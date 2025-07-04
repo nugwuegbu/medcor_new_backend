@@ -208,6 +208,9 @@ Changelog:
 - July 05, 2025. Fixed speech recognition errors by adding try-catch blocks and timeouts to prevent "recognition already started" errors
 - July 05, 2025. Fixed overlapping messages in chat interface by increasing container height and adding proper spacing between messages
 - July 05, 2025. Updated doctors screen to show actual HeyGen avatar video in circle instead of placeholder icon
+- July 05, 2025. Fixed doctor hover functionality - avatar now speaks in third person ("This is Dr. X") and stops speaking when mouse leaves
+- July 05, 2025. Added authentication overlay with Google, Apple, Microsoft OAuth options that appears after user sends 2 messages
+- July 05, 2025. Replaced AI Assistant logo with User Account button in chat interface menu
 
 ## User Preferences
 

@@ -33,6 +33,7 @@ export const doctors = pgTable("doctors", {
   education: text("education").notNull(),
   photo: text("photo").notNull(),
   bio: text("bio").notNull(),
+  description: text("description"), // Short hover description for HeyGen
   avatarId: text("avatar_id"), // HeyGen avatar ID for this doctor
   available: boolean("available").notNull().default(true),
 });

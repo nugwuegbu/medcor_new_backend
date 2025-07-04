@@ -12,6 +12,7 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef }
   const [hasPermission, setHasPermission] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [cameraError, setCameraError] = useState(false);
+  const [manuallyTurnedOff, setManuallyTurnedOff] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
@@ -52,10 +53,10 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef }
   }, [hasPermission, capturePhotoRef]);
 
   useEffect(() => {
-    if (isEnabled && hasPermission) {
+    if (isEnabled && hasPermission && !manuallyTurnedOff) {
       console.log("Camera conditions met - starting camera");
       startCamera();
-    } else if (isEnabled && !hasPermission) {
+    } else if (isEnabled && !hasPermission && !manuallyTurnedOff) {
       console.log("Camera enabled but no permission yet - requesting");
       setHasPermission(true);
       onPermissionRequest?.();
@@ -66,7 +67,7 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef }
     return () => {
       stopCamera();
     };
-  }, [isEnabled, hasPermission, onPermissionRequest]);
+  }, [isEnabled, hasPermission, manuallyTurnedOff, onPermissionRequest]);
 
   const startCamera = async () => {
     try {
@@ -105,10 +106,12 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef }
   const handleCameraClick = () => {
     if (!hasPermission) {
       setHasPermission(true);
+      setManuallyTurnedOff(false);
       onPermissionRequest?.();
     } else {
       // Toggle camera off
       setHasPermission(false);
+      setManuallyTurnedOff(true);
       stopCamera();
     }
   };

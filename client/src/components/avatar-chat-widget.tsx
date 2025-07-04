@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
-import HeyGenSDKAvatar from "./heygen-sdk-avatar";
+import HeyGenSDKAvatar, { HeyGenSDKAvatarRef } from "./heygen-sdk-avatar";
 import ChatDoctorList from "./chat-doctor-list";
 import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
@@ -13,6 +13,7 @@ import InfoOverlay from "./info-overlay";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
+import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
 
 interface Message {
   id: string;
@@ -76,10 +77,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }>({ title: "", places: [] });
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [hoveredDoctorId, setHoveredDoctorId] = useState<number | null>(null);
+  const [showAuthOverlay, setShowAuthOverlay] = useState(false);
+  const [userMessageCount, setUserMessageCount] = useState(0);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const capturePhotoRef = useRef<(() => string | null) | null>(null);
+  const doctorHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -319,6 +325,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     setMessages(prev => [...prev, userMessage]);
     setInputText("");
     
+    // Track user messages and show auth after 2 messages
+    const newCount = userMessageCount + 1;
+    setUserMessageCount(newCount);
+    if (newCount === 2) {
+      setShowAuthOverlay(true);
+    }
+    
     voiceChatMutation.mutate(text.trim());
   };
 
@@ -333,6 +346,51 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleCameraPermissionRequest = useCallback(() => {
     console.log("Camera permission requested");
     setCameraEnabled(true);
+  }, []);
+
+  // Handle doctor card hover
+  const handleDoctorHover = useCallback((doctorId: number, doctorName: string, description: string) => {
+    // Only set if different doctor
+    if (hoveredDoctorId === doctorId) return;
+    
+    setHoveredDoctorId(doctorId);
+    
+    // Clear any existing timeout
+    if (doctorHoverTimeoutRef.current) {
+      clearTimeout(doctorHoverTimeoutRef.current);
+    }
+    
+    // Set a delay before speaking
+    doctorHoverTimeoutRef.current = setTimeout(() => {
+      if (avatarRef.current && hoveredDoctorId === doctorId) {
+        const message = `This is ${doctorName}. ${description}`;
+        avatarRef.current.speak({
+          text: message,
+          taskType: TaskType.TALK,
+          taskMode: TaskMode.SYNC
+        });
+      }
+    }, 300); // 300ms delay
+  }, [hoveredDoctorId]);
+
+  const handleDoctorHoverEnd = useCallback(() => {
+    // Clear timeout if user leaves before avatar speaks
+    if (doctorHoverTimeoutRef.current) {
+      clearTimeout(doctorHoverTimeoutRef.current);
+      doctorHoverTimeoutRef.current = null;
+    }
+    
+    // Reset hovered doctor ID
+    setHoveredDoctorId(null);
+    
+    // Stop avatar from speaking by interrupting with empty text
+    if (avatarRef.current) {
+      avatarRef.current.speak({
+        text: " ",
+        taskType: TaskType.TALK,
+        taskMode: TaskMode.SYNC
+      });
+    }
   }, []);
 
   if (!isOpen) return null;
@@ -383,6 +441,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             <>
               {/* Always show HeyGen avatar */}
               <HeyGenSDKAvatar 
+                ref={avatarRef}
                 key="single-avatar-instance"
                 apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
                 isVisible={true}
@@ -455,14 +514,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   
                   {/* Circular AI Menu */}
                   <div className="relative w-48 h-48">
-                    {/* Center Circle with AI Effect */}
+                    {/* Center Circle with User Account */}
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
-                    <div className="absolute inset-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center">
-                    <div className="text-white text-center">
-                      <MessageSquare className="h-8 w-8 mx-auto mb-1" />
-                      <p className="text-xs font-medium">AI Assistant</p>
-                    </div>
-                  </div>
+                    <button 
+                      onClick={() => setShowAuthOverlay(true)}
+                      className="absolute inset-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform cursor-pointer">
+                      <div className="text-white text-center">
+                        <User className="h-8 w-8 mx-auto mb-1" />
+                        <p className="text-xs font-medium">Account</p>
+                      </div>
+                    </button>
                   
                   {/* Menu Items - Circular Layout */}
                   {[
@@ -626,7 +687,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Our Doctors</h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
                         {/* Doctor 1 */}
-                        <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer">
+                        <div 
+                          className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                          onMouseEnter={() => handleDoctorHover(1, "Dr. Sarah Johnson", "5 years experience in cardiology, graduated from Johns Hopkins University.")}
+                          onMouseLeave={handleDoctorHoverEnd}
+                        >
                           <div className="text-center">
                             <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
                               <img 
@@ -636,7 +701,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               />
                             </div>
                             <h3 className="text-lg font-bold text-gray-800">Dr. Sarah Johnson</h3>
-                            <p className="text-sm text-purple-600 font-medium mb-2">Plastic Surgery</p>
+                            <p className="text-sm text-purple-600 font-medium mb-2">Cardiology</p>
                             <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
                               <Phone className="h-4 w-4" />
                               <span>+44 20 7123 4567</span>
@@ -644,11 +709,19 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           </div>
                         </div>
                         
-                        {/* Doctor 2 - Placeholder */}
-                        <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer">
+                        {/* Doctor 2 */}
+                        <div 
+                          className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                          onMouseEnter={() => handleDoctorHover(2, "Dr. Michael Chen", "7 years in orthopedics, Harvard Medical School graduate, expert in sports medicine.")}
+                          onMouseLeave={handleDoctorHoverEnd}
+                        >
                           <div className="text-center">
                             <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
-                              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
+                              <img 
+                                src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face"
+                                alt="Dr. Michael Chen"
+                                className="w-full h-full object-cover"
+                              />
                             </div>
                             <h3 className="text-lg font-bold text-gray-800">Dr. Michael Chen</h3>
                             <p className="text-sm text-purple-600 font-medium mb-2">Orthopedics</p>
@@ -659,14 +732,22 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           </div>
                         </div>
                         
-                        {/* Doctor 3 - Placeholder */}
-                        <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer">
+                        {/* Doctor 3 */}
+                        <div 
+                          className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                          onMouseEnter={() => handleDoctorHover(3, "Dr. Emily Rodriguez", "10 years of pediatric experience, Stanford University alumnus, child health specialist.")}
+                          onMouseLeave={handleDoctorHoverEnd}
+                        >
                           <div className="text-center">
                             <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
-                              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
+                              <img 
+                                src="https://images.unsplash.com/photo-1594824388853-2c5cb2d2f40e?w=300&h=300&fit=crop&crop=face"
+                                alt="Dr. Emily Rodriguez"
+                                className="w-full h-full object-cover"
+                              />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-800">Dr. Emily Davis</h3>
-                            <p className="text-sm text-purple-600 font-medium mb-2">Dermatology</p>
+                            <h3 className="text-lg font-bold text-gray-800">Dr. Emily Rodriguez</h3>
+                            <p className="text-sm text-purple-600 font-medium mb-2">Pediatrics</p>
                             <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
                               <Phone className="h-4 w-4" />
                               <span>+44 20 7123 4569</span>
@@ -812,6 +893,57 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
       </div>
 
+      {/* Authentication Overlay */}
+      {showAuthOverlay && (
+        <div className="absolute inset-0 bg-white bg-opacity-95 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <button
+              onClick={() => setShowAuthOverlay(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="h-10 w-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Create Your Account</h2>
+              <p className="text-gray-600">Continue with your preferred provider</p>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => window.location.href = '/api/auth/google'}
+                className="w-full flex items-center justify-center gap-3 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <FaGoogle className="h-5 w-5 text-red-500" />
+                <span className="text-gray-700 font-medium">Continue with Google</span>
+              </button>
+
+              <button
+                onClick={() => window.location.href = '/api/auth/apple'}
+                className="w-full flex items-center justify-center gap-3 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <FaApple className="h-5 w-5 text-black" />
+                <span className="text-gray-700 font-medium">Continue with Apple</span>
+              </button>
+
+              <button
+                onClick={() => window.location.href = '/api/auth/microsoft'}
+                className="w-full flex items-center justify-center gap-3 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <FaMicrosoft className="h-5 w-5 text-blue-600" />
+                <span className="text-gray-700 font-medium">Continue with Microsoft</span>
+              </button>
+            </div>
+
+            <p className="text-center text-sm text-gray-500 mt-6">
+              By continuing, you agree to our Terms of Service and Privacy Policy
+            </p>
+          </div>
+        </div>
+      )}
 
     </div>
   );

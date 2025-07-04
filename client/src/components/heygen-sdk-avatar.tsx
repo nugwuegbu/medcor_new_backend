@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { AvatarManager } from "../services/avatar-manager";
 import { Loader } from "lucide-react";
+import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 
 interface HeyGenSDKAvatarProps {
   apiKey: string;
@@ -9,12 +10,26 @@ interface HeyGenSDKAvatarProps {
   onReady?: () => void;
 }
 
-export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible, onReady }: HeyGenSDKAvatarProps) {
+export interface HeyGenSDKAvatarRef {
+  speak: (params: { text: string; taskType?: TaskType; taskMode?: TaskMode }) => void;
+}
+
+const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ apiKey, onMessage, isVisible, onReady }, ref) => {
   const [isLoading, setIsLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "failed">("connecting");
   const videoRef = useRef<HTMLVideoElement>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasCalledOnReady = useRef(false);
+
+  // Expose speak method through ref
+  useImperativeHandle(ref, () => ({
+    speak: ({ text, taskType = TaskType.TALK, taskMode = TaskMode.SYNC }) => {
+      const avatar = AvatarManager.getAvatar();
+      if (avatar) {
+        avatar.speak({ text, taskType, taskMode });
+      }
+    }
+  }), []);
 
   useEffect(() => {
     if (!isVisible || !apiKey) return;
@@ -131,4 +146,8 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible, onReady 
       />
     </div>
   );
-}
+});
+
+HeyGenSDKAvatar.displayName = 'HeyGenSDKAvatar';
+
+export default HeyGenSDKAvatar;

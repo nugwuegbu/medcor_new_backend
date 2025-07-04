@@ -126,6 +126,11 @@ export class AvatarManager {
     return stream;
   }
 
+  static getAvatar() {
+    const manager = (window as any).__avatarManager;
+    return manager?.avatar;
+  }
+
   static detectLanguage(text: string): string {
     // Simple language detection based on common patterns
     const turkishPatterns = /[ığüşöçĞÜŞÖÇİ]/;

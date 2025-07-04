@@ -50,30 +50,33 @@ export class MemStorage implements IStorage {
       {
         name: "Dr. Sarah Johnson",
         specialty: "Cardiology",
-        experience: 15,
+        experience: 5,
         education: "MD from Johns Hopkins University",
         photo: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face",
-        bio: "Dr. Johnson is a board-certified cardiologist with over 15 years of experience treating heart conditions.",
+        bio: "Dr. Johnson is a board-certified cardiologist with over 5 years of experience treating heart conditions.",
+        description: "5 years experience in cardiology, graduated from Johns Hopkins University.",
         avatarId: "heygen_avatar_sarah_cardio",
         available: true,
       },
       {
         name: "Dr. Michael Chen",
         specialty: "Orthopedics",
-        experience: 12,
+        experience: 7,
         education: "MD from Harvard Medical School",
         photo: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face",
         bio: "Dr. Chen specializes in sports medicine and joint replacement surgery.",
+        description: "7 years in orthopedics, Harvard Medical School graduate, expert in sports medicine.",
         avatarId: "heygen_avatar_michael_ortho",
         available: true,
       },
       {
         name: "Dr. Emily Rodriguez",
         specialty: "Pediatrics",
-        experience: 8,
+        experience: 10,
         education: "MD from Stanford University",
         photo: "https://images.unsplash.com/photo-1594824388853-2c5cb2d2f40e?w=300&h=300&fit=crop&crop=face",
         bio: "Dr. Rodriguez is passionate about providing comprehensive care for children and adolescents.",
+        description: "10 years of pediatric experience, Stanford University alumnus, child health specialist.",
         avatarId: "heygen_avatar_emily_pediatrics",
         available: true,
       },
@@ -115,7 +118,8 @@ export class MemStorage implements IStorage {
         ...doctor, 
         id,
         avatarId: doctor.avatarId || null,
-        available: doctor.available ?? true
+        available: doctor.available ?? true,
+        description: doctor.description || null
       };
       this.doctors.set(id, fullDoctor);
     });
@@ -209,7 +213,8 @@ export class MemStorage implements IStorage {
       ...insertDoctor, 
       id,
       avatarId: insertDoctor.avatarId || null,
-      available: insertDoctor.available !== undefined ? insertDoctor.available : true
+      available: insertDoctor.available !== undefined ? insertDoctor.available : true,
+      description: insertDoctor.description || null
     };
     this.doctors.set(id, doctor);
     return doctor;
