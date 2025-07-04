@@ -1,22 +1,26 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, Users, Calendar, Shield, Clock, Phone, Camera } from "lucide-react";
 import { Link } from "wouter";
 import FaqSection from "@/components/faq-section";
-import FaceRecognition from "@/components/face-recognition";
+import FloatingChatButton from "@/components/floating-chat-button";
+import MedcorChatModal from "@/components/medcor-chat-modal";
 
 export default function Home() {
-  const handleFaceRecognition = (result: any) => {
-    if (result.recognized) {
-      console.log("Patient recognized:", result);
-    } else {
-      console.log("New patient:", result);
-    }
-  };
+  const [showModal, setShowModal] = useState(false);
 
-  const handleLanguageDetection = (language: string) => {
-    console.log("Language detected:", language);
-  };
+  // Auto-show modal when users first visit
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('medcor-visited');
+    if (!hasVisited) {
+      const timer = setTimeout(() => {
+        setShowModal(true);
+        localStorage.setItem('medcor-visited', 'true');
+      }, 1500); // Show after 1.5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -25,11 +29,11 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Your Health, Our Priority
+              Welcome to Medcor.ai
             </h1>
             <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-              Experience personalized healthcare with our AI-powered assistant. 
-              Get instant support, book appointments, and connect with expert doctors.
+              Experience revolutionary healthcare with face recognition, interactive AI avatars, and instant multi-language support. 
+              Your personalized medical journey starts here.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/chat">
@@ -105,11 +109,21 @@ export default function Home() {
             </div>
             
             <div className="flex justify-center">
-              <FaceRecognition 
-                sessionId="home-demo"
-                onRecognitionComplete={handleFaceRecognition}
-                onLanguageDetected={handleLanguageDetection}
-              />
+              <Card className="max-w-md">
+                <CardContent className="p-6 text-center">
+                  <Camera className="h-12 w-12 text-primary mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Try Face Recognition</h3>
+                  <p className="text-gray-600 mb-4">
+                    Click the chat button to experience instant patient recognition and personalized care.
+                  </p>
+                  <Button 
+                    onClick={() => setShowModal(true)}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  >
+                    Start Demo
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
@@ -256,6 +270,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Floating Chat Button */}
+      <FloatingChatButton />
+
+      {/* Auto-show Modal */}
+      <MedcorChatModal 
+        isOpen={showModal} 
+        onClose={() => setShowModal(false)} 
+      />
     </div>
   );
 }

@@ -69,7 +69,11 @@
 
 @layer components {
   .medical-gradient {
-    background: linear-gradient(135deg, var(--medical-blue), var(--medical-dark-blue));
+    background: linear-gradient(135deg, #8B5CF6, #3B82F6, #06B6D4);
+  }
+  
+  .medcor-gradient {
+    background: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 50%, #06B6D4 100%);
   }
   
   .medical-card {
