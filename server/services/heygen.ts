@@ -69,9 +69,13 @@ export class HeyGenService {
   private baseUrl: string;
 
   constructor() {
-    // Use the provided API key
-    this.apiKey = "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg==";
+    // Use the API key from environment
+    this.apiKey = process.env.HEYGEN_API_KEY || "";
     this.baseUrl = "https://api.heygen.com/v1";
+    
+    if (!this.apiKey) {
+      console.warn("HeyGen API key not configured. Avatar features will be limited.");
+    }
   }
 
   async generateAvatarResponse(message: HeyGenChatMessage): Promise<HeyGenResponse> {
@@ -88,22 +92,43 @@ export class HeyGenService {
         "Susan_public_2_20240328" // Public avatar
       ];
 
-      // Create streaming avatar session first
+      // Create access token first
+      console.log("Creating HeyGen access token...");
+      const tokenResponse = await fetch(`${this.baseUrl}/streaming.create_token`, {
+        method: "POST",
+        headers: {
+          "x-api-key": this.apiKey
+        }
+      });
+
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.json();
+        console.error("HeyGen token error:", errorData);
+        throw new Error(`HeyGen token error: ${tokenResponse.status}`);
+      }
+
+      const tokenData = await tokenResponse.json();
+      const accessToken = tokenData.data?.token;
+      
+      if (!accessToken) {
+        throw new Error("No access token received");
+      }
+
+      console.log("Creating HeyGen streaming session with token...");
+      
+      // Create new session with the token
       const sessionPayload = {
         quality: "high",
         avatar_name: publicAvatars[0], // Use first public avatar
         voice: {
-          voice_id: "1bd001e7e50f421d891986aad5158bc8",
-          rate: 1.0,
-          emotion: "Neutral"
+          voice_id: "1bd001e7e50f421d891986aad5158bc8"
         }
       };
 
-      console.log("Creating HeyGen streaming session...");
-      const sessionResponse = await fetch(`${this.baseUrl}/streaming.create_token`, {
+      const sessionResponse = await fetch(`${this.baseUrl}/streaming.new`, {
         method: "POST",
         headers: {
-          "X-API-Key": this.apiKey,
+          "Authorization": `Bearer ${accessToken}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify(sessionPayload)

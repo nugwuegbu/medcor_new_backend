@@ -131,6 +131,12 @@ export default function VoiceAvatarChat({
   // Start voice recording
   const startRecording = async () => {
     try {
+      // Check for microphone permissions
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Microphone not supported in this browser');
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -172,6 +178,17 @@ export default function VoiceAvatarChat({
       setIsRecording(true);
     } catch (error) {
       console.error("Recording failed:", error);
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          alert('Microphone access denied. Please allow microphone access and try again.');
+        } else if (error.name === 'NotFoundError') {
+          alert('No microphone found. Please check your microphone connection.');
+        } else {
+          alert('Error accessing microphone: ' + error.message);
+        }
+      } else {
+        alert('Error accessing microphone');
+      }
     }
   };
 

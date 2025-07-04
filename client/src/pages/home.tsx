@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import FaqSection from "@/components/faq-section";
 import FloatingChatButton from "@/components/floating-chat-button";
 import MedcorChatModal from "@/components/medcor-chat-modal";
+import SystemTest from "@/components/system-test";
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
@@ -235,6 +236,13 @@ export default function Home() {
 
       {/* FAQ Section */}
       <FaqSection />
+
+      {/* System Test Section */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <SystemTest />
+        </div>
+      </section>
 
       {/* Contact Section */}
       <section className="py-16 bg-muted/50">
