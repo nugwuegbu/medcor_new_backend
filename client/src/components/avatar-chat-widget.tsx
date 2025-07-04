@@ -182,7 +182,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     onSuccess: async (data) => {
       // Check if the response contains a nearby search command
       if (data.message.includes("NEARBY_SEARCH:")) {
+        console.log("NEARBY_SEARCH detected in response:", data.message);
         const searchType = data.message.split("NEARBY_SEARCH:")[1].trim();
+        console.log("Search type extracted:", searchType);
         
         // Make API call to get nearby places
         // Use Medcor Clinic's location in Dubai Healthcare City
@@ -209,6 +211,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             const placesData = await placesResponse.json();
             
             // Show info overlay with results
+            console.log("Setting overlay data with places:", placesData.places);
             setInfoOverlayData({
               title: `Nearby ${searchType}`,
               places: placesData.places.map((place: any) => ({
@@ -216,6 +219,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 mapUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + " " + place.address)}`
               }))
             });
+            console.log("Setting showInfoOverlay to true and minimizing avatar");
             setShowInfoOverlay(true);
             setIsMinimized(true);
             

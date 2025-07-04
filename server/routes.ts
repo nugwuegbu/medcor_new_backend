@@ -529,8 +529,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`AI response: ${aiResponse}`);
       }
       
-      // Check if user is asking about doctors
-      const askingAboutDoctors = message.toLowerCase().includes('doctor') || 
+      // Check if user is asking about doctors or if AI response includes doctor search
+      const askingAboutDoctors = aiResponse.includes('DOCTOR_SEARCH:') ||
+                                  message.toLowerCase().includes('doctor') || 
                                   message.toLowerCase().includes('doktor') ||
                                   message.toLowerCase().includes('appointment') ||
                                   message.toLowerCase().includes('randevu') ||

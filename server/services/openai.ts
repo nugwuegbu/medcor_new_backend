@@ -92,14 +92,29 @@ export async function generateChatResponse(message: string, language: string = "
       'near', 'yakın', 'nearby', 'yakında', 'close to', 'around here'
     ];
     
+    // Check if user is asking about doctors
+    const doctorKeywords = [
+      'doctor', 'doktor', 'physician', 'hekim',
+      'available', 'availability', 'müsait', 'uygun',
+      'appointment', 'randevu', 'book', 'schedule',
+      'specialist', 'uzman', 'cardiologist', 'kardiyolog',
+      'pediatrician', 'çocuk doktoru', 'dermatologist', 'dermatoloji',
+      'who can i see', 'kim müsait', 'which doctor', 'hangi doktor'
+    ];
+    
     const lowerMessage = message.toLowerCase();
     const isNearbyQuery = nearbyPlaceKeywords.some(keyword => lowerMessage.includes(keyword));
+    const isDoctorQuery = doctorKeywords.some(keyword => lowerMessage.includes(keyword));
     
     const systemPrompt = LANGUAGE_PROMPTS[language as keyof typeof LANGUAGE_PROMPTS] || LANGUAGE_PROMPTS.en;
     
-    const enhancedPrompt = isNearbyQuery 
-      ? `${systemPrompt}\n\nThe user is asking about nearby places. If they ask about gas stations, restaurants, pharmacies, or other places, respond with: "NEARBY_SEARCH:[TYPE]" where TYPE is the place they're looking for (e.g., NEARBY_SEARCH:gas_station). Keep it in English.`
-      : systemPrompt;
+    let enhancedPrompt = systemPrompt;
+    
+    if (isNearbyQuery) {
+      enhancedPrompt = `${systemPrompt}\n\nThe user is asking about nearby places. If they ask about gas stations, restaurants, pharmacies, or other places, respond with: "NEARBY_SEARCH:[TYPE]" where TYPE is the place they're looking for (e.g., NEARBY_SEARCH:gas_station). Keep it in English.`;
+    } else if (isDoctorQuery) {
+      enhancedPrompt = `${systemPrompt}\n\nThe user is asking about available doctors or appointments. Respond with: "DOCTOR_SEARCH:AVAILABLE" to show available doctors. Keep your response short and mention you'll show available doctors.`;
+    }
     
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
