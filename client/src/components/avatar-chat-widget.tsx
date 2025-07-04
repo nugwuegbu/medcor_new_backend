@@ -38,7 +38,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showDoctorList, setShowDoctorList] = useState(false);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
-  const [currentView, setCurrentView] = useState<'menu' | 'booking' | 'doctors'>('menu');
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -253,13 +252,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40 rounded-lg overflow-hidden">
             {/* Back Button - Top Left Corner */}
             <button
-              onClick={() => {
-                if (currentView !== 'menu') {
-                  setCurrentView('menu');
-                } else {
-                  setShowChatInterface(false);
-                }
-              }}
+              onClick={() => setShowChatInterface(false)}
               className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -268,10 +261,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             
             {/* Chat Interface Content */}
             <div className="h-full flex flex-col">
-              {/* Show different views based on currentView */}
-              {currentView === 'menu' && (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-4">
+              {/* Menu Section - Centered */}
+              <div className="flex-1 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
                   
                   {/* Circular AI Menu */}
                   <div className="relative w-48 h-48">
@@ -286,8 +278,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   
                   {/* Menu Items - Circular Layout */}
                   {[
-                    { icon: Calendar, label: "Book", angle: 0, action: () => { setCurrentView('booking'); setSelectedMenuItem("book"); } },
-                    { icon: Users, label: "Doctors", angle: 60, action: () => { setCurrentView('doctors'); setSelectedMenuItem("doctors"); } },
+                    { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); } },
+                    { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); } },
                     { icon: FileText, label: "Records", angle: 120, action: () => setSelectedMenuItem("records") },
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
                     { icon: Settings, label: "Settings", angle: 240, action: () => setSelectedMenuItem("settings") },
