@@ -63,11 +63,10 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
           quality: AvatarQuality.High,
           avatarName: "Ann_Doctor_Standing2_public",
           voice: {
-            voiceId: "ed497416d2854c3e8e4c6a8f8f9d272b", // Updated voice ID for Ann
+            voiceId: "1bd001e7e50f421d891986aad5158bc8", // Default female voice
             rate: 1.0,
             emotion: VoiceEmotion.FRIENDLY
-          },
-          knowledgeBase: "e5c9b4c0a91d47c189f80423ba274c0c" // Knowledge base from embed
+          }
         });
 
         console.log("Avatar session started:", sessionInfo);
