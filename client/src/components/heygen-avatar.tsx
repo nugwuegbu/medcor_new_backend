@@ -6,6 +6,7 @@ interface HeyGenAvatarProps {
     videoUrl?: string;
     audioUrl?: string;
     text: string;
+    isSimulated?: boolean;
   };
   isLoading?: boolean;
   userSpeechText?: string;
@@ -15,17 +16,20 @@ interface HeyGenAvatarProps {
 export default function HeyGenAvatar({ avatarResponse, isLoading, userSpeechText, isUserSpeaking }: HeyGenAvatarProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [lipSyncAnimation, setLipSyncAnimation] = useState(false);
 
   useEffect(() => {
-    if (avatarResponse?.videoUrl && videoRef.current) {
-      // In a real implementation, this would load the HeyGen video
-      // For now, we'll show a placeholder with animation
+    if (avatarResponse?.text) {
       setIsPlaying(true);
+      setLipSyncAnimation(true);
       
-      // Simulate video playing for the duration of the response
-      const duration = Math.max(3000, avatarResponse.text.length * 100);
+      // Simulate realistic speaking duration (150-200 WPM reading speed)
+      const wordCount = avatarResponse.text.split(' ').length;
+      const duration = Math.max(2000, (wordCount / 3) * 1000); // ~180 WPM
+      
       const timer = setTimeout(() => {
         setIsPlaying(false);
+        setLipSyncAnimation(false);
       }, duration);
       
       return () => clearTimeout(timer);
@@ -47,12 +51,12 @@ export default function HeyGenAvatar({ avatarResponse, isLoading, userSpeechText
 
   return (
     <div className="w-full h-full relative bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center overflow-hidden">
-      {/* Avatar Container */}
+      {/* Interactive Medical Avatar */}
       <div className="relative">
         {avatarResponse?.videoUrl ? (
           <video
             ref={videoRef}
-            className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+            className="w-24 h-32 rounded-lg object-cover border-2 border-white shadow-lg"
             autoPlay
             muted
             loop={false}
@@ -60,19 +64,66 @@ export default function HeyGenAvatar({ avatarResponse, isLoading, userSpeechText
             <source src={avatarResponse.videoUrl} type="video/mp4" />
           </video>
         ) : (
-          <div className={`w-32 h-32 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center border-4 border-white shadow-lg transition-all duration-300 ${isPlaying ? 'scale-110' : 'scale-100'}`}>
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 7C14.45 7 14 7.45 14 8V16C14 16.55 14.45 17 15 17H21V15H16V9H21ZM9 13.5C9 14.11 8.61 14.61 8.06 14.81L6.5 15.25C5.44 15.59 4.5 16.61 4.5 17.75V22H2.5V17.75C2.5 15.97 3.81 14.43 5.56 13.95L7.44 13.45C7.61 13.41 7.75 13.27 7.75 13.08V12.42C7.33 12.15 7 11.63 7 11V9C7 8.45 7.45 8 8 8H10C10.55 8 11 8.45 11 9V11C11 11.63 10.67 12.15 10.25 12.42V13.08C10.25 13.27 10.39 13.41 10.56 13.45L12.44 13.95C14.19 14.43 15.5 15.97 15.5 17.75V22H13.5V17.75C13.5 16.61 12.56 15.59 11.5 15.25L9.94 14.81C9.39 14.61 9 14.11 9 13.5Z"/>
-              </svg>
+          <div className="relative">
+            {/* Medical Professional Avatar */}
+            <div className={`w-24 h-32 bg-gradient-to-b from-white to-blue-50 rounded-lg border-2 border-white shadow-lg overflow-hidden transition-all duration-300 ${
+              isPlaying ? 'scale-105 shadow-xl' : 'scale-100'
+            }`}>
+              {/* Face and Hair */}
+              <div className="relative h-20 bg-gradient-to-b from-pink-100 to-pink-50">
+                {/* Hair */}
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-6 bg-amber-700 rounded-t-full"></div>
+                
+                {/* Face */}
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-12 h-14 bg-pink-100 rounded-full">
+                  {/* Eyes */}
+                  <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                    <div className={`w-1.5 h-1.5 bg-blue-800 rounded-full transition-transform duration-200 ${
+                      lipSyncAnimation ? 'scale-110' : ''
+                    }`}></div>
+                    <div className={`w-1.5 h-1.5 bg-blue-800 rounded-full transition-transform duration-200 ${
+                      lipSyncAnimation ? 'scale-110' : ''
+                    }`}></div>
+                  </div>
+                  
+                  {/* Nose */}
+                  <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-pink-200 rounded-full"></div>
+                  
+                  {/* Mouth with Lip Sync Animation */}
+                  <div className={`absolute top-8 left-1/2 transform -translate-x-1/2 transition-all duration-300 ${
+                    lipSyncAnimation 
+                      ? 'w-3 h-2 bg-red-300 rounded-full animate-pulse' 
+                      : 'w-2 h-1 bg-red-200 rounded-full'
+                  }`}></div>
+                </div>
+              </div>
+              
+              {/* Medical Coat */}
+              <div className="h-12 bg-white relative">
+                {/* Collar */}
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-2 bg-gray-100 rounded-t-sm"></div>
+                
+                {/* Stethoscope */}
+                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-6 h-6">
+                  <div className="w-full h-1 bg-gray-600 rounded-full"></div>
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gray-600 rounded-full"></div>
+                </div>
+                
+                {/* Breathing Animation */}
+                <div className={`absolute inset-0 transition-all duration-2000 ${
+                  isPlaying ? 'animate-pulse' : ''
+                }`}>
+                  <div className="w-full h-full bg-gradient-to-b from-transparent to-blue-50 opacity-30"></div>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
-        
-        {/* Speaking Indicator */}
-        {isPlaying && (
-          <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
-            <div className="w-3 h-3 bg-white rounded-full"></div>
+            
+            {/* Speaking Indicator */}
+            {isPlaying && (
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -84,9 +135,16 @@ export default function HeyGenAvatar({ avatarResponse, isLoading, userSpeechText
         duration={3000}
       />
       
+      {/* Medical Badge */}
+      <div className="absolute top-2 right-2">
+        <div className="bg-white/90 px-2 py-1 rounded-full shadow-sm">
+          <span className="text-xs font-medium text-purple-600">Dr. AI</span>
+        </div>
+      </div>
+      
       {/* Status Text */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center">
-        <p className="text-xs text-gray-600 bg-white/80 px-3 py-1 rounded-full">
+      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-center">
+        <p className="text-xs text-gray-600 bg-white/80 px-2 py-1 rounded-full">
           {isPlaying ? "Speaking..." : "Ready to help"}
         </p>
       </div>

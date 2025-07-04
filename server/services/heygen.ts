@@ -21,6 +21,7 @@ interface HeyGenResponse {
   voice?: string;
   language?: string;
   duration?: number;
+  isSimulated?: boolean;
 }
 
 // Avatar configurations for different languages
@@ -70,7 +71,7 @@ export class HeyGenService {
   constructor() {
     // Use the provided API key
     this.apiKey = "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg==";
-    this.baseUrl = "https://api.heygen.com/v2";
+    this.baseUrl = "https://api.heygen.com/v1";
   }
 
   async generateAvatarResponse(message: HeyGenChatMessage): Promise<HeyGenResponse> {
@@ -79,90 +80,117 @@ export class HeyGenService {
         throw new Error("HeyGen API key not configured");
       }
 
-      // Use common public avatar IDs that should be available
-      const publicAvatarIds = [
-        "Wayne_20240711", // Common public avatar
-        "Anna_public_3_20240108", // Another common public avatar
+      // Use public avatars that should work with most accounts
+      const publicAvatars = [
+        "Kristin_public_2_20240108", // Public avatar
+        "Anna_public_3_20240108", // Public avatar
         "josh_lite3_20230714", // Public avatar
-        "Tyler-incasualsuit-20220721" // Another option
+        "Susan_public_2_20240328" // Public avatar
       ];
-      
-      // Try to get available avatars, fallback to public ones
-      let avatarId = publicAvatarIds[0]; // Default to first public avatar
-      
-      try {
-        const avatarsResponse = await fetch(`${this.baseUrl}/avatars`, {
-          method: "GET",
-          headers: {
-            "X-API-Key": this.apiKey,
-            "Content-Type": "application/json"
-          }
-        });
 
-        if (avatarsResponse.ok) {
-          const avatarsData = await avatarsResponse.json();
-          if (avatarsData.data && avatarsData.data.length > 0) {
-            // Use the first available avatar from user's account
-            avatarId = avatarsData.data[0].avatar_id;
-          }
+      // Create streaming avatar session first
+      const sessionPayload = {
+        quality: "high",
+        avatar_name: publicAvatars[0], // Use first public avatar
+        voice: {
+          voice_id: "1bd001e7e50f421d891986aad5158bc8",
+          rate: 1.0,
+          emotion: "Neutral"
         }
-      } catch (error) {
-        console.log("Using default public avatar");
-      }
-
-      // Generate avatar video with real HeyGen API
-      const payload = {
-        video_inputs: [{
-          character: {
-            type: "avatar",
-            avatar_id: avatarId
-          },
-          voice: {
-            type: "text",
-            input_text: message.text,
-            voice_id: "1bd001e7e50f421d891986aad5158bc8" // Default English voice
-          }
-        }],
-        callback_id: message.sessionId,
-        test: false // Set to true for testing, false for production
       };
 
-      const response = await fetch(`${this.baseUrl}/video/generate`, {
+      console.log("Creating HeyGen streaming session...");
+      const sessionResponse = await fetch(`${this.baseUrl}/streaming.create_token`, {
         method: "POST",
         headers: {
           "X-API-Key": this.apiKey,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(sessionPayload)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("HeyGen API error:", errorData);
-        throw new Error(`HeyGen API error: ${response.status} - ${errorData.message || 'Unknown error'}`);
+      if (!sessionResponse.ok) {
+        const errorData = await sessionResponse.json();
+        console.error("HeyGen session error:", errorData);
+        throw new Error(`HeyGen session error: ${sessionResponse.status}`);
       }
 
-      const data = await response.json();
+      const sessionData = await sessionResponse.json();
+      console.log("HeyGen session created:", sessionData);
 
-      return {
-        videoUrl: data.data?.video_url,
-        audioUrl: data.data?.audio_url,
-        text: message.text,
-        sessionId: message.sessionId,
-        videoId: data.data?.video_id // For status checking
+      // If we have a session token, use it to send the message
+      if (sessionData.data?.token) {
+        const speakPayload = {
+          text: message.text,
+          task_type: "talk",
+          session_id: sessionData.data.session_id
+        };
+
+        const speakResponse = await fetch(`${this.baseUrl}/streaming.task`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${sessionData.data.token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(speakPayload)
+        });
+
+        if (speakResponse.ok) {
+          const speakData = await speakResponse.json();
+          console.log("HeyGen speak response:", speakData);
+          
+          return {
+            videoUrl: `https://api.heygen.com/v1/streaming.get/${sessionData.data.session_id}`,
+            audioUrl: speakData.data?.audio_url,
+            text: message.text,
+            sessionId: message.sessionId,
+            videoId: sessionData.data.session_id
+          };
+        }
+      }
+
+      // Fallback to video generation API
+      console.log("Trying video generation API...");
+      const videoPayload = {
+        avatar_id: publicAvatars[0],
+        input_text: message.text,
+        voice_id: "1bd001e7e50f421d891986aad5158bc8"
       };
+
+      const videoResponse = await fetch(`${this.baseUrl}/video.generate`, {
+        method: "POST",
+        headers: {
+          "X-API-Key": this.apiKey,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(videoPayload)
+      });
+
+      if (videoResponse.ok) {
+        const videoData = await videoResponse.json();
+        console.log("HeyGen video response:", videoData);
+        
+        return {
+          videoUrl: videoData.data?.video_url,
+          audioUrl: videoData.data?.audio_url,
+          text: message.text,
+          sessionId: message.sessionId,
+          videoId: videoData.data?.video_id
+        };
+      }
 
     } catch (error) {
       console.error("HeyGen API error:", error);
-      
-      // Return mock response for development
-      return {
-        text: `I understand you said: "${message.text}". I'm your AI health assistant here to help with medical questions and appointments.`,
-        sessionId: message.sessionId,
-        videoUrl: `https://mock-avatar-video.com/${message.sessionId}.mp4`,
-        audioUrl: `https://mock-avatar-audio.com/${message.sessionId}.mp3`
-      };
     }
+
+    // Enhanced mock response with realistic avatar simulation
+    return {
+      text: message.text,
+      sessionId: message.sessionId,
+      videoUrl: undefined, // No video URL, will use CSS animation instead
+      audioUrl: undefined,
+      isSimulated: true
+    };
   }
 
   async getAvatarStatus(sessionId: string): Promise<{ status: string; progress?: number }> {
