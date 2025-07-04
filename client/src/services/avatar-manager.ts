@@ -83,20 +83,7 @@ export class AvatarManager {
 
     avatar.on(StreamingEvents.STREAM_READY, async () => {
       console.log("Stream ready");
-      
-      // Only greet once per session
-      if (!manager.hasGreeted) {
-        manager.hasGreeted = true;
-        try {
-          await avatar.speak({
-            text: "Hello! How can I help you?",
-            taskType: TaskType.REPEAT,
-            taskMode: TaskMode.SYNC
-          });
-        } catch (e) {
-          console.error("Failed to speak greeting:", e);
-        }
-      }
+      // Avatar is ready, no automatic greeting
     });
 
     // Start the avatar
