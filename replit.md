@@ -152,6 +152,7 @@ Changelog:
 - July 04, 2025. Integrated HeyGen chatbot token authentication for proper API access
 - July 04, 2025. Added user camera view on avatar's chest with hover-to-expand functionality and permission-based activation
 - July 04, 2025. Fixed microphone functionality with proper cross-browser support including Safari AudioContext handling
+- July 04, 2025. Working on Turkish voice support for HeyGen avatar - currently investigating proper voice ID configuration
 
 ## User Preferences
 

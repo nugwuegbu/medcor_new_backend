@@ -928,6 +928,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get available HeyGen voices
+  app.get("/api/heygen/voices", async (req, res) => {
+    try {
+      const response = await fetch("https://api.heygen.com/v2/voices", {
+        headers: {
+          "Accept": "application/json",
+          "X-Api-Key": process.env.HEYGEN_API_KEY || ""
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HeyGen API error: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Filter for Turkish voices
+      const turkishVoices = data.data?.voices?.filter((v: any) => 
+        v.language === 'Turkish' || v.language === 'tr' || v.language_code === 'tr-TR'
+      ) || [];
+      
+      res.json({
+        success: true,
+        turkishVoices,
+        allVoices: data.data?.voices || []
+      });
+    } catch (error) {
+      console.error("Failed to fetch HeyGen voices:", error);
+      res.status(500).json({ error: "Failed to fetch voices" });
+    }
+  });
+
   // Location weather endpoint
   app.post("/api/location-weather", async (req, res) => {
     try {

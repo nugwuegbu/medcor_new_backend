@@ -86,12 +86,12 @@ export class AvatarManager {
       // Avatar is ready, no automatic greeting
     });
 
-    // Start the avatar
+    // Start the avatar with multi-language support
     const sessionInfo = await avatar.createStartAvatar({
       quality: AvatarQuality.High,
       avatarName: "Ann_Doctor_Standing2_public",
       voice: {
-        voiceId: "1bd001e7e50f421d891986aad5158bc8", // Default female voice
+        voiceId: "1bd001e7e50f421d891986aad5158bc8", // Default voice - will be overridden per language
         rate: 1.0,
         emotion: VoiceEmotion.FRIENDLY
       },
@@ -109,12 +109,27 @@ export class AvatarManager {
           const detectedLang = language || AvatarManager.detectLanguage(text);
           const voiceConfig = AvatarManager.getVoiceConfig(detectedLang);
           
-          await manager.avatar.speak({
+          // Create speak parameters based on language
+          const speakParams: any = {
             text,
             taskType: TaskType.REPEAT,
-            taskMode: TaskMode.SYNC,
-            voice: voiceConfig
-          });
+            taskMode: TaskMode.SYNC
+          };
+          
+          // For Turkish, use specific Turkish voice
+          if (detectedLang === 'tr') {
+            speakParams.voice = {
+              voiceId: "379faad82db34c33bfe0e72f046d2d6e", // HeyGen Turkish female voice ID
+              rate: 1.0,
+              emotion: VoiceEmotion.FRIENDLY
+            };
+            console.log("Speaking Turkish text with Turkish voice:", text);
+          } else {
+            // Use default English voice for other languages
+            speakParams.voice = voiceConfig;
+          }
+          
+          await manager.avatar.speak(speakParams);
         } catch (e) {
           console.error("Failed to speak:", e);
         }
@@ -159,9 +174,10 @@ export class AvatarManager {
         emotion: VoiceEmotion.FRIENDLY
       },
       tr: {
-        voiceId: "d2e44e2d3a064ec299a451af681af292", // Turkish female voice
+        voiceId: "Zeynep - Natural", // HeyGen Turkish female voice
         rate: 1.0,
-        emotion: VoiceEmotion.FRIENDLY
+        emotion: VoiceEmotion.FRIENDLY,
+        language: "Turkish"
       },
       es: {
         voiceId: "es-ES-ElviraNeural", // Spanish female
