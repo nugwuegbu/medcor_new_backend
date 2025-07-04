@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Camera, CameraOff } from 'lucide-react';
+import { interactiveDialogue } from '../services/interactive-dialogue';
 
 interface UserCameraViewProps {
   isEnabled: boolean;
@@ -39,6 +40,13 @@ export default function UserCameraView({ isEnabled, onPermissionRequest }: UserC
         streamRef.current = stream;
       }
       setCameraError(false);
+      
+      // Start interactive dialogue after camera is enabled
+      setTimeout(() => {
+        if (videoRef.current) {
+          interactiveDialogue.startInteractiveGreeting(videoRef.current);
+        }
+      }, 1500);
     } catch (error) {
       console.error("Camera access error:", error);
       setCameraError(true);

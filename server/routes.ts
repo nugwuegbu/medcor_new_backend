@@ -893,6 +893,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analyze user image endpoint
+  app.post("/api/analyze-user-image", async (req, res) => {
+    try {
+      const { image, includeLocation } = req.body;
+      
+      if (!image) {
+        return res.status(400).json({ error: "Image data required" });
+      }
+      
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      // Analyze image with GPT-4 Vision
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a friendly AI assistant analyzing a user's appearance. Be polite, observant, and complimentary. Describe what you see briefly and create a warm, personalized greeting based on their appearance."
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Please analyze this image and provide: 1) A brief description of what you see (clothing, appearance, background) 2) A warm, personalized greeting that mentions something specific you noticed (like their clothing color or style). Keep it friendly and natural."
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${image}`
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 300
+      });
+      
+      const analysis = response.choices[0].message.content || "";
+      const lines = analysis.split('\n').filter(line => line.trim());
+      
+      res.json({
+        description: lines[0] || "I can see you",
+        greeting: lines[1] || "Hello! How can I assist you today?",
+        success: true
+      });
+    } catch (error) {
+      console.error("Image analysis error:", error);
+      res.status(500).json({ 
+        error: "Failed to analyze image",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Location weather endpoint
+  app.post("/api/location-weather", async (req, res) => {
+    try {
+      const { latitude, longitude } = req.body;
+      
+      if (!latitude || !longitude) {
+        return res.status(400).json({ error: "Location coordinates required" });
+      }
+      
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      // Get location name and weather (simulated for now)
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful assistant providing location-based weather information. Based on the coordinates, identify the city and provide a brief, friendly weather update. If you don't have real-time data, provide a plausible weather description for the location."
+          },
+          {
+            role: "user",
+            content: `The user is at coordinates: ${latitude}, ${longitude}. Please provide:
+            1) The city name
+            2) A friendly weather update message that sounds natural and conversational`
+          }
+        ],
+        max_tokens: 150
+      });
+      
+      const weatherInfo = response.choices[0].message.content || "";
+      
+      res.json({
+        message: weatherInfo,
+        success: true
+      });
+    } catch (error) {
+      console.error("Weather API error:", error);
+      res.status(500).json({ 
+        error: "Failed to get weather information",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
