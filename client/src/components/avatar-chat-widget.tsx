@@ -423,15 +423,22 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 )}
                 
                 {showDoctorList && (
-                  <div className="mt-4 bg-white rounded-lg shadow-md p-4">
-                    <h3 className="text-lg font-semibold mb-3">Available Doctors</h3>
-                    <ChatDoctorList 
-                      onSelectDoctor={(doctor) => {
-                        setShowDoctorList(false);
-                        setShowCalendar(true);
-                        console.log("Selected doctor:", doctor);
-                      }}
-                    />
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => setShowDoctorList(false)}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Empty Doctors Page */}
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        {/* Empty page content */}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
