@@ -8,6 +8,7 @@ import HeyGenSDKAvatar from "./heygen-sdk-avatar";
 import ChatDoctorList from "./chat-doctor-list";
 import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
+import SimpleVoiceButton from "./simple-voice-button";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
 
 interface Message {
@@ -27,10 +28,7 @@ interface AvatarChatWidgetProps {
 export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioLevel, setAudioLevel] = useState(0);
   const [sessionId] = useState(() => `session_${Date.now()}`);
-  const [currentSpeechText, setCurrentSpeechText] = useState("");
   const [showCalendar, setShowCalendar] = useState(false);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [showChatInterface, setShowChatInterface] = useState(false);
@@ -39,8 +37,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -133,70 +129,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     }
   };
 
-  const startRecording = async () => {
-    try {
-      // Activate HeyGen avatar on first user interaction
-      setUserHasInteracted(true);
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        
-        // Convert audio to base64
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const base64Audio = reader.result?.toString().split(',')[1];
-          
-          if (base64Audio) {
-            try {
-              // Send to backend for speech-to-text
-              const response = await fetch('/api/speech-to-text', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ audio: base64Audio })
-              });
-              
-              const data = await response.json();
-              const transcription = data.text || "Sorry, I couldn't understand that";
-              
-              setCurrentSpeechText(transcription);
-              handleSendMessage(transcription);
-            } catch (error) {
-              console.error("Speech-to-text error:", error);
-              setCurrentSpeechText("Error processing speech");
-            }
-          }
-        };
-        
-        reader.readAsDataURL(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      setCurrentSpeechText("Listening...");
-    } catch (error) {
-      console.error("Error starting recording:", error);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setAudioLevel(0);
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -332,22 +265,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       }
                     }}
                   />
-                  <button
-                    onClick={() => {
-                      if (isRecording) {
-                        stopRecording();
-                      } else {
-                        startRecording();
-                      }
+                  <SimpleVoiceButton
+                    onTranscript={(text) => {
+                      handleSendMessage(text);
                     }}
-                    className={`p-3 rounded-full transition-all duration-200 ${
-                      isRecording
-                        ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
-                        : "bg-purple-600 hover:bg-purple-700 text-white"
-                    }`}
-                  >
-                    {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                  </button>
+                    disabled={false}
+                  />
                   <button
                     onClick={() => {
                       const input = document.querySelector('input[type="text"]') as HTMLInputElement;
@@ -368,28 +291,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   </button>
                 </div>
                 
-                {/* Visual indicator when recording */}
-                {isRecording && (
-                  <div className="mt-2 text-center">
-                    <p className="text-sm text-red-500 animate-pulse">Recording... Speak now</p>
-                  </div>
-                )}
+
               </div>
               
               {/* Content Area - Hidden for now */}
               <div className="absolute bottom-0 left-0 right-0 p-6" style={{ display: showCalendar || showDoctorList ? 'block' : 'none' }}>
                 
-                {/* Visual indicator that mic is active */}
-                {isRecording && (
-                  <div className="flex justify-center mb-4">
-                    <div className="relative">
-                      <div className="w-16 h-16 bg-red-500 rounded-full animate-pulse flex items-center justify-center">
-                        <Mic className="h-8 w-8 text-white" />
-                      </div>
-                      <div className="absolute inset-0 bg-red-400 rounded-full animate-ping"></div>
-                    </div>
-                  </div>
-                )}
+
                 
                 {/* Messages Container */}
                 <div className="flex-1 space-y-3">
@@ -601,29 +509,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             <Send className="h-5 w-5" />
           </Button>
           
-          <Button
-            size="sm"
-            onMouseDown={startRecording}
-            onMouseUp={stopRecording}
-            onMouseLeave={stopRecording}
-            className={`p-2 rounded-full transition-colors ${
-              isRecording 
-                ? "text-red-600 bg-red-100" 
-                : "text-gray-600 hover:bg-gray-200"
-            }`}
-            variant="ghost"
+          <SimpleVoiceButton
+            onTranscript={(text) => {
+              handleSendMessage(text);
+            }}
             disabled={voiceChatMutation.isPending}
-          >
-            <Mic className="h-5 w-5" />
-          </Button>
+          />
         </div>
         
-        {isRecording && (
-          <div className="mt-2 flex items-center justify-center gap-2 text-sm text-red-600">
-            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-            Recording...
-          </div>
-        )}
+
       </div>
 
 
