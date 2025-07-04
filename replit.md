@@ -151,6 +151,7 @@ Changelog:
 - July 04, 2025. Added doctor portfolio display in chatbot when users ask about appointments or doctors
 - July 04, 2025. Integrated HeyGen chatbot token authentication for proper API access
 - July 04, 2025. Added user camera view on avatar's chest with hover-to-expand functionality and permission-based activation
+- July 04, 2025. Fixed microphone functionality with proper cross-browser support including Safari AudioContext handling
 
 ## User Preferences
 

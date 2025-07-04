@@ -12,14 +12,37 @@ export default function SimpleVoiceButton({ onTranscript, disabled = false }: Si
   const [isProcessing, setIsProcessing] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [micStatus, setMicStatus] = useState<'idle' | 'requesting' | 'active' | 'error'>('idle');
 
   const startRecording = async () => {
     try {
-      // Request microphone permission
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicStatus('requesting');
       
-      // Create media recorder
-      const recorder = new MediaRecorder(stream);
+      // Check microphone permissions explicitly
+      if ('permissions' in navigator) {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        console.log('Microphone permission:', permissionStatus.state);
+      }
+
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicStatus('active');
+
+      // Create AudioContext and handle Safari suspension
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+      const audioContext = new AudioContextClass();
+      
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();  // Required for Safari
+        console.log("AudioContext resumed explicitly for Safari");
+      }
+
+      // Create audio source for monitoring
+      const source = audioContext.createMediaStreamSource(stream);
+      
+      // Create media recorder with proper MIME type
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const recorder = new MediaRecorder(stream, { mimeType });
       const chunks: Blob[] = [];
       
       recorder.ondataavailable = (event) => {
@@ -32,7 +55,7 @@ export default function SimpleVoiceButton({ onTranscript, disabled = false }: Si
         setIsProcessing(true);
         
         // Create audio blob
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const audioBlob = new Blob(chunks, { type: mimeType });
         
         // Convert to base64
         const reader = new FileReader();
@@ -62,8 +85,11 @@ export default function SimpleVoiceButton({ onTranscript, disabled = false }: Si
           
           setIsProcessing(false);
           setIsRecording(false);
+          setMicStatus('idle');
           
-          // Stop all tracks
+          // Cleanup
+          source.disconnect();
+          audioContext.close();
           stream.getTracks().forEach(track => track.stop());
         };
         
@@ -75,9 +101,12 @@ export default function SimpleVoiceButton({ onTranscript, disabled = false }: Si
       setMediaRecorder(recorder);
       setAudioChunks(chunks);
       setIsRecording(true);
+      console.log('Microphone activated successfully (Chrome & Safari compatible)');
       
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      console.error('Microphone activation error:', error);
+      setMicStatus('error');
+      setIsRecording(false);
       alert('Please allow microphone access to use voice input');
     }
   };
