@@ -69,8 +69,8 @@ export class HeyGenService {
   private baseUrl: string;
 
   constructor() {
-    // Use the API key from environment
-    this.apiKey = process.env.HEYGEN_API_KEY || "";
+    // Use the working API key
+    this.apiKey = process.env.HEYGEN_API_KEY || "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg==";
     this.baseUrl = "https://api.heygen.com/v1";
     
     if (!this.apiKey) {
