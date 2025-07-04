@@ -9,6 +9,7 @@ import AppointmentCalendar from "./appointment-calendar";
 import ChatDoctorList from "./chat-doctor-list";
 import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
+import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
 
 interface Message {
   id: string;
@@ -440,7 +441,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           {/* Doctor Avatar */}
                           <div className="w-32 h-32 rounded-full mx-auto mb-4 overflow-hidden bg-gray-200 relative">
                             <img 
-                              src="@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png"
+                              src={doctorPhoto}
                               alt="Dr. Sarah Johnson"
                               className="w-full h-full object-cover object-center"
                             />
