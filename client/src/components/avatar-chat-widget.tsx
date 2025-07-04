@@ -253,10 +253,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             {/* Back Button - Top Left Corner */}
             <button
               onClick={() => setShowChatInterface(false)}
-              className="absolute top-4 left-4 flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-full shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+              className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
             >
-              <ChevronLeft className="h-3.5 w-3.5" />
-              <span className="font-medium text-xs">Back</span>
+              <ChevronLeft className="h-4 w-4" />
+              <span className="font-medium text-sm">Back</span>
             </button>
             
             {/* Chat Interface Content */}
