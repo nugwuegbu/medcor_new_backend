@@ -119,11 +119,12 @@ export class AvatarManager {
           // For Turkish, use specific Turkish voice
           if (detectedLang === 'tr') {
             speakParams.voice = {
-              voiceId: "379faad82db34c33bfe0e72f046d2d6e", // HeyGen Turkish female voice ID
+              voiceId: "d61a2c54f4b4401d87777a218b2d2ae4", // Fatma - Turkish female voice
               rate: 1.0,
               emotion: VoiceEmotion.FRIENDLY
             };
-            console.log("Speaking Turkish text with Turkish voice:", text);
+            console.log("Speaking Turkish text with params:", speakParams);
+            console.log("Available avatar methods:", Object.getOwnPropertyNames(Object.getPrototypeOf(manager.avatar)));
           } else {
             // Use default English voice for other languages
             speakParams.voice = voiceConfig;
