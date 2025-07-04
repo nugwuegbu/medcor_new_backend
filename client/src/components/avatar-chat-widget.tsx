@@ -163,61 +163,75 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         </Button>
       </div>
 
-      {/* HeyGen Avatar Section - Slimmer */}
-      <div className="h-36 border-b border-gray-100">
-        {messages[messages.length - 1]?.avatarResponse?.sessionData ? (
-          <HeyGenWebRTCAvatar 
-            sessionData={messages[messages.length - 1]?.avatarResponse?.sessionData}
-            isLoading={voiceChatMutation.isPending}
-          />
-        ) : (
-          <HeyGenAvatar 
-            avatarResponse={messages[messages.length - 1]?.avatarResponse}
-            isLoading={voiceChatMutation.isPending}
-            userSpeechText={currentSpeechText}
-            isUserSpeaking={isRecording}
-          />
-        )}
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 p-3 overflow-y-auto space-y-2">
-        {messages.length === 0 && (
-          <div className="text-center text-gray-500 py-4">
-            <p className="text-xs">Start your conversation</p>
-            <p className="text-xs text-gray-400 mt-1">Ask about appointments or health questions</p>
-          </div>
-        )}
-        
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div className="max-w-[85%]">
-              <div
-                className={`p-2 rounded-lg ${
-                  message.sender === "user"
-                    ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                <p className="text-xs leading-relaxed">{message.text}</p>
-                <p className="text-xs opacity-60 mt-1">
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-              {message.showDoctors && message.sender === "bot" && (
-                <div className="mt-2">
-                  <ChatDoctorList onSelectDoctor={(doctor) => {
-                    handleSendMessage(`I want to book an appointment with Dr. ${doctor.name}`);
-                  }} />
-                </div>
-              )}
+      {/* Main Content Area with HeyGen Avatar */}
+      <div className="flex-1 relative overflow-hidden">
+        {/* Messages or Avatar Display */}
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full p-4">
+            <div className="w-48 h-48 mb-4 rounded-2xl overflow-hidden bg-gray-50">
+              <HeyGenAvatar 
+                avatarResponse={undefined}
+                isLoading={voiceChatMutation.isPending}
+                userSpeechText={currentSpeechText}
+                isUserSpeaking={isRecording}
+              />
+            </div>
+            <p className="text-sm text-gray-700 font-medium">Ready to help</p>
+            <div className="text-center text-gray-500 mt-6">
+              <p className="text-xs">Start your conversation</p>
+              <p className="text-xs text-gray-400 mt-1">Ask about appointments or health questions</p>
             </div>
           </div>
-        ))}
-        <div ref={messagesEndRef} />
+        ) : (
+          <div className="flex-1 p-3 overflow-y-auto space-y-2">
+            {/* Small avatar in corner when messages are present */}
+            <div className="fixed top-20 right-6 w-20 h-20 rounded-lg overflow-hidden shadow-lg z-20 bg-white">
+              {messages[messages.length - 1]?.avatarResponse?.sessionData ? (
+                <HeyGenWebRTCAvatar 
+                  sessionData={messages[messages.length - 1]?.avatarResponse?.sessionData}
+                  isLoading={voiceChatMutation.isPending}
+                />
+              ) : (
+                <HeyGenAvatar 
+                  avatarResponse={messages[messages.length - 1]?.avatarResponse}
+                  isLoading={voiceChatMutation.isPending}
+                  userSpeechText={currentSpeechText}
+                  isUserSpeaking={isRecording}
+                />
+              )}
+            </div>
+        
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div className="max-w-[85%]">
+                  <div
+                    className={`p-2 rounded-lg ${
+                      message.sender === "user"
+                        ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    <p className="text-xs leading-relaxed">{message.text}</p>
+                    <p className="text-xs opacity-60 mt-1">
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  {message.showDoctors && message.sender === "bot" && (
+                    <div className="mt-2">
+                      <ChatDoctorList onSelectDoctor={(doctor) => {
+                        handleSendMessage(`I want to book an appointment with Dr. ${doctor.name}`);
+                      }} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
       </div>
 
       {/* Input Section */}
