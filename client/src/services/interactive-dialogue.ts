@@ -75,9 +75,12 @@ export class InteractiveDialogueService {
 
   async startInteractiveGreeting(videoElement: HTMLVideoElement): Promise<void> {
     try {
+      console.log("Interactive greeting started, waiting for user to settle...");
+      
       // Wait a moment for user to settle
       await new Promise(resolve => setTimeout(resolve, 2000));
       
+      console.log("Capturing and analyzing user image...");
       // Capture and analyze
       const analysis = await this.captureAndAnalyzeUser(videoElement);
       
@@ -86,11 +89,14 @@ export class InteractiveDialogueService {
         return;
       }
       
+      console.log("Analysis received:", analysis);
+      
       // Get avatar instance
       const avatar = await AvatarManager.getOrCreateAvatar(
         "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
       );
       
+      console.log("Speaking greeting:", analysis.greeting);
       // First greeting based on appearance
       await avatar.speak({
         text: analysis.greeting,
@@ -101,6 +107,7 @@ export class InteractiveDialogueService {
       // Wait a bit
       await new Promise(resolve => setTimeout(resolve, 1500));
       
+      console.log("Asking for location permission...");
       // Ask for location permission
       await avatar.speak({
         text: "May I know your location to provide you with local weather information?",
@@ -108,8 +115,10 @@ export class InteractiveDialogueService {
         taskMode: TaskMode.SYNC
       });
       
+      console.log("Getting location...");
       // Get location
       const position = await this.getLocationPermission();
+      console.log("Location received:", position);
       
       if (position) {
         // Get weather info
