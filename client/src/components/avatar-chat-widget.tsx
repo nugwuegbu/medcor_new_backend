@@ -30,6 +30,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [sessionId] = useState(() => `session_${Date.now()}`);
   const [currentSpeechText, setCurrentSpeechText] = useState("");
   const [showCalendar, setShowCalendar] = useState(false);
+  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -40,6 +41,23 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const toggleMessageExpanded = (messageId: string) => {
+    const newExpanded = new Set(expandedMessages);
+    if (newExpanded.has(messageId)) {
+      newExpanded.delete(messageId);
+    } else {
+      newExpanded.add(messageId);
+    }
+    setExpandedMessages(newExpanded);
+  };
+
+  const truncateText = (text: string, maxLength: number = 100) => {
+    if (text.length <= maxLength) return text;
+    const truncated = text.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    return truncated.substring(0, lastSpace) + '...';
+  };
 
   // Auto-focus input when opened
   useEffect(() => {
@@ -201,19 +219,19 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           )}
         </div>
         
-        {/* Messages Overlay - Medcor Purple Rectangle */}
-        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 w-[90%] max-w-[600px] z-20">
+        {/* Messages Overlay - Medcor Purple Rectangle - Wide and positioned above input */}
+        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 w-[95%] max-w-[700px] z-20">
           <div 
-            className="relative bg-purple-600/10 border-2 border-purple-600 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+            className="relative bg-purple-600/10 border border-purple-600 rounded-lg backdrop-blur-sm transition-all duration-300"
             style={{
-              maxHeight: '350px',
-              minHeight: '100px',
+              maxHeight: '60px',
+              minHeight: '30px',
             }}
           >
             <div 
-              className="overflow-y-auto overflow-x-hidden p-4 space-y-3 scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-transparent"
+              className="overflow-y-auto overflow-x-hidden px-3 py-1.5 space-y-1 scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-transparent"
               style={{
-                maxHeight: '350px',
+                maxHeight: '60px',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.classList.add('overflow-y-scroll');
@@ -243,13 +261,23 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     style={{ opacity }}
                   >
                     <div
-                      className={`inline-block max-w-[85%] px-3 py-1.5 rounded-lg ${
+                      className={`inline-block max-w-[85%] px-3 py-1.5 rounded-lg cursor-pointer transition-all ${
                         message.sender === "user"
                           ? "bg-blue-100/90 text-gray-800"
-                          : "bg-white/90 text-gray-800 shadow-sm"
+                          : "bg-white/90 text-gray-800 shadow-sm hover:shadow-md"
                       }`}
+                      onClick={() => message.text.length > 50 && toggleMessageExpanded(message.id)}
                     >
-                      <p className="text-xs leading-snug break-words">{message.text}</p>
+                      <p className="text-xs leading-snug break-words">
+                        {expandedMessages.has(message.id) 
+                          ? message.text 
+                          : truncateText(message.text)}
+                      </p>
+                      {message.text.length > 50 && (
+                        <p className="text-[10px] mt-1 text-purple-600 font-medium">
+                          {expandedMessages.has(message.id) ? 'Click to collapse' : 'Click to read more'}
+                        </p>
+                      )}
                       <p className="text-[10px] mt-0.5 opacity-60">
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
