@@ -234,9 +234,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </button>
             
             {/* Chat Interface Content */}
-            <div className="h-full flex flex-col p-6 pt-16">
+            <div className="h-full flex flex-col items-center justify-center p-6">
               {/* Circular AI Menu */}
-              <div className="flex justify-center mb-4">
+              <div className="flex justify-center">
                 <div className="relative w-48 h-48">
                   {/* Center Circle with AI Effect */}
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
@@ -264,10 +264,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <button
                         key={index}
                         onClick={item.action}
-                        className={`absolute w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-300 ${
+                        className={`absolute w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-300 transform ${
                           selectedMenuItem === item.label.toLowerCase()
-                            ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-110 shadow-lg"
-                            : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
+                            ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-125 shadow-xl"
+                            : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-125"
                         }`}
                         style={{
                           left: `calc(50% + ${x}px - 28px)`,
@@ -282,9 +282,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto space-y-4">
-                <h2 className="text-xl font-bold text-center text-gray-800 mb-2">Advanced Chat Mode</h2>
-                <p className="text-center text-gray-600 text-sm mb-4">Select a service from the AI menu above.</p>
+              {/* Title and Description Below Menu */}
+              <div className="mt-8 text-center">
+                <h2 className="text-xl font-bold text-gray-800 mb-2">Advanced Chat Mode</h2>
+                <p className="text-gray-600 text-sm">Select a service from the AI menu above</p>
+              </div>
+              
+              {/* Content Area */}
+              <div className="flex-1 overflow-y-auto mt-6 w-full max-w-lg">
                 
                 {/* Visual indicator that mic is active */}
                 {isRecording && (
