@@ -220,25 +220,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         <div className={`absolute inset-0 ${showChatInterface ? 'invisible' : 'visible'}`}>
           {isOpen && (
             <>
-              {/* Show video loop when user hasn't interacted yet */}
-              {!userHasInteracted && (
-                <AvatarVideoLoop 
-                  isActive={true}
-                  onVideoReady={() => console.log("Avatar video loop ready")}
-                />
-              )}
-              
-              {/* Show real HeyGen avatar after user interaction */}
-              {userHasInteracted && (
-                <HeyGenSDKAvatar 
-                  key="single-avatar-instance"
-                  apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-                  isVisible={true}
-                  onMessage={(text) => {
-                    console.log("Avatar message:", text);
-                  }}
-                />
-              )}
+              {/* Always show HeyGen avatar for now */}
+              <HeyGenSDKAvatar 
+                key="single-avatar-instance"
+                apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+                isVisible={true}
+                onMessage={(text) => {
+                  console.log("Avatar message:", text);
+                }}
+              />
             </>
           )}
         </div>
