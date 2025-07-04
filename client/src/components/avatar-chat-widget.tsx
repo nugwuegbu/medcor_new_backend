@@ -234,9 +234,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </button>
             
             {/* Chat Interface Content */}
-            <div className="h-full flex flex-col items-center justify-center p-6">
-              {/* Circular AI Menu */}
-              <div className="flex justify-center">
+            <div className="h-full flex items-center justify-center">
+              <div className="flex flex-col items-center">
+                {/* Circular AI Menu */}
                 <div className="relative w-48 h-48">
                   {/* Center Circle with AI Effect */}
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
@@ -280,16 +280,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     );
                   })}
                 </div>
+                
+                {/* Title and Description Below Menu */}
+                <div className="mt-8 text-center">
+                  <h2 className="text-xl font-bold text-gray-800 mb-2">Advanced Chat Mode</h2>
+                  <p className="text-gray-600 text-sm">Select a service from the AI menu above</p>
+                </div>
               </div>
               
-              {/* Title and Description Below Menu */}
-              <div className="mt-8 text-center">
-                <h2 className="text-xl font-bold text-gray-800 mb-2">Advanced Chat Mode</h2>
-                <p className="text-gray-600 text-sm">Select a service from the AI menu above</p>
-              </div>
-              
-              {/* Content Area */}
-              <div className="flex-1 overflow-y-auto mt-6 w-full max-w-lg">
+              {/* Content Area - Hidden for now */}
+              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ display: showCalendar || showDoctorList ? 'block' : 'none' }}>
                 
                 {/* Visual indicator that mic is active */}
                 {isRecording && (
