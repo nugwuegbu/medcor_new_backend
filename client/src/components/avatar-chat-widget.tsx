@@ -100,16 +100,35 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     }
   }, [isOpen, cameraPermissionRequested]);
   
-  // Request location and get weather (now using IP-based location)
+  // Request location and get weather (try browser first, fallback to IP)
   const requestLocationAndWeather = async () => {
     try {
-      // Get weather info using IP-based location
+      let coords = null;
+      
+      // Try to get browser location first
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 5000,
+            enableHighAccuracy: true
+          });
+        });
+        coords = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        };
+        console.log("Got browser location:", coords);
+      } catch (e) {
+        console.log("Browser location denied, will use IP location");
+      }
+      
+      // Get weather info (will use IP if no coords)
       const response = await fetch("/api/location-weather", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({}) // No coordinates needed, will use IP
+        body: JSON.stringify(coords || {})
       });
       
       if (response.ok) {
