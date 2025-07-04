@@ -101,14 +101,19 @@ export class AvatarManager {
     console.log("Avatar session created:", sessionInfo.session_id);
     manager.avatar = avatar;
     
-    // Set global speak function
-    (window as any).heygenSpeak = async (text: string) => {
+    // Set global speak function with language detection
+    (window as any).heygenSpeak = async (text: string, language?: string) => {
       if (manager.avatar) {
         try {
+          // Detect language from text if not provided
+          const detectedLang = language || AvatarManager.detectLanguage(text);
+          const voiceConfig = AvatarManager.getVoiceConfig(detectedLang);
+          
           await manager.avatar.speak({
             text,
             taskType: TaskType.REPEAT,
-            taskMode: TaskMode.SYNC
+            taskMode: TaskMode.SYNC,
+            voice: voiceConfig
           });
         } catch (e) {
           console.error("Failed to speak:", e);
@@ -124,6 +129,58 @@ export class AvatarManager {
     const stream = manager.avatar?.mediaStream || null;
     console.log("Getting media stream:", stream);
     return stream;
+  }
+
+  static detectLanguage(text: string): string {
+    // Simple language detection based on common patterns
+    const turkishPatterns = /[ığüşöçĞÜŞÖÇİ]/;
+    const arabicPatterns = /[\u0600-\u06FF]/;
+    const chinesePatterns = /[\u4E00-\u9FA5]/;
+    const japanesePatterns = /[\u3040-\u309F\u30A0-\u30FF]/;
+    
+    if (turkishPatterns.test(text)) return 'tr';
+    if (arabicPatterns.test(text)) return 'ar';
+    if (chinesePatterns.test(text)) return 'zh';
+    if (japanesePatterns.test(text)) return 'ja';
+    
+    // Check for common Turkish words
+    const turkishWords = ['merhaba', 'nasıl', 'yardım', 'teşekkür', 'lütfen', 'evet', 'hayır'];
+    const lowerText = text.toLowerCase();
+    if (turkishWords.some(word => lowerText.includes(word))) return 'tr';
+    
+    return 'en'; // Default to English
+  }
+  
+  static getVoiceConfig(language: string): any {
+    const voiceConfigs: Record<string, any> = {
+      en: {
+        voiceId: "1bd001e7e50f421d891986aad5158bc8", // English female
+        rate: 1.0,
+        emotion: VoiceEmotion.FRIENDLY
+      },
+      tr: {
+        voiceId: "d2e44e2d3a064ec299a451af681af292", // Turkish female voice
+        rate: 1.0,
+        emotion: VoiceEmotion.FRIENDLY
+      },
+      es: {
+        voiceId: "es-ES-ElviraNeural", // Spanish female
+        rate: 1.0,
+        emotion: VoiceEmotion.FRIENDLY
+      },
+      fr: {
+        voiceId: "fr-FR-DeniseNeural", // French female
+        rate: 1.0,
+        emotion: VoiceEmotion.FRIENDLY
+      },
+      zh: {
+        voiceId: "zh-CN-XiaoxiaoNeural", // Chinese female
+        rate: 1.0,
+        emotion: VoiceEmotion.FRIENDLY
+      }
+    };
+    
+    return voiceConfigs[language] || voiceConfigs.en;
   }
 
   static async cleanup() {

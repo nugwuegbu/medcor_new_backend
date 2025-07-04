@@ -25,6 +25,19 @@ interface AvatarChatWidgetProps {
   onClose: () => void;
 }
 
+// Simple language detection function
+function detectLanguageFromText(text: string): string {
+  const turkishPatterns = /[ığüşöçĞÜŞÖÇİ]/;
+  const turkishWords = ['merhaba', 'nasıl', 'yardım', 'teşekkür', 'lütfen', 'evet', 'hayır'];
+  const lowerText = text.toLowerCase();
+  
+  if (turkishPatterns.test(text) || turkishWords.some(word => lowerText.includes(word))) {
+    return 'tr';
+  }
+  
+  return 'en';
+}
+
 export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
@@ -96,9 +109,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       };
       setMessages(prev => [...prev, botMessage]);
       
-      // Make the HeyGen avatar speak the response
+      // Make the HeyGen avatar speak the response with language detection
       if ((window as any).heygenSpeak) {
-        (window as any).heygenSpeak(data.message);
+        // Detect language from response text
+        const detectedLang = detectLanguageFromText(data.message);
+        (window as any).heygenSpeak(data.message, detectedLang);
       }
     }
   });
