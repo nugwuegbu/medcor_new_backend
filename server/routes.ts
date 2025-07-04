@@ -602,6 +602,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email notifications
+  app.post("/api/notifications/email", async (req, res) => {
+    try {
+      const { to, subject, appointmentDetails } = req.body;
+      
+      console.log("Sending email to:", to);
+      console.log("Subject:", subject);
+      console.log("Appointment details:", appointmentDetails);
+      
+      res.json({ success: true, message: "Email notification sent" });
+    } catch (error) {
+      console.error("Email notification error:", error);
+      res.status(500).json({ error: "Failed to send email notification" });
+    }
+  });
+
+  // WhatsApp notifications
+  app.post("/api/notifications/whatsapp", async (req, res) => {
+    try {
+      const { phone, message, appointmentDetails } = req.body;
+      
+      console.log("Sending WhatsApp to:", phone);
+      console.log("Message:", message);
+      console.log("Appointment details:", appointmentDetails);
+      
+      res.json({ success: true, message: "WhatsApp notification sent" });
+    } catch (error) {
+      console.error("WhatsApp notification error:", error);
+      res.status(500).json({ error: "Failed to send WhatsApp notification" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

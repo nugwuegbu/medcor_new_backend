@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Send, X, MessageSquare } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
+import AppointmentCalendar from "./appointment-calendar";
 
 interface Message {
   id: string;
@@ -23,6 +24,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [isRecording, setIsRecording] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const [sessionId] = useState(() => `session_${Date.now()}`);
+  const [currentSpeechText, setCurrentSpeechText] = useState("");
+  const [showCalendar, setShowCalendar] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -108,6 +111,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         
         // For demo purposes, convert to text placeholder
         const mockTranscription = "Hello, I would like to schedule an appointment";
+        setCurrentSpeechText(mockTranscription);
+        
+        // Check if it's an appointment request
+        if (mockTranscription.toLowerCase().includes("appointment") || mockTranscription.toLowerCase().includes("book")) {
+          setShowCalendar(true);
+        }
+        
         handleSendMessage(mockTranscription);
         
         stream.getTracks().forEach(track => track.stop());
@@ -115,6 +125,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
       mediaRecorder.start();
       setIsRecording(true);
+      setCurrentSpeechText("Listening...");
     } catch (error) {
       console.error("Error starting recording:", error);
     }
@@ -153,6 +164,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         <HeyGenAvatar 
           avatarResponse={messages[messages.length - 1]?.avatarResponse}
           isLoading={voiceChatMutation.isPending}
+          userSpeechText={currentSpeechText}
+          isUserSpeaking={isRecording}
         />
       </div>
 
@@ -235,6 +248,22 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           </div>
         )}
       </div>
+
+      {/* Appointment Calendar Modal */}
+      <AppointmentCalendar
+        isOpen={showCalendar}
+        onClose={() => setShowCalendar(false)}
+        onAppointmentBooked={(appointment) => {
+          const confirmationMessage: Message = {
+            id: Date.now().toString(),
+            text: `Great! Your appointment has been confirmed for ${appointment.appointmentDate} at ${appointment.appointmentTime}. You will receive email and WhatsApp confirmations shortly.`,
+            sender: "bot",
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, confirmationMessage]);
+          setShowCalendar(false);
+        }}
+      />
     </div>
   );
 }

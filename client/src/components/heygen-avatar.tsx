@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import AnimatedTextOverlay from "./animated-text-overlay";
 
 interface HeyGenAvatarProps {
   avatarResponse?: {
@@ -7,9 +8,11 @@ interface HeyGenAvatarProps {
     text: string;
   };
   isLoading?: boolean;
+  userSpeechText?: string;
+  isUserSpeaking?: boolean;
 }
 
-export default function HeyGenAvatar({ avatarResponse, isLoading }: HeyGenAvatarProps) {
+export default function HeyGenAvatar({ avatarResponse, isLoading, userSpeechText, isUserSpeaking }: HeyGenAvatarProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -43,7 +46,7 @@ export default function HeyGenAvatar({ avatarResponse, isLoading }: HeyGenAvatar
   }
 
   return (
-    <div className="w-full h-full relative bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+    <div className="w-full h-full relative bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center overflow-hidden">
       {/* Avatar Container */}
       <div className="relative">
         {avatarResponse?.videoUrl ? (
@@ -73,6 +76,13 @@ export default function HeyGenAvatar({ avatarResponse, isLoading }: HeyGenAvatar
           </div>
         )}
       </div>
+      
+      {/* Animated Text Overlay for User Speech */}
+      <AnimatedTextOverlay
+        text={userSpeechText || ""}
+        isVisible={isUserSpeaking || false}
+        duration={3000}
+      />
       
       {/* Status Text */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center">
