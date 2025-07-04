@@ -234,13 +234,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </button>
             
             {/* Chat Interface Content */}
-            <div className="h-full flex items-center justify-center">
-              <div className="flex flex-col items-center">
-                {/* Circular AI Menu */}
-                <div className="relative w-48 h-48">
-                  {/* Center Circle with AI Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
-                  <div className="absolute inset-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center">
+            <div className="h-full flex flex-col">
+              {/* Menu Section - Centered */}
+              <div className="flex-1 flex items-center justify-center">
+                <div className="flex flex-col items-center">
+                  {/* Circular AI Menu */}
+                  <div className="relative w-48 h-48">
+                    {/* Center Circle with AI Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                    <div className="absolute inset-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center">
                     <div className="text-white text-center">
                       <MessageSquare className="h-8 w-8 mx-auto mb-1" />
                       <p className="text-xs font-medium">AI Assistant</p>
@@ -279,71 +281,72 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       </button>
                     );
                   })}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Text Input at Bottom - Same as Main Chat */}
+              <div className="p-4 border-t border-gray-200 bg-white/80">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Type your message..."
+                    className="flex-1 px-4 py-3 bg-gray-100 rounded-full outline-none text-gray-700 focus:bg-gray-50"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                        const message = e.currentTarget.value;
+                        setMessages(prev => [...prev, {
+                          id: Date.now().toString(),
+                          text: message,
+                          sender: "user",
+                          timestamp: new Date()
+                        }]);
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (isRecording) {
+                        stopRecording();
+                      } else {
+                        startRecording();
+                      }
+                    }}
+                    className={`p-3 rounded-full transition-all duration-200 ${
+                      isRecording
+                        ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
+                        : "bg-purple-600 hover:bg-purple-700 text-white"
+                    }`}
+                  >
+                    {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+                      if (input && input.value.trim()) {
+                        const message = input.value;
+                        setMessages(prev => [...prev, {
+                          id: Date.now().toString(),
+                          text: message,
+                          sender: "user",
+                          timestamp: new Date()
+                        }]);
+                        input.value = '';
+                      }
+                    }}
+                    className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
+                  >
+                    <Send className="h-5 w-5" />
+                  </button>
                 </div>
                 
-                {/* Text Input and Microphone Below Menu */}
-                <div className="mt-8 w-full max-w-md">
-                  <div className="flex items-center gap-2 bg-white rounded-full shadow-md p-2">
-                    <input
-                      type="text"
-                      placeholder="Type your message or use voice..."
-                      className="flex-1 px-4 py-2 bg-transparent outline-none text-gray-700"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                          const message = e.currentTarget.value;
-                          setMessages(prev => [...prev, {
-                            id: Date.now().toString(),
-                            text: message,
-                            sender: "user",
-                            timestamp: new Date()
-                          }]);
-                          e.currentTarget.value = '';
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={() => {
-                        if (isRecording) {
-                          stopRecording();
-                        } else {
-                          startRecording();
-                        }
-                      }}
-                      className={`p-3 rounded-full transition-all duration-200 ${
-                        isRecording
-                          ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
-                          : "bg-purple-600 hover:bg-purple-700 text-white"
-                      }`}
-                    >
-                      {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                    </button>
-                    <button
-                      onClick={() => {
-                        const input = document.querySelector('input[type="text"]') as HTMLInputElement;
-                        if (input && input.value.trim()) {
-                          const message = input.value;
-                          setMessages(prev => [...prev, {
-                            id: Date.now().toString(),
-                            text: message,
-                            sender: "user",
-                            timestamp: new Date()
-                          }]);
-                          input.value = '';
-                        }
-                      }}
-                      className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
-                    >
-                      <Send className="h-5 w-5" />
-                    </button>
+                {/* Visual indicator when recording */}
+                {isRecording && (
+                  <div className="mt-2 text-center">
+                    <p className="text-sm text-red-500 animate-pulse">Recording... Speak now</p>
                   </div>
-                  
-                  {/* Visual indicator when recording */}
-                  {isRecording && (
-                    <div className="mt-2 text-center">
-                      <p className="text-sm text-red-500 animate-pulse">Recording... Speak now</p>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
               
               {/* Content Area - Hidden for now */}
