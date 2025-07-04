@@ -80,12 +80,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [hoveredDoctorId, setHoveredDoctorId] = useState<number | null>(null);
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const capturePhotoRef = useRef<(() => string | null) | null>(null);
   const doctorHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSpeakTimeRef = useRef<number>(0);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -350,8 +352,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   // Handle doctor card hover
   const handleDoctorHover = useCallback((doctorId: number, doctorName: string, description: string) => {
-    // Only set if different doctor
-    if (hoveredDoctorId === doctorId) return;
+    // Only set if different doctor or not already speaking
+    if (hoveredDoctorId === doctorId || isSpeaking) return;
     
     setHoveredDoctorId(doctorId);
     
@@ -362,16 +364,28 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     
     // Set a delay before speaking
     doctorHoverTimeoutRef.current = setTimeout(() => {
-      if (avatarRef.current && hoveredDoctorId === doctorId) {
+      const now = Date.now();
+      const timeSinceLastSpeak = now - lastSpeakTimeRef.current;
+      
+      // Only speak if at least 3 seconds have passed since last speech
+      if (avatarRef.current && hoveredDoctorId === doctorId && !isSpeaking && timeSinceLastSpeak > 3000) {
+        setIsSpeaking(true);
+        lastSpeakTimeRef.current = now;
+        
         const message = `This is ${doctorName}. ${description}`;
         avatarRef.current.speak({
           text: message,
           taskType: TaskType.TALK,
           taskMode: TaskMode.SYNC
         });
+        
+        // Reset speaking state after speech duration
+        setTimeout(() => {
+          setIsSpeaking(false);
+        }, 4000); // 4 seconds for speech
       }
-    }, 300); // 300ms delay
-  }, [hoveredDoctorId]);
+    }, 700); // 700ms delay before speaking
+  }, [hoveredDoctorId, isSpeaking]);
 
   const handleDoctorHoverEnd = useCallback(() => {
     // Clear timeout if user leaves before avatar speaks
@@ -380,8 +394,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       doctorHoverTimeoutRef.current = null;
     }
     
-    // Reset hovered doctor ID
+    // Reset states
     setHoveredDoctorId(null);
+    setIsSpeaking(false);
     
     // Stop avatar from speaking by interrupting with empty text
     if (avatarRef.current) {
