@@ -147,6 +147,9 @@ Changelog:
 - July 04, 2025. Initial setup with face recognition and HeyGen avatar integration
 - July 04, 2025. Added voice-to-text and text-to-voice capabilities with microphone controls
 - July 04, 2025. Implemented comprehensive voice avatar chat interface with real-time audio processing
+- July 04, 2025. Redesigned chat interface to match real Medcor.ai with full-screen HeyGen avatar background
+- July 04, 2025. Added doctor portfolio display in chatbot when users ask about appointments or doctors
+- July 04, 2025. Integrated HeyGen chatbot token authentication for proper API access
 
 ## User Preferences
 

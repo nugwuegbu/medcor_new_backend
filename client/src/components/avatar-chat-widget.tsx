@@ -146,78 +146,63 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 w-80 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50">
+    <div className="fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-            <MessageSquare className="h-3 w-3 text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-900 text-sm">Medcor AI</h3>
-            <p className="text-xs text-gray-500">Health Assistant</p>
-          </div>
+      <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-10">
+        <div className="flex items-center gap-3">
+          <MessageSquare className="h-5 w-5 text-gray-600" />
+          <span className="text-gray-700 font-medium">AI Assistant</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className="text-purple-600 font-bold text-lg">medcor</span>
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
-      {/* Main Content Area with HeyGen Avatar */}
-      <div className="flex-1 relative overflow-hidden">
-        {/* Messages or Avatar Display */}
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full p-4">
-            <div className="w-48 h-48 mb-4 rounded-2xl overflow-hidden bg-gray-50">
-              <HeyGenAvatar 
-                avatarResponse={undefined}
-                isLoading={voiceChatMutation.isPending}
-                userSpeechText={currentSpeechText}
-                isUserSpeaking={isRecording}
-              />
-            </div>
-            <p className="text-sm text-gray-700 font-medium">Ready to help</p>
-            <div className="text-center text-gray-500 mt-6">
-              <p className="text-xs">Start your conversation</p>
-              <p className="text-xs text-gray-400 mt-1">Ask about appointments or health questions</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 p-3 overflow-y-auto space-y-2">
-            {/* Small avatar in corner when messages are present */}
-            <div className="fixed top-20 right-6 w-20 h-20 rounded-lg overflow-hidden shadow-lg z-20 bg-white">
-              {messages[messages.length - 1]?.avatarResponse?.sessionData ? (
-                <HeyGenWebRTCAvatar 
-                  sessionData={messages[messages.length - 1]?.avatarResponse?.sessionData}
-                  isLoading={voiceChatMutation.isPending}
-                />
-              ) : (
-                <HeyGenAvatar 
-                  avatarResponse={messages[messages.length - 1]?.avatarResponse}
-                  isLoading={voiceChatMutation.isPending}
-                  userSpeechText={currentSpeechText}
-                  isUserSpeaking={isRecording}
-                />
-              )}
-            </div>
+      {/* Full Screen Avatar Background with Message Overlay */}
+      <div className="flex-1 relative">
+        {/* Avatar Background - Always Visible */}
+        <div className="absolute inset-0">
+          {messages[messages.length - 1]?.avatarResponse?.sessionData ? (
+            <HeyGenWebRTCAvatar 
+              sessionData={messages[messages.length - 1]?.avatarResponse?.sessionData}
+              isLoading={voiceChatMutation.isPending}
+            />
+          ) : (
+            <HeyGenAvatar 
+              avatarResponse={messages[messages.length - 1]?.avatarResponse}
+              isLoading={voiceChatMutation.isPending}
+              userSpeechText={currentSpeechText}
+              isUserSpeaking={isRecording}
+            />
+          )}
+        </div>
         
+        {/* Messages Overlay */}
+        <div className="absolute inset-0 flex flex-col">
+          <div className="flex-1 overflow-y-auto p-4 pt-20 pb-2 space-y-3">
+            {messages.length === 0 && (
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 max-w-[85%] mx-auto mt-8">
+                <p className="text-gray-800 font-medium">Hello! How can I assist you today?</p>
+              </div>
+            )}
+            
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
               >
-                <div className="max-w-[85%]">
+                <div className={`max-w-[85%] ${message.sender === "user" ? "mr-2" : "ml-2"}`}>
                   <div
-                    className={`p-2 rounded-lg ${
+                    className={`px-4 py-3 rounded-2xl ${
                       message.sender === "user"
-                        ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white"
-                        : "bg-gray-100 text-gray-800"
+                        ? "bg-white text-gray-800"
+                        : "bg-white/90 backdrop-blur-sm text-gray-800"
                     }`}
                   >
-                    <p className="text-xs leading-relaxed">{message.text}</p>
-                    <p className="text-xs opacity-60 mt-1">
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    <p className="text-sm leading-relaxed">{message.text}</p>
                   </div>
                   {message.showDoctors && message.sender === "bot" && (
                     <div className="mt-2">
@@ -231,53 +216,53 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             ))}
             <div ref={messagesEndRef} />
           </div>
-        )}
+        </div>
       </div>
 
       {/* Input Section */}
-      <div className="p-3 border-t border-gray-100">
-        <div className="flex items-center gap-2">
-          <div className="flex-1 relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask about health or appointments..."
-              className="w-full px-3 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-xs bg-gray-50"
-              disabled={voiceChatMutation.isPending}
-            />
-          </div>
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm">
+        <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Send your message..."
+            className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
+            disabled={voiceChatMutation.isPending}
+          />
+          
+          <Button
+            size="sm"
+            onClick={() => handleSendMessage(inputText)}
+            disabled={!inputText.trim() || voiceChatMutation.isPending}
+            className="p-2 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
+            variant="ghost"
+          >
+            <Send className="h-5 w-5" />
+          </Button>
           
           <Button
             size="sm"
             onMouseDown={startRecording}
             onMouseUp={stopRecording}
             onMouseLeave={stopRecording}
-            className={`w-8 h-8 p-0 rounded-full ${
+            className={`p-2 rounded-full transition-colors ${
               isRecording 
-                ? "bg-red-500 hover:bg-red-600" 
-                : "bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                ? "text-red-600 bg-red-100" 
+                : "text-gray-600 hover:bg-gray-200"
             }`}
+            variant="ghost"
             disabled={voiceChatMutation.isPending}
           >
-            {isRecording ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
-          </Button>
-          
-          <Button
-            size="sm"
-            onClick={() => handleSendMessage(inputText)}
-            disabled={!inputText.trim() || voiceChatMutation.isPending}
-            className="w-8 h-8 p-0 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-          >
-            <Send className="h-3 w-3" />
+            <Mic className="h-5 w-5" />
           </Button>
         </div>
         
         {isRecording && (
-          <div className="mt-2 flex items-center gap-2 text-xs text-red-600">
-            <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+          <div className="mt-2 flex items-center justify-center gap-2 text-sm text-red-600">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
             Recording...
           </div>
         )}
