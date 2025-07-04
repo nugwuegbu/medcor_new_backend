@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, ArrowRight, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { Link } from "wouter";
 import FaceRecognition from "./face-recognition";
+import VoiceAvatarChat from "./voice-avatar-chat";
 
 interface MedcorChatModalProps {
   isOpen: boolean;
@@ -14,6 +15,9 @@ interface MedcorChatModalProps {
 export default function MedcorChatModal({ isOpen, onClose }: MedcorChatModalProps) {
   const [currentSlide, setCurrentSlide] = useState(1);
   const [showFaceRecognition, setShowFaceRecognition] = useState(false);
+  const [showVoiceChat, setShowVoiceChat] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState("en");
+  const [recognizedUser, setRecognizedUser] = useState<any>(null);
 
   const services = [
     {
@@ -56,14 +60,30 @@ export default function MedcorChatModal({ isOpen, onClose }: MedcorChatModalProp
 
   const handleFaceRecognition = (result: any) => {
     console.log("Face recognition result:", result);
+    setRecognizedUser(result);
+    if (result.preferredLanguage) {
+      setCurrentLanguage(result.preferredLanguage);
+    }
     if (result.recognized) {
-      // Close modal and redirect to personalized chat
-      onClose();
+      // Start voice chat with recognized user
+      setShowFaceRecognition(false);
+      setShowVoiceChat(true);
     }
   };
 
   const handleLanguageDetection = (language: string) => {
     console.log("Language detected:", language);
+    setCurrentLanguage(language);
+  };
+
+  const startVoiceChat = () => {
+    setShowVoiceChat(true);
+  };
+
+  const goBackToServices = () => {
+    setShowFaceRecognition(false);
+    setShowVoiceChat(false);
+    setRecognizedUser(null);
   };
 
   if (!isOpen) return null;
@@ -95,12 +115,46 @@ export default function MedcorChatModal({ isOpen, onClose }: MedcorChatModalProp
 
           {/* Content */}
           <div className="bg-gradient-to-br from-blue-100 via-purple-50 to-cyan-100 rounded-b-3xl p-8">
-            {showFaceRecognition ? (
+            {showVoiceChat ? (
               <div className="space-y-6">
                 <div className="text-center">
                   <Button
                     variant="ghost"
-                    onClick={() => setShowFaceRecognition(false)}
+                    onClick={goBackToServices}
+                    className="mb-4"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-2" />
+                    Back to Options
+                  </Button>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    Voice Avatar Assistant
+                  </h2>
+                  {recognizedUser?.recognized && (
+                    <div className="mb-4">
+                      <Badge variant="secondary" className="text-sm">
+                        Welcome back! Recognized patient
+                      </Badge>
+                    </div>
+                  )}
+                  <p className="text-gray-600">
+                    Speak with our AI health assistant using voice commands and interactive avatars
+                  </p>
+                </div>
+                <div className="flex justify-center">
+                  <VoiceAvatarChat
+                    sessionId="medcor-voice-chat"
+                    language={currentLanguage}
+                    userId={recognizedUser?.userId}
+                    avatarId="heygen_avatar_nurse_medcor"
+                  />
+                </div>
+              </div>
+            ) : showFaceRecognition ? (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <Button
+                    variant="ghost"
+                    onClick={goBackToServices}
                     className="mb-4"
                   >
                     <ChevronLeft className="h-4 w-4 mr-2" />
@@ -236,13 +290,20 @@ export default function MedcorChatModal({ isOpen, onClose }: MedcorChatModalProp
 
                 {/* Bottom actions */}
                 <div className="flex justify-center gap-4">
+                  <Button 
+                    onClick={startVoiceChat}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Start Voice Chat
+                  </Button>
                   <Link href="/chat">
                     <Button 
                       variant="outline" 
                       className="bg-white/80 hover:bg-white"
                       onClick={onClose}
                     >
-                      Start Chat Without Face Recognition
+                      Traditional Text Chat
                     </Button>
                   </Link>
                 </div>

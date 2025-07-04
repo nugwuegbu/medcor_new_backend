@@ -386,6 +386,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Speech-to-text endpoint
+  app.post("/api/speech-to-text", async (req, res) => {
+    try {
+      // In real implementation, this would use OpenAI Whisper API or Azure Speech Services
+      // For now, we'll simulate the response
+      const { language = "en" } = req.body;
+      
+      // Mock speech-to-text response
+      const mockResponses = {
+        en: "Hello, I would like to book an appointment with a cardiologist.",
+        es: "Hola, me gustaría reservar una cita con un cardiólogo.",
+        fr: "Bonjour, je voudrais prendre rendez-vous avec un cardiologue.",
+        de: "Hallo, ich möchte einen Termin bei einem Kardiologen buchen."
+      };
+
+      res.json({
+        text: mockResponses[language as keyof typeof mockResponses] || mockResponses.en,
+        confidence: 0.95,
+        language: language
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Speech-to-text conversion failed" });
+    }
+  });
+
+  // Avatar chat endpoint with HeyGen integration
+  app.post("/api/avatar-chat", async (req, res) => {
+    try {
+      const { message, sessionId, language = "en", userId, avatarId, isVoice, speakerType = "nurse" } = req.body;
+
+      // Generate AI response
+      const aiResponse = await generateChatResponse(message, language);
+
+      // Get HeyGen avatar response
+      const avatarResponse = await heygenService.generateAvatarResponse({
+        text: aiResponse,
+        sessionId,
+        language
+      });
+
+      // Store the chat message
+      await storage.createChatMessage({
+        sessionId,
+        userId: userId || null,
+        message,
+        response: aiResponse,
+        language,
+        speakerType,
+        avatarResponse: avatarResponse,
+        faceRecognitionData: null
+      });
+
+      res.json({
+        response: aiResponse,
+        audioUrl: avatarResponse.audioUrl,
+        videoUrl: avatarResponse.videoUrl,
+        avatarResponse: avatarResponse,
+        sessionId,
+        language
+      });
+    } catch (error) {
+      console.error("Avatar chat error:", error);
+      res.status(500).json({ 
+        message: "Avatar chat failed",
+        response: "I'm experiencing technical difficulties. Please try again or contact support."
+      });
+    }
+  });
+
+  // Text-to-speech endpoint
+  app.post("/api/text-to-speech", async (req, res) => {
+    try {
+      const { text, language = "en", voice = "female" } = req.body;
+
+      if (!text) {
+        return res.status(400).json({ message: "Text is required" });
+      }
+
+      // In real implementation, this would use:
+      // - OpenAI's TTS API
+      // - Azure Speech Services
+      // - Google Cloud Text-to-Speech
+      // - ElevenLabs API
+      
+      // Mock TTS response
+      const mockAudioUrl = `https://api.example.com/tts/audio/${Date.now()}.mp3`;
+
+      res.json({
+        audioUrl: mockAudioUrl,
+        duration: Math.ceil(text.length / 10), // Rough estimate
+        language,
+        voice
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Text-to-speech conversion failed" });
+    }
+  });
+
+  // Get available voices for TTS
+  app.get("/api/voices", async (req, res) => {
+    try {
+      const voices = [
+        {
+          id: "nurse_sarah",
+          name: "Sarah (Nurse)",
+          language: "en",
+          gender: "female",
+          description: "Warm, caring nurse voice"
+        },
+        {
+          id: "doctor_james",
+          name: "Dr. James",
+          language: "en", 
+          gender: "male",
+          description: "Professional doctor voice"
+        },
+        {
+          id: "assistant_maria",
+          name: "Maria (Assistant)",
+          language: "es",
+          gender: "female",
+          description: "Spanish medical assistant"
+        },
+        {
+          id: "doctor_chen",
+          name: "Dr. Chen",
+          language: "zh",
+          gender: "male",
+          description: "Mandarin specialist voice"
+        }
+      ];
+
+      res.json(voices);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch voices" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
