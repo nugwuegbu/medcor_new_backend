@@ -201,17 +201,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           )}
         </div>
         
-        {/* Messages Overlay - Red Rectangle */}
+        {/* Messages Overlay - Medcor Purple Rectangle */}
         <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 w-[90%] max-w-[600px] z-20">
           <div 
-            className="relative bg-red-500/10 border-2 border-red-400 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+            className="relative bg-purple-600/10 border-2 border-purple-600 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
             style={{
               maxHeight: '350px',
               minHeight: '100px',
             }}
           >
             <div 
-              className="overflow-y-auto overflow-x-hidden p-4 space-y-3 scrollbar-thin scrollbar-thumb-red-300 scrollbar-track-transparent"
+              className="overflow-y-auto overflow-x-hidden p-4 space-y-3 scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-transparent"
               style={{
                 maxHeight: '350px',
               }}
