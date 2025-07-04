@@ -189,13 +189,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       <div className="flex-1 relative">
         {/* Avatar Background - Always Visible */}
         <div className="absolute inset-0">
-          <HeyGenSDKAvatar 
-            apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-            isVisible={true}
-            onMessage={(text) => {
-              console.log("Avatar message:", text);
-            }}
-          />
+          {isOpen && (
+            <HeyGenSDKAvatar 
+              apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+              isVisible={true}
+              onMessage={(text) => {
+                console.log("Avatar message:", text);
+              }}
+            />
+          )}
         </div>
         
         {/* Messages Overlay */}

@@ -41,7 +41,7 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
           console.log("Avatar stopped talking");
         });
 
-        avatar.on(StreamingEvents.STREAM_READY, (event) => {
+        avatar.on(StreamingEvents.STREAM_READY, async (event) => {
           console.log("Stream ready:", event);
           setConnectionStatus("connected");
           setIsLoading(false);
@@ -50,6 +50,17 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
           if (videoRef.current && avatar.mediaStream) {
             videoRef.current.srcObject = avatar.mediaStream;
             videoRef.current.play().catch(e => console.error("Video play error:", e));
+          }
+
+          // Initial greeting from Medcor AI
+          try {
+            await avatar.speak({
+              text: "Hello there! How can I help you? I am Medcor AI assistant.",
+              taskType: TaskType.REPEAT,
+              taskMode: TaskMode.SYNC
+            });
+          } catch (error) {
+            console.error("Failed to speak initial greeting:", error);
           }
         });
 
@@ -66,7 +77,8 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
             voiceId: "1bd001e7e50f421d891986aad5158bc8", // Default female voice
             rate: 1.0,
             emotion: VoiceEmotion.FRIENDLY
-          }
+          },
+          disableIdleTimeout: true // Prevent default idle messages
         });
 
         console.log("Avatar session started:", sessionInfo);
@@ -83,8 +95,12 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
     // Cleanup
     return () => {
       if (avatarRef.current) {
-        avatarRef.current.stopAvatar();
+        console.log("Cleaning up avatar instance");
+        avatarRef.current.stopAvatar().catch(e => console.error("Error stopping avatar:", e));
         avatarRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
       }
     };
   }, [apiKey, isVisible]);
