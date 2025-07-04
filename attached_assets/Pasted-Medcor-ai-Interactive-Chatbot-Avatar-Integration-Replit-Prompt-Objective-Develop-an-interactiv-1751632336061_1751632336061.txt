@@ -1,0 +1,111 @@
+Medcor.ai Interactive Chatbot & Avatar Integration - Replit Prompt
+
+Objective:
+Develop an interactive, AI-powered chatbot integrated with Heygen avatars for hospital and clinic websites. The chatbot should be easily customizable with hospital-specific prompts and functionalities.
+
+Core Functionalities & Evaluation Criteria (Scored out of 100):
+
+Interactive Chatbot with Heygen Avatar (15 pts):
+
+Realistic AI-driven avatar integrated into hospital websites.
+
+Customizable greeting, voice, and responses based on hospital prompts.
+
+Initial greeting and patient interaction handled by a welcoming nurse avatar.
+
+Transition to selected doctor's twin avatar for personalized interactions.
+
+Voice and Text Communication (10 pts):
+
+Support both voice and text-based user interaction.
+
+Effective Natural Language Processing for accurate understanding and responses.
+
+Appointment Booking Integration (15 pts):
+
+MCP Server AI Agents integration for Google Calendar.
+
+Real-time booking via conversational flows (voice/text).
+
+Automated Outbound Calls (Tcall.ai API Integration) (10 pts):
+
+Automated voice callbacks through Tcall.ai API.
+
+Appointment confirmations, inquiries resolution, and follow-up automation.
+
+WhatsApp Integration (5 pts):
+
+Automatic sending of hospital locations and directions via WhatsApp.
+
+Patient Travel Assistance (10 pts):
+
+Flight and hotel recommendations for out-of-city patients.
+
+Integrated MCP Server AI agents for travel recommendations and bookings.
+
+DeepAR.ai Before-After Simulations (10 pts):
+
+User-uploaded photos processed for realistic before-after procedure visuals.
+
+Doctor Database and Portfolios (5 pts):
+
+Interactive and comprehensive doctor profiles.
+
+Integration with existing hospital doctor databases.
+
+Doctor-Specific Dashboard (10 pts):
+
+Secure access to patient lists and appointments.
+
+Notification system for new patient bookings.
+
+Data visualization for interaction analytics.
+
+CRM Integration (HubSpot) (10 pts):
+
+Seamless synchronization of patient interaction, booking data, and feedback.
+
+MCP Server AI Agents (Backend Optimization & Scoring):
+
+Booking Agent (15 pts):
+
+Efficient calendar management, conflict avoidance.
+
+Automated rescheduling, cancellations, and notifications.
+
+Communication Agent (10 pts):
+
+Outbound call management via Tcall.ai.
+
+WhatsApp location details and travel recommendations.
+
+Travel Agent (10 pts):
+
+Efficiently handles queries for flights and hotel bookings.
+
+Image Processing Agent (DeepAR Integration) (10 pts):
+
+Generates accurate, visually compelling before-after simulations.
+
+CRM Sync Agent (10 pts):
+
+Reliable bi-directional data synchronization with hospital CRM systems.
+
+Technology Stack (Scored out of 100):
+
+Frontend: HTML, CSS, JavaScript, React. (20 pts)
+
+Backend: Node.js, Express. (20 pts)
+
+AI Integrations: OpenAI API, Heygen API, DeepAR.ai API, Tcall.ai API. (20 pts)
+
+MCP Server AI Agents: Node.js-based APIs or Python microservices. (20 pts)
+
+Database: PostgreSQL or MongoDB. (10 pts)
+
+Authentication: JWT for secure dashboard access. (5 pts)
+
+Deployment: Replit hosting (containerized setup). (5 pts)
+
+Outcome:
+A robust, fully automated, avatar-driven AI chatbot system customized for hospitals and clinics, significantly enhancing patient experience, streamlining hospital workflows, and automating critical administrative processes.
