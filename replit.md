@@ -165,6 +165,7 @@ Changelog:
 - July 04, 2025. Updated chat system to detect nearby place queries and trigger NEARBY_SEARCH command for backend processing
 - July 05, 2025. Implemented avatar minimize feature - when searching for places or showing links, HeyGen avatar shrinks to circle size and moves to right corner while screen becomes white writing area
 - July 05, 2025. Updated initial greeting to "Hi, how can I assist you?" followed by weather information formatted as "So your location is [location] - [temperature]°C, [condition]" and appearance compliment
+- July 05, 2025. Removed static "Hello! How can I assist you today?" text that was permanently displayed on screen - greeting is now only spoken by avatar, not shown as text
 
 ## User Preferences
 

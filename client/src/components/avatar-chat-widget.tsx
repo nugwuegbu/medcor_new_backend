@@ -643,11 +643,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 e.currentTarget.classList.remove('overflow-y-scroll');
               }}
             >
-              {messages.length === 0 && (
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center">
-                  <p className="text-gray-800 font-medium text-sm">Hello! How can I assist you today?</p>
-                </div>
-              )}
+
               
               {messages.map((message, index) => {
                 // Calculate opacity - most recent messages are fully visible
