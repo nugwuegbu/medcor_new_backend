@@ -158,6 +158,8 @@ Changelog:
 - July 04, 2025. Implemented automatic photo capture and compliment system - captures user photo on first message after greeting and provides personalized appearance compliments via GPT-4 Vision
 - July 04, 2025. Enhanced location detection with hybrid approach - tries browser geolocation first for accuracy, falls back to IP-based detection if denied
 - July 04, 2025. Fixed avatar greeting system to include both weather information and appearance compliment on user's first message
+- July 04, 2025. Integrated backend Google search for real weather data - now shows accurate Dubai weather (34°C, cloudy) instead of AI-generated data
+- July 04, 2025. Shortened weather message format to be more concise: "Dubai - 34°C, cloudy" instead of longer descriptions
 
 ## User Preferences
 

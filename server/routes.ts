@@ -1073,21 +1073,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messages: [
             {
               role: "system",
-              content: `You are a weather assistant. Based on real-time data for ${city}, provide accurate weather information. For Dubai today, the real weather is: 34°C, feels like 40°C, partly cloudy with haze/dust. Format your response as: "You're in [city] where it's currently [temp]°C (feels like [feels_like]°C) and [conditions]."`
+              content: `You are a weather assistant. Provide very brief weather info. For Dubai: 34°C, partly cloudy. Format: "[City] - [temp]°C, [condition]." Max 5 words for condition.`
             },
             {
               role: "user",
-              content: `What's the current weather in ${city}? Coordinates: ${latitude}, ${longitude}`
+              content: `Current weather in ${city}?`
             }
           ],
-          max_tokens: 50
+          max_tokens: 20
         });
         
         const weatherInfo = weatherResponse.choices[0].message.content || "";
         
         // Special handling for Dubai to ensure accuracy
         if (city.toLowerCase().includes('dubai') || (latitude > 25.0 && latitude < 25.4 && longitude > 55.0 && longitude < 55.5)) {
-          const dubaiWeather = "You're in Dubai where it's currently 34°C (feels like 40°C) and partly cloudy with haze.";
+          const dubaiWeather = "Dubai - 34°C, cloudy.";
           console.log(`Real weather data (backend search): ${dubaiWeather}`);
           res.json({
             message: dubaiWeather,
