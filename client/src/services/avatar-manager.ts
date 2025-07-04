@@ -86,14 +86,14 @@ export class AvatarManager {
       // Avatar is ready, no automatic greeting
     });
 
-    // Start the avatar with multi-language support
+    // Start the avatar with Turkish language and voice
     const sessionInfo = await avatar.createStartAvatar({
       quality: AvatarQuality.High,
       avatarName: "Ann_Doctor_Standing2_public",
+      language: "tr", // Set Turkish language
       voice: {
-        voiceId: "1bd001e7e50f421d891986aad5158bc8", // Default voice - will be overridden per language
-        rate: 1.0,
-        emotion: VoiceEmotion.FRIENDLY
+        voiceId: "d61a2c54f4b4401d87777a218b2d2ae4", // Fatma - Turkish female voice
+        rate: 1.0
       },
       disableIdleTimeout: true
     });
@@ -109,28 +109,12 @@ export class AvatarManager {
           const detectedLang = language || AvatarManager.detectLanguage(text);
           const voiceConfig = AvatarManager.getVoiceConfig(detectedLang);
           
-          // Create speak parameters based on language
-          const speakParams: any = {
+          // Speak with basic parameters only
+          await manager.avatar.speak({
             text,
             taskType: TaskType.REPEAT,
             taskMode: TaskMode.SYNC
-          };
-          
-          // For Turkish, use specific Turkish voice
-          if (detectedLang === 'tr') {
-            speakParams.voice = {
-              voiceId: "d61a2c54f4b4401d87777a218b2d2ae4", // Fatma - Turkish female voice
-              rate: 1.0,
-              emotion: VoiceEmotion.FRIENDLY
-            };
-            console.log("Speaking Turkish text with params:", speakParams);
-            console.log("Available avatar methods:", Object.getOwnPropertyNames(Object.getPrototypeOf(manager.avatar)));
-          } else {
-            // Use default English voice for other languages
-            speakParams.voice = voiceConfig;
-          }
-          
-          await manager.avatar.speak(speakParams);
+          });
         } catch (e) {
           console.error("Failed to speak:", e);
         }
