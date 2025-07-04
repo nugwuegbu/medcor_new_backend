@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import StreamingAvatar, { 
-  AvatarQuality, 
-  StreamingEvents,
-  TaskType,
-  TaskMode,
-  VoiceEmotion 
-} from "@heygen/streaming-avatar";
+import { AvatarManager } from "../services/avatar-manager";
 import { Loader } from "lucide-react";
 
 interface HeyGenSDKAvatarProps {
@@ -18,7 +12,7 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
   const [isLoading, setIsLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "failed">("connecting");
   const videoRef = useRef<HTMLVideoElement>(null);
-  const avatarRef = useRef<StreamingAvatar | null>(null);
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!isVisible || !apiKey) return;
@@ -28,60 +22,29 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
         setIsLoading(true);
         setConnectionStatus("connecting");
 
-        // Create streaming avatar instance
-        const avatar = new StreamingAvatar({ token: apiKey });
-        avatarRef.current = avatar;
-
-        // Set up event listeners
-        avatar.on(StreamingEvents.AVATAR_START_TALKING, () => {
-          console.log("Avatar started talking");
-        });
-
-        avatar.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
-          console.log("Avatar stopped talking");
-        });
-
-        avatar.on(StreamingEvents.STREAM_READY, async (event) => {
-          console.log("Stream ready:", event);
-          setConnectionStatus("connected");
-          setIsLoading(false);
-          
-          // Attach the stream to video element
-          if (videoRef.current && avatar.mediaStream) {
-            videoRef.current.srcObject = avatar.mediaStream;
+        // Get or create avatar
+        const avatar = await AvatarManager.getOrCreateAvatar(apiKey);
+        
+        // Set up stream checking
+        const checkStream = () => {
+          const mediaStream = AvatarManager.getMediaStream();
+          if (mediaStream && videoRef.current) {
+            videoRef.current.srcObject = mediaStream;
             videoRef.current.play().catch(e => console.error("Video play error:", e));
+            setConnectionStatus("connected");
+            setIsLoading(false);
+            
+            // Clear the interval once connected
+            if (checkIntervalRef.current) {
+              clearInterval(checkIntervalRef.current);
+              checkIntervalRef.current = null;
+            }
           }
+        };
 
-          // Initial greeting from Medcor AI
-          try {
-            await avatar.speak({
-              text: "Hello there! How can I help you? I am Medcor AI assistant.",
-              taskType: TaskType.REPEAT,
-              taskMode: TaskMode.SYNC
-            });
-          } catch (error) {
-            console.error("Failed to speak initial greeting:", error);
-          }
-        });
-
-        avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
-          console.log("Stream disconnected");
-          setConnectionStatus("failed");
-        });
-
-        // Start the avatar
-        const sessionInfo = await avatar.createStartAvatar({
-          quality: AvatarQuality.High,
-          avatarName: "Ann_Doctor_Standing2_public",
-          voice: {
-            voiceId: "1bd001e7e50f421d891986aad5158bc8", // Default female voice
-            rate: 1.0,
-            emotion: VoiceEmotion.FRIENDLY
-          },
-          disableIdleTimeout: true // Prevent default idle messages
-        });
-
-        console.log("Avatar session started:", sessionInfo);
+        // Check immediately and then periodically
+        checkStream();
+        checkIntervalRef.current = setInterval(checkStream, 100);
 
       } catch (error) {
         console.error("Failed to initialize avatar:", error);
@@ -94,41 +57,11 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
 
     // Cleanup
     return () => {
-      if (avatarRef.current) {
-        console.log("Cleaning up avatar instance");
-        avatarRef.current.stopAvatar().catch(e => console.error("Error stopping avatar:", e));
-        avatarRef.current = null;
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
       }
     };
   }, [apiKey, isVisible]);
-
-  // Public method to make avatar speak
-  const speak = async (text: string) => {
-    if (!avatarRef.current) {
-      console.error("Avatar not initialized");
-      return;
-    }
-
-    try {
-      await avatarRef.current.speak({
-        text,
-        taskType: TaskType.REPEAT, // Changed from TALK to REPEAT to speak exact text
-        taskMode: TaskMode.SYNC
-      });
-    } catch (error) {
-      console.error("Failed to make avatar speak:", error);
-    }
-  };
-
-  // Expose speak method to parent
-  useEffect(() => {
-    if (onMessage) {
-      (window as any).heygenSpeak = speak;
-    }
-  }, [onMessage]);
 
   if (!isVisible) return null;
 
@@ -138,7 +71,7 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
         <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10">
           <div className="text-center">
             <Loader className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-4" />
-            <p className="text-sm text-gray-600">Connecting to HeyGen...</p>
+            <p className="text-sm text-gray-600">Connecting to Medcor AI...</p>
           </div>
         </div>
       )}

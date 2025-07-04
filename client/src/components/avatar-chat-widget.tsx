@@ -191,6 +191,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         <div className="absolute inset-0">
           {isOpen && (
             <HeyGenSDKAvatar 
+              key="single-avatar-instance"
               apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
               isVisible={true}
               onMessage={(text) => {
