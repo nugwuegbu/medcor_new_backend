@@ -8,6 +8,7 @@ import HeyGenSDKAvatar from "./heygen-sdk-avatar";
 import AppointmentCalendar from "./appointment-calendar";
 import ChatDoctorList from "./chat-doctor-list";
 import AvatarVideoLoop from "./avatar-video-loop";
+import UserCameraView from "./user-camera-view";
 
 interface Message {
   id: string;
@@ -36,6 +37,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [selectedMenuItem, setSelectedMenuItem] = useState<string | null>(null);
   const [showDoctorList, setShowDoctorList] = useState(false);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
+  const [cameraEnabled, setCameraEnabled] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -227,6 +229,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 isVisible={true}
                 onMessage={(text) => {
                   console.log("Avatar message:", text);
+                }}
+              />
+              
+              {/* User Camera View - positioned on avatar's chest */}
+              <UserCameraView 
+                isEnabled={cameraEnabled}
+                onPermissionRequest={() => {
+                  console.log("Camera permission requested");
+                  setCameraEnabled(true);
                 }}
               />
             </>
