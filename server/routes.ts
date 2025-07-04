@@ -382,7 +382,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           
           compliment = imageAnalysisResponse.choices[0].message.content || "";
-          console.log("Generated compliment:", compliment);
+          console.log("=== OpenAI Photo Analysis Response ===");
+          console.log("Compliment generated:", compliment);
+          console.log("=====================================");
         } catch (error) {
           console.error("Image analysis failed:", error);
         }
@@ -396,16 +398,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let prefix = "";
         if (locationWeather) {
           prefix += `${locationWeather} `;
+          console.log("Weather info added:", locationWeather);
         }
         if (compliment) {
           prefix += `${compliment} `;
         }
         if (prefix) {
           aiResponse = `${prefix}${aiResponse}`;
+          console.log("=== Final Combined Response ===");
+          console.log("Full message:", aiResponse);
+          console.log("==============================");
         }
+      } else {
+        console.log(`AI response: ${aiResponse}`);
       }
-      
-      console.log(`AI response: ${aiResponse}`);
       
       // Check if user is asking about doctors
       const askingAboutDoctors = message.toLowerCase().includes('doctor') || 
