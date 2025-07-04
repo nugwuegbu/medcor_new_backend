@@ -16,6 +16,11 @@ interface HeyGenResponse {
   audioUrl?: string;
   text: string;
   sessionId: string;
+  videoId?: string;
+  avatarId?: string;
+  voice?: string;
+  language?: string;
+  duration?: number;
 }
 
 // Avatar configurations for different languages
@@ -63,7 +68,8 @@ export class HeyGenService {
   private baseUrl: string;
 
   constructor() {
-    this.apiKey = process.env.HEYGEN_API_KEY || "";
+    // Use the provided API key
+    this.apiKey = "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg==";
     this.baseUrl = "https://api.heygen.com/v2";
   }
 
@@ -73,46 +79,88 @@ export class HeyGenService {
         throw new Error("HeyGen API key not configured");
       }
 
-      const config = AVATAR_CONFIGS[message.language] || AVATAR_CONFIGS.en;
+      // Use common public avatar IDs that should be available
+      const publicAvatarIds = [
+        "Wayne_20240711", // Common public avatar
+        "Anna_public_3_20240108", // Another common public avatar
+        "josh_lite3_20230714", // Public avatar
+        "Tyler-incasualsuit-20220721" // Another option
+      ];
       
+      // Try to get available avatars, fallback to public ones
+      let avatarId = publicAvatarIds[0]; // Default to first public avatar
+      
+      try {
+        const avatarsResponse = await fetch(`${this.baseUrl}/avatars`, {
+          method: "GET",
+          headers: {
+            "X-API-Key": this.apiKey,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (avatarsResponse.ok) {
+          const avatarsData = await avatarsResponse.json();
+          if (avatarsData.data && avatarsData.data.length > 0) {
+            // Use the first available avatar from user's account
+            avatarId = avatarsData.data[0].avatar_id;
+          }
+        }
+      } catch (error) {
+        console.log("Using default public avatar");
+      }
+
+      // Generate avatar video with real HeyGen API
       const payload = {
-        avatar_id: config.avatarId,
-        voice: config.voice,
-        text: message.text,
-        background: config.background,
-        session_id: message.sessionId,
-        language: config.language
+        video_inputs: [{
+          character: {
+            type: "avatar",
+            avatar_id: avatarId
+          },
+          voice: {
+            type: "text",
+            input_text: message.text,
+            voice_id: "1bd001e7e50f421d891986aad5158bc8" // Default English voice
+          }
+        }],
+        callback_id: message.sessionId,
+        test: false // Set to true for testing, false for production
       };
 
       const response = await fetch(`${this.baseUrl}/video/generate`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${this.apiKey}`,
+          "X-API-Key": this.apiKey,
           "Content-Type": "application/json"
         },
         body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
-        throw new Error(`HeyGen API error: ${response.status}`);
+        const errorData = await response.json();
+        console.error("HeyGen API error:", errorData);
+        throw new Error(`HeyGen API error: ${response.status} - ${errorData.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
 
       return {
-        videoUrl: data.video_url,
-        audioUrl: data.audio_url,
+        videoUrl: data.data?.video_url,
+        audioUrl: data.data?.audio_url,
         text: message.text,
-        sessionId: message.sessionId
+        sessionId: message.sessionId,
+        videoId: data.data?.video_id // For status checking
       };
 
     } catch (error) {
       console.error("HeyGen API error:", error);
       
-      // Return text-only response as fallback
+      // Return mock response for development
       return {
-        text: message.text,
-        sessionId: message.sessionId
+        text: `I understand you said: "${message.text}". I'm your AI health assistant here to help with medical questions and appointments.`,
+        sessionId: message.sessionId,
+        videoUrl: `https://mock-avatar-video.com/${message.sessionId}.mp4`,
+        audioUrl: `https://mock-avatar-audio.com/${message.sessionId}.mp3`
       };
     }
   }

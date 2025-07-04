@@ -241,6 +241,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Voice avatar chat endpoint
+  app.post("/api/chat/voice", async (req, res) => {
+    try {
+      const { message, sessionId, language = "en", userId } = req.body;
+      
+      if (!message || !sessionId) {
+        return res.status(400).json({ error: "Message and sessionId are required" });
+      }
+
+      console.log(`Voice chat request: ${message} (session: ${sessionId})`);
+
+      // Generate AI response using OpenAI
+      const aiResponse = await generateChatResponse(message, language);
+      console.log(`AI response: ${aiResponse}`);
+      
+      // Generate avatar response using HeyGen
+      const avatarResponse = await heygenService.generateAvatarResponse({
+        text: aiResponse,
+        sessionId,
+        language
+      });
+      
+      console.log(`Avatar response generated:`, avatarResponse);
+
+      // Save chat messages
+      await storage.createChatMessage({
+        sessionId,
+        message,
+        response: aiResponse,
+        language,
+        avatarResponse: avatarResponse,
+        userId: userId || null
+      });
+
+      res.json({
+        message: aiResponse,
+        avatarResponse,
+        sessionId,
+        success: true
+      });
+    } catch (error) {
+      console.error("Voice chat error:", error);
+      res.status(500).json({ 
+        error: "Failed to process voice chat",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Settings endpoints
   app.post("/api/settings", async (req, res) => {
     try {
