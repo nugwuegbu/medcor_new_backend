@@ -590,28 +590,68 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Doctors Page */}
-                    <div className="h-full flex items-center justify-center">
-                      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full mx-4">
-                        <div className="text-center">
-                          {/* Doctor Avatar */}
-                          <div className="w-32 h-32 rounded-full mx-auto mb-4 overflow-hidden bg-gray-200 relative">
-                            <img 
-                              src={doctorPhoto}
-                              alt="Dr. Sarah Johnson"
-                              className="w-full h-full object-cover object-center"
-                            />
+                    {/* Small Avatar Circle in Top Right */}
+                    <div className="absolute top-[75px] right-[25px] z-50">
+                      <div 
+                        className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
+                        onClick={() => setShowDoctorList(false)}
+                      >
+                        <div className="relative">
+                          <MessageCircle className="h-10 w-10 text-white animate-pulse" />
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse ring-2 ring-white"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Doctors Grid */}
+                    <div className="h-full pt-32 px-6 pb-6 overflow-y-auto">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Our Doctors</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+                        {/* Doctor 1 */}
+                        <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer">
+                          <div className="text-center">
+                            <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
+                              <img 
+                                src={doctorPhoto}
+                                alt="Dr. Sarah Johnson"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-800">Dr. Sarah Johnson</h3>
+                            <p className="text-sm text-purple-600 font-medium mb-2">Plastic Surgery</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
+                              <Phone className="h-4 w-4" />
+                              <span>+44 20 7123 4567</span>
+                            </div>
                           </div>
-                          
-                          {/* Doctor Information */}
-                          <h2 className="text-2xl font-bold text-gray-800 mb-2">Dr. Sarah Johnson</h2>
-                          <p className="text-lg text-purple-600 font-medium mb-4">Plastic Surgery Specialist</p>
-                          
-                          {/* Contact Information */}
-                          <div className="border-t pt-4 mt-4">
-                            <div className="flex items-center justify-center gap-2 text-gray-600">
-                              <Phone className="h-5 w-5" />
-                              <span className="text-lg">+44 20 7123 4567</span>
+                        </div>
+                        
+                        {/* Doctor 2 - Placeholder */}
+                        <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer">
+                          <div className="text-center">
+                            <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
+                              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-800">Dr. Michael Chen</h3>
+                            <p className="text-sm text-purple-600 font-medium mb-2">Orthopedics</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
+                              <Phone className="h-4 w-4" />
+                              <span>+44 20 7123 4568</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Doctor 3 - Placeholder */}
+                        <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer">
+                          <div className="text-center">
+                            <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
+                              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400"></div>
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-800">Dr. Emily Davis</h3>
+                            <p className="text-sm text-purple-600 font-medium mb-2">Dermatology</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
+                              <Phone className="h-4 w-4" />
+                              <span>+44 20 7123 4569</span>
                             </div>
                           </div>
                         </div>

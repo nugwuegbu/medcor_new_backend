@@ -204,6 +204,7 @@ Changelog:
 - July 05, 2025. Created secure authentication flow: OAuth login → Phone collection → Face registration → Face recognition login
 - July 05, 2025. Modified doctor search behavior - now automatically opens chat interface (lightbulb menu) instead of showing inline results
 - July 05, 2025. Removed website's doctors page from navigation to prevent confusion - all doctor queries now handled through chat interface
+- July 05, 2025. Redesigned doctors screen - avatar now visible as small circle in top right, doctor cards made smaller in grid layout to accommodate multiple doctors
 
 ## User Preferences
 
