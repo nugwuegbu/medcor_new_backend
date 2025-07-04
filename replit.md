@@ -154,6 +154,8 @@ Changelog:
 - July 04, 2025. Fixed microphone functionality with proper cross-browser support including Safari AudioContext handling
 - July 04, 2025. Working on Turkish voice support for HeyGen avatar - currently investigating proper voice ID configuration
 - July 04, 2025. Discovered HeyGen Streaming Avatar API limitation - Turkish voices not supported for streaming avatars. Avatar works with default voice but pronounces Turkish text with English phonetics
+- July 04, 2025. Fixed microphone timeout issue - now uses continuous recognition mode to prevent premature speech cutoff
+- July 04, 2025. Implemented automatic photo capture and compliment system - captures user photo on first message after greeting and provides personalized appearance compliments via GPT-4 Vision
 
 ## User Preferences
 

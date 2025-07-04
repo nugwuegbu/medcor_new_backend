@@ -31,7 +31,7 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
 
     // Create recognition instance
     const recognition = new SpeechRecognition();
-    recognition.continuous = false; // Stop after one result
+    recognition.continuous = true; // Keep listening continuously
     recognition.interimResults = true; // Show results while speaking
     recognition.lang = 'en-US'; // Set language
     recognition.maxAlternatives = 1;
@@ -57,7 +57,7 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
       if (finalTranscript) {
         console.log("Final transcript:", finalTranscript);
         onTranscript(finalTranscript);
-        setIsRecording(false);
+        // Don't stop recording - let user click button again to stop
       }
     };
 
@@ -65,17 +65,34 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error:", event.error);
       if (event.error === 'no-speech') {
-        console.log("No speech detected");
+        console.log("No speech detected - continuing to listen");
+        // Restart recognition to continue listening
+        recognition.start();
       } else if (event.error === 'not-allowed') {
         alert("Please allow microphone access to use voice input");
+        setIsRecording(false);
+      } else if (event.error === 'aborted') {
+        // Restart if aborted (common when user pauses)
+        if (isRecording) {
+          recognition.start();
+        }
+      } else {
+        setIsRecording(false);
       }
-      setIsRecording(false);
     };
 
     // Handle end
     recognition.onend = () => {
       console.log("Recognition ended");
-      setIsRecording(false);
+      // Restart if still recording (browser might auto-stop after silence)
+      if (isRecording) {
+        console.log("Restarting recognition to continue listening");
+        setTimeout(() => {
+          if (recognitionRef.current && isRecording) {
+            recognitionRef.current.start();
+          }
+        }, 100);
+      }
     };
 
     // Handle start

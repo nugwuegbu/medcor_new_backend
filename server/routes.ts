@@ -335,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Voice avatar chat endpoint
   app.post("/api/chat/voice", async (req, res) => {
     try {
-      const { message, sessionId, language = "en", userId } = req.body;
+      const { message, sessionId, language = "en", userId, userImage } = req.body;
       
       if (!message || !sessionId) {
         return res.status(400).json({ error: "Message and sessionId are required" });
@@ -343,8 +343,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Voice chat request: ${message} (session: ${sessionId})`);
 
+      // Check chat history to see if this is user's first response
+      const previousMessages = await storage.getChatMessages(sessionId);
+      const isFirstUserResponse = previousMessages.length === 0 || previousMessages.length === 1;
+      
+      let compliment = "";
+      
+      // If this is the first user response after initial greeting, analyze their image
+      if (isFirstUserResponse && userImage) {
+        try {
+          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+          
+          // Analyze image with GPT-4 Vision
+          const imageAnalysisResponse = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: "You are a kind AI that notices nice details about people. Give 1 brief compliment about something specific you see (clothing, style, accessories). Be genuine and warm. Keep it under 15 words. Example: 'I love your elegant blue dress!'"
+              },
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: "Give a brief compliment about their appearance."
+                  },
+                  {
+                    type: "image_url",
+                    image_url: {
+                      url: `data:image/jpeg;base64,${userImage}`
+                    }
+                  }
+                ]
+              }
+            ],
+            max_tokens: 30
+          });
+          
+          compliment = imageAnalysisResponse.choices[0].message.content || "";
+          console.log("Generated compliment:", compliment);
+        } catch (error) {
+          console.error("Image analysis failed:", error);
+        }
+      }
+
       // Generate AI response using OpenAI
-      const aiResponse = await generateChatResponse(message, language);
+      let aiResponse = await generateChatResponse(message, language);
+      
+      // Add compliment to the beginning of the response if available
+      if (compliment) {
+        aiResponse = `${compliment} ${aiResponse}`;
+      }
+      
       console.log(`AI response: ${aiResponse}`);
       
       // Check if user is asking about doctors

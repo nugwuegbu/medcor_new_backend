@@ -52,6 +52,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const capturePhotoRef = useRef<(() => string | null) | null>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -118,6 +119,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   // Voice chat mutation
   const voiceChatMutation = useMutation({
     mutationFn: async (message: string) => {
+      // Check if this is the first user message after initial greeting
+      const isFirstUserMessage = messages.length === 0 || messages.length === 1;
+      
+      let userImage = null;
+      
+      // Capture photo if this is the first message and camera is available
+      if (isFirstUserMessage && capturePhotoRef.current) {
+        console.log("Capturing user photo for first message");
+        userImage = capturePhotoRef.current();
+      }
+      
       const response = await fetch("/api/chat/voice", {
         method: "POST",
         headers: {
@@ -126,7 +138,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         body: JSON.stringify({
           message,
           sessionId,
-          language: "en"
+          language: "en",
+          userImage
         })
       });
       return await response.json();
@@ -198,6 +211,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               console.log("Camera permission requested");
               setCameraEnabled(true);
             }}
+            capturePhotoRef={capturePhotoRef}
           />
         </div>
         

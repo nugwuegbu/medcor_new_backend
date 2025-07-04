@@ -5,14 +5,51 @@ import { interactiveDialogue } from '../services/interactive-dialogue';
 interface UserCameraViewProps {
   isEnabled: boolean;
   onPermissionRequest?: () => void;
+  capturePhotoRef?: React.MutableRefObject<(() => string | null) | null>;
 }
 
-export default function UserCameraView({ isEnabled, onPermissionRequest }: UserCameraViewProps) {
+export default function UserCameraView({ isEnabled, onPermissionRequest, capturePhotoRef }: UserCameraViewProps) {
   const [hasPermission, setHasPermission] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [cameraError, setCameraError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  
+  // Capture photo function
+  const capturePhoto = (): string | null => {
+    if (!videoRef.current || !streamRef.current || !hasPermission) {
+      console.log("Cannot capture photo - camera not ready");
+      return null;
+    }
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    
+    if (!context) return null;
+    
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw current frame
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert to base64
+    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+    const base64Image = imageData.split(',')[1];
+    
+    console.log("Photo captured from user camera");
+    return base64Image;
+  };
+  
+  // Expose capture function via ref
+  useEffect(() => {
+    if (capturePhotoRef) {
+      capturePhotoRef.current = capturePhoto;
+    }
+  }, [hasPermission, capturePhotoRef]);
 
   useEffect(() => {
     if (isEnabled && hasPermission) {
