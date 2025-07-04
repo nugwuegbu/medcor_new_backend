@@ -7,6 +7,7 @@ import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
 import HeyGenSDKAvatar from "./heygen-sdk-avatar";
 import AppointmentCalendar from "./appointment-calendar";
 import ChatDoctorList from "./chat-doctor-list";
+import AvatarVideoLoop from "./avatar-video-loop";
 
 interface Message {
   id: string;
@@ -34,6 +35,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showChatInterface, setShowChatInterface] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<string | null>(null);
   const [showDoctorList, setShowDoctorList] = useState(false);
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -106,6 +108,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
+    // Activate HeyGen avatar on first user interaction
+    setUserHasInteracted(true);
+
     const userMessage: Message = {
       id: `user_${Date.now()}`,
       text: text.trim(),
@@ -128,6 +133,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   const startRecording = async () => {
     try {
+      // Activate HeyGen avatar on first user interaction
+      setUserHasInteracted(true);
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -211,14 +219,27 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         {/* Avatar Background - Always Active but Hidden when Chat Interface is shown */}
         <div className={`absolute inset-0 ${showChatInterface ? 'invisible' : 'visible'}`}>
           {isOpen && (
-            <HeyGenSDKAvatar 
-              key="single-avatar-instance"
-              apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-              isVisible={true}
-              onMessage={(text) => {
-                console.log("Avatar message:", text);
-              }}
-            />
+            <>
+              {/* Show video loop when user hasn't interacted yet */}
+              {!userHasInteracted && (
+                <AvatarVideoLoop 
+                  isActive={true}
+                  onVideoReady={() => console.log("Avatar video loop ready")}
+                />
+              )}
+              
+              {/* Show real HeyGen avatar after user interaction */}
+              {userHasInteracted && (
+                <HeyGenSDKAvatar 
+                  key="single-avatar-instance"
+                  apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+                  isVisible={true}
+                  onMessage={(text) => {
+                    console.log("Avatar message:", text);
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
         
