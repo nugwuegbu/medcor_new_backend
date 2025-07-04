@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Send, X, MessageSquare } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
+import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
 import AppointmentCalendar from "./appointment-calendar";
 
 interface Message {
@@ -161,12 +162,19 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
       {/* HeyGen Avatar Section - Slimmer */}
       <div className="h-36 border-b border-gray-100">
-        <HeyGenAvatar 
-          avatarResponse={messages[messages.length - 1]?.avatarResponse}
-          isLoading={voiceChatMutation.isPending}
-          userSpeechText={currentSpeechText}
-          isUserSpeaking={isRecording}
-        />
+        {messages[messages.length - 1]?.avatarResponse?.sessionData ? (
+          <HeyGenWebRTCAvatar 
+            sessionData={messages[messages.length - 1]?.avatarResponse?.sessionData}
+            isLoading={voiceChatMutation.isPending}
+          />
+        ) : (
+          <HeyGenAvatar 
+            avatarResponse={messages[messages.length - 1]?.avatarResponse}
+            isLoading={voiceChatMutation.isPending}
+            userSpeechText={currentSpeechText}
+            isUserSpeaking={isRecording}
+          />
+        )}
       </div>
 
       {/* Messages */}

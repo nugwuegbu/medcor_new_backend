@@ -22,6 +22,13 @@ interface HeyGenResponse {
   language?: string;
   duration?: number;
   isSimulated?: boolean;
+  sessionData?: {
+    sdp: string;
+    ice_servers: any[];
+    session_id: string;
+    access_token: string;
+    realtime_endpoint?: string;
+  };
 }
 
 // Avatar configurations for different languages
@@ -143,35 +150,21 @@ export class HeyGenService {
       const sessionData = await sessionResponse.json();
       console.log("HeyGen session created:", sessionData);
 
-      // If we have a session token, use it to send the message
-      if (sessionData.data?.token) {
-        const speakPayload = {
+      // Return the session data for WebRTC connection
+      if (sessionData.data?.sdp) {
+        return {
           text: message.text,
-          task_type: "talk",
-          session_id: sessionData.data.session_id
+          sessionId: message.sessionId,
+          videoUrl: undefined,
+          audioUrl: undefined,
+          sessionData: {
+            sdp: sessionData.data.sdp,
+            ice_servers: sessionData.data.ice_servers2 || sessionData.data.ice_servers,
+            session_id: sessionData.data.session_id,
+            access_token: accessToken,
+            realtime_endpoint: sessionData.data.realtime_endpoint
+          }
         };
-
-        const speakResponse = await fetch(`${this.baseUrl}/streaming.task`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${sessionData.data.token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(speakPayload)
-        });
-
-        if (speakResponse.ok) {
-          const speakData = await speakResponse.json();
-          console.log("HeyGen speak response:", speakData);
-          
-          return {
-            videoUrl: `https://api.heygen.com/v1/streaming.get/${sessionData.data.session_id}`,
-            audioUrl: speakData.data?.audio_url,
-            text: message.text,
-            sessionId: message.sessionId,
-            videoId: sessionData.data.session_id
-          };
-        }
       }
 
       // Fallback to video generation API
