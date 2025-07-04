@@ -8,7 +8,7 @@ import HeyGenSDKAvatar from "./heygen-sdk-avatar";
 import ChatDoctorList from "./chat-doctor-list";
 import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
-import SimpleVoiceButton from "./simple-voice-button";
+import BrowserVoiceButton from "./browser-voice-button";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
 
 interface Message {
@@ -265,7 +265,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       }
                     }}
                   />
-                  <SimpleVoiceButton
+                  <BrowserVoiceButton
                     onTranscript={(text) => {
                       handleSendMessage(text);
                     }}
@@ -509,7 +509,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             <Send className="h-5 w-5" />
           </Button>
           
-          <SimpleVoiceButton
+          <BrowserVoiceButton
             onTranscript={(text) => {
               handleSendMessage(text);
             }}
