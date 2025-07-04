@@ -136,8 +136,8 @@ export class InteractiveDialogueService {
         if (weatherResponse.ok) {
           const weatherData = await weatherResponse.json();
           
-          // Speak weather info followed by personalized compliment
-          const combinedMessage = `${weatherData.message} By the way, ${analysis.description}`;
+          // Speak clinic greeting, weather info, and personalized compliment
+          const combinedMessage = `Hi! Welcome to Medcor Clinic. How can I help you? ${weatherData.message} By the way, ${analysis.description}`;
           
           await avatar.speak({
             text: combinedMessage,

@@ -9,6 +9,7 @@ import ChatDoctorList from "./chat-doctor-list";
 import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
+import InfoOverlay from "./info-overlay";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -54,6 +55,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [cameraPermissionRequested, setCameraPermissionRequested] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
   const [locationWeather, setLocationWeather] = useState<string>("");
+  const [showInfoOverlay, setShowInfoOverlay] = useState(false);
+  const [infoOverlayData, setInfoOverlayData] = useState<{
+    title: string;
+    places: any[];
+  }>({ title: "", places: [] });
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -117,6 +124,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           latitude: position.coords.latitude,
           longitude: position.coords.longitude
         };
+        setUserLocation(coords); // Save user location
         console.log("Got browser location:", coords);
       } catch (e) {
         console.log("Browser location denied, will use IP location");
@@ -170,16 +178,82 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       });
       return await response.json();
     },
-    onSuccess: (data) => {
-      const botMessage: Message = {
-        id: `bot_${Date.now()}`,
-        text: data.message,
-        sender: "bot",
-        timestamp: new Date(),
-        avatarResponse: data.avatarResponse,
-        showDoctors: data.showDoctors
-      };
-      setMessages(prev => [...prev, botMessage]);
+    onSuccess: async (data) => {
+      // Check if the response contains a nearby search command
+      if (data.message.includes("NEARBY_SEARCH:")) {
+        const searchType = data.message.split("NEARBY_SEARCH:")[1].trim();
+        
+        // Make API call to get nearby places
+        if (userLocation) {
+          try {
+            const placesResponse = await fetch("/api/nearby-places", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                latitude: userLocation.latitude,
+                longitude: userLocation.longitude,
+                type: searchType,
+                radius: 2000 // 2km radius
+              })
+            });
+            
+            if (placesResponse.ok) {
+              const placesData = await placesResponse.json();
+              
+              // Show info overlay with results
+              setInfoOverlayData({
+                title: `Nearby ${searchType}`,
+                places: placesData.places.map((place: any) => ({
+                  ...place,
+                  mapUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + " " + place.address)}`
+                }))
+              });
+              setShowInfoOverlay(true);
+              
+              // Create a friendly message for the chat
+              const friendlyMessage = placesData.places.length > 0
+                ? `I found ${placesData.places.length} ${searchType} near you. Check the details on the left!`
+                : `I couldn't find any ${searchType} within 2km of your location.`;
+              
+              const botMessage: Message = {
+                id: `bot_${Date.now()}`,
+                text: friendlyMessage,
+                sender: "bot",
+                timestamp: new Date(),
+                avatarResponse: data.avatarResponse,
+                showDoctors: false
+              };
+              setMessages(prev => [...prev, botMessage]);
+            }
+          } catch (error) {
+            console.error("Error fetching nearby places:", error);
+          }
+        } else {
+          // No location available
+          const botMessage: Message = {
+            id: `bot_${Date.now()}`,
+            text: "I need your location to find nearby places. Please enable location access.",
+            sender: "bot",
+            timestamp: new Date(),
+            avatarResponse: data.avatarResponse,
+            showDoctors: false
+          };
+          setMessages(prev => [...prev, botMessage]);
+        }
+      } else {
+        // Normal response
+        const botMessage: Message = {
+          id: `bot_${Date.now()}`,
+          text: data.message,
+          sender: "bot",
+          timestamp: new Date(),
+          avatarResponse: data.avatarResponse,
+          showDoctors: data.showDoctors
+        };
+        setMessages(prev => [...prev, botMessage]);
+      }
       
       // Make the HeyGen avatar speak the response with language detection
       if ((window as any).heygenSpeak) {
@@ -272,6 +346,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </>
           )}
         </div>
+        
+        {/* Info Overlay - Shows nearby places */}
+        <InfoOverlay
+          isVisible={showInfoOverlay}
+          title={infoOverlayData.title}
+          places={infoOverlayData.places}
+          onClose={() => setShowInfoOverlay(false)}
+        />
         
         {/* Chat Interface View - Within Chat Container */}
         {showChatInterface && (

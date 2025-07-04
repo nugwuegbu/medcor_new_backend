@@ -81,14 +81,32 @@ const LANGUAGE_PROMPTS = {
 
 export async function generateChatResponse(message: string, language: string = "en"): Promise<string> {
   try {
+    // Check if user is asking about nearby places
+    const nearbyPlaceKeywords = [
+      'gas station', 'petrol station', 'fuel station', 'benzin istasyonu',
+      'restaurant', 'restoran', 'food', 'yemek',
+      'pharmacy', 'eczane', 'drug store',
+      'hospital', 'hastane', 'clinic', 'klinik',
+      'bank', 'banka', 'atm',
+      'supermarket', 'market', 'grocery',
+      'near', 'yakın', 'nearby', 'yakında', 'close to', 'around here'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    const isNearbyQuery = nearbyPlaceKeywords.some(keyword => lowerMessage.includes(keyword));
+    
     const systemPrompt = LANGUAGE_PROMPTS[language as keyof typeof LANGUAGE_PROMPTS] || LANGUAGE_PROMPTS.en;
+    
+    const enhancedPrompt = isNearbyQuery 
+      ? `${systemPrompt}\n\nThe user is asking about nearby places. If they ask about gas stations, restaurants, pharmacies, or other places, respond with: "NEARBY_SEARCH:[TYPE]" where TYPE is the place they're looking for (e.g., NEARBY_SEARCH:gas_station). Keep it in English.`
+      : systemPrompt;
     
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: systemPrompt
+          content: enhancedPrompt
         },
         {
           role: "user", 

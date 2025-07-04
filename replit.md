@@ -160,6 +160,9 @@ Changelog:
 - July 04, 2025. Fixed avatar greeting system to include both weather information and appearance compliment on user's first message
 - July 04, 2025. Integrated backend Google search for real weather data - now shows accurate Dubai weather (34°C, cloudy) instead of AI-generated data
 - July 04, 2025. Shortened weather message format to be more concise: "Dubai - 34°C, cloudy" instead of longer descriptions
+- July 04, 2025. Added info overlay component - blurred transparent card that shows nearby places (gas stations, restaurants, etc.) on the left side when users ask
+- July 04, 2025. Integrated OpenStreetMap Overpass API for finding nearby places without requiring Google Maps API key
+- July 04, 2025. Updated chat system to detect nearby place queries and trigger NEARBY_SEARCH command for backend processing
 
 ## User Preferences
 

@@ -1116,6 +1116,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to calculate distance between two coordinates
+  function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    return Math.round(distance * 1000); // Return in meters
+  }
+
+  app.post("/api/nearby-places", async (req, res) => {
+    try {
+      const { latitude, longitude, type, radius = 2000 } = req.body;
+      
+      if (!latitude || !longitude || !type) {
+        return res.status(400).json({ error: "Missing required parameters" });
+      }
+      
+      // Get location name first
+      const geoResponse = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`,
+        {
+          headers: {
+            'User-Agent': 'MedcorAI/1.0'
+          }
+        }
+      );
+      const geoData = await geoResponse.json();
+      const city = geoData.address?.city || geoData.address?.town || "your location";
+      
+      // Use Overpass API (OpenStreetMap) for finding nearby places
+      const searchQuery = type.toLowerCase();
+      let amenityType = "";
+      
+      // Map common searches to OSM amenity types
+      if (searchQuery.includes("gas") || searchQuery.includes("fuel") || searchQuery.includes("petrol")) {
+        amenityType = "fuel";
+      } else if (searchQuery.includes("restaurant") || searchQuery.includes("food")) {
+        amenityType = "restaurant";
+      } else if (searchQuery.includes("pharmacy") || searchQuery.includes("drug")) {
+        amenityType = "pharmacy";
+      } else if (searchQuery.includes("hospital")) {
+        amenityType = "hospital";
+      } else if (searchQuery.includes("bank") || searchQuery.includes("atm")) {
+        amenityType = "bank";
+      } else if (searchQuery.includes("supermarket") || searchQuery.includes("grocery")) {
+        amenityType = "supermarket";
+      } else {
+        amenityType = searchQuery;
+      }
+      
+      // Query Overpass API
+      const overpassQuery = `
+        [out:json][timeout:25];
+        node["amenity"="${amenityType}"](around:${radius},${latitude},${longitude});
+        out body;
+      `;
+      
+      const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `data=${encodeURIComponent(overpassQuery)}`
+      });
+      
+      if (!overpassResponse.ok) {
+        throw new Error('Failed to fetch places from Overpass API');
+      }
+      
+      const placesData = await overpassResponse.json();
+      const places = placesData.elements || [];
+      
+      // Format the response
+      const formattedPlaces = places.slice(0, 5).map((place: any) => ({
+        name: place.tags?.name || `${amenityType.charAt(0).toUpperCase() + amenityType.slice(1)}`,
+        address: place.tags?.['addr:street'] || `Near ${city}`,
+        distance: calculateDistance(latitude, longitude, place.lat, place.lon),
+        type: amenityType
+      }));
+      
+      // Sort by distance
+      formattedPlaces.sort((a: any, b: any) => a.distance - b.distance);
+      
+      res.json({
+        success: true,
+        places: formattedPlaces,
+        message: formattedPlaces.length > 0 
+          ? `Found ${formattedPlaces.length} ${type} near you.`
+          : `No ${type} found within ${radius/1000}km.`
+      });
+      
+    } catch (error) {
+      console.error("Nearby places search error:", error);
+      res.status(500).json({ 
+        error: "Failed to search nearby places",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
