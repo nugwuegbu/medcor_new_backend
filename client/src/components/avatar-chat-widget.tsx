@@ -5,7 +5,6 @@ import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
 import HeyGenSDKAvatar from "./heygen-sdk-avatar";
-import AppointmentCalendar from "./appointment-calendar";
 import ChatDoctorList from "./chat-doctor-list";
 import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
@@ -410,16 +409,24 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   ))}
                 </div>
                 
-                {/* Show Calendar or Doctor List based on selection */}
+                {/* Show Book page */}
                 {showCalendar && (
-                  <div className="mt-4">
-                    <AppointmentCalendar 
-                      isOpen={showCalendar}
-                      onClose={() => {
-                        setShowCalendar(false);
-                        setSelectedMenuItem(null);
-                      }}
-                    />
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => setShowCalendar(false)}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Empty Book Page */}
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        {/* Empty page content */}
+                      </div>
+                    </div>
                   </div>
                 )}
                 
@@ -619,21 +626,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         )}
       </div>
 
-      {/* Appointment Calendar Modal */}
-      <AppointmentCalendar
-        isOpen={showCalendar}
-        onClose={() => setShowCalendar(false)}
-        onAppointmentBooked={(appointment) => {
-          const confirmationMessage: Message = {
-            id: Date.now().toString(),
-            text: `Great! Your appointment has been confirmed for ${appointment.appointmentDate} at ${appointment.appointmentTime}. You will receive email and WhatsApp confirmations shortly.`,
-            sender: "bot",
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, confirmationMessage]);
-          setShowCalendar(false);
-        }}
-      />
+
     </div>
   );
 }

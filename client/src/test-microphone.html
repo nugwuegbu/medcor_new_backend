@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microphone Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e0f0e0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Microphone Test</h1>
+    <button id="startBtn">Start Recording</button>
+    <button id="stopBtn" disabled>Stop Recording</button>
+    <div id="status">Click "Start Recording" to test the microphone</div>
+    <div id="response" style="display:none"></div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        const response = document.getElementById('response');
+        
+        startBtn.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const reader = new FileReader();
+                    
+                    reader.onloadend = async () => {
+                        const base64Audio = reader.result.split(',')[1];
+                        status.textContent = 'Sending audio to server...';
+                        
+                        try {
+                            const res = await fetch('/api/speech-to-text', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ 
+                                    audio: base64Audio,
+                                    sessionId: 'test_' + Date.now()
+                                })
+                            });
+                            
+                            const data = await res.json();
+                            status.textContent = 'Response received!';
+                            response.style.display = 'block';
+                            response.textContent = JSON.stringify(data, null, 2);
+                        } catch (error) {
+                            status.textContent = 'Error: ' + error.message;
+                            response.style.display = 'block';
+                            response.textContent = error.stack;
+                        }
+                    };
+                    
+                    reader.readAsDataURL(audioBlob);
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                mediaRecorder.start();
+                status.textContent = 'Recording... Speak now!';
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } catch (error) {
+                status.textContent = 'Error: ' + error.message;
+            }
+        });
+        
+        stopBtn.addEventListener('click', () => {
+            if (mediaRecorder) {
+                mediaRecorder.stop();
+                status.textContent = 'Processing...';
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
