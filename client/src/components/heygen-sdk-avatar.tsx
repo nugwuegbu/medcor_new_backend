@@ -29,8 +29,12 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
         const checkStream = () => {
           const mediaStream = AvatarManager.getMediaStream();
           if (mediaStream && videoRef.current) {
+            console.log("Attaching media stream to video element:", mediaStream);
             videoRef.current.srcObject = mediaStream;
-            videoRef.current.play().catch(e => console.error("Video play error:", e));
+            videoRef.current.onloadedmetadata = () => {
+              console.log("Video metadata loaded");
+              videoRef.current!.play().catch(e => console.error("Video play error:", e));
+            };
             setConnectionStatus("connected");
             setIsLoading(false);
             
@@ -42,9 +46,25 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
           }
         };
 
-        // Check immediately and then periodically
+        // Check immediately and then periodically  
         checkStream();
         checkIntervalRef.current = setInterval(checkStream, 100);
+        
+        // Force check after avatar is ready
+        setTimeout(checkStream, 500);
+        setTimeout(checkStream, 1000);
+        setTimeout(checkStream, 1500);
+        
+        // Debug: Check avatar status after 2 seconds
+        setTimeout(() => {
+          const stream = AvatarManager.getMediaStream();
+          console.log("Avatar debug - Stream status:", {
+            hasStream: !!stream,
+            streamActive: stream?.active,
+            videoTracks: stream?.getVideoTracks().length,
+            audioTracks: stream?.getAudioTracks().length
+          });
+        }, 2000);
 
       } catch (error) {
         console.error("Failed to initialize avatar:", error);
@@ -85,6 +105,7 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
       <video
         ref={videoRef}
         className="w-full h-full object-cover"
+        style={{ minHeight: '100%', minWidth: '100%' }}
         autoPlay
         playsInline
         muted={false}

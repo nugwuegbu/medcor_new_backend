@@ -133,7 +133,10 @@ export class AvatarManager {
   }
 
   static getMediaStream(): MediaStream | null {
-    return globalAvatar?.mediaStream || null;
+    const manager = (window as any).__avatarManager;
+    const stream = manager.avatar?.mediaStream || null;
+    console.log("Getting media stream:", stream);
+    return stream;
   }
 
   static async cleanup() {
