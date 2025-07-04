@@ -349,8 +349,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let compliment = "";
       
-      // If this is the first user response after initial greeting, analyze their image
-      if (isFirstUserResponse && userImage) {
+      // Analyze user image whenever it's provided
+      if (userImage) {
         try {
           const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
           

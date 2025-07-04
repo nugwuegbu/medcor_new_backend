@@ -168,6 +168,8 @@ Changelog:
 - July 05, 2025. Removed static "Hello! How can I assist you today?" text that was permanently displayed on screen - greeting is now only spoken by avatar, not shown as text
 - July 05, 2025. Fixed nearby places search to use Medcor Clinic's location in Dubai Healthcare City instead of user's location for more relevant results
 - July 05, 2025. Memoized UserCameraView component with React.memo to prevent camera shaking when typing messages by avoiding unnecessary re-renders
+- July 05, 2025. Fixed photo capture to work every 2nd user message (message 1, 3, 5, etc.) with appearance compliments from GPT-4 Vision
+- July 05, 2025. Added useCallback hook for camera permission handler to ensure stable function reference and prevent child component re-renders
 
 ## User Preferences
 

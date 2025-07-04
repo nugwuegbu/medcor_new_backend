@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
@@ -153,14 +153,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   // Voice chat mutation
   const voiceChatMutation = useMutation({
     mutationFn: async (message: string) => {
-      // Check if this is the first user message after initial greeting
-      const isFirstUserMessage = messages.length === 0 || messages.length === 1;
+      // Count user messages to determine if we should capture photo
+      const userMessageCount = messages.filter(m => m.sender === "user").length;
       
       let userImage = null;
       
-      // Capture photo if this is the first message and camera is available
-      if (isFirstUserMessage && capturePhotoRef.current) {
-        console.log("Capturing user photo for first message");
+      // Capture photo every 2nd user message (0, 2, 4, 6, etc.)
+      if (userMessageCount % 2 === 0 && capturePhotoRef.current) {
+        console.log(`Capturing user photo for message #${userMessageCount + 1}`);
         userImage = capturePhotoRef.current();
       }
       
@@ -174,7 +174,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           sessionId,
           language: "en",
           userImage,
-          locationWeather: isFirstUserMessage ? locationWeather : null
+          locationWeather: userMessageCount === 0 ? locationWeather : null
         })
       });
       return await response.json();
@@ -285,7 +285,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     }
   };
 
-
+  // Memoized camera permission handler to prevent re-renders
+  const handleCameraPermissionRequest = useCallback(() => {
+    console.log("Camera permission requested");
+    setCameraEnabled(true);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -302,10 +306,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <UserCameraView 
             isEnabled={cameraEnabled}
-            onPermissionRequest={() => {
-              console.log("Camera permission requested");
-              setCameraEnabled(true);
-            }}
+            onPermissionRequest={handleCameraPermissionRequest}
             capturePhotoRef={capturePhotoRef}
           />
         </div>
