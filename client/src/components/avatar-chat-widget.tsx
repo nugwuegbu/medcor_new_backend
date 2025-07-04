@@ -439,45 +439,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         <div className="text-center">
                           {/* Doctor Avatar */}
                           <div className="w-32 h-32 rounded-full mx-auto mb-4 overflow-hidden bg-gray-200 relative">
-                            <svg className="w-full h-full" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                              {/* Background */}
-                              <rect width="120" height="120" fill="#e0e7ff" />
-                              
-                              {/* Professional headshot style */}
-                              {/* Hair - professional style */}
-                              <path d="M25 35 Q60 20 95 35 Q100 50 95 65 L95 70 Q80 75 60 75 Q40 75 25 70 L25 65 Q20 50 25 35" fill="#6b4423" />
-                              
-                              {/* Face shape */}
-                              <ellipse cx="60" cy="55" rx="22" ry="26" fill="#fdbcb4" />
-                              
-                              {/* Hair detail - side swept bangs */}
-                              <path d="M30 35 Q50 30 70 33 Q75 40 70 45" fill="#6b4423" />
-                              
-                              {/* Eyes */}
-                              <ellipse cx="50" cy="52" rx="3" ry="4" fill="#fff" />
-                              <ellipse cx="70" cy="52" rx="3" ry="4" fill="#fff" />
-                              <circle cx="50" cy="52" r="2" fill="#4a5568" />
-                              <circle cx="70" cy="52" r="2" fill="#4a5568" />
-                              
-                              {/* Eyebrows */}
-                              <path d="M45 47 Q50 45 55 47" stroke="#6b4423" strokeWidth="1.5" fill="none" />
-                              <path d="M65 47 Q70 45 75 47" stroke="#6b4423" strokeWidth="1.5" fill="none" />
-                              
-                              {/* Nose */}
-                              <path d="M60 55 L58 62 Q60 63 62 62 L60 55" fill="#f4a09c" />
-                              
-                              {/* Smile */}
-                              <path d="M52 67 Q60 71 68 67" stroke="#d69090" strokeWidth="1.5" fill="none" />
-                              
-                              {/* White coat collar */}
-                              <path d="M20 85 Q60 75 100 85 L100 120 L20 120 Z" fill="#fff" />
-                              <path d="M35 80 L45 85 L60 82 L75 85 L85 80 L85 90 Q60 95 35 90 Z" fill="#f0f0f0" />
-                              
-                              {/* Stethoscope */}
-                              <circle cx="60" cy="100" r="8" fill="none" stroke="#4a5568" strokeWidth="2" />
-                              <path d="M52 100 Q50 90 45 85" stroke="#4a5568" strokeWidth="2" fill="none" />
-                              <path d="M68 100 Q70 90 75 85" stroke="#4a5568" strokeWidth="2" fill="none" />
-                            </svg>
+                            <img 
+                              src="@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png"
+                              alt="Dr. Sarah Johnson"
+                              className="w-full h-full object-cover object-center"
+                            />
                           </div>
                           
                           {/* Doctor Information */}
