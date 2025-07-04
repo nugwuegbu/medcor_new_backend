@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { MessageCircle, Users, Calendar, Home, Menu } from "lucide-react";
+import { MessageCircle, Users, Calendar, Home, Menu, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -11,6 +11,7 @@ export default function Navbar() {
     { href: "/chat", label: "AI Assistant", icon: MessageCircle },
     { href: "/doctors", label: "Doctors", icon: Users },
     { href: "/appointments", label: "Appointments", icon: Calendar },
+    { href: "/settings", label: "Settings", icon: Settings },
   ];
 
   const NavLinks = ({ mobile = false }) => (
