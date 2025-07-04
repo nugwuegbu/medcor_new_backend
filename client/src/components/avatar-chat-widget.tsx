@@ -8,7 +8,7 @@ import AppointmentCalendar from './appointment-calendar';
 import ChatDoctorList from './chat-doctor-list';
 import UserCameraView from './user-camera-view';
 import AnimatedTextOverlay from './animated-text-overlay';
-import { generateChatResponse } from '../services/openai';
+// import { generateChatResponse } from '../services/openai';
 import { useMutation } from '@tanstack/react-query';
 import { interactiveDialogue } from '../services/interactive-dialogue';
 
@@ -430,7 +430,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         isVisible={voiceChatMutation.isPending}
       />
       
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
