@@ -243,14 +243,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     style={{ opacity }}
                   >
                     <div
-                      className={`inline-block max-w-[85%] px-4 py-2 rounded-xl ${
+                      className={`inline-block max-w-[85%] px-3 py-1.5 rounded-lg ${
                         message.sender === "user"
                           ? "bg-blue-100/90 text-gray-800"
                           : "bg-white/90 text-gray-800 shadow-sm"
                       }`}
                     >
-                      <p className="text-sm leading-relaxed">{message.text}</p>
-                      <p className="text-xs mt-1 opacity-60">
+                      <p className="text-xs leading-snug break-words">{message.text}</p>
+                      <p className="text-[10px] mt-0.5 opacity-60">
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>

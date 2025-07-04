@@ -10,34 +10,64 @@ import StreamingAvatar, {
 let globalAvatar: StreamingAvatar | null = null;
 let globalInitPromise: Promise<any> | null = null;
 let hasGreeted = false;
+let initializationLock = false;
+
+// Use window object to persist across React re-renders
+if (typeof window !== 'undefined') {
+  (window as any).__avatarManager = (window as any).__avatarManager || {
+    avatar: null,
+    promise: null,
+    hasGreeted: false,
+    lock: false
+  };
+}
 
 export class AvatarManager {
-  static async getOrCreateAvatar(apiKey: string) {
+  static async getOrCreateAvatar(apiKey: string): Promise<StreamingAvatar> {
+    const manager = (window as any).__avatarManager;
+    
     // If we already have an avatar, return it
-    if (globalAvatar) {
-      console.log("Returning existing avatar instance");
-      return globalAvatar;
+    if (manager.avatar) {
+      console.log("Returning existing avatar instance from window");
+      return manager.avatar;
     }
 
     // If initialization is in progress, wait for it
-    if (globalInitPromise) {
-      console.log("Waiting for existing initialization");
-      await globalInitPromise;
-      return globalAvatar;
+    if (manager.promise) {
+      console.log("Waiting for existing initialization from window");
+      try {
+        await manager.promise;
+        return manager.avatar;
+      } catch (e) {
+        console.error("Previous initialization failed:", e);
+        manager.promise = null;
+      }
     }
 
-    // Start new initialization
-    globalInitPromise = AvatarManager.createAvatar(apiKey);
+    // Prevent concurrent initialization
+    if (manager.lock) {
+      console.log("Initialization already locked, waiting...");
+      // Wait a bit and try again
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return AvatarManager.getOrCreateAvatar(apiKey);
+    }
+
+    // Lock and start new initialization
+    manager.lock = true;
+    manager.promise = AvatarManager.createAvatar(apiKey);
     
     try {
-      await globalInitPromise;
-      return globalAvatar;
+      await manager.promise;
+      return manager.avatar;
     } finally {
-      globalInitPromise = null;
+      manager.promise = null;
+      manager.lock = false;
     }
   }
 
   private static async createAvatar(apiKey: string) {
+    const manager = (window as any).__avatarManager;
+    
     console.log("Creating new avatar instance");
     
     const avatar = new StreamingAvatar({ token: apiKey });
@@ -55,11 +85,11 @@ export class AvatarManager {
       console.log("Stream ready");
       
       // Only greet once per session
-      if (!hasGreeted) {
-        hasGreeted = true;
+      if (!manager.hasGreeted) {
+        manager.hasGreeted = true;
         try {
           await avatar.speak({
-            text: "Hello there! How can I help you? I am Medcor AI assistant.",
+            text: "Hello! How can I help you?",
             taskType: TaskType.REPEAT,
             taskMode: TaskMode.SYNC
           });
@@ -82,13 +112,13 @@ export class AvatarManager {
     });
 
     console.log("Avatar session created:", sessionInfo.session_id);
-    globalAvatar = avatar;
+    manager.avatar = avatar;
     
     // Set global speak function
     (window as any).heygenSpeak = async (text: string) => {
-      if (globalAvatar) {
+      if (manager.avatar) {
         try {
-          await globalAvatar.speak({
+          await manager.avatar.speak({
             text,
             taskType: TaskType.REPEAT,
             taskMode: TaskMode.SYNC
