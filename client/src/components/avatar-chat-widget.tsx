@@ -28,16 +28,30 @@ interface AvatarChatWidgetProps {
   onClose: () => void;
 }
 
-// Simple language detection function
+// Enhanced language detection function
 function detectLanguageFromText(text: string): string {
   const turkishPatterns = /[ığüşöçĞÜŞÖÇİ]/;
-  const turkishWords = ['merhaba', 'nasıl', 'yardım', 'teşekkür', 'lütfen', 'evet', 'hayır'];
+  const turkishWords = [
+    'merhaba', 'nasıl', 'yardım', 'teşekkür', 'lütfen', 'evet', 'hayır',
+    'doktor', 'randevu', 'muayene', 'hasta', 'ağrı', 'ilaç', 'ne', 'ben',
+    'sen', 'biz', 'onlar', 'bu', 'şu', 'nerede', 'ne zaman', 'nasılsın',
+    'günaydın', 'iyi akşamlar', 'güle güle', 'hoşgeldin', 'sağlık',
+    'ameliyat', 'tedavi', 'reçete', 'hastane', 'klinik', 'var', 'yok'
+  ];
   const lowerText = text.toLowerCase();
   
+  // Check for Turkish characters or common Turkish words
   if (turkishPatterns.test(text) || turkishWords.some(word => lowerText.includes(word))) {
     return 'tr';
   }
   
+  // Check for Arabic patterns (basic detection)
+  const arabicPattern = /[\u0600-\u06FF]/;
+  if (arabicPattern.test(text)) {
+    return 'ar';
+  }
+  
+  // Default to English
   return 'en';
 }
 
@@ -172,7 +186,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         body: JSON.stringify({
           message,
           sessionId,
-          language: "en",
+          language: detectLanguageFromText(message),
           userImage,
           locationWeather: userMessageCount === 0 ? locationWeather : null
         })
@@ -593,12 +607,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     {/* Small Avatar Circle in Top Right */}
                     <div className="absolute top-[75px] right-[25px] z-50">
                       <div 
-                        className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
+                        className="w-24 h-24 rounded-full bg-black shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform"
                         onClick={() => setShowDoctorList(false)}
                       >
-                        <div className="relative">
-                          <MessageCircle className="h-10 w-10 text-white animate-pulse" />
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse ring-2 ring-white"></div>
+                        <div className="w-full h-full scale-150 translate-y-2">
+                          <HeyGenSDKAvatar 
+                            key="doctors-avatar-instance"
+                            apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+                            isVisible={true}
+                            onMessage={() => {}}
+                          />
                         </div>
                       </div>
                     </div>
@@ -692,14 +710,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <div 
             className="relative bg-purple-600/10 border border-purple-600 rounded-lg backdrop-blur-sm transition-all duration-300"
             style={{
-              maxHeight: '60px',
+              maxHeight: '120px',
               minHeight: '30px',
             }}
           >
             <div 
-              className="overflow-y-auto overflow-x-hidden px-3 py-1.5 space-y-1 scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-transparent"
+              className="overflow-y-auto overflow-x-hidden px-3 py-1.5 scrollbar-thin scrollbar-thumb-purple-300 scrollbar-track-transparent"
               style={{
-                maxHeight: '60px',
+                maxHeight: '120px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.classList.add('overflow-y-scroll');

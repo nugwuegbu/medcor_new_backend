@@ -67,14 +67,27 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
       if (event.error === 'no-speech') {
         console.log("No speech detected - continuing to listen");
         // Restart recognition to continue listening
-        recognition.start();
+        setTimeout(() => {
+          try {
+            recognition.start();
+          } catch (e) {
+            console.log("Recognition already started");
+          }
+        }, 100);
       } else if (event.error === 'not-allowed') {
         alert("Please allow microphone access to use voice input");
         setIsRecording(false);
       } else if (event.error === 'aborted') {
+        console.error("Speech recognition error:", event.error);
         // Restart if aborted (common when user pauses)
         if (isRecording) {
-          recognition.start();
+          setTimeout(() => {
+            try {
+              recognition.start();
+            } catch (e) {
+              console.log("Recognition already started");
+            }
+          }, 100);
         }
       } else {
         setIsRecording(false);
