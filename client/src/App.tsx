@@ -10,6 +10,7 @@ import Doctors from "@/pages/doctors";
 import Appointments from "@/pages/appointments";
 import SettingsPage from "@/pages/settings";
 import NotFound from "@/pages/not-found";
+import { useEffect } from "react";
 
 function Router() {
   return (
@@ -25,6 +26,28 @@ function Router() {
 }
 
 function App() {
+  // Request location permission immediately on app load
+  useEffect(() => {
+    // Request geolocation permission
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("Location permission granted:", position.coords);
+          // Store in localStorage for later use
+          localStorage.setItem('userLocation', JSON.stringify({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            timestamp: Date.now()
+          }));
+        },
+        (error) => {
+          console.log("Location permission denied or error:", error);
+        },
+        { enableHighAccuracy: true }
+      );
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
