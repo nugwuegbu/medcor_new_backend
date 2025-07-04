@@ -185,64 +185,57 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         const searchType = data.message.split("NEARBY_SEARCH:")[1].trim();
         
         // Make API call to get nearby places
-        if (userLocation) {
-          try {
-            const placesResponse = await fetch("/api/nearby-places", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                latitude: userLocation.latitude,
-                longitude: userLocation.longitude,
-                type: searchType,
-                radius: 2000 // 2km radius
-              })
-            });
+        // Use Medcor Clinic's location in Dubai Healthcare City
+        const clinicLocation = {
+          latitude: 25.1972, // Dubai Healthcare City coordinates
+          longitude: 55.3233
+        };
+        
+        try {
+          const placesResponse = await fetch("/api/nearby-places", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              latitude: clinicLocation.latitude,
+              longitude: clinicLocation.longitude,
+              type: searchType,
+              radius: 5000 // 5km radius
+            })
+          });
+          
+          if (placesResponse.ok) {
+            const placesData = await placesResponse.json();
             
-            if (placesResponse.ok) {
-              const placesData = await placesResponse.json();
-              
-              // Show info overlay with results
-              setInfoOverlayData({
-                title: `Nearby ${searchType}`,
-                places: placesData.places.map((place: any) => ({
-                  ...place,
-                  mapUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + " " + place.address)}`
-                }))
-              });
-              setShowInfoOverlay(true);
-              setIsMinimized(true);
-              
-              // Create a friendly message for the chat
-              const friendlyMessage = placesData.places.length > 0
-                ? `I found ${placesData.places.length} ${searchType} near you. Check the details on the left!`
-                : `I couldn't find any ${searchType} within 2km of your location.`;
-              
-              const botMessage: Message = {
-                id: `bot_${Date.now()}`,
-                text: friendlyMessage,
-                sender: "bot",
-                timestamp: new Date(),
-                avatarResponse: data.avatarResponse,
-                showDoctors: false
-              };
-              setMessages(prev => [...prev, botMessage]);
-            }
-          } catch (error) {
-            console.error("Error fetching nearby places:", error);
+            // Show info overlay with results
+            setInfoOverlayData({
+              title: `Nearby ${searchType}`,
+              places: placesData.places.map((place: any) => ({
+                ...place,
+                mapUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + " " + place.address)}`
+              }))
+            });
+            setShowInfoOverlay(true);
+            setIsMinimized(true);
+            
+            // Create a friendly message for the chat
+            const friendlyMessage = placesData.places.length > 0
+              ? `I found ${placesData.places.length} ${searchType} near our clinic. Check the details on the screen!`
+              : `I couldn't find any ${searchType} within 5km of our clinic.`;
+            
+            const botMessage: Message = {
+              id: `bot_${Date.now()}`,
+              text: friendlyMessage,
+              sender: "bot",
+              timestamp: new Date(),
+              avatarResponse: data.avatarResponse,
+              showDoctors: false
+            };
+            setMessages(prev => [...prev, botMessage]);
           }
-        } else {
-          // No location available
-          const botMessage: Message = {
-            id: `bot_${Date.now()}`,
-            text: "I need your location to find nearby places. Please enable location access.",
-            sender: "bot",
-            timestamp: new Date(),
-            avatarResponse: data.avatarResponse,
-            showDoctors: false
-          };
-          setMessages(prev => [...prev, botMessage]);
+        } catch (error) {
+          console.error("Error fetching nearby places:", error);
         }
       } else {
         // Normal response
@@ -332,7 +325,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         <div 
           className={`absolute transition-all duration-700 ease-in-out ${
             isMinimized 
-              ? 'bottom-4 right-4 w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 cursor-pointer hover:scale-110' 
+              ? 'top-20 right-4 w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 cursor-pointer hover:scale-110' 
               : 'inset-0'
           }`}
           onClick={() => {
@@ -379,12 +372,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           </div>
                           <span className="text-sm text-gray-500">{place.distance}</span>
                         </div>
-                        {place.link && (
-                          <a href={place.link} target="_blank" rel="noopener noreferrer" 
-                             className="text-blue-600 hover:underline text-sm mt-2 inline-block">
-                            View on map →
-                          </a>
-                        )}
+                        <a 
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + ' ' + place.address)}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-blue-600 hover:underline text-sm mt-2 inline-block">
+                          View on Google Maps →
+                        </a>
                       </div>
                     ))}
                   </div>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { Camera, CameraOff } from 'lucide-react';
 import { interactiveDialogue } from '../services/interactive-dialogue';
 
@@ -8,7 +8,7 @@ interface UserCameraViewProps {
   capturePhotoRef?: React.MutableRefObject<(() => string | null) | null>;
 }
 
-export default function UserCameraView({ isEnabled, onPermissionRequest, capturePhotoRef }: UserCameraViewProps) {
+const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef }: UserCameraViewProps) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [cameraError, setCameraError] = useState(false);
@@ -179,4 +179,8 @@ export default function UserCameraView({ isEnabled, onPermissionRequest, capture
       )}
     </div>
   );
-}
+});
+
+UserCameraView.displayName = 'UserCameraView';
+
+export default UserCameraView;

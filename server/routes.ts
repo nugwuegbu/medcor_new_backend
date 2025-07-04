@@ -1131,7 +1131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/nearby-places", async (req, res) => {
     try {
-      const { latitude, longitude, type, radius = 2000 } = req.body;
+      const { latitude, longitude, type, radius = 5000 } = req.body;
       
       if (!latitude || !longitude || !type) {
         return res.status(400).json({ error: "Missing required parameters" });
