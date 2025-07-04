@@ -529,14 +529,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`AI response: ${aiResponse}`);
       }
       
-      // Check if user is asking about doctors or if AI response includes doctor search
-      const askingAboutDoctors = aiResponse.includes('DOCTOR_SEARCH:') ||
-                                  message.toLowerCase().includes('doctor') || 
-                                  message.toLowerCase().includes('doktor') ||
-                                  message.toLowerCase().includes('appointment') ||
-                                  message.toLowerCase().includes('randevu') ||
-                                  message.toLowerCase().includes('book') ||
-                                  message.toLowerCase().includes('specialist');
+      // Check if AI response includes special commands
+      const askingAboutDoctors = aiResponse.includes('DOCTOR_SEARCH:');
+      const openChatInterface = aiResponse.includes('OPEN_CHAT_INTERFACE:');
       
       // Generate avatar response using HeyGen
       let avatarResponse;
@@ -599,7 +594,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         avatarResponse,
         sessionId,
         success: true,
-        showDoctors: askingAboutDoctors
+        showDoctors: askingAboutDoctors,
+        openChatInterface: openChatInterface
       });
     } catch (error) {
       console.error("Voice chat error:", error);

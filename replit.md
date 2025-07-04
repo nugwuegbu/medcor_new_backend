@@ -202,6 +202,8 @@ Changelog:
 - July 05, 2025. Implemented comprehensive face recognition login system with OAuth integration (Google, Apple, Facebook)
 - July 05, 2025. Added phone number collection during first login for appointment reminders
 - July 05, 2025. Created secure authentication flow: OAuth login → Phone collection → Face registration → Face recognition login
+- July 05, 2025. Modified doctor search behavior - now automatically opens chat interface (lightbulb menu) instead of showing inline results
+- July 05, 2025. Removed website's doctors page from navigation to prevent confusion - all doctor queries now handled through chat interface
 
 ## User Preferences
 

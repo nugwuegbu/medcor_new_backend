@@ -113,7 +113,7 @@ export async function generateChatResponse(message: string, language: string = "
     if (isNearbyQuery) {
       enhancedPrompt = `${systemPrompt}\n\nThe user is asking about nearby places. If they ask about gas stations, restaurants, pharmacies, or other places, respond with: "NEARBY_SEARCH:[TYPE]" where TYPE is the place they're looking for (e.g., NEARBY_SEARCH:gas_station). Keep it in English.`;
     } else if (isDoctorQuery) {
-      enhancedPrompt = `${systemPrompt}\n\nThe user is asking about available doctors or appointments. Respond with: "DOCTOR_SEARCH:AVAILABLE" to show available doctors. Keep your response short and mention you'll show available doctors.`;
+      enhancedPrompt = `${systemPrompt}\n\nThe user is asking about available doctors or appointments. Respond with: "OPEN_CHAT_INTERFACE:DOCTORS" followed by a short message like "Let me show you our available doctors." Keep it very brief.`;
     }
     
     const response = await openai.chat.completions.create({

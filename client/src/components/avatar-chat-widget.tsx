@@ -241,6 +241,32 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         } catch (error) {
           console.error("Error fetching nearby places:", error);
         }
+      } else if (data.message.includes("OPEN_CHAT_INTERFACE:")) {
+        console.log("OPEN_CHAT_INTERFACE detected:", data.message);
+        const interfaceType = data.message.split("OPEN_CHAT_INTERFACE:")[1].split(" ")[0].trim();
+        console.log("Interface type:", interfaceType);
+        
+        // Clean the message to remove the command
+        const cleanMessage = data.message.replace(/OPEN_CHAT_INTERFACE:\w+\s*/, "");
+        
+        const botMessage: Message = {
+          id: `bot_${Date.now()}`,
+          text: cleanMessage,
+          sender: "bot",
+          timestamp: new Date(),
+          avatarResponse: data.avatarResponse,
+          showDoctors: false
+        };
+        setMessages(prev => [...prev, botMessage]);
+        
+        // Open the chat interface and navigate to doctors
+        if (interfaceType === "DOCTORS") {
+          setShowChatInterface(true);
+          setTimeout(() => {
+            setShowDoctorList(true);
+            setSelectedMenuItem("doctors");
+          }, 300); // Small delay to ensure animation
+        }
       } else {
         // Normal response
         const botMessage: Message = {
@@ -249,7 +275,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           sender: "bot",
           timestamp: new Date(),
           avatarResponse: data.avatarResponse,
-          showDoctors: data.showDoctors
+          showDoctors: false // Never show inline doctors
         };
         setMessages(prev => [...prev, botMessage]);
       }
@@ -680,13 +706,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
-                    {message.showDoctors && message.sender === "bot" && (
-                      <div className="mt-2 inline-block max-w-[85%]">
-                        <ChatDoctorList onSelectDoctor={(doctor) => {
-                          handleSendMessage(`I want to book an appointment with Dr. ${doctor.name}`);
-                        }} />
-                      </div>
-                    )}
+
                   </div>
                 );
               })}

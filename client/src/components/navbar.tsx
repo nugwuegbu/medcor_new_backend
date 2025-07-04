@@ -9,7 +9,6 @@ export default function Navbar() {
   const navItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/chat", label: "AI Assistant", icon: MessageCircle },
-    { href: "/doctors", label: "Doctors", icon: Users },
     { href: "/appointments", label: "Appointments", icon: Calendar },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
