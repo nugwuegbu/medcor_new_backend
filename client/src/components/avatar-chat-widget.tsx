@@ -31,6 +31,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [currentSpeechText, setCurrentSpeechText] = useState("");
   const [showCalendar, setShowCalendar] = useState(false);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
+  const [showChatInterface, setShowChatInterface] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -205,8 +206,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
       {/* Full Screen Avatar Background with Message Overlay */}
       <div className="flex-1 relative">
-        {/* Avatar Background - Always Visible */}
-        <div className="absolute inset-0">
+        {/* Avatar Background - Always Active but Hidden when Chat Interface is shown */}
+        <div className={`absolute inset-0 ${showChatInterface ? 'invisible' : 'visible'}`}>
           {isOpen && (
             <HeyGenSDKAvatar 
               key="single-avatar-instance"
@@ -219,8 +220,62 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           )}
         </div>
         
+        {/* Chat Interface View */}
+        {showChatInterface && (
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-blue-50 z-40">
+            {/* Back Button */}
+            <button
+              onClick={() => setShowChatInterface(false)}
+              className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow"
+            >
+              <ChevronLeft className="h-6 w-6 text-purple-600" />
+            </button>
+            
+            {/* Chat Interface Content */}
+            <div className="h-full flex flex-col items-center justify-center p-8">
+              <div className="max-w-md w-full space-y-6">
+                <h2 className="text-2xl font-bold text-center text-gray-800">Advanced Chat Mode</h2>
+                <p className="text-center text-gray-600">Microphone is still active. Speak or type to continue.</p>
+                
+                {/* Visual indicator that mic is active */}
+                {isRecording && (
+                  <div className="flex justify-center">
+                    <div className="relative">
+                      <div className="w-20 h-20 bg-red-500 rounded-full animate-pulse flex items-center justify-center">
+                        <Mic className="h-10 w-10 text-white" />
+                      </div>
+                      <div className="absolute inset-0 bg-red-400 rounded-full animate-ping"></div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Recent messages in chat mode */}
+                <div className="bg-white rounded-lg shadow-md p-4 max-h-64 overflow-y-auto">
+                  {messages.slice(-3).map(message => (
+                    <div key={message.id} className={`mb-2 ${message.sender === "user" ? "text-right" : "text-left"}`}>
+                      <span className={`text-sm ${message.sender === "user" ? "text-blue-600" : "text-gray-700"}`}>
+                        {message.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Quick actions */}
+                <div className="grid grid-cols-2 gap-4">
+                  <button className="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                    Book Appointment
+                  </button>
+                  <button className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    View Doctors
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Animated Button on Chest Area */}
-        <div className="absolute left-1/2 top-[68%] transform -translate-x-1/2 -translate-y-1/2 z-30">
+        <div className={`absolute left-1/2 top-[68%] transform -translate-x-1/2 -translate-y-1/2 z-30 ${showChatInterface ? 'hidden' : ''}`}>
           <button
             className="relative w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-110 animate-float"
             onMouseEnter={(e) => {
@@ -230,8 +285,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               e.currentTarget.style.transform = 'translate(0, 0) scale(1)';
             }}
             onClick={() => {
-              // Add any action you want here
-              console.log("Animated button clicked!");
+              setShowChatInterface(true);
             }}
           >
             <div className="absolute inset-0 rounded-full bg-white opacity-25 animate-ping"></div>
