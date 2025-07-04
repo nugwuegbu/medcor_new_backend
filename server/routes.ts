@@ -6,6 +6,7 @@ import { generateChatResponse } from "./services/openai";
 import { heygenService } from "./services/heygen";
 // Streaming service temporarily disabled due to module issues
 import { faceRecognitionAgent } from "./agents/face-recognition-agent";
+import OpenAI from "openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all doctors
@@ -209,6 +210,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Speech to Text
+  app.post("/api/speech-to-text", async (req, res) => {
+    try {
+      const { audio } = req.body;
+      
+      if (!audio) {
+        return res.status(400).json({ error: "No audio data provided" });
+      }
+
+      // Convert base64 to buffer
+      const audioBuffer = Buffer.from(audio, 'base64');
+      
+      // Create a temporary file for the audio
+      const tempFile = `/tmp/audio_${Date.now()}.wav`;
+      const fs = require('fs');
+      fs.writeFileSync(tempFile, audioBuffer);
+
+      // Use OpenAI Whisper API for speech-to-text
+      const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const transcription = await openaiClient.audio.transcriptions.create({
+        file: fs.createReadStream(tempFile),
+        model: "whisper-1",
+      });
+
+      // Clean up temp file
+      fs.unlinkSync(tempFile);
+
+      res.json({ text: transcription.text });
+    } catch (error) {
+      console.error("Speech-to-text error:", error);
+      res.status(500).json({ 
+        error: "Failed to process speech",
+        text: "Sorry, I couldn't understand that" 
+      });
+    }
+  });
+
   // Language detection from audio
   app.post("/api/language/detect", async (req, res) => {
     try {
@@ -337,11 +375,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                   message.toLowerCase().includes('specialist');
       
       // Generate avatar response using HeyGen
-      const avatarResponse = await heygenService.generateAvatarResponse({
-        text: aiResponse,
-        sessionId,
-        language
-      });
+      let avatarResponse;
+      try {
+        // Try creating a direct streaming session
+        const streamingResponse = await fetch("https://api.heygen.com/v1/streaming.new", {
+          method: "POST",
+          headers: {
+            "x-api-key": process.env.HEYGEN_API_KEY || "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg==",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            quality: "high",
+            avatar_name: "anna_public_3_20240108",
+            voice: {
+              voice_id: "1bd001e7e50f421d891986aad5158bc8"
+            }
+          })
+        });
+
+        if (streamingResponse.ok) {
+          const data = await streamingResponse.json();
+          console.log("Direct HeyGen response:", data);
+          avatarResponse = {
+            text: aiResponse,
+            sessionId,
+            sessionData: data.data
+          };
+        } else {
+          console.error("HeyGen direct API error:", await streamingResponse.text());
+          avatarResponse = await heygenService.generateAvatarResponse({
+            text: aiResponse,
+            sessionId,
+            language
+          });
+        }
+      } catch (error) {
+        console.error("HeyGen streaming error:", error);
+        avatarResponse = await heygenService.generateAvatarResponse({
+          text: aiResponse,
+          sessionId,
+          language
+        });
+      }
       
       console.log(`Avatar response generated:`, avatarResponse);
 

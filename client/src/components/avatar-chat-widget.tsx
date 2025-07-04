@@ -4,6 +4,7 @@ import { Mic, MicOff, Send, X, MessageSquare } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
+import HeyGenSDKAvatar from "./heygen-sdk-avatar";
 import AppointmentCalendar from "./appointment-calendar";
 import ChatDoctorList from "./chat-doctor-list";
 
@@ -73,6 +74,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         showDoctors: data.showDoctors
       };
       setMessages(prev => [...prev, botMessage]);
+      
+      // Make the HeyGen avatar speak the response
+      if ((window as any).heygenSpeak) {
+        (window as any).heygenSpeak(data.message);
+      }
     }
   });
 
@@ -113,17 +119,35 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
         
-        // For demo purposes, convert to text placeholder
-        const mockTranscription = "Hello, I would like to schedule an appointment";
-        setCurrentSpeechText(mockTranscription);
+        // Convert audio to base64
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Audio = reader.result?.toString().split(',')[1];
+          
+          if (base64Audio) {
+            try {
+              // Send to backend for speech-to-text
+              const response = await fetch('/api/speech-to-text', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ audio: base64Audio })
+              });
+              
+              const data = await response.json();
+              const transcription = data.text || "Sorry, I couldn't understand that";
+              
+              setCurrentSpeechText(transcription);
+              handleSendMessage(transcription);
+            } catch (error) {
+              console.error("Speech-to-text error:", error);
+              setCurrentSpeechText("Error processing speech");
+            }
+          }
+        };
         
-        // Check if it's an appointment request
-        if (mockTranscription.toLowerCase().includes("appointment") || mockTranscription.toLowerCase().includes("book")) {
-          setShowCalendar(true);
-        }
-        
-        handleSendMessage(mockTranscription);
-        
+        reader.readAsDataURL(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -165,19 +189,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       <div className="flex-1 relative">
         {/* Avatar Background - Always Visible */}
         <div className="absolute inset-0">
-          {messages[messages.length - 1]?.avatarResponse?.sessionData ? (
-            <HeyGenWebRTCAvatar 
-              sessionData={messages[messages.length - 1]?.avatarResponse?.sessionData}
-              isLoading={voiceChatMutation.isPending}
-            />
-          ) : (
-            <HeyGenAvatar 
-              avatarResponse={messages[messages.length - 1]?.avatarResponse}
-              isLoading={voiceChatMutation.isPending}
-              userSpeechText={currentSpeechText}
-              isUserSpeaking={isRecording}
-            />
-          )}
+          <HeyGenSDKAvatar 
+            apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+            isVisible={true}
+            onMessage={(text) => {
+              console.log("Avatar message:", text);
+            }}
+          />
         </div>
         
         {/* Messages Overlay */}

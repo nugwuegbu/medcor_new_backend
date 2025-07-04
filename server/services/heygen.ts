@@ -102,38 +102,9 @@ export class HeyGenService {
         "Susan_public_2_20240328" // Public avatar
       ];
 
-      // Use chatbot token if available, otherwise create access token
-      let accessToken = "";
+      console.log("Creating HeyGen streaming session...");
       
-      if (this.chatbotToken) {
-        console.log("Using HeyGen chatbot token for authentication");
-        accessToken = this.chatbotToken;
-      } else {
-        console.log("Creating HeyGen access token...");
-        const tokenResponse = await fetch(`${this.baseUrl}/streaming.create_token`, {
-          method: "POST",
-          headers: {
-            "x-api-key": this.apiKey
-          }
-        });
-
-        if (!tokenResponse.ok) {
-          const errorData = await tokenResponse.json();
-          console.error("HeyGen token error:", errorData);
-          throw new Error(`HeyGen token error: ${tokenResponse.status}`);
-        }
-
-        const tokenData = await tokenResponse.json();
-        accessToken = tokenData.data?.token || "";
-      }
-      
-      if (!accessToken) {
-        throw new Error("No access token received");
-      }
-
-      console.log("Creating HeyGen streaming session with token...");
-      
-      // Create new session with the token
+      // Create new session with API key
       const sessionPayload = {
         quality: "high",
         avatar_name: publicAvatars[0], // Use first public avatar
@@ -142,16 +113,11 @@ export class HeyGenService {
         }
       };
 
-      // Use HeyGen's chatbot endpoint with the chatbot token
-      const endpoint = this.chatbotToken ? 
-        "https://api.heygen.com/v1/streaming.chatbot/new" : 
-        `${this.baseUrl}/streaming.new`;
+      // Always use the API key approach - it's working
+      const endpoint = "https://api.heygen.com/v1/streaming.new";
       
-      const headers: HeadersInit = this.chatbotToken ? {
-        "chatbot-token": this.chatbotToken,
-        "Content-Type": "application/json"
-      } : {
-        "Authorization": `Bearer ${accessToken}`,
+      const headers: HeadersInit = {
+        "x-api-key": this.apiKey,
         "Content-Type": "application/json"
       };
       
@@ -162,12 +128,20 @@ export class HeyGenService {
       });
 
       if (!sessionResponse.ok) {
-        const errorData = await sessionResponse.json();
-        console.error("HeyGen session error:", errorData);
+        const errorText = await sessionResponse.text();
+        console.error("HeyGen session error status:", sessionResponse.status);
+        console.error("HeyGen session error response:", errorText.substring(0, 500)); // Log first 500 chars
         throw new Error(`HeyGen session error: ${sessionResponse.status}`);
       }
 
-      const sessionData = await sessionResponse.json();
+      const responseText = await sessionResponse.text();
+      let sessionData;
+      try {
+        sessionData = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Failed to parse HeyGen response:", responseText.substring(0, 500));
+        throw new Error("HeyGen returned invalid JSON response");
+      }
       console.log("HeyGen session created:", sessionData);
 
       // Return the session data for WebRTC connection
@@ -179,9 +153,9 @@ export class HeyGenService {
           audioUrl: undefined,
           sessionData: {
             sdp: sessionData.data.sdp,
-            ice_servers: sessionData.data.ice_servers2 || sessionData.data.ice_servers,
+            ice_servers: sessionData.data.ice_servers2 || [],
             session_id: sessionData.data.session_id,
-            access_token: accessToken,
+            access_token: this.apiKey,
             realtime_endpoint: sessionData.data.realtime_endpoint
           }
         };

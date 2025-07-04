@@ -7,6 +7,7 @@ interface HeyGenWebRTCAvatarProps {
     ice_servers?: any[];
     session_id?: string;
     access_token?: string;
+    realtime_endpoint?: string;
   };
   isLoading?: boolean;
 }
@@ -50,8 +51,39 @@ export default function HeyGenWebRTCAvatar({ sessionData, isLoading }: HeyGenWeb
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
-        // In a real implementation, you would send this answer back to HeyGen
-        console.log("WebRTC answer created:", answer);
+        // Connect to HeyGen WebSocket and send answer
+        if (sessionData.realtime_endpoint) {
+          const ws = new WebSocket(sessionData.realtime_endpoint);
+          
+          ws.onopen = () => {
+            console.log("Connected to HeyGen WebSocket");
+            // Send the answer to HeyGen
+            ws.send(JSON.stringify({
+              type: "answer",
+              data: {
+                sdp: answer.sdp,
+                type: "answer"
+              }
+            }));
+          };
+
+          ws.onmessage = (event) => {
+            console.log("HeyGen message:", event.data);
+            try {
+              const message = JSON.parse(event.data);
+              // Handle ICE candidates and other messages from HeyGen
+              if (message.type === "ice-candidate" && message.candidate) {
+                pc.addIceCandidate(message.candidate);
+              }
+            } catch (e) {
+              console.error("Failed to parse HeyGen message:", e);
+            }
+          };
+
+          ws.onerror = (error) => {
+            console.error("HeyGen WebSocket error:", error);
+          };
+        }
 
         // Handle connection state changes
         pc.onconnectionstatechange = () => {
