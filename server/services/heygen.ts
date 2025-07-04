@@ -73,15 +73,18 @@ const AVATAR_CONFIGS: Record<string, HeyGenAvatarConfig> = {
 
 export class HeyGenService {
   private apiKey: string;
+  private chatbotToken: string;
   private baseUrl: string;
 
   constructor() {
     // Use the working API key
     this.apiKey = process.env.HEYGEN_API_KEY || "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg==";
+    // Use the provided chatbot token
+    this.chatbotToken = "bWVkY29yaG9zcGl0YWw6MTc1MTY0MDI5MjoyODZmMzRhY2UxNmZiOTc5Mzc4M2YxNjc4MDk4YzNjNGEzOGM2ZWM2NDZkMGQyYTNhZDcwNGY1ZDUxMGIwMDcy";
     this.baseUrl = "https://api.heygen.com/v1";
     
-    if (!this.apiKey) {
-      console.warn("HeyGen API key not configured. Avatar features will be limited.");
+    if (!this.apiKey && !this.chatbotToken) {
+      console.warn("Neither HeyGen API key nor chatbot token configured. Avatar features will be limited.");
     }
   }
 
@@ -99,23 +102,30 @@ export class HeyGenService {
         "Susan_public_2_20240328" // Public avatar
       ];
 
-      // Create access token first
-      console.log("Creating HeyGen access token...");
-      const tokenResponse = await fetch(`${this.baseUrl}/streaming.create_token`, {
-        method: "POST",
-        headers: {
-          "x-api-key": this.apiKey
+      // Use chatbot token if available, otherwise create access token
+      let accessToken = "";
+      
+      if (this.chatbotToken) {
+        console.log("Using HeyGen chatbot token for authentication");
+        accessToken = this.chatbotToken;
+      } else {
+        console.log("Creating HeyGen access token...");
+        const tokenResponse = await fetch(`${this.baseUrl}/streaming.create_token`, {
+          method: "POST",
+          headers: {
+            "x-api-key": this.apiKey
+          }
+        });
+
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.json();
+          console.error("HeyGen token error:", errorData);
+          throw new Error(`HeyGen token error: ${tokenResponse.status}`);
         }
-      });
 
-      if (!tokenResponse.ok) {
-        const errorData = await tokenResponse.json();
-        console.error("HeyGen token error:", errorData);
-        throw new Error(`HeyGen token error: ${tokenResponse.status}`);
+        const tokenData = await tokenResponse.json();
+        accessToken = tokenData.data?.token || "";
       }
-
-      const tokenData = await tokenResponse.json();
-      const accessToken = tokenData.data?.token;
       
       if (!accessToken) {
         throw new Error("No access token received");
