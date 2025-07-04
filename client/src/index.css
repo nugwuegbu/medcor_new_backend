@@ -2,46 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Static Avatar Animation Keyframes */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-  }
-  50% {
-    transform: translateY(-10px) scale(1.02);
-  }
-}
-
-@keyframes blink {
-  0%, 90%, 100% {
-    transform: scaleY(1);
-  }
-  95% {
-    transform: scaleY(0.1);
-  }
-}
-
-@keyframes talk {
-  0%, 100% {
-    height: 8px;
-  }
-  50% {
-    height: 12px;
-  }
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-blink {
-  animation: blink 4s ease-in-out infinite;
-}
-
-.animate-talk {
-  animation: talk 0.8s ease-in-out infinite;
-}
-
 /* Custom scrollbar for chat messages */
 @layer utilities {
   .scrollbar-thin::-webkit-scrollbar {
