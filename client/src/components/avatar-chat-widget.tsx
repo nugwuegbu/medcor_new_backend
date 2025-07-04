@@ -49,6 +49,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showDoctorList, setShowDoctorList] = useState(false);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [cameraPermissionRequested, setCameraPermissionRequested] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -83,8 +84,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       
       // Request location permission when chat opens
       requestLocationAndWeather();
+      
+      // Auto-enable camera after a short delay
+      setTimeout(() => {
+        if (!cameraPermissionRequested) {
+          console.log("Auto-enabling camera for photo capture");
+          setCameraEnabled(true);
+          setCameraPermissionRequested(true);
+        }
+      }, 2000);
     }
-  }, [isOpen]);
+  }, [isOpen, cameraPermissionRequested]);
   
   // Request location and get weather
   const requestLocationAndWeather = async () => {

@@ -53,7 +53,12 @@ export default function UserCameraView({ isEnabled, onPermissionRequest, capture
 
   useEffect(() => {
     if (isEnabled && hasPermission) {
+      console.log("Camera conditions met - starting camera");
       startCamera();
+    } else if (isEnabled && !hasPermission) {
+      console.log("Camera enabled but no permission yet - requesting");
+      setHasPermission(true);
+      onPermissionRequest?.();
     } else {
       stopCamera();
     }
@@ -61,7 +66,7 @@ export default function UserCameraView({ isEnabled, onPermissionRequest, capture
     return () => {
       stopCamera();
     };
-  }, [isEnabled, hasPermission]);
+  }, [isEnabled, hasPermission, onPermissionRequest]);
 
   const startCamera = async () => {
     try {
