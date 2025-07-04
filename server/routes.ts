@@ -890,14 +890,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messages: [
           {
             role: "system",
-            content: "Provide 1 sentence describing the person and 1 sentence greeting. Be brief and friendly."
+            content: "You are a kind AI that notices nice details about people. Give 2 brief compliments about specific things you see (clothing, style, facial features, accessories). Be genuine and warm. Example: 'I love your stylish black jacket! Your warm smile really brightens the room.'"
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Describe this person briefly and greet them."
+                text: "Notice something nice about their appearance (clothing, hairstyle, facial features, accessories) and give a specific compliment."
               },
               {
                 type: "image_url",

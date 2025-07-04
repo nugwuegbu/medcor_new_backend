@@ -127,16 +127,19 @@ export class InteractiveDialogueService {
         if (weatherResponse.ok) {
           const weatherData = await weatherResponse.json();
           
-          // Speak weather info
+          // Speak weather info followed by personalized compliment
+          const combinedMessage = `${weatherData.message} By the way, ${analysis.description}`;
+          
           await avatar.speak({
-            text: weatherData.message,
+            text: combinedMessage,
             taskType: TaskType.REPEAT,
             taskMode: TaskMode.SYNC
           });
         }
       } else {
+        // If no location, still give the compliment
         await avatar.speak({
-          text: "No problem! How can I assist you today?",
+          text: `No problem! ${analysis.description} How can I assist you today?`,
           taskType: TaskType.REPEAT,
           taskMode: TaskMode.SYNC
         });
