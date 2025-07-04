@@ -153,6 +153,7 @@ Changelog:
 - July 04, 2025. Added user camera view on avatar's chest with hover-to-expand functionality and permission-based activation
 - July 04, 2025. Fixed microphone functionality with proper cross-browser support including Safari AudioContext handling
 - July 04, 2025. Working on Turkish voice support for HeyGen avatar - currently investigating proper voice ID configuration
+- July 04, 2025. Discovered HeyGen Streaming Avatar API limitation - Turkish voices not supported for streaming avatars. Avatar works with default voice but pronounces Turkish text with English phonetics
 
 ## User Preferences
 

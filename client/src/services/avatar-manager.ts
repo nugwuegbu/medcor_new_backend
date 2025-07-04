@@ -86,15 +86,10 @@ export class AvatarManager {
       // Avatar is ready, no automatic greeting
     });
 
-    // Start the avatar with Turkish language and voice
+    // Start the avatar with default settings
     const sessionInfo = await avatar.createStartAvatar({
       quality: AvatarQuality.High,
       avatarName: "Ann_Doctor_Standing2_public",
-      language: "tr", // Set Turkish language
-      voice: {
-        voiceId: "d61a2c54f4b4401d87777a218b2d2ae4", // Fatma - Turkish female voice
-        rate: 1.0
-      },
       disableIdleTimeout: true
     });
 
