@@ -203,11 +203,23 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   return (
     <div className="fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-10">
-        <div className="flex items-center gap-3">
-          <MessageSquare className="h-5 w-5 text-gray-600" />
-          <span className="text-gray-700 font-medium">AI Assistant</span>
+      <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-gray-600" />
+          <span className="text-gray-700 text-sm">AI Assistant</span>
         </div>
+        
+        {/* User Camera View in center */}
+        <div className="absolute left-1/2 transform -translate-x-1/2">
+          <UserCameraView 
+            isEnabled={cameraEnabled}
+            onPermissionRequest={() => {
+              console.log("Camera permission requested");
+              setCameraEnabled(true);
+            }}
+          />
+        </div>
+        
         <div className="flex items-center gap-3">
           <span className="text-purple-600 font-bold text-lg">medcor</span>
           <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
@@ -229,15 +241,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 isVisible={true}
                 onMessage={(text) => {
                   console.log("Avatar message:", text);
-                }}
-              />
-              
-              {/* User Camera View - positioned on avatar's chest */}
-              <UserCameraView 
-                isEnabled={cameraEnabled}
-                onPermissionRequest={() => {
-                  console.log("Camera permission requested");
-                  setCameraEnabled(true);
                 }}
               />
             </>

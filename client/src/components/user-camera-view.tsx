@@ -60,15 +60,19 @@ export default function UserCameraView({ isEnabled, onPermissionRequest }: UserC
     if (!hasPermission) {
       setHasPermission(true);
       onPermissionRequest?.();
+    } else {
+      // Toggle camera off
+      setHasPermission(false);
+      stopCamera();
     }
   };
 
   return (
     <div 
       className={`
-        absolute left-1/2 top-[75%] transform -translate-x-1/2
-        transition-all duration-300 ease-in-out z-20
-        ${isHovered ? 'w-32 h-32' : 'w-16 h-16'}
+        relative
+        transition-all duration-300 ease-in-out
+        ${isHovered ? 'w-12 h-12' : 'w-8 h-8'}
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -84,10 +88,13 @@ export default function UserCameraView({ isEnabled, onPermissionRequest }: UserC
             ${isHovered ? 'scale-110' : ''}
           `}
         >
-          <Camera className={`text-white ${isHovered ? 'h-8 w-8' : 'h-6 w-6'}`} />
+          <Camera className={`text-white ${isHovered ? 'h-5 w-5' : 'h-4 w-4'}`} />
         </button>
       ) : (
-        <div className="relative w-full h-full">
+        <button
+          onClick={handleCameraClick}
+          className="relative w-full h-full cursor-pointer group"
+        >
           <video
             ref={videoRef}
             autoPlay
@@ -106,16 +113,21 @@ export default function UserCameraView({ isEnabled, onPermissionRequest }: UserC
             </div>
           )}
           
+          {/* Click to close overlay */}
+          <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+            <CameraOff className="text-white h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+          
           {/* Decorative ring */}
           <div className="absolute inset-0 rounded-full ring-2 ring-purple-500/50 ring-offset-2 ring-offset-transparent pointer-events-none" />
-        </div>
+        </button>
       )}
       
       {/* Tooltip */}
-      {isHovered && !hasPermission && (
+      {isHovered && (
         <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
           <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg">
-            Click to enable camera
+            {hasPermission ? 'Click to close camera' : 'Click to enable camera'}
           </div>
         </div>
       )}
