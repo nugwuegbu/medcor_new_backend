@@ -220,7 +220,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         </div>
         
         {/* Animated Button on Chest Area */}
-        <div className="absolute left-1/2 top-[58%] transform -translate-x-1/2 -translate-y-1/2 z-30">
+        <div className="absolute left-1/2 top-[62%] transform -translate-x-1/2 -translate-y-1/2 z-30">
           <button
             className="relative w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-110 animate-float"
             onMouseEnter={(e) => {
