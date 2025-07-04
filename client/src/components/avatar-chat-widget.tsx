@@ -163,11 +163,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
       {/* Full Screen Avatar Background with Message Overlay */}
       <div className="flex-1 relative">
-        {/* Avatar Background - Always Active but Hidden when Chat Interface is shown */}
-        <div className={`absolute inset-0 ${showChatInterface ? 'invisible' : 'visible'}`}>
+        {/* Avatar Background - Always Active */}
+        <div className="absolute inset-0">
           {isOpen && (
             <>
-              {/* Always show HeyGen avatar for now */}
+              {/* Always show HeyGen avatar */}
               <HeyGenSDKAvatar 
                 key="single-avatar-instance"
                 apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="

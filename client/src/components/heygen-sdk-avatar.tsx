@@ -31,9 +31,20 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
           if (mediaStream && videoRef.current) {
             console.log("Attaching media stream to video element:", mediaStream);
             videoRef.current.srcObject = mediaStream;
-            videoRef.current.onloadedmetadata = () => {
+            videoRef.current.muted = true; // Allow autoplay by muting initially
+            videoRef.current.onloadedmetadata = async () => {
               console.log("Video metadata loaded");
-              videoRef.current!.play().catch(e => console.error("Video play error:", e));
+              try {
+                await videoRef.current!.play();
+                // Try to unmute after playing starts
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.muted = false;
+                  }
+                }, 100);
+              } catch (e) {
+                console.error("Video play error:", e);
+              }
             };
             setConnectionStatus("connected");
             setIsLoading(false);
@@ -108,7 +119,7 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
         style={{ minHeight: '100%', minWidth: '100%' }}
         autoPlay
         playsInline
-        muted={false}
+        muted
       />
     </div>
   );

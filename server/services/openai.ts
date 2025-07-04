@@ -16,7 +16,7 @@ const LANGUAGE_PROMPTS = {
   
   Always be professional, empathetic, and helpful. If asked about serious medical conditions, advise patients to consult with a healthcare provider. Do not provide medical diagnoses or replace professional medical advice.
   
-  IMPORTANT: Keep all responses to EXACTLY 2 sentences maximum. Be extremely brief and direct.`,
+  IMPORTANT: Keep all responses to EXACTLY 1 sentence maximum. Be extremely brief and direct.`,
   
   es: `Eres Medcor AI, un asistente médico profesional avatar para una plataforma de salud. Ayudas a los pacientes con:
   - Programación de citas médicas y consultas
@@ -95,7 +95,7 @@ export async function generateChatResponse(message: string, language: string = "
           content: message
         }
       ],
-      max_tokens: 60, // Very short responses
+      max_tokens: 40, // Very short responses
       temperature: 0.7,
     });
 

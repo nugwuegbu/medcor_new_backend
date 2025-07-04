@@ -890,14 +890,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messages: [
           {
             role: "system",
-            content: "You are a friendly AI assistant analyzing a user's appearance. Be polite, observant, and complimentary. Describe what you see briefly and create a warm, personalized greeting based on their appearance."
+            content: "Provide 1 sentence describing the person and 1 sentence greeting. Be brief and friendly."
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Please analyze this image and provide: 1) A brief description of what you see (clothing, appearance, background) 2) A warm, personalized greeting that mentions something specific you noticed (like their clothing color or style). Keep it friendly and natural."
+                text: "Describe this person briefly and greet them."
               },
               {
                 type: "image_url",
@@ -908,7 +908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ]
           }
         ],
-        max_tokens: 300
+        max_tokens: 50
       });
       
       const analysis = response.choices[0].message.content || "";
@@ -945,16 +945,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant providing location-based weather information. Based on the coordinates, identify the city and provide a brief, friendly weather update. If you don't have real-time data, provide a plausible weather description for the location."
+            content: "Give extremely brief location and weather info in 1 sentence only. Example: 'You're in London where it's 15°C and cloudy.'"
           },
           {
             role: "user",
-            content: `The user is at coordinates: ${latitude}, ${longitude}. Please provide:
-            1) The city name
-            2) A friendly weather update message that sounds natural and conversational`
+            content: `Coordinates: ${latitude}, ${longitude}`
           }
         ],
-        max_tokens: 150
+        max_tokens: 30
       });
       
       const weatherInfo = response.choices[0].message.content || "";
