@@ -25,8 +25,8 @@ interface Message {
 }
 
 interface AvatarChatWidgetProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 // Enhanced language detection function
@@ -418,7 +418,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     */
   }, []);
 
-  if (!isOpen) return null;
+  // Default to open if not specified
+  const widgetIsOpen = isOpen !== undefined ? isOpen : true;
+  
+  if (!widgetIsOpen) return null;
 
   return (
     <div className="fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
@@ -440,9 +443,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         
         <div className="flex items-center gap-3">
           <span className="text-purple-600 font-bold text-lg">medcor</span>
-          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
-            <X className="h-5 w-5" />
-          </Button>
+          {onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+              <X className="h-5 w-5" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -462,25 +467,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               setShowInfoOverlay(false);
             }
           }}>
-          {isOpen && (
-            <>
-              {/* Always show HeyGen avatar */}
-              <HeyGenSDKAvatar 
-                ref={avatarRef}
-                key="single-avatar-instance"
-                apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-                isVisible={true}
-                onMessage={(text) => {
-                  console.log("Avatar message:", text);
-                }}
-                onReady={() => {
-                  console.log("Avatar is ready");
-                  setHasGreeted(true);
-                  // Don't send automatic greeting - wait for user interaction
-                }}
-              />
-            </>
-          )}
+          {/* Always show HeyGen avatar */}
+          <HeyGenSDKAvatar 
+            ref={avatarRef}
+            key="single-avatar-instance"
+            apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+            isVisible={true}
+            onMessage={(text) => {
+              console.log("Avatar message:", text);
+            }}
+            onReady={() => {
+              console.log("Avatar is ready");
+              setHasGreeted(true);
+              // Don't send automatic greeting - wait for user interaction
+            }}
+          />
         </div>
         
         {/* White Content Area when minimized */}
@@ -690,12 +691,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Small Avatar Circle in Top Right - Empty placeholder */}
+                    {/* Small Avatar Circle in Top Right */}
                     <div className="absolute top-[75px] right-[25px] z-50">
                       <div 
-                        className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
+                        className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform"
                         onClick={() => setShowDoctorList(false)}
                       >
+                        {/* HeyGen Avatar - Using existing ref */}
                         <Bot className="h-10 w-10 text-white" />
                       </div>
                     </div>
