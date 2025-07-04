@@ -281,10 +281,68 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   })}
                 </div>
                 
-                {/* Title and Description Below Menu */}
-                <div className="mt-8 text-center">
-                  <h2 className="text-xl font-bold text-gray-800 mb-2">Advanced Chat Mode</h2>
-                  <p className="text-gray-600 text-sm">Select a service from the AI menu above</p>
+                {/* Text Input and Microphone Below Menu */}
+                <div className="mt-8 w-full max-w-md">
+                  <div className="flex items-center gap-2 bg-white rounded-full shadow-md p-2">
+                    <input
+                      type="text"
+                      placeholder="Type your message or use voice..."
+                      className="flex-1 px-4 py-2 bg-transparent outline-none text-gray-700"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                          const message = e.currentTarget.value;
+                          setMessages(prev => [...prev, {
+                            id: Date.now().toString(),
+                            text: message,
+                            sender: "user",
+                            timestamp: new Date()
+                          }]);
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        if (isRecording) {
+                          stopRecording();
+                        } else {
+                          startRecording();
+                        }
+                      }}
+                      className={`p-3 rounded-full transition-all duration-200 ${
+                        isRecording
+                          ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
+                          : "bg-purple-600 hover:bg-purple-700 text-white"
+                      }`}
+                    >
+                      {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+                        if (input && input.value.trim()) {
+                          const message = input.value;
+                          setMessages(prev => [...prev, {
+                            id: Date.now().toString(),
+                            text: message,
+                            sender: "user",
+                            timestamp: new Date()
+                          }]);
+                          input.value = '';
+                        }
+                      }}
+                      className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
+                    >
+                      <Send className="h-5 w-5" />
+                    </button>
+                  </div>
+                  
+                  {/* Visual indicator when recording */}
+                  {isRecording && (
+                    <div className="mt-2 text-center">
+                      <p className="text-sm text-red-500 animate-pulse">Recording... Speak now</p>
+                    </div>
+                  )}
                 </div>
               </div>
               
