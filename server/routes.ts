@@ -6,6 +6,7 @@ import { generateChatResponse } from "./services/openai";
 import { heygenService } from "./services/heygen";
 // Streaming service temporarily disabled due to module issues
 import { faceRecognitionAgent } from "./agents/face-recognition-agent";
+import { avatarRecorder } from "./services/avatar-recorder";
 import OpenAI from "openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -829,6 +830,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
         apiKeyPresent: !!process.env.HEYGEN_API_KEY
+      });
+    }
+  });
+
+  // Avatar recording endpoint
+  app.post("/api/avatar/record", async (req, res) => {
+    try {
+      const { sessionId, duration = 10 } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ 
+          error: "Session ID is required" 
+        });
+      }
+      
+      console.log(`Starting avatar recording for session: ${sessionId}`);
+      
+      // Start recording the avatar session
+      const recordingResult = await avatarRecorder.recordAvatarSession({
+        sessionId,
+        duration
+      });
+      
+      if (recordingResult.success) {
+        res.json({
+          success: true,
+          message: `Avatar recorded successfully for ${duration} seconds`,
+          filePath: recordingResult.filePath,
+          metadata: recordingResult.metadata
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: recordingResult.error || "Recording failed"
+        });
+      }
+    } catch (error) {
+      console.error("Avatar recording error:", error);
+      res.status(500).json({ 
+        error: "Failed to record avatar session",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Get recordings for a session
+  app.get("/api/avatar/recordings/:sessionId", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const recordings = await avatarRecorder.getSessionRecordings(sessionId);
+      
+      res.json({
+        success: true,
+        recordings
+      });
+    } catch (error) {
+      console.error("Error fetching recordings:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch recordings"
       });
     }
   });
