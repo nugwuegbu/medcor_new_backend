@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -220,52 +220,81 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           )}
         </div>
         
-        {/* Chat Interface View */}
+        {/* Chat Interface View - Within Chat Container */}
         {showChatInterface && (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-blue-50 z-40">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40 rounded-lg overflow-hidden">
             {/* Back Button */}
             <button
               onClick={() => setShowChatInterface(false)}
-              className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow"
+              className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow z-50"
             >
               <ChevronLeft className="h-6 w-6 text-purple-600" />
             </button>
             
             {/* Chat Interface Content */}
-            <div className="h-full flex flex-col items-center justify-center p-8">
-              <div className="max-w-md w-full space-y-6">
-                <h2 className="text-2xl font-bold text-center text-gray-800">Advanced Chat Mode</h2>
-                <p className="text-center text-gray-600">Microphone is still active. Speak or type to continue.</p>
+            <div className="h-full flex flex-col p-6 pt-16">
+              <div className="flex-1 overflow-y-auto space-y-4">
+                <h2 className="text-xl font-bold text-center text-gray-800 mb-2">Advanced Chat Mode</h2>
+                <p className="text-center text-gray-600 text-sm mb-4">Microphone is still active. Speak or type to continue.</p>
                 
                 {/* Visual indicator that mic is active */}
                 {isRecording && (
-                  <div className="flex justify-center">
+                  <div className="flex justify-center mb-4">
                     <div className="relative">
-                      <div className="w-20 h-20 bg-red-500 rounded-full animate-pulse flex items-center justify-center">
-                        <Mic className="h-10 w-10 text-white" />
+                      <div className="w-16 h-16 bg-red-500 rounded-full animate-pulse flex items-center justify-center">
+                        <Mic className="h-8 w-8 text-white" />
                       </div>
                       <div className="absolute inset-0 bg-red-400 rounded-full animate-ping"></div>
                     </div>
                   </div>
                 )}
                 
-                {/* Recent messages in chat mode */}
-                <div className="bg-white rounded-lg shadow-md p-4 max-h-64 overflow-y-auto">
-                  {messages.slice(-3).map(message => (
-                    <div key={message.id} className={`mb-2 ${message.sender === "user" ? "text-right" : "text-left"}`}>
-                      <span className={`text-sm ${message.sender === "user" ? "text-blue-600" : "text-gray-700"}`}>
-                        {message.text}
-                      </span>
+                {/* Messages Container */}
+                <div className="flex-1 space-y-3">
+                  {messages.map(message => (
+                    <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[80%] p-3 rounded-lg ${
+                        message.sender === "user" 
+                          ? "bg-purple-600 text-white" 
+                          : "bg-white shadow-md text-gray-800"
+                      }`}>
+                        <p className="text-sm">{message.text}</p>
+                        <span className="text-xs opacity-70 mt-1 block">
+                          {new Date(message.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
                 
-                {/* Quick actions */}
-                <div className="grid grid-cols-2 gap-4">
-                  <button className="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                {/* Quick actions at bottom */}
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <button 
+                    onClick={() => {
+                      const message = "I want to book an appointment";
+                      setMessages(prev => [...prev, {
+                        id: Date.now().toString(),
+                        text: message,
+                        sender: "user",
+                        timestamp: new Date()
+                      }]);
+                    }}
+                    className="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                  >
                     Book Appointment
                   </button>
-                  <button className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  <button 
+                    onClick={() => {
+                      const message = "Show me available doctors";
+                      setMessages(prev => [...prev, {
+                        id: Date.now().toString(),
+                        text: message,
+                        sender: "user",
+                        timestamp: new Date()
+                      }]);
+                    }}
+                    className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
                     View Doctors
                   </button>
                 </div>
