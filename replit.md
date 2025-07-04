@@ -163,6 +163,8 @@ Changelog:
 - July 04, 2025. Added info overlay component - blurred transparent card that shows nearby places (gas stations, restaurants, etc.) on the left side when users ask
 - July 04, 2025. Integrated OpenStreetMap Overpass API for finding nearby places without requiring Google Maps API key
 - July 04, 2025. Updated chat system to detect nearby place queries and trigger NEARBY_SEARCH command for backend processing
+- July 05, 2025. Implemented avatar minimize feature - when searching for places or showing links, HeyGen avatar shrinks to circle size and moves to right corner while screen becomes white writing area
+- July 05, 2025. Updated initial greeting to "Hi, how can I assist you?" followed by weather information formatted as "So your location is [location] - [temperature]°C, [condition]" and appearance compliment
 
 ## User Preferences
 

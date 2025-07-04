@@ -393,11 +393,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate AI response using OpenAI
       let aiResponse = await generateChatResponse(message, language);
       
-      // Add weather and compliment to the beginning of the response if available
+      // Add weather and compliment to the response if available
       if (isFirstUserResponse) {
         let prefix = "";
         if (locationWeather) {
-          prefix += `${locationWeather} `;
+          prefix += `So your location is ${locationWeather} `;
           console.log("Weather info added:", locationWeather);
         }
         if (compliment) {

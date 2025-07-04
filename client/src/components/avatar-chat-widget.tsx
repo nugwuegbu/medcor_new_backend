@@ -61,6 +61,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     places: any[];
   }>({ title: "", places: [] });
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [isMinimized, setIsMinimized] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -211,6 +212,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 }))
               });
               setShowInfoOverlay(true);
+              setIsMinimized(true);
               
               // Create a friendly message for the chat
               const friendlyMessage = placesData.places.length > 0
@@ -326,7 +328,19 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       {/* Full Screen Avatar Background with Message Overlay */}
       <div className="flex-1 relative">
         {/* Avatar Background - Always Active */}
-        <div className="absolute inset-0">
+        {/* Avatar Container with minimize transition */}
+        <div 
+          className={`absolute transition-all duration-700 ease-in-out ${
+            isMinimized 
+              ? 'bottom-4 right-4 w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 cursor-pointer hover:scale-110' 
+              : 'inset-0'
+          }`}
+          onClick={() => {
+            if (isMinimized) {
+              setIsMinimized(false);
+              setShowInfoOverlay(false);
+            }
+          }}>
           {isOpen && (
             <>
               {/* Always show HeyGen avatar */}
@@ -347,13 +361,40 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           )}
         </div>
         
-        {/* Info Overlay - Shows nearby places */}
-        <InfoOverlay
-          isVisible={showInfoOverlay}
-          title={infoOverlayData.title}
-          places={infoOverlayData.places}
-          onClose={() => setShowInfoOverlay(false)}
-        />
+        {/* White Content Area when minimized */}
+        {isMinimized && (
+          <div className="absolute inset-0 bg-white">
+            <div className="p-6 h-full overflow-y-auto">
+              {showInfoOverlay && (
+                <div className="max-w-4xl mx-auto">
+                  <h2 className="text-2xl font-bold mb-4">{infoOverlayData.title}</h2>
+                  <div className="space-y-4">
+                    {infoOverlayData.places.map((place: any, index: number) => (
+                      <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="text-lg font-semibold">{place.name}</h3>
+                            <p className="text-gray-600">{place.type}</p>
+                            {place.address && <p className="text-sm text-gray-500">{place.address}</p>}
+                          </div>
+                          <span className="text-sm text-gray-500">{place.distance}</span>
+                        </div>
+                        {place.link && (
+                          <a href={place.link} target="_blank" rel="noopener noreferrer" 
+                             className="text-blue-600 hover:underline text-sm mt-2 inline-block">
+                            View on map →
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Info Overlay hidden when minimized since content is shown in white area */}
         
         {/* Chat Interface View - Within Chat Container */}
         {showChatInterface && (

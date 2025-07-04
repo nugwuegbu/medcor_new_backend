@@ -94,7 +94,7 @@ class HeyGenSingleton {
       // Initial greeting - only speak once
       if (!this.hasSpokenGreeting) {
         this.hasSpokenGreeting = true;
-        await this.speak("Hello there! How can I help you? I am Medcor AI assistant.");
+        await this.speak("Hi, how can I assist you?");
       }
 
       this.isInitializing = false;
