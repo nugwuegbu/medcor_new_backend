@@ -75,12 +75,45 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     return truncated.substring(0, lastSpace) + '...';
   };
 
-  // Auto-focus input when opened
+  // Auto-focus input when opened and request location
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
+      
+      // Request location permission when chat opens
+      requestLocationAndWeather();
     }
   }, [isOpen]);
+  
+  // Request location and get weather
+  const requestLocationAndWeather = async () => {
+    try {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          // Get weather info
+          const response = await fetch("/api/location-weather", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ latitude, longitude })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log("Location and weather data:", data);
+          }
+        },
+        (error) => {
+          console.log("Location permission denied:", error);
+        }
+      );
+    } catch (error) {
+      console.error("Error requesting location:", error);
+    }
+  };
 
   // Voice chat mutation
   const voiceChatMutation = useMutation({
