@@ -461,7 +461,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check chat history to see if this is user's first response
       const previousMessages = await storage.getChatMessages(sessionId);
-      const isFirstUserResponse = previousMessages.length === 0 || previousMessages.length === 1;
+      const userMessages = previousMessages.filter(m => m.message && m.message.trim() !== '');
+      const isFirstUserResponse = userMessages.length === 0;
       
       let compliment = "";
       

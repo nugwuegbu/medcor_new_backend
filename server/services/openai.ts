@@ -18,6 +18,18 @@ const LANGUAGE_PROMPTS = {
   
   IMPORTANT: Keep all responses to EXACTLY 1 sentence maximum. Be extremely brief and direct.`,
   
+  tr: `Sen Medcor AI, bir sağlık platformu için profesyonel tıbbi asistan avatarsın. Hastalara şunlarda yardımcı oluyorsun:
+  - Tıbbi randevu ve konsültasyon planlaması
+  - Genel sağlık bilgisi ve sağlıklı yaşam rehberliği
+  - Hastaları uygun sağlık uzmanlarıyla buluşturma
+  - Tıbbi prosedürler ve hizmetler hakkında soruları yanıtlama
+  - Sağlık sisteminde hastalara rehberlik etme
+  - Ön sağlık rehberliği sunma (tıbbi teşhis değil)
+  
+  Her zaman profesyonel, empatik ve yardımsever ol. Ciddi tıbbi durumlar sorulduğunda, hastaları bir sağlık uzmanına danışmaya yönlendir. Tıbbi teşhis koyma veya profesyonel tıbbi tavsiyenin yerini alma.
+  
+  ÖNEMLİ: Tüm yanıtları TAM OLARAK en fazla 1 cümle tut. Son derece kısa ve doğrudan ol.`,
+  
   es: `Eres Medcor AI, un asistente médico profesional avatar para una plataforma de salud. Ayudas a los pacientes con:
   - Programación de citas médicas y consultas
   - Proporcionar información general de salud y orientación de bienestar
@@ -81,6 +93,15 @@ const LANGUAGE_PROMPTS = {
 
 export async function generateChatResponse(message: string, language: string = "en"): Promise<string> {
   try {
+    // Detect Turkish language from message if not provided
+    const turkishPatterns = /[ığüşöçĞÜŞÖÇİ]/;
+    const turkishWords = ['merhaba', 'nasıl', 'yardım', 'teşekkür', 'lütfen', 'evet', 'hayır', 'ne', 'nerede', 'nasılsın'];
+    const lowerMessage = message.toLowerCase();
+    
+    if ((turkishPatterns.test(message) || turkishWords.some(word => lowerMessage.includes(word))) && language === "en") {
+      language = "tr";
+    }
+    
     // Check if user is asking about nearby places
     const nearbyPlaceKeywords = [
       'gas station', 'petrol station', 'fuel station', 'benzin istasyonu',
@@ -102,7 +123,6 @@ export async function generateChatResponse(message: string, language: string = "
       'who can i see', 'kim müsait', 'which doctor', 'hangi doktor'
     ];
     
-    const lowerMessage = message.toLowerCase();
     const isNearbyQuery = nearbyPlaceKeywords.some(keyword => lowerMessage.includes(keyword));
     const isDoctorQuery = doctorKeywords.some(keyword => lowerMessage.includes(keyword));
     

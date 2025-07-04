@@ -211,6 +211,9 @@ Changelog:
 - July 05, 2025. Fixed doctor hover functionality - avatar now speaks in third person ("This is Dr. X") and stops speaking when mouse leaves
 - July 05, 2025. Added authentication overlay with Google, Apple, Microsoft OAuth options that appears after user sends 2 messages
 - July 05, 2025. Replaced AI Assistant logo with User Account button in chat interface menu
+- July 05, 2025. Fixed avatar repetition issue - removed duplicate HeyGen avatar instance on doctors page and disabled hover speech to prevent continuous speaking
+- July 05, 2025. Added Turkish language support with proper system prompts and automatic detection from message content
+- July 05, 2025. Fixed weather greeting to properly display on first user message only
 
 ## User Preferences
 

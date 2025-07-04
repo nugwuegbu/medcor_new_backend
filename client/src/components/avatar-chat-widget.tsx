@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User, Bot } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -350,8 +350,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     setCameraEnabled(true);
   }, []);
 
-  // Handle doctor card hover
+  // Handle doctor card hover - DISABLED to prevent repetitive speaking
   const handleDoctorHover = useCallback((doctorId: number, doctorName: string, description: string) => {
+    // Temporarily disabled hover speech to prevent avatar from speaking repeatedly
+    return;
+    
+    /* Original code commented out:
     // Only set if different doctor or not already speaking
     if (hoveredDoctorId === doctorId || isSpeaking) return;
     
@@ -385,9 +389,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         }, 4000); // 4 seconds for speech
       }
     }, 700); // 700ms delay before speaking
+    */
   }, [hoveredDoctorId, isSpeaking]);
 
   const handleDoctorHoverEnd = useCallback(() => {
+    // Temporarily disabled to prevent avatar issues
+    return;
+    
+    /* Original code commented out:
     // Clear timeout if user leaves before avatar speaks
     if (doctorHoverTimeoutRef.current) {
       clearTimeout(doctorHoverTimeoutRef.current);
@@ -406,6 +415,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         taskMode: TaskMode.SYNC
       });
     }
+    */
   }, []);
 
   if (!isOpen) return null;
@@ -680,20 +690,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Small Avatar Circle in Top Right */}
+                    {/* Small Avatar Circle in Top Right - Empty placeholder */}
                     <div className="absolute top-[75px] right-[25px] z-50">
                       <div 
-                        className="w-24 h-24 rounded-full bg-black shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform"
+                        className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
                         onClick={() => setShowDoctorList(false)}
                       >
-                        <div className="w-full h-full scale-150 translate-y-2">
-                          <HeyGenSDKAvatar 
-                            key="doctors-avatar-instance"
-                            apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-                            isVisible={true}
-                            onMessage={() => {}}
-                          />
-                        </div>
+                        <Bot className="h-10 w-10 text-white" />
                       </div>
                     </div>
                     
