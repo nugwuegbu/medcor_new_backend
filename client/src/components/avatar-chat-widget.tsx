@@ -433,10 +433,27 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Empty Doctors Page */}
+                    {/* Doctors Page */}
                     <div className="h-full flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        {/* Empty page content */}
+                      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full mx-4">
+                        <div className="text-center">
+                          {/* Doctor Avatar */}
+                          <div className="w-32 h-32 bg-purple-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <Users className="h-16 w-16 text-purple-600" />
+                          </div>
+                          
+                          {/* Doctor Information */}
+                          <h2 className="text-2xl font-bold text-gray-800 mb-2">Dr. Ayşe Yılmaz</h2>
+                          <p className="text-lg text-purple-600 font-medium mb-4">Plastik Cerrahi Uzmanı</p>
+                          
+                          {/* Contact Information */}
+                          <div className="border-t pt-4 mt-4">
+                            <div className="flex items-center justify-center gap-2 text-gray-600">
+                              <Phone className="h-5 w-5" />
+                              <span className="text-lg">+90 555 123 4567</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
