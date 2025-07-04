@@ -9,6 +9,8 @@ import ChatDoctorList from "./chat-doctor-list";
 import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
+import { AvatarManager } from "../services/avatar-manager";
+import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
 
 interface Message {
@@ -50,6 +52,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraPermissionRequested, setCameraPermissionRequested] = useState(false);
+  const [hasGreeted, setHasGreeted] = useState(false);
+  const [locationWeather, setLocationWeather] = useState<string>("");
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -96,33 +100,25 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     }
   }, [isOpen, cameraPermissionRequested]);
   
-  // Request location and get weather
+  // Request location and get weather (now using IP-based location)
   const requestLocationAndWeather = async () => {
     try {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          
-          // Get weather info
-          const response = await fetch("/api/location-weather", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ latitude, longitude })
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log("Location and weather data:", data);
-          }
+      // Get weather info using IP-based location
+      const response = await fetch("/api/location-weather", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
         },
-        (error) => {
-          console.log("Location permission denied:", error);
-        }
-      );
+        body: JSON.stringify({}) // No coordinates needed, will use IP
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Location and weather data:", data);
+        setLocationWeather(data.message);
+      }
     } catch (error) {
-      console.error("Error requesting location:", error);
+      console.error("Error getting weather:", error);
     }
   };
 
@@ -149,7 +145,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           message,
           sessionId,
           language: "en",
-          userImage
+          userImage,
+          locationWeather: isFirstUserMessage ? locationWeather : null
         })
       });
       return await response.json();
@@ -246,6 +243,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 isVisible={true}
                 onMessage={(text) => {
                   console.log("Avatar message:", text);
+                }}
+                onReady={() => {
+                  console.log("Avatar is ready");
+                  setHasGreeted(true);
+                  // Don't send automatic greeting - wait for user interaction
                 }}
               />
             </>

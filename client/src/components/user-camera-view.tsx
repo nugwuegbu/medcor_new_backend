@@ -83,15 +83,8 @@ export default function UserCameraView({ isEnabled, onPermissionRequest, capture
       }
       setCameraError(false);
       
-      // Start interactive dialogue after camera is enabled
-      setTimeout(() => {
-        if (videoRef.current) {
-          console.log("Starting interactive greeting with camera feed");
-          interactiveDialogue.startInteractiveGreeting(videoRef.current);
-        } else {
-          console.error("No video ref available for interactive greeting");
-        }
-      }, 1500);
+      // Remove auto-greeting - will be triggered manually to avoid repetition
+      console.log("Camera started successfully");
     } catch (error) {
       console.error("Camera access error:", error);
       setCameraError(true);

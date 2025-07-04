@@ -156,6 +156,8 @@ Changelog:
 - July 04, 2025. Discovered HeyGen Streaming Avatar API limitation - Turkish voices not supported for streaming avatars. Avatar works with default voice but pronounces Turkish text with English phonetics
 - July 04, 2025. Fixed microphone timeout issue - now uses continuous recognition mode to prevent premature speech cutoff
 - July 04, 2025. Implemented automatic photo capture and compliment system - captures user photo on first message after greeting and provides personalized appearance compliments via GPT-4 Vision
+- July 04, 2025. Enhanced location detection to use IP-based geolocation instead of requiring browser permissions - automatically detects location and includes weather in first response
+- July 04, 2025. Fixed avatar greeting system to include both weather information and appearance compliment on user's first message
 
 ## User Preferences
 

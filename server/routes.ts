@@ -335,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Voice avatar chat endpoint
   app.post("/api/chat/voice", async (req, res) => {
     try {
-      const { message, sessionId, language = "en", userId, userImage } = req.body;
+      const { message, sessionId, language = "en", userId, userImage, locationWeather } = req.body;
       
       if (!message || !sessionId) {
         return res.status(400).json({ error: "Message and sessionId are required" });
@@ -391,9 +391,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate AI response using OpenAI
       let aiResponse = await generateChatResponse(message, language);
       
-      // Add compliment to the beginning of the response if available
-      if (compliment) {
-        aiResponse = `${compliment} ${aiResponse}`;
+      // Add weather and compliment to the beginning of the response if available
+      if (isFirstUserResponse) {
+        let prefix = "";
+        if (locationWeather) {
+          prefix += `${locationWeather} `;
+        }
+        if (compliment) {
+          prefix += `${compliment} `;
+        }
+        if (prefix) {
+          aiResponse = `${prefix}${aiResponse}`;
+        }
       }
       
       console.log(`AI response: ${aiResponse}`);
@@ -1011,13 +1020,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Location weather endpoint
+  // Location weather endpoint - now with IP-based location
   app.post("/api/location-weather", async (req, res) => {
     try {
-      const { latitude, longitude } = req.body;
+      let latitude = req.body.latitude;
+      let longitude = req.body.longitude;
       
+      // If no coordinates provided, get from IP
       if (!latitude || !longitude) {
-        return res.status(400).json({ error: "Location coordinates required" });
+        try {
+          const ipResponse = await fetch('http://ip-api.com/json/');
+          const ipData = await ipResponse.json();
+          
+          if (ipData.status === 'success') {
+            latitude = ipData.lat;
+            longitude = ipData.lon;
+            console.log(`Got location from IP: ${ipData.city}, ${ipData.country}`);
+          } else {
+            return res.status(400).json({ error: "Could not get location from IP" });
+          }
+        } catch (ipError) {
+          console.error("IP location error:", ipError);
+          return res.status(400).json({ error: "Failed to detect location" });
+        }
       }
       
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

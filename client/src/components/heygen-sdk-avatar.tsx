@@ -6,13 +6,15 @@ interface HeyGenSDKAvatarProps {
   apiKey: string;
   onMessage?: (text: string) => void;
   isVisible: boolean;
+  onReady?: () => void;
 }
 
-export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGenSDKAvatarProps) {
+export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible, onReady }: HeyGenSDKAvatarProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "failed">("connecting");
   const videoRef = useRef<HTMLVideoElement>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasCalledOnReady = useRef(false);
 
   useEffect(() => {
     if (!isVisible || !apiKey) return;
@@ -48,6 +50,12 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
             };
             setConnectionStatus("connected");
             setIsLoading(false);
+            
+            // Call onReady callback when avatar is ready (only once)
+            if (onReady && !hasCalledOnReady.current) {
+              hasCalledOnReady.current = true;
+              onReady();
+            }
             
             // Clear the interval once connected
             if (checkIntervalRef.current) {

@@ -148,7 +148,7 @@ export class InteractiveDialogueService {
       } else {
         // If no location, still give the compliment
         await avatar.speak({
-          text: `No problem! ${analysis.description} How can I assist you today?`,
+          text: `No problem! ${analysis.description}`,
           taskType: TaskType.REPEAT,
           taskMode: TaskMode.SYNC
         });
