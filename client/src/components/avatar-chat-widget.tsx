@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -32,6 +32,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showCalendar, setShowCalendar] = useState(false);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [showChatInterface, setShowChatInterface] = useState(false);
+  const [selectedMenuItem, setSelectedMenuItem] = useState<string | null>(null);
+  const [showDoctorList, setShowDoctorList] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -233,9 +235,56 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             
             {/* Chat Interface Content */}
             <div className="h-full flex flex-col p-6 pt-16">
+              {/* Circular AI Menu */}
+              <div className="flex justify-center mb-4">
+                <div className="relative w-48 h-48">
+                  {/* Center Circle with AI Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                  <div className="absolute inset-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <MessageSquare className="h-8 w-8 mx-auto mb-1" />
+                      <p className="text-xs font-medium">AI Assistant</p>
+                    </div>
+                  </div>
+                  
+                  {/* Menu Items - Circular Layout */}
+                  {[
+                    { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); } },
+                    { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); } },
+                    { icon: FileText, label: "Records", angle: 120, action: () => setSelectedMenuItem("records") },
+                    { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
+                    { icon: Settings, label: "Settings", angle: 240, action: () => setSelectedMenuItem("settings") },
+                    { icon: Home, label: "Home", angle: 300, action: () => setSelectedMenuItem("home") }
+                  ].map((item, index) => {
+                    const angleRad = (item.angle * Math.PI) / 180;
+                    const x = Math.cos(angleRad) * 75;
+                    const y = Math.sin(angleRad) * 75;
+                    
+                    return (
+                      <button
+                        key={index}
+                        onClick={item.action}
+                        className={`absolute w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-300 ${
+                          selectedMenuItem === item.label.toLowerCase()
+                            ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-110 shadow-lg"
+                            : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
+                        }`}
+                        style={{
+                          left: `calc(50% + ${x}px - 28px)`,
+                          top: `calc(50% + ${y}px - 28px)`
+                        }}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
               <div className="flex-1 overflow-y-auto space-y-4">
                 <h2 className="text-xl font-bold text-center text-gray-800 mb-2">Advanced Chat Mode</h2>
-                <p className="text-center text-gray-600 text-sm mb-4">Microphone is still active. Speak or type to continue.</p>
+                <p className="text-center text-gray-600 text-sm mb-4">Select a service from the AI menu above.</p>
                 
                 {/* Visual indicator that mic is active */}
                 {isRecording && (
@@ -267,37 +316,31 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   ))}
                 </div>
                 
-                {/* Quick actions at bottom */}
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  <button 
-                    onClick={() => {
-                      const message = "I want to book an appointment";
-                      setMessages(prev => [...prev, {
-                        id: Date.now().toString(),
-                        text: message,
-                        sender: "user",
-                        timestamp: new Date()
-                      }]);
-                    }}
-                    className="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
-                  >
-                    Book Appointment
-                  </button>
-                  <button 
-                    onClick={() => {
-                      const message = "Show me available doctors";
-                      setMessages(prev => [...prev, {
-                        id: Date.now().toString(),
-                        text: message,
-                        sender: "user",
-                        timestamp: new Date()
-                      }]);
-                    }}
-                    className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                  >
-                    View Doctors
-                  </button>
-                </div>
+                {/* Show Calendar or Doctor List based on selection */}
+                {showCalendar && (
+                  <div className="mt-4">
+                    <AppointmentCalendar 
+                      isOpen={showCalendar}
+                      onClose={() => {
+                        setShowCalendar(false);
+                        setSelectedMenuItem(null);
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {showDoctorList && (
+                  <div className="mt-4 bg-white rounded-lg shadow-md p-4">
+                    <h3 className="text-lg font-semibold mb-3">Available Doctors</h3>
+                    <ChatDoctorList 
+                      onSelectDoctor={(doctor) => {
+                        setShowDoctorList(false);
+                        setShowCalendar(true);
+                        console.log("Selected doctor:", doctor);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
