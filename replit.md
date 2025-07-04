@@ -144,7 +144,9 @@ The application uses a relational database with the following core entities:
 ## Changelog
 
 Changelog:
-- July 04, 2025. Initial setup
+- July 04, 2025. Initial setup with face recognition and HeyGen avatar integration
+- July 04, 2025. Added voice-to-text and text-to-voice capabilities with microphone controls
+- July 04, 2025. Implemented comprehensive voice avatar chat interface with real-time audio processing
 
 ## User Preferences
 

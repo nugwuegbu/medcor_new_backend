@@ -275,13 +275,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Mock test for HeyGen API
-      // In real implementation, you would test the actual API
-      res.json({ 
-        success: true, 
-        message: "HeyGen API connection successful",
-        details: "Avatar service is ready"
-      });
+      // Test real HeyGen API
+      try {
+        const testResponse = await fetch("https://api.heygen.com/v2/avatars", {
+          method: "GET",
+          headers: {
+            "X-API-Key": heygenApiKey,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (testResponse.ok) {
+          const data = await testResponse.json();
+          res.json({ 
+            success: true, 
+            message: "HeyGen API connection successful",
+            details: `Found ${data.data?.length || 0} available avatars`,
+            avatars: data.data?.slice(0, 3) // Show first 3 avatars as preview
+          });
+        } else if (testResponse.status === 401) {
+          res.status(401).json({ 
+            success: false, 
+            message: "Invalid HeyGen API key. Please check your credentials." 
+          });
+        } else {
+          res.status(400).json({ 
+            success: false, 
+            message: `HeyGen API error: ${testResponse.statusText}` 
+          });
+        }
+      } catch (apiError) {
+        console.error("HeyGen API test error:", apiError);
+        res.status(500).json({ 
+          success: false, 
+          message: "Failed to connect to HeyGen API. Please check your internet connection." 
+        });
+      }
     } catch (error) {
       res.status(500).json({ 
         success: false, 

@@ -118,7 +118,7 @@ export default function SettingsPage() {
                   <Input
                     id="heygenApiKey"
                     type={showKeys ? "text" : "password"}
-                    placeholder="Enter your HeyGen API key"
+                    placeholder="Enter your HeyGen API key (e.g., hg_xxxxxxxxx)"
                     value={formData.heygenApiKey}
                     onChange={(e) => handleInputChange("heygenApiKey", e.target.value)}
                   />
@@ -132,9 +132,19 @@ export default function SettingsPage() {
                     {showKeys ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
-                <p className="text-sm text-gray-500">
-                  Get your API key from <a href="https://heygen.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">HeyGen Dashboard</a>
-                </p>
+                <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                  <p className="font-medium mb-2">How to get your HeyGen API key:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-xs">
+                    <li>Go to <a href="https://app.heygen.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">HeyGen Dashboard</a></li>
+                    <li>Sign up or log in to your account</li>
+                    <li>Navigate to Settings → API</li>
+                    <li>Create a new API key or copy an existing one</li>
+                    <li>Paste it in the field above and click "Test HeyGen API"</li>
+                  </ol>
+                </div>
+                <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                  ⚠️ After adding your key, click "Test HeyGen API" to verify it works, then use "Save Configuration" to store it.
+                </div>
               </div>
               <Button
                 onClick={() => handleTestApi("heygen")}
