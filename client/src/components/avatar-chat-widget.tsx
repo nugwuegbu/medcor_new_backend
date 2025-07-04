@@ -201,41 +201,71 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           )}
         </div>
         
-        {/* Messages Overlay */}
-        <div className="absolute inset-0 flex flex-col">
-          <div className="flex-1 overflow-y-auto p-4 pt-20 pb-2 space-y-3">
-            {messages.length === 0 && (
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 max-w-[85%] mx-auto mt-8">
-                <p className="text-gray-800 font-medium">Hello! How can I assist you today?</p>
-              </div>
-            )}
-            
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div className={`max-w-[85%] ${message.sender === "user" ? "mr-2" : "ml-2"}`}>
-                  <div
-                    className={`px-4 py-3 rounded-2xl ${
-                      message.sender === "user"
-                        ? "bg-white text-gray-800"
-                        : "bg-white/90 backdrop-blur-sm text-gray-800"
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed">{message.text}</p>
-                  </div>
-                  {message.showDoctors && message.sender === "bot" && (
-                    <div className="mt-2">
-                      <ChatDoctorList onSelectDoctor={(doctor) => {
-                        handleSendMessage(`I want to book an appointment with Dr. ${doctor.name}`);
-                      }} />
-                    </div>
-                  )}
+        {/* Messages Overlay - Red Rectangle */}
+        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 w-[90%] max-w-[600px] z-20">
+          <div 
+            className="relative bg-red-500/10 border-2 border-red-400 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+            style={{
+              maxHeight: '350px',
+              minHeight: '100px',
+            }}
+          >
+            <div 
+              className="overflow-y-auto overflow-x-hidden p-4 space-y-3 scrollbar-thin scrollbar-thumb-red-300 scrollbar-track-transparent"
+              style={{
+                maxHeight: '350px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.classList.add('overflow-y-scroll');
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.classList.remove('overflow-y-scroll');
+              }}
+            >
+              {messages.length === 0 && (
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center">
+                  <p className="text-gray-800 font-medium text-sm">Hello! How can I assist you today?</p>
                 </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+              )}
+              
+              {messages.map((message, index) => {
+                // Calculate opacity - most recent messages are fully visible
+                const totalMessages = messages.length;
+                const messagePosition = totalMessages - index - 1;
+                const opacity = messagePosition === 0 ? 1 : Math.max(0.4, 1 - (messagePosition * 0.2));
+                
+                return (
+                  <div
+                    key={message.id}
+                    className={`transition-all duration-500 ${
+                      message.sender === "user" ? "text-right" : "text-left"
+                    }`}
+                    style={{ opacity }}
+                  >
+                    <div
+                      className={`inline-block max-w-[85%] px-4 py-2 rounded-xl ${
+                        message.sender === "user"
+                          ? "bg-blue-100/90 text-gray-800"
+                          : "bg-white/90 text-gray-800 shadow-sm"
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed">{message.text}</p>
+                      <p className="text-xs mt-1 opacity-60">
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    {message.showDoctors && message.sender === "bot" && (
+                      <div className="mt-2 inline-block max-w-[85%]">
+                        <ChatDoctorList onSelectDoctor={(doctor) => {
+                          handleSendMessage(`I want to book an appointment with Dr. ${doctor.name}`);
+                        }} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
         </div>
       </div>
