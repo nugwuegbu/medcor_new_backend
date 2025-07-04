@@ -99,7 +99,7 @@ export default function HeyGenSDKAvatar({ apiKey, onMessage, isVisible }: HeyGen
     try {
       await avatarRef.current.speak({
         text,
-        taskType: TaskType.TALK,
+        taskType: TaskType.REPEAT, // Changed from TALK to REPEAT to speak exact text
         taskMode: TaskMode.SYNC
       });
     } catch (error) {
