@@ -3,7 +3,12 @@ import { doctors, appointments, chatMessages, type Doctor, type InsertDoctor, ty
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByOAuthId(provider: string, providerId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<User>): Promise<User>;
+  updateUserLastLogin(id: number): Promise<void>;
+  linkOAuthAccount(userId: number, provider: string, providerId: string): Promise<void>;
   
   getAllDoctors(): Promise<Doctor[]>;
   getDoctor(id: number): Promise<Doctor | undefined>;
@@ -126,16 +131,65 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(u => u.email === email);
+  }
+
+  async getUserByOAuthId(provider: string, providerId: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(u => 
+      u.oauthProvider === provider && u.oauthProviderId === providerId
+    );
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const user = this.users.get(id);
+    if (!user) throw new Error('User not found');
+    
+    const updatedUser = { ...user, ...updates };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async updateUserLastLogin(id: number): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      user.lastLogin = new Date();
+      this.users.set(id, user);
+    }
+  }
+
+  async linkOAuthAccount(userId: number, provider: string, providerId: string): Promise<void> {
+    const user = this.users.get(userId);
+    if (user) {
+      user.oauthProvider = provider;
+      user.oauthProviderId = providerId;
+      this.users.set(userId, user);
+    }
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
     const user: User = { 
-      ...insertUser, 
-      id, 
+      id,
+      username: insertUser.username,
+      password: insertUser.password,
+      email: insertUser.email || null,
+      phoneNumber: insertUser.phoneNumber || null,
+      name: insertUser.name || null,
+      profilePicture: insertUser.profilePicture || null,
       preferredLanguage: insertUser.preferredLanguage || "en",
       faceId: null,
       personId: null,
       lastFaceLogin: null,
-      faceLoginEnabled: false
+      faceLoginEnabled: false,
+      faceRegistered: false,
+      oauthProvider: insertUser.oauthProvider || null,
+      oauthProviderId: insertUser.oauthProviderId || null,
+      lastLogin: null,
+      isNewUser: insertUser.isNewUser !== undefined ? insertUser.isNewUser : true,
+      role: insertUser.role || "patient",
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
     this.users.set(id, user);
     return user;

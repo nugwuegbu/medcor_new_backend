@@ -9,6 +9,7 @@ import Chat from "@/pages/chat";
 import Doctors from "@/pages/doctors";
 import Appointments from "@/pages/appointments";
 import SettingsPage from "@/pages/settings";
+import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 import { useEffect } from "react";
 
@@ -16,6 +17,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
       <Route path="/chat" component={Chat} />
       <Route path="/doctors" component={Doctors} />
       <Route path="/appointments" component={Appointments} />

@@ -6,11 +6,23 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: text("email").unique(),
+  phoneNumber: text("phone_number"),
+  name: text("name"),
+  profilePicture: text("profile_picture"),
   preferredLanguage: text("preferred_language").notNull().default("en"),
   faceId: text("face_id"), // Face recognition ID
   personId: text("person_id"), // Azure Face API person ID
   lastFaceLogin: timestamp("last_face_login"),
   faceLoginEnabled: boolean("face_login_enabled").notNull().default(false),
+  faceRegistered: boolean("face_registered").notNull().default(false),
+  oauthProvider: text("oauth_provider"), // google, apple, facebook
+  oauthProviderId: text("oauth_provider_id"),
+  lastLogin: timestamp("last_login"),
+  isNewUser: boolean("is_new_user").notNull().default(true),
+  role: text("role").notNull().default("patient"), // patient, doctor, admin
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
 });
 
 export const doctors = pgTable("doctors", {
@@ -79,10 +91,14 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   createdAt: true,
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  preferredLanguage: true,
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  faceId: true,
+  personId: true,
+  lastFaceLogin: true,
+  lastLogin: true,
+  createdAt: true,
+  updatedAt: true
 });
 
 export type InsertDoctor = z.infer<typeof insertDoctorSchema>;

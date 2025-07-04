@@ -7,9 +7,125 @@ import { heygenService } from "./services/heygen";
 // Streaming service temporarily disabled due to module issues
 import { faceRecognitionAgent } from "./agents/face-recognition-agent";
 import { avatarRecorder } from "./services/avatar-recorder";
+import { googleMapsAgent } from "./agents/google-maps-agent";
 import OpenAI from "openai";
+import passport from "passport";
+import { 
+  configureSession, 
+  configureOAuthProviders, 
+  authenticateWithFace,
+  registerFaceForUser,
+  updateUserPhoneNumber,
+  isAuthenticated
+} from "./auth/oauth-providers";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure authentication
+  configureSession(app);
+  configureOAuthProviders();
+
+  // Authentication routes
+  // Face recognition login
+  app.post("/api/auth/face-login", async (req, res) => {
+    try {
+      const { imageBase64, sessionId } = req.body;
+      
+      if (!imageBase64 || !sessionId) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      const result = await authenticateWithFace(imageBase64, sessionId);
+      
+      if (result.success && result.user) {
+        // Log the user in
+        req.login(result.user, (err) => {
+          if (err) {
+            return res.status(500).json({ message: "Login failed" });
+          }
+          res.json(result);
+        });
+      } else {
+        res.json(result);
+      }
+    } catch (error) {
+      console.error("Face login error:", error);
+      res.status(500).json({ message: "Face login failed" });
+    }
+  });
+
+  // Register face for authenticated user
+  app.post("/api/auth/register-face", isAuthenticated, async (req, res) => {
+    try {
+      const { imageBase64 } = req.body;
+      const userId = (req.user as any).id;
+      
+      if (!imageBase64) {
+        return res.status(400).json({ message: "Image is required" });
+      }
+      
+      const result = await registerFaceForUser(userId, imageBase64);
+      res.json(result);
+    } catch (error) {
+      console.error("Face registration error:", error);
+      res.status(500).json({ message: "Face registration failed" });
+    }
+  });
+
+  // Update phone number
+  app.post("/api/auth/update-phone", isAuthenticated, async (req, res) => {
+    try {
+      const { phoneNumber } = req.body;
+      const userId = (req.user as any).id;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({ message: "Phone number is required" });
+      }
+      
+      const result = await updateUserPhoneNumber(userId, phoneNumber);
+      res.json(result);
+    } catch (error) {
+      console.error("Phone update error:", error);
+      res.status(500).json({ message: "Failed to update phone number" });
+    }
+  });
+
+  // OAuth routes
+  app.get("/api/auth/google", 
+    passport.authenticate("google", { scope: ["profile", "email"] })
+  );
+
+  app.get("/api/auth/google/callback",
+    passport.authenticate("google", { failureRedirect: "/login" }),
+    (req, res) => {
+      // Check if user needs to complete profile
+      const user = req.user as any;
+      if (user.isNewUser) {
+        res.redirect("/complete-profile");
+      } else {
+        res.redirect("/");
+      }
+    }
+  );
+
+  // Current user
+  app.get("/api/auth/user", (req, res) => {
+    if (req.isAuthenticated()) {
+      res.json(req.user);
+    } else {
+      res.status(401).json({ message: "Not authenticated" });
+    }
+  });
+
+  // Logout
+  app.post("/api/auth/logout", (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.json({ message: "Logged out successfully" });
+    });
+  });
+
   // Get all doctors
   app.get("/api/doctors", async (req, res) => {
     try {

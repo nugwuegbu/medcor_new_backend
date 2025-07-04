@@ -141,6 +141,35 @@ The application uses a relational database with the following core entities:
 - `OPENAI_API_KEY`: OpenAI API authentication (required)
 - `NODE_ENV`: Environment flag for development/production modes
 
+## Face Recognition Login Architecture
+
+### Authentication Flow
+1. **Initial Login**: Users first authenticate via OAuth providers (Google, Apple, Facebook)
+2. **Phone Number Collection**: New users are prompted to provide phone number for appointment reminders
+3. **Face Registration**: After OAuth login, users can register their face for future quick access
+4. **Face Recognition Login**: Returning users can login instantly using face recognition
+
+### Technical Implementation
+- **OAuth Providers**: Google OAuth2 with passport.js (Apple & Facebook ready for integration)
+- **Session Management**: PostgreSQL-backed sessions with connect-pg-simple
+- **Face Recognition**: Azure Face API integration for secure biometric authentication
+- **User Management**: Extended user schema with OAuth and face recognition fields
+- **Security**: Face patterns encrypted, no raw images stored, HIPAA compliant
+
+### Database Schema Updates
+- Added OAuth fields: oauthProvider, oauthProviderId
+- Added face recognition fields: faceRegistered, faceId, personId, lastFaceLogin
+- Added profile fields: email, phoneNumber, name, profilePicture, role
+- Added tracking fields: lastLogin, isNewUser, createdAt, updatedAt
+
+### API Endpoints
+- POST /api/auth/face-login - Face recognition authentication
+- POST /api/auth/register-face - Register face for authenticated user
+- POST /api/auth/update-phone - Update user phone number
+- GET /api/auth/google - Google OAuth login
+- GET /api/auth/user - Get current authenticated user
+- POST /api/auth/logout - Logout user
+
 ## Changelog
 
 Changelog:
@@ -170,6 +199,9 @@ Changelog:
 - July 05, 2025. Memoized UserCameraView component with React.memo to prevent camera shaking when typing messages by avoiding unnecessary re-renders
 - July 05, 2025. Fixed photo capture to work every 2nd user message (message 1, 3, 5, etc.) with appearance compliments from GPT-4 Vision
 - July 05, 2025. Added useCallback hook for camera permission handler to ensure stable function reference and prevent child component re-renders
+- July 05, 2025. Implemented comprehensive face recognition login system with OAuth integration (Google, Apple, Facebook)
+- July 05, 2025. Added phone number collection during first login for appointment reminders
+- July 05, 2025. Created secure authentication flow: OAuth login → Phone collection → Face registration → Face recognition login
 
 ## User Preferences
 
