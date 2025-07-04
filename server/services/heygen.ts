@@ -142,12 +142,22 @@ export class HeyGenService {
         }
       };
 
-      const sessionResponse = await fetch(`${this.baseUrl}/streaming.new`, {
+      // Use HeyGen's chatbot endpoint with the chatbot token
+      const endpoint = this.chatbotToken ? 
+        "https://api.heygen.com/v1/streaming.chatbot/new" : 
+        `${this.baseUrl}/streaming.new`;
+      
+      const headers: HeadersInit = this.chatbotToken ? {
+        "chatbot-token": this.chatbotToken,
+        "Content-Type": "application/json"
+      } : {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      };
+      
+      const sessionResponse = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json"
-        },
+        headers,
         body: JSON.stringify(sessionPayload)
       });
 

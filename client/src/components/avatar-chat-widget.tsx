@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
 import AppointmentCalendar from "./appointment-calendar";
+import ChatDoctorList from "./chat-doctor-list";
 
 interface Message {
   id: string;
@@ -12,6 +13,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: Date;
   avatarResponse?: any;
+  showDoctors?: boolean;
 }
 
 interface AvatarChatWidgetProps {
@@ -67,7 +69,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         text: data.message,
         sender: "bot",
         timestamp: new Date(),
-        avatarResponse: data.avatarResponse
+        avatarResponse: data.avatarResponse,
+        showDoctors: data.showDoctors
       };
       setMessages(prev => [...prev, botMessage]);
     }
@@ -191,17 +194,26 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             key={message.id}
             className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
           >
-            <div
-              className={`max-w-[85%] p-2 rounded-lg ${
-                message.sender === "user"
-                  ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white"
-                  : "bg-gray-100 text-gray-800"
-              }`}
-            >
-              <p className="text-xs leading-relaxed">{message.text}</p>
-              <p className="text-xs opacity-60 mt-1">
-                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </p>
+            <div className="max-w-[85%]">
+              <div
+                className={`p-2 rounded-lg ${
+                  message.sender === "user"
+                    ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                <p className="text-xs leading-relaxed">{message.text}</p>
+                <p className="text-xs opacity-60 mt-1">
+                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              {message.showDoctors && message.sender === "bot" && (
+                <div className="mt-2">
+                  <ChatDoctorList onSelectDoctor={(doctor) => {
+                    handleSendMessage(`I want to book an appointment with Dr. ${doctor.name}`);
+                  }} />
+                </div>
+              )}
             </div>
           </div>
         ))}

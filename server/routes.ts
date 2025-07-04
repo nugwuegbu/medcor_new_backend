@@ -328,6 +328,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const aiResponse = await generateChatResponse(message, language);
       console.log(`AI response: ${aiResponse}`);
       
+      // Check if user is asking about doctors
+      const askingAboutDoctors = message.toLowerCase().includes('doctor') || 
+                                  message.toLowerCase().includes('doktor') ||
+                                  message.toLowerCase().includes('appointment') ||
+                                  message.toLowerCase().includes('randevu') ||
+                                  message.toLowerCase().includes('book') ||
+                                  message.toLowerCase().includes('specialist');
+      
       // Generate avatar response using HeyGen
       const avatarResponse = await heygenService.generateAvatarResponse({
         text: aiResponse,
@@ -351,7 +359,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: aiResponse,
         avatarResponse,
         sessionId,
-        success: true
+        success: true,
+        showDoctors: askingAboutDoctors
       });
     } catch (error) {
       console.error("Voice chat error:", error);
