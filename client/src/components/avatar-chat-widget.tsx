@@ -561,9 +561,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           ref={avatarContainerRef}
           className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
             showDoctorList
-              ? 'w-24 h-24 rounded-full overflow-hidden shadow-lg z-50 hover:scale-110 ring-4 ring-purple-600'
+              ? 'w-24 h-24 rounded-full overflow-hidden shadow-lg z-[45] hover:scale-110 ring-4 ring-purple-600'
               : isMinimized 
-                ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 hover:scale-110' 
+                ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-[45] hover:scale-110' 
                 : 'inset-0 overflow-hidden'
           }`}
           style={{
@@ -651,7 +651,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             {/* Back Button - Top Left Corner */}
             <button
               onClick={() => setShowChatInterface(false)}
-              className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+              className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-[60]"
+              style={{ pointerEvents: 'auto' }}
             >
               <ChevronLeft className="h-4 w-4" />
               <span className="font-medium text-sm">Back</span>
