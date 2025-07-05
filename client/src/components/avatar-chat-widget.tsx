@@ -582,10 +582,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   {[
                     { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); } },
                     { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); } },
-                    { icon: FileText, label: "Records", angle: 120, action: () => { setSelectedMenuItem("records"); setShowChatInterface(false); } },
-                    { icon: Phone, label: "Call", angle: 180, action: () => { setSelectedMenuItem("call"); setShowChatInterface(false); } },
-                    { icon: Settings, label: "Settings", angle: 240, action: () => { setSelectedMenuItem("settings"); setShowChatInterface(false); } },
-                    { icon: Home, label: "Home", angle: 300, action: () => { setSelectedMenuItem("home"); setShowChatInterface(false); } }
+                    { icon: FileText, label: "Records", angle: 120, action: () => setSelectedMenuItem("records") },
+                    { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
+                    { icon: Settings, label: "Settings", angle: 240, action: () => setSelectedMenuItem("settings") },
+                    { icon: Home, label: "Home", angle: 300, action: () => { setSelectedMenuItem(null); setShowChatInterface(false); } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
                     const x = Math.cos(angleRad) * 75;
@@ -685,6 +685,75 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     </div>
                   ))}
                 </div>
+                
+                {/* Show Records page */}
+                {selectedMenuItem === "records" && (
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => setSelectedMenuItem(null)}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Records Page Content */}
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <FileText className="h-16 w-16 text-purple-600 mx-auto mb-4" />
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Medical Records</h2>
+                        <p className="text-gray-600">Your medical records will appear here</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Show Call page */}
+                {selectedMenuItem === "call" && (
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => setSelectedMenuItem(null)}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Call Page Content */}
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <Phone className="h-16 w-16 text-purple-600 mx-auto mb-4" />
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Make a Call</h2>
+                        <p className="text-gray-600">Call feature will be available soon</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Show Settings page */}
+                {selectedMenuItem === "settings" && (
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => setSelectedMenuItem(null)}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Settings Page Content */}
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <Settings className="h-16 w-16 text-purple-600 mx-auto mb-4" />
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Settings</h2>
+                        <p className="text-gray-600">Settings options will appear here</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Show Book page */}
                 {showCalendar && (
@@ -848,90 +917,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             }
                           }}
                         />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Book/Appointment Page */}
-                {selectedMenuItem === "book" && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => setSelectedMenuItem(null)}
-                      className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
-                    >
-                      <ChevronLeft className="h-3 w-3" />
-                      <span className="font-medium">Back</span>
-                    </button>
-                    
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <Calendar className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Book Appointment</h2>
-                        <p className="text-gray-600">Appointment booking feature coming soon!</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Settings Page */}
-                {selectedMenuItem === "settings" && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => setSelectedMenuItem(null)}
-                      className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
-                    >
-                      <ChevronLeft className="h-3 w-3" />
-                      <span className="font-medium">Back</span>
-                    </button>
-                    
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <Settings className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Settings</h2>
-                        <p className="text-gray-600">Settings page coming soon!</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Call Page */}
-                {selectedMenuItem === "call" && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => setSelectedMenuItem(null)}
-                      className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
-                    >
-                      <ChevronLeft className="h-3 w-3" />
-                      <span className="font-medium">Back</span>
-                    </button>
-                    
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <Phone className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Make a Call</h2>
-                        <p className="text-gray-600">Calling feature coming soon!</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Records Page */}
-                {selectedMenuItem === "records" && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => setSelectedMenuItem(null)}
-                      className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
-                    >
-                      <ChevronLeft className="h-3 w-3" />
-                      <span className="font-medium">Back</span>
-                    </button>
-                    
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <FileText className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Medical Records</h2>
-                        <p className="text-gray-600">Medical records feature coming soon!</p>
                       </div>
                     </div>
                   </div>
