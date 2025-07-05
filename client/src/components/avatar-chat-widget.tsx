@@ -536,6 +536,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           onClick={() => {
             setShowDoctorList(false);
             setShowChatInterface(true);
+            // Reset avatar position when going back
+            setAvatarPosition({ x: null, y: null });
           }}
           className="absolute top-4 left-4 flex items-center gap-1 px-3 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
         >
@@ -844,9 +846,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             } else if (showDoctorList) {
               setShowDoctorList(false);
               setShowChatInterface(true);
+              // Reset avatar position when going back from doctor list
+              setAvatarPosition({ x: null, y: null });
             } else if (showRecordsList) {
               setShowRecordsList(false);
               setShowChatInterface(true);
+              // Reset avatar position when going back from records list
+              setAvatarPosition({ x: null, y: null });
             }
           }}>
           {isOpen && !showDoctorList && (
