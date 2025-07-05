@@ -216,6 +216,7 @@ Changelog:
 - July 05, 2025. Fixed weather greeting to properly display on first user message only
 - July 05, 2025. Fixed missing HeyGen avatar on doctors page - made widget props optional and set default to always visible
 - July 05, 2025. Added AvatarChatWidget to main App component so it appears on all pages consistently
+- July 05, 2025. Restored HeyGen avatar to full-screen immersive experience with transparent overlays and better styling
 
 ## User Preferences
 
