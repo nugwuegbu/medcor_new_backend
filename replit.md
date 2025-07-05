@@ -234,3 +234,5 @@ Preferred communication style: Simple, everyday language.
   - className="absolute inset-0 w-full h-full object-cover"
   - No transform, scale, or additional styling
   - This configuration has been tested and approved by the user
+  - User confirmed on July 05, 2025: "suanda heygen avatar muhtesem neyi duzelttiysen onu tekrar bozma"
+  - ABSOLUTELY NO CHANGES to avatar display configuration allowed
