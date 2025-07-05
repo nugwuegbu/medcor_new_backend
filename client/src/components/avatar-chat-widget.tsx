@@ -545,12 +545,23 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <span className="font-medium text-sm">Back</span>
         </button>
         
-        {/* Avatar placeholder in circle - no duplicate HeyGen instance */}
+        {/* Real HeyGen Avatar in small circle for doctor list */}
         <div 
-          className="absolute w-16 h-16 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-2 ring-purple-600 bg-purple-600 flex items-center justify-center"
+          className="absolute w-16 h-16 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-2 ring-purple-600"
           style={{ right: '16px', top: '16px' }}
         >
-          <div className="text-white text-xs font-bold">AI</div>
+          <HeyGenSDKAvatar 
+            ref={avatarRef}
+            key="doctor-list-avatar"
+            apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+            isVisible={true}
+            onMessage={(text) => {
+              console.log("Avatar message:", text);
+            }}
+            onReady={() => {
+              console.log("Doctor list avatar ready");
+            }}
+          />
         </div>
         
         {/* Main Content Area - Shows doctors within chat bounds */}
@@ -832,8 +843,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               left: avatarPosition.x !== null ? `${avatarPosition.x}px` : 'auto',
               top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '75px',
               right: avatarPosition.x !== null ? 'auto' : '25px',
-              userSelect: isDragging ? 'none' : 'auto'
-            } : {})
+              userSelect: isDragging ? 'none' : 'auto',
+              opacity: 1
+            } : {
+              opacity: 1
+            })
           }}
           onMouseDown={handleAvatarMouseDown}
           onClick={(e) => {
@@ -855,9 +869,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               setAvatarPosition({ x: null, y: null });
             }
           }}>
-          {isOpen && !showDoctorList && (
+          {isOpen && !showDoctorList && showChatInterface && (
             <>
-              {/* Show HeyGen avatar only when NOT in doctor list */}
+              {/* Show HeyGen avatar only when in main chat interface */}
               <HeyGenSDKAvatar 
                 ref={avatarRef}
                 key="single-avatar-instance"
