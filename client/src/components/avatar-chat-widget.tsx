@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User, Bot } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -691,13 +691,35 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium">Back</span>
                     </button>
                     
-                    {/* Small Bot Icon Circle in Top Right */}
+                    {/* Small Avatar Circle in Top Right */}
                     <div className="absolute top-[75px] right-[20px] z-50">
-                      <div 
-                        className="w-16 h-16 rounded-full shadow-lg bg-gradient-to-br from-purple-600 to-blue-600 ring-2 ring-white/50 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
-                        onClick={() => setShowDoctorList(false)}
-                      >
-                        <Bot className="h-8 w-8 text-white" />
+                      <div className="relative">
+                        {/* Pulsing ring to show avatar is active */}
+                        <div className="absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 animate-pulse opacity-50"></div>
+                        
+                        {/* Avatar container */}
+                        <div 
+                          className="relative w-20 h-20 rounded-full shadow-2xl ring-4 ring-white/70 cursor-pointer hover:scale-110 transition-transform overflow-hidden"
+                          onClick={() => setShowDoctorList(false)}
+                        >
+                          <HeyGenSDKAvatar 
+                            ref={avatarRef}
+                            key="single-avatar-instance"
+                            apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+                            isVisible={true}
+                            onMessage={(text) => {
+                              console.log("Avatar message:", text);
+                            }}
+                            onReady={() => {
+                              console.log("Avatar is ready in doctors view");
+                            }}
+                          />
+                        </div>
+                        
+                        {/* Active status indicator */}
+                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow-md">
+                          Active
+                        </div>
                       </div>
                     </div>
                     
