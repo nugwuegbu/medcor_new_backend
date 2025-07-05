@@ -90,6 +90,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [avatarPosition, setAvatarPosition] = useState({ x: null as number | null, y: null as number | null });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [bookingFormData, setBookingFormData] = useState({
+    patientName: '',
+    patientEmail: '',
+    patientPhone: '',
+    reason: '',
+    doctorId: 1,
+    selectedDate: null as Date | null
+  });
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -829,6 +838,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(1, "Dr. Sarah Johnson", "5 years experience in cardiology, graduated from Johns Hopkins University.")}
                           onMouseLeave={handleDoctorHoverEnd}
+                          onClick={() => {
+                            if (bookingFormData.selectedDate) {
+                              setShowDoctorList(false);
+                              setBookingFormData(prev => ({ ...prev, doctorId: 1 }));
+                              setShowBookingForm(true);
+                            }
+                          }}
                         >
                           <div className="text-center">
                             <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
@@ -1159,8 +1175,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 <button
                   onClick={() => {
                     if (selectedDate) {
-                      handleSendMessage(`I'd like to book an appointment on ${selectedDate.toLocaleDateString()}`);
                       setShowBookingCalendar(false);
+                      setShowDoctorList(true);
+                      // Store selected date for later use in booking
+                      setBookingFormData(prev => ({ ...prev, selectedDate }));
                     }
                   }}
                   disabled={!selectedDate}
@@ -1172,8 +1190,173 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     }
                   `}
                 >
-                  Continue Booking
+                  Select Doctor
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Booking Form View */}
+        {showBookingForm && (
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
+            {/* Back Button */}
+            <button
+              onClick={() => {
+                setShowBookingForm(false);
+                setShowDoctorList(true);
+              }}
+              className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="font-medium text-sm">Back</span>
+            </button>
+            
+            {/* Form Content */}
+            <div className="flex-1 flex items-center justify-center p-6">
+              <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Book Appointment</h3>
+                
+                {/* Selected Date & Doctor Info */}
+                <div className="mb-4 p-3 bg-purple-50 rounded-lg">
+                  <p className="text-sm text-purple-700">
+                    Date: {bookingFormData.selectedDate?.toLocaleDateString('en-US', { 
+                      weekday: 'short', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                  <p className="text-sm text-purple-700">
+                    Doctor: {bookingFormData.doctorId === 1 ? 'Dr. Sarah Johnson' : 
+                            bookingFormData.doctorId === 2 ? 'Dr. Michael Chen' : 
+                            'Dr. Emily Rodriguez'}
+                  </p>
+                </div>
+                
+                {/* Form Fields */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={bookingFormData.patientName}
+                      onChange={(e) => setBookingFormData(prev => ({ ...prev, patientName: e.target.value }))}
+                      placeholder="Your full name"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={bookingFormData.patientEmail}
+                      onChange={(e) => setBookingFormData(prev => ({ ...prev, patientEmail: e.target.value }))}
+                      placeholder="your.email@example.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      value={bookingFormData.patientPhone}
+                      onChange={(e) => setBookingFormData(prev => ({ ...prev, patientPhone: e.target.value }))}
+                      placeholder="+1 234 567 8900"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                    <textarea
+                      value={bookingFormData.reason}
+                      onChange={(e) => setBookingFormData(prev => ({ ...prev, reason: e.target.value }))}
+                      placeholder="Brief description of your concern"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                    />
+                  </div>
+                </div>
+                
+                {/* Voice Input Note */}
+                <div className="mt-3 p-2 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-700 text-center">
+                    💡 You can also fill this form by speaking to our AI assistant
+                  </p>
+                </div>
+                
+                {/* Submit Button */}
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/appointments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          patientName: bookingFormData.patientName,
+                          patientEmail: bookingFormData.patientEmail,
+                          patientPhone: bookingFormData.patientPhone,
+                          doctorId: bookingFormData.doctorId,
+                          appointmentDate: bookingFormData.selectedDate,
+                          appointmentTime: "09:00",
+                          reason: bookingFormData.reason,
+                          status: "pending"
+                        })
+                      });
+                      
+                      if (response.ok) {
+                        setShowBookingForm(false);
+                        setShowChatInterface(true);
+                        handleSendMessage(`Appointment booked successfully for ${bookingFormData.selectedDate?.toLocaleDateString()}`);
+                        // Reset form
+                        setBookingFormData({
+                          patientName: '',
+                          patientEmail: '',
+                          patientPhone: '',
+                          reason: '',
+                          doctorId: 1,
+                          selectedDate: null
+                        });
+                      }
+                    } catch (error) {
+                      console.error('Booking error:', error);
+                    }
+                  }}
+                  disabled={!bookingFormData.patientName || !bookingFormData.patientEmail || !bookingFormData.patientPhone}
+                  className={`
+                    w-full mt-4 py-3 rounded-full font-medium transition-all text-sm
+                    ${(bookingFormData.patientName && bookingFormData.patientEmail && bookingFormData.patientPhone)
+                      ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg hover:shadow-xl' 
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  Book Appointment
+                </button>
+                
+                {/* Chat Input for Voice */}
+                <div className="mt-4 flex items-center gap-2 p-2 bg-gray-50 rounded-full">
+                  <input
+                    type="text"
+                    placeholder="Or speak to fill the form..."
+                    className="flex-1 bg-transparent text-sm placeholder-gray-500 focus:outline-none"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                        handleSendMessage(e.currentTarget.value);
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
+                  <BrowserVoiceButton
+                    onTranscript={(transcript: string) => {
+                      if (transcript.trim()) {
+                        handleSendMessage(transcript);
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
