@@ -868,6 +868,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(2, "Dr. Michael Chen", "7 years in orthopedics, Harvard Medical School graduate, expert in sports medicine.")}
                           onMouseLeave={handleDoctorHoverEnd}
+                          onClick={() => {
+                            if (bookingFormData.selectedDate) {
+                              setShowDoctorList(false);
+                              setBookingFormData(prev => ({ ...prev, doctorId: 2 }));
+                              setShowBookingForm(true);
+                            }
+                          }}
                         >
                           <div className="text-center">
                             <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
@@ -891,6 +898,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(3, "Dr. Emily Rodriguez", "10 years of pediatric experience, Stanford University alumnus, child health specialist.")}
                           onMouseLeave={handleDoctorHoverEnd}
+                          onClick={() => {
+                            if (bookingFormData.selectedDate) {
+                              setShowDoctorList(false);
+                              setBookingFormData(prev => ({ ...prev, doctorId: 3 }));
+                              setShowBookingForm(true);
+                            }
+                          }}
                         >
                           <div className="text-center">
                             <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
@@ -1177,6 +1191,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     if (selectedDate) {
                       setShowBookingCalendar(false);
                       setShowDoctorList(true);
+                      setSelectedMenuItem('doctors');
                       // Store selected date for later use in booking
                       setBookingFormData(prev => ({ ...prev, selectedDate }));
                     }

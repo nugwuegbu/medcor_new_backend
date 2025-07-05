@@ -236,6 +236,8 @@ Changelog:
 - July 05, 2025. Resized Book calendar to fit chat widget dimensions - calendar now displays in proper modal size (384px x 600px) instead of full screen
 - July 05, 2025. Fixed Book calendar containment - calendar now stays within chat widget boundaries using absolute positioning instead of fixed to prevent overflow
 - July 05, 2025. Implemented complete booking flow - Calendar → Doctor Selection → Appointment Form with voice input support and database storage
+- July 05, 2025. Fixed appointment booking interface sizing to fit properly within chat widget boundaries 
+- July 05, 2025. Corrected Select Doctor button to properly navigate to doctors page instead of main chat interface
 
 ## User Preferences
 
