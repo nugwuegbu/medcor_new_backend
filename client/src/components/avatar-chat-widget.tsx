@@ -751,26 +751,26 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     <div className="h-full pt-32 px-6 pb-24 overflow-y-auto relative">
                       {/* Always show doctors in background */}
                       <div className={`transition-opacity duration-300 ${doctorsMessages.length > 0 ? 'opacity-20' : 'opacity-100'}`}>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Our Doctors</h2>
-                        <div className="grid grid-cols-3 gap-3 max-w-5xl mx-auto">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Our Doctors</h2>
+                        <div className="grid grid-cols-3 gap-2 max-w-4xl mx-auto">
                         {/* Doctor 1 */}
                         <div 
-                          className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
+                          className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(1, "Dr. Sarah Johnson", "5 years experience in cardiology, graduated from Johns Hopkins University.")}
                           onMouseLeave={handleDoctorHoverEnd}
                         >
                           <div className="text-center">
-                            <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden bg-gray-200">
+                            <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
                               <img 
                                 src={doctorPhoto}
                                 alt="Dr. Sarah Johnson"
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <h3 className="text-base font-bold text-gray-800">Dr. Sarah Johnson</h3>
-                            <p className="text-xs text-purple-600 font-medium mb-1">Cardiology</p>
-                            <div className="flex items-center justify-center gap-1 text-gray-600 text-xs">
-                              <Phone className="h-3 w-3" />
+                            <h3 className="text-sm font-bold text-gray-800">Dr. Sarah Johnson</h3>
+                            <p className="text-xs text-purple-600 font-medium">Cardiology</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
+                              <Phone className="h-2.5 w-2.5" />
                               <span>+44 20 7123 4567</span>
                             </div>
                           </div>
@@ -778,22 +778,22 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         
                         {/* Doctor 2 */}
                         <div 
-                          className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
+                          className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(2, "Dr. Michael Chen", "7 years in orthopedics, Harvard Medical School graduate, expert in sports medicine.")}
                           onMouseLeave={handleDoctorHoverEnd}
                         >
                           <div className="text-center">
-                            <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden bg-gray-200">
+                            <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
                               <img 
                                 src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face"
                                 alt="Dr. Michael Chen"
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <h3 className="text-base font-bold text-gray-800">Dr. Michael Chen</h3>
-                            <p className="text-xs text-purple-600 font-medium mb-1">Orthopedics</p>
-                            <div className="flex items-center justify-center gap-1 text-gray-600 text-xs">
-                              <Phone className="h-3 w-3" />
+                            <h3 className="text-sm font-bold text-gray-800">Dr. Michael Chen</h3>
+                            <p className="text-xs text-purple-600 font-medium">Orthopedics</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
+                              <Phone className="h-2.5 w-2.5" />
                               <span>+44 20 7123 4568</span>
                             </div>
                           </div>
@@ -801,22 +801,22 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         
                         {/* Doctor 3 */}
                         <div 
-                          className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
+                          className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(3, "Dr. Emily Rodriguez", "10 years of pediatric experience, Stanford University alumnus, child health specialist.")}
                           onMouseLeave={handleDoctorHoverEnd}
                         >
                           <div className="text-center">
-                            <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden bg-gray-200">
+                            <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
                               <img 
                                 src={doctorEmilyPhoto}
                                 alt="Dr. Emily Rodriguez"
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <h3 className="text-base font-bold text-gray-800">Dr. Emily Rodriguez</h3>
-                            <p className="text-xs text-purple-600 font-medium mb-1">Pediatrics</p>
-                            <div className="flex items-center justify-center gap-1 text-gray-600 text-xs">
-                              <Phone className="h-3 w-3" />
+                            <h3 className="text-sm font-bold text-gray-800">Dr. Emily Rodriguez</h3>
+                            <p className="text-xs text-purple-600 font-medium">Pediatrics</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
+                              <Phone className="h-2.5 w-2.5" />
                               <span>+44 20 7123 4569</span>
                             </div>
                           </div>
