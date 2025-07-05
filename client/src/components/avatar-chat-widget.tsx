@@ -60,6 +60,7 @@ function detectLanguageFromText(text: string): string {
 export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
+  const [doctorsInputText, setDoctorsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
   const [showCalendar, setShowCalendar] = useState(false);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
@@ -702,7 +703,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     </div>
                     
                     {/* Doctors Grid */}
-                    <div className="h-full pt-32 px-6 pb-6 overflow-y-auto">
+                    <div className="h-full pt-32 px-6 pb-24 overflow-y-auto">
                       <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Our Doctors</h2>
                       <div className="grid grid-cols-3 gap-3 max-w-5xl mx-auto">
                         {/* Doctor 1 */}
@@ -773,6 +774,47 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             </div>
                           </div>
                         </div>
+                      </div>
+                    </div>
+                    
+                    {/* Chat Input with Microphone for Doctors Page */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-white border-t p-4">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={doctorsInputText}
+                          onChange={(e) => setDoctorsInputText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && doctorsInputText.trim()) {
+                              handleSendMessage(doctorsInputText);
+                              setDoctorsInputText('');
+                              setShowDoctorList(false);
+                              setShowChatInterface(true);
+                            }
+                          }}
+                          placeholder="Send your message..."
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                        <button
+                          onClick={() => {
+                            if (doctorsInputText.trim()) {
+                              handleSendMessage(doctorsInputText);
+                              setDoctorsInputText('');
+                              setShowDoctorList(false);
+                              setShowChatInterface(true);
+                            }
+                          }}
+                          className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
+                        >
+                          <Send className="h-5 w-5" />
+                        </button>
+                        <BrowserVoiceButton
+                          onTranscript={(transcript: string) => {
+                            handleSendMessage(transcript);
+                            setShowDoctorList(false);
+                            setShowChatInterface(true);
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
