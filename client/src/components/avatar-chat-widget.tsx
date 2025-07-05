@@ -813,7 +813,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 )}
                 
                 {showDoctorList && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40">
                     {/* Back Button */}
                     <button
                       onClick={() => {
@@ -1018,49 +1018,49 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       </div>
                       </div>
                       
-                      {/* Small Chat Widget for Doctor Page */}
+                      {/* Mini Chat Widget for Doctor Page */}
                       {messages.length > 0 && (
-                        <div className="fixed bottom-20 right-4 w-80 h-60 bg-white rounded-lg shadow-xl border-2 border-purple-200 z-50">
+                        <div className="fixed bottom-4 right-4 w-52 h-32 bg-white rounded-lg shadow-lg border border-purple-200 z-50">
                           <div className="h-full flex flex-col">
-                            {/* Chat Header */}
-                            <div className="bg-purple-600 text-white p-2 rounded-t-lg flex justify-between items-center">
-                              <span className="text-sm font-medium">Booking Assistant</span>
+                            {/* Compact Chat Header */}
+                            <div className="bg-purple-600 text-white p-1 rounded-t-lg flex justify-between items-center">
+                              <span className="text-xs font-medium">Assistant</span>
                               <button 
                                 onClick={() => setMessages([])}
-                                className="text-white hover:text-gray-200"
+                                className="text-white hover:text-gray-200 text-xs"
                               >
                                 ×
                               </button>
                             </div>
                             
-                            {/* Messages */}
-                            <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                              {messages.map((msg, index) => (
+                            {/* Last 2 Messages Only */}
+                            <div className="flex-1 overflow-y-auto p-1.5 space-y-1">
+                              {messages.slice(-2).map((msg, index) => (
                                 <div
                                   key={index}
-                                  className={`p-2 rounded-md text-xs ${
+                                  className={`p-1 rounded text-[10px] ${
                                     msg.sender === 'user' 
-                                      ? 'bg-purple-100 ml-auto max-w-[85%]' 
-                                      : 'bg-gray-100 mr-auto max-w-[85%]'
+                                      ? 'bg-purple-100 ml-auto max-w-[80%]' 
+                                      : 'bg-gray-100 mr-auto max-w-[80%]'
                                   }`}
                                 >
-                                  <p>{msg.text}</p>
+                                  <p>{msg.text.length > 50 ? msg.text.substring(0, 50) + '...' : msg.text}</p>
                                 </div>
                               ))}
                             </div>
                             
-                            {/* Quick Reply Buttons */}
-                            <div className="p-2 border-t">
+                            {/* Mini Reply Buttons */}
+                            <div className="p-1 border-t">
                               <div className="flex gap-1">
                                 <button 
-                                  className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full hover:bg-purple-200"
-                                  onClick={() => handleDoctorsSendMessage("Continue booking")}
+                                  className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded hover:bg-purple-200"
+                                  onClick={() => handleDoctorsSendMessage("Continue")}
                                 >
                                   Continue
                                 </button>
                                 <button 
-                                  className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-200"
-                                  onClick={() => handleDoctorsSendMessage("Need help")}
+                                  className="text-[9px] bg-gray-100 text-gray-700 px-1 py-0.5 rounded hover:bg-gray-200"
+                                  onClick={() => handleDoctorsSendMessage("Help")}
                                 >
                                   Help
                                 </button>
@@ -1280,10 +1280,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 <button
                   onClick={async () => {
                     if (selectedDate) {
-                      setShowBookingCalendar(false);
-                      setShowDoctorList(true);
-                      setSelectedMenuItem('doctors');
-                      // Store selected date for later use in booking
+                      // Store selected date first
                       setBookingFormData(prev => ({ ...prev, selectedDate }));
                       
                       // Initialize booking assistant
@@ -1313,8 +1310,18 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         if (avatarRef.current) {
                           avatarRef.current.speak(assistantStep.message);
                         }
+                        
+                        // Navigate to doctor selection after initialization
+                        setShowBookingCalendar(false);
+                        setShowDoctorList(true);
+                        setSelectedMenuItem('doctors');
+                        
                       } catch (error) {
                         console.error('Failed to initialize booking assistant:', error);
+                        // Even if API fails, show doctor list
+                        setShowBookingCalendar(false);
+                        setShowDoctorList(true);
+                        setSelectedMenuItem('doctors');
                       }
                     }
                   }}
