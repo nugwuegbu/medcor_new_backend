@@ -543,16 +543,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <span className="font-medium text-sm">Back</span>
         </button>
         
-        {/* Avatar in circle */}
+        {/* Avatar placeholder in circle - no duplicate HeyGen instance */}
         <div 
-          className="absolute w-16 h-16 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-2 ring-purple-600"
+          className="absolute w-16 h-16 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-2 ring-purple-600 bg-purple-600 flex items-center justify-center"
           style={{ right: '16px', top: '16px' }}
         >
-          <HeyGenSDKAvatar
-            ref={avatarRef}
-            apiKey={import.meta.env.VITE_HEYGEN_API_KEY || ''}
-            isVisible={true}
-          />
+          <div className="text-white text-xs font-bold">AI</div>
         </div>
         
         {/* Main Content Area - Shows doctors within chat bounds */}
