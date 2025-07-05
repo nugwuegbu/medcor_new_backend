@@ -232,6 +232,7 @@ Changelog:
 - July 05, 2025. Added chat history display in Records page - messages shown as cards with timestamps, user messages in purple, bot messages in white with shadow
 - July 05, 2025. Fixed Records page chat input to match main interface - added blue send button alongside microphone, consistent with main chat design
 - July 05, 2025. Improved Records page upload text readability - split long text into two lines for better display
+- July 05, 2025. Added booking calendar to Book menu - displays interactive calendar grid where users can select future dates for appointments, with selected date highlighted and Continue Booking button
 
 ## User Preferences
 

@@ -64,6 +64,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [recordsInputText, setRecordsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showBookingCalendar, setShowBookingCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [showChatInterface, setShowChatInterface] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<string | null>(null);
@@ -670,7 +672,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   
                   {/* Menu Items - Circular Layout */}
                   {[
-                    { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); } },
+                    { icon: Calendar, label: "Book", angle: 0, action: () => { setShowBookingCalendar(true); setSelectedMenuItem("book"); } },
                     { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); } },
                     { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
@@ -1067,6 +1069,104 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             <Send size={20} />
                           </button>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Booking Calendar View */}
+                {showBookingCalendar && (
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => {
+                        setShowBookingCalendar(false);
+                      }}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Calendar Content */}
+                    <div className="flex-1 flex items-center justify-center p-6">
+                      <div className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Book an Appointment</h3>
+                        
+                        {/* Calendar Grid */}
+                        <div className="grid grid-cols-7 gap-1">
+                          {/* Week Days */}
+                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                            <div key={index} className="text-center text-xs text-gray-500 font-medium py-2">
+                              {day}
+                            </div>
+                          ))}
+                          
+                          {/* Calendar Days */}
+                          {Array.from({ length: 35 }, (_, i) => {
+                            const day = i - new Date().getDay() + 1;
+                            const isToday = day === new Date().getDate();
+                            const isSelectable = day >= new Date().getDate();
+                            
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => {
+                                  if (isSelectable && day > 0 && day <= 31) {
+                                    const newDate = new Date();
+                                    newDate.setDate(day);
+                                    setSelectedDate(newDate);
+                                  }
+                                }}
+                                disabled={!isSelectable || day <= 0 || day > 31}
+                                className={`
+                                  h-10 w-10 rounded-lg text-sm font-medium transition-all
+                                  ${day <= 0 || day > 31 ? 'invisible' : ''}
+                                  ${isToday ? 'bg-purple-600 text-white' : ''}
+                                  ${selectedDate?.getDate() === day && !isToday ? 'bg-purple-200 text-purple-800' : ''}
+                                  ${isSelectable && day > 0 && day <= 31 && !isToday && selectedDate?.getDate() !== day ? 'hover:bg-gray-100' : ''}
+                                  ${!isSelectable && day > 0 && day <= 31 ? 'text-gray-300 cursor-not-allowed' : ''}
+                                `}
+                              >
+                                {day > 0 && day <= 31 ? day : ''}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        {/* Selected Date */}
+                        {selectedDate && (
+                          <div className="mt-4 p-3 bg-purple-50 rounded-lg">
+                            <p className="text-sm text-purple-700">
+                              Selected: {selectedDate.toLocaleDateString('en-US', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Book Button */}
+                        <button
+                          onClick={() => {
+                            if (selectedDate) {
+                              handleSendMessage(`I'd like to book an appointment on ${selectedDate.toLocaleDateString()}`);
+                              setShowBookingCalendar(false);
+                            }
+                          }}
+                          disabled={!selectedDate}
+                          className={`
+                            w-full mt-4 py-3 rounded-full font-medium transition-all
+                            ${selectedDate 
+                              ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg hover:shadow-xl' 
+                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            }
+                          `}
+                        >
+                          Continue Booking
+                        </button>
                       </div>
                     </div>
                   </div>
