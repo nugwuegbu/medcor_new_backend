@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User, Bot } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User, Bot, Upload } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -961,10 +961,31 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Empty Records Page */}
+                    {/* Records Page with File Upload */}
                     <div className="h-full flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        {/* Empty records page content */}
+                      <div className="text-center">
+                        <label htmlFor="records-file-upload" className="cursor-pointer">
+                          <div className="inline-flex items-center gap-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-8 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl transform hover:scale-105">
+                            <Upload size={24} />
+                            <span className="text-lg">Upload Medical Records</span>
+                          </div>
+                          <input
+                            id="records-file-upload"
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                console.log('Medical record selected:', file.name);
+                                // TODO: Handle file upload
+                              }
+                            }}
+                          />
+                        </label>
+                        <p className="text-gray-600 mt-4 text-sm">
+                          Upload your medical documents or photos (PDF, JPEG, PNG, DOC)
+                        </p>
                       </div>
                     </div>
                   </div>
