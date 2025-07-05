@@ -1769,7 +1769,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         avatarRef.current.speak(assistantStep.message);
                       }
                       
-                      // Reset form and UI
+                      // Reset form and UI - Complete reset to main chat
                       setBookingFormData({
                         selectedDate: null,
                         doctorId: 1,
@@ -1779,7 +1779,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         reason: ''
                       });
                       setShowBookingForm(false);
-                      setSelectedMenuItem('home');
+                      setShowChatInterface(true);
+                      setShowDoctorList(false);
+                      setShowBookingCalendar(false);
+                      setIsMinimized(false);
+                      setSelectedMenuItem('');
+                      setSelectedDate(null);
+                      setAvatarPosition({ x: null, y: null });
                       
                     } catch (error) {
                       console.error('Booking confirmation error:', error);
