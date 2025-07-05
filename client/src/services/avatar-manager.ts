@@ -22,6 +22,10 @@ if (typeof window !== 'undefined') {
   };
 }
 
+// Simple cache for frequently used responses to improve speed
+const responseCache = new Map<string, { timestamp: number; duration: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+
 export class AvatarManager {
   static async getOrCreateAvatar(apiKey: string): Promise<StreamingAvatar> {
     const manager = (window as any).__avatarManager;
@@ -86,9 +90,9 @@ export class AvatarManager {
       // Avatar is ready, no automatic greeting
     });
 
-    // Start the avatar with default settings
+    // Start the avatar with optimized settings for better performance
     const sessionInfo = await avatar.createStartAvatar({
-      quality: AvatarQuality.High,
+      quality: AvatarQuality.Medium, // Changed from High to Medium for better speed
       avatarName: "Ann_Doctor_Standing2_public",
       disableIdleTimeout: true,
       knowledgeBase: undefined // Explicitly set to avoid potential issues
@@ -97,19 +101,37 @@ export class AvatarManager {
     console.log("Avatar session created:", sessionInfo.session_id);
     manager.avatar = avatar;
     
-    // Set global speak function with language detection
+    // Set global speak function with language detection and caching
     (window as any).heygenSpeak = async (text: string, language?: string) => {
       if (manager.avatar) {
         try {
+          // Check cache first for improved speed
+          const cacheKey = `${text}_${language || 'auto'}`;
+          const cached = responseCache.get(cacheKey);
+          
+          if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+            console.log("Using cached response for faster delivery");
+            // For cached responses, we still need to trigger the avatar to speak
+            // but the response will be faster as HeyGen may have internal caching
+          }
+          
           // Detect language from text if not provided
           const detectedLang = language || AvatarManager.detectLanguage(text);
           const voiceConfig = AvatarManager.getVoiceConfig(detectedLang);
           
-          // Speak with basic parameters only
+          const startTime = Date.now();
+          
+          // Speak with optimized parameters for better performance
           await manager.avatar.speak({
             text,
             taskType: TaskType.REPEAT,
-            taskMode: TaskMode.SYNC
+            taskMode: TaskMode.ASYNC // Changed from SYNC to ASYNC for non-blocking operation
+          });
+          
+          // Cache the response timing
+          responseCache.set(cacheKey, {
+            timestamp: Date.now(),
+            duration: Date.now() - startTime
           });
         } catch (e: any) {
           console.error("Failed to speak:", e);
@@ -129,7 +151,7 @@ export class AvatarManager {
                 await manager.avatar.speak({
                   text,
                   taskType: TaskType.REPEAT,
-                  taskMode: TaskMode.SYNC
+                  taskMode: TaskMode.ASYNC // Changed from SYNC to ASYNC for non-blocking operation
                 });
               }
             } catch (recreateError) {

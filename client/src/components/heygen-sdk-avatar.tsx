@@ -23,7 +23,7 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
 
   // Expose speak method through ref
   useImperativeHandle(ref, () => ({
-    speak: async ({ text, taskType = TaskType.TALK, taskMode = TaskMode.SYNC }) => {
+    speak: async ({ text, taskType = TaskType.TALK, taskMode = TaskMode.ASYNC }) => {
       try {
         const avatar = AvatarManager.getAvatar();
         if (avatar) {
