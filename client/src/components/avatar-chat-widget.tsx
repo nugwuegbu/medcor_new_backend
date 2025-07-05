@@ -580,12 +580,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   
                   {/* Menu Items - Circular Layout */}
                   {[
-                    { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); } },
-                    { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); } },
-                    { icon: FileText, label: "Records", angle: 120, action: () => setSelectedMenuItem("records") },
-                    { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
-                    { icon: Settings, label: "Settings", angle: 240, action: () => setSelectedMenuItem("settings") },
-                    { icon: Home, label: "Home", angle: 300, action: () => setSelectedMenuItem("home") }
+                    { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); setShowChatInterface(true); } },
+                    { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); setShowChatInterface(false); } },
+                    { icon: FileText, label: "Records", angle: 120, action: () => { setSelectedMenuItem("records"); setShowChatInterface(true); } },
+                    { icon: Phone, label: "Call", angle: 180, action: () => { setSelectedMenuItem("call"); setShowChatInterface(true); } },
+                    { icon: Settings, label: "Settings", angle: 240, action: () => { setSelectedMenuItem("settings"); setShowChatInterface(true); } },
+                    { icon: Home, label: "Home", angle: 300, action: () => { setSelectedMenuItem("home"); setShowChatInterface(false); } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
                     const x = Math.cos(angleRad) * 75;
@@ -711,7 +711,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
                     {/* Back Button */}
                     <button
-                      onClick={() => setShowDoctorList(false)}
+                      onClick={() => {
+                        setShowDoctorList(false);
+                        setShowChatInterface(true);
+                      }}
                       className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
                     >
                       <ChevronLeft className="h-3 w-3" />
@@ -857,7 +860,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 {selectedMenuItem === "book" && (
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
                     <button
-                      onClick={() => setSelectedMenuItem(null)}
+                      onClick={() => {
+                        setSelectedMenuItem(null);
+                        setShowChatInterface(true);
+                      }}
                       className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
                     >
                       <ChevronLeft className="h-3 w-3" />
@@ -878,7 +884,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 {selectedMenuItem === "settings" && (
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
                     <button
-                      onClick={() => setSelectedMenuItem(null)}
+                      onClick={() => {
+                        setSelectedMenuItem(null);
+                        setShowChatInterface(true);
+                      }}
                       className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
                     >
                       <ChevronLeft className="h-3 w-3" />
@@ -899,7 +908,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 {selectedMenuItem === "call" && (
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
                     <button
-                      onClick={() => setSelectedMenuItem(null)}
+                      onClick={() => {
+                        setSelectedMenuItem(null);
+                        setShowChatInterface(true);
+                      }}
                       className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
                     >
                       <ChevronLeft className="h-3 w-3" />
@@ -920,7 +932,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 {selectedMenuItem === "records" && (
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
                     <button
-                      onClick={() => setSelectedMenuItem(null)}
+                      onClick={() => {
+                        setSelectedMenuItem(null);
+                        setShowChatInterface(true);
+                      }}
                       className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
                     >
                       <ChevronLeft className="h-3 w-3" />

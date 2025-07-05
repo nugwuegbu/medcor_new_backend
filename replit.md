@@ -233,6 +233,7 @@ Changelog:
 - July 05, 2025. Integrated AI Self-Healing Agent - continuous monitoring, auto-fixing database/avatar issues, memory management, comprehensive error handling
 - July 05, 2025. Implemented voice-activated menu navigation - users can now say "book", "settings", "home", "call", "records", or "doctors" to navigate to those pages
 - July 05, 2025. Created empty placeholder pages for all menu items (Book, Settings, Call, Records) that can be filled with content later
+- July 05, 2025. Fixed critical bug where chat section was disappearing and not restoring through history navigation - now chat interface automatically reopens when returning from menu items
 
 ## User Preferences
 
