@@ -1313,6 +1313,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         
                         // Navigate to doctor selection after initialization
                         setShowBookingCalendar(false);
+                        setShowChatInterface(false);
                         setShowDoctorList(true);
                         setSelectedMenuItem('doctors');
                         
@@ -1320,6 +1321,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         console.error('Failed to initialize booking assistant:', error);
                         // Even if API fails, show doctor list
                         setShowBookingCalendar(false);
+                        setShowChatInterface(false);
                         setShowDoctorList(true);
                         setSelectedMenuItem('doctors');
                       }
