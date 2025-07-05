@@ -8,6 +8,7 @@ import { heygenService } from "./services/heygen";
 import { faceRecognitionAgent } from "./agents/face-recognition-agent";
 import { avatarRecorder } from "./services/avatar-recorder";
 import { googleMapsAgent } from "./agents/google-maps-agent";
+import { bookingAssistantAgent } from "./agents/booking-assistant-agent";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -397,6 +398,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(messages);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch chat history" });
+    }
+  });
+
+  // Booking Assistant Agent endpoints
+  app.post("/api/booking-assistant/initialize", async (req, res) => {
+    try {
+      const { sessionId, selectedDate } = req.body;
+      
+      if (!sessionId || !selectedDate) {
+        return res.status(400).json({ message: "Session ID and selected date are required" });
+      }
+
+      const step = await bookingAssistantAgent.initializeBooking(sessionId, selectedDate);
+      res.json(step);
+    } catch (error) {
+      console.error("Booking assistant initialization error:", error);
+      res.status(500).json({ message: "Failed to initialize booking assistant" });
+    }
+  });
+
+  app.post("/api/booking-assistant/select-doctor", async (req, res) => {
+    try {
+      const { sessionId, doctorId } = req.body;
+      
+      if (!sessionId || !doctorId) {
+        return res.status(400).json({ message: "Session ID and doctor ID are required" });
+      }
+
+      const step = await bookingAssistantAgent.processDoctorSelection(sessionId, doctorId);
+      res.json(step);
+    } catch (error) {
+      console.error("Doctor selection error:", error);
+      res.status(500).json({ message: "Failed to process doctor selection" });
+    }
+  });
+
+  app.post("/api/booking-assistant/process-input", async (req, res) => {
+    try {
+      const { sessionId, userInput } = req.body;
+      
+      if (!sessionId || !userInput) {
+        return res.status(400).json({ message: "Session ID and user input are required" });
+      }
+
+      const step = await bookingAssistantAgent.processFormInput(sessionId, userInput);
+      res.json(step);
+    } catch (error) {
+      console.error("Form input processing error:", error);
+      res.status(500).json({ message: "Failed to process form input" });
+    }
+  });
+
+  app.post("/api/booking-assistant/confirm", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ message: "Session ID is required" });
+      }
+
+      const step = await bookingAssistantAgent.confirmAppointment(sessionId);
+      res.json(step);
+    } catch (error) {
+      console.error("Appointment confirmation error:", error);
+      res.status(500).json({ message: "Failed to confirm appointment" });
+    }
+  });
+
+  app.get("/api/booking-assistant/context/:sessionId", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      const context = bookingAssistantAgent.getBookingContext(sessionId);
+      if (!context) {
+        return res.status(404).json({ message: "Booking context not found" });
+      }
+
+      res.json(context);
+    } catch (error) {
+      console.error("Context retrieval error:", error);
+      res.status(500).json({ message: "Failed to retrieve booking context" });
     }
   });
 

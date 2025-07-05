@@ -238,6 +238,7 @@ Changelog:
 - July 05, 2025. Implemented complete booking flow - Calendar → Doctor Selection → Appointment Form with voice input support and database storage
 - July 05, 2025. Fixed appointment booking interface sizing to fit properly within chat widget boundaries 
 - July 05, 2025. Corrected Select Doctor button to properly navigate to doctors page instead of main chat interface
+- July 05, 2025. Implemented MCP server booking assistant AI agent that activates when date is selected, guides users through doctor selection, processes form input via voice/text, and handles appointment confirmation with GPT-4o AI processing
 
 ## User Preferences
 

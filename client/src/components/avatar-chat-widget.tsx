@@ -838,11 +838,42 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(1, "Dr. Sarah Johnson", "5 years experience in cardiology, graduated from Johns Hopkins University.")}
                           onMouseLeave={handleDoctorHoverEnd}
-                          onClick={() => {
+                          onClick={async () => {
                             if (bookingFormData.selectedDate) {
                               setShowDoctorList(false);
                               setBookingFormData(prev => ({ ...prev, doctorId: 1 }));
                               setShowBookingForm(true);
+                              
+                              // Process doctor selection with booking assistant
+                              try {
+                                const response = await fetch('/api/booking-assistant/select-doctor', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    sessionId: sessionId,
+                                    doctorId: 1
+                                  })
+                                });
+                                
+                                const assistantStep = await response.json();
+                                console.log('Doctor selected with assistant:', assistantStep);
+                                
+                                // Add assistant message to chat
+                                const assistantMessage = {
+                                  id: Date.now().toString(),
+                                  text: assistantStep.message,
+                                  sender: 'bot' as const,
+                                  timestamp: new Date()
+                                };
+                                setMessages(prev => [...prev, assistantMessage]);
+                                
+                                // Make avatar speak the message
+                                if (avatarRef.current) {
+                                  avatarRef.current.speak(assistantStep.message);
+                                }
+                              } catch (error) {
+                                console.error('Failed to process doctor selection with assistant:', error);
+                              }
                             }
                           }}
                         >
@@ -868,11 +899,42 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(2, "Dr. Michael Chen", "7 years in orthopedics, Harvard Medical School graduate, expert in sports medicine.")}
                           onMouseLeave={handleDoctorHoverEnd}
-                          onClick={() => {
+                          onClick={async () => {
                             if (bookingFormData.selectedDate) {
                               setShowDoctorList(false);
                               setBookingFormData(prev => ({ ...prev, doctorId: 2 }));
                               setShowBookingForm(true);
+                              
+                              // Process doctor selection with booking assistant
+                              try {
+                                const response = await fetch('/api/booking-assistant/select-doctor', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    sessionId: sessionId,
+                                    doctorId: 2
+                                  })
+                                });
+                                
+                                const assistantStep = await response.json();
+                                console.log('Doctor 2 selected with assistant:', assistantStep);
+                                
+                                // Add assistant message to chat
+                                const assistantMessage = {
+                                  id: (Date.now() + 1).toString(),
+                                  text: assistantStep.message,
+                                  sender: 'bot' as const,
+                                  timestamp: new Date()
+                                };
+                                setMessages(prev => [...prev, assistantMessage]);
+                                
+                                // Make avatar speak the message
+                                if (avatarRef.current) {
+                                  avatarRef.current.speak(assistantStep.message);
+                                }
+                              } catch (error) {
+                                console.error('Failed to process doctor 2 selection:', error);
+                              }
                             }
                           }}
                         >
@@ -898,11 +960,42 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(3, "Dr. Emily Rodriguez", "10 years of pediatric experience, Stanford University alumnus, child health specialist.")}
                           onMouseLeave={handleDoctorHoverEnd}
-                          onClick={() => {
+                          onClick={async () => {
                             if (bookingFormData.selectedDate) {
                               setShowDoctorList(false);
                               setBookingFormData(prev => ({ ...prev, doctorId: 3 }));
                               setShowBookingForm(true);
+                              
+                              // Process doctor selection with booking assistant
+                              try {
+                                const response = await fetch('/api/booking-assistant/select-doctor', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    sessionId: sessionId,
+                                    doctorId: 3
+                                  })
+                                });
+                                
+                                const assistantStep = await response.json();
+                                console.log('Doctor 3 selected with assistant:', assistantStep);
+                                
+                                // Add assistant message to chat
+                                const assistantMessage = {
+                                  id: (Date.now() + 2).toString(),
+                                  text: assistantStep.message,
+                                  sender: 'bot' as const,
+                                  timestamp: new Date()
+                                };
+                                setMessages(prev => [...prev, assistantMessage]);
+                                
+                                // Make avatar speak the message
+                                if (avatarRef.current) {
+                                  avatarRef.current.speak(assistantStep.message);
+                                }
+                              } catch (error) {
+                                console.error('Failed to process doctor 3 selection:', error);
+                              }
                             }
                           }}
                         >
@@ -1187,13 +1280,44 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 
                 {/* Book Button */}
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (selectedDate) {
                       setShowBookingCalendar(false);
                       setShowDoctorList(true);
                       setSelectedMenuItem('doctors');
                       // Store selected date for later use in booking
                       setBookingFormData(prev => ({ ...prev, selectedDate }));
+                      
+                      // Initialize booking assistant
+                      try {
+                        const response = await fetch('/api/booking-assistant/initialize', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            sessionId: sessionId,
+                            selectedDate: selectedDate.toISOString().split('T')[0]
+                          })
+                        });
+                        
+                        const assistantStep = await response.json();
+                        console.log('Booking assistant initialized:', assistantStep);
+                        
+                        // Add assistant message to chat
+                        const assistantMessage = {
+                          id: Date.now().toString(),
+                          text: assistantStep.message,
+                          sender: 'bot' as const,
+                          timestamp: new Date()
+                        };
+                        setMessages(prev => [...prev, assistantMessage]);
+                        
+                        // Make avatar speak the message
+                        if (avatarRef.current) {
+                          avatarRef.current.speak(assistantStep.message);
+                        }
+                      } catch (error) {
+                        console.error('Failed to initialize booking assistant:', error);
+                      }
                     }
                   }}
                   disabled={!selectedDate}
@@ -1306,37 +1430,47 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 <button
                   onClick={async () => {
                     try {
-                      const response = await fetch('/api/appointments', {
+                      // Confirm appointment with booking assistant
+                      const response = await fetch('/api/booking-assistant/confirm', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                          patientName: bookingFormData.patientName,
-                          patientEmail: bookingFormData.patientEmail,
-                          patientPhone: bookingFormData.patientPhone,
-                          doctorId: bookingFormData.doctorId,
-                          appointmentDate: bookingFormData.selectedDate,
-                          appointmentTime: "09:00",
-                          reason: bookingFormData.reason,
-                          status: "pending"
+                          sessionId: sessionId
                         })
                       });
                       
-                      if (response.ok) {
-                        setShowBookingForm(false);
-                        setShowChatInterface(true);
-                        handleSendMessage(`Appointment booked successfully for ${bookingFormData.selectedDate?.toLocaleDateString()}`);
-                        // Reset form
-                        setBookingFormData({
-                          patientName: '',
-                          patientEmail: '',
-                          patientPhone: '',
-                          reason: '',
-                          doctorId: 1,
-                          selectedDate: null
-                        });
+                      const assistantStep = await response.json();
+                      console.log('Appointment confirmed with assistant:', assistantStep);
+                      
+                      // Add assistant confirmation message
+                      const assistantMessage = {
+                        id: (Date.now() + 5).toString(),
+                        text: assistantStep.message,
+                        sender: 'bot' as const,
+                        timestamp: new Date()
+                      };
+                      setMessages(prev => [...prev, assistantMessage]);
+                      
+                      // Make avatar speak the confirmation
+                      if (avatarRef.current) {
+                        avatarRef.current.speak(assistantStep.message);
                       }
+                      
+                      // Reset form and UI
+                      setBookingFormData({
+                        selectedDate: null,
+                        doctorId: 1,
+                        patientName: '',
+                        patientEmail: '',
+                        patientPhone: '',
+                        reason: ''
+                      });
+                      setShowBookingForm(false);
+                      setSelectedMenuItem('home');
+                      
                     } catch (error) {
-                      console.error('Booking error:', error);
+                      console.error('Booking confirmation error:', error);
+                      alert("Failed to confirm appointment. Please try again.");
                     }
                   }}
                   disabled={!bookingFormData.patientName || !bookingFormData.patientEmail || !bookingFormData.patientPhone}
@@ -1357,17 +1491,97 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     type="text"
                     placeholder="Or speak to fill the form..."
                     className="flex-1 bg-transparent text-xs placeholder-gray-500 focus:outline-none"
-                    onKeyPress={(e) => {
+                    onKeyPress={async (e) => {
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                        handleSendMessage(e.currentTarget.value);
+                        const userInput = e.currentTarget.value;
                         e.currentTarget.value = '';
+                        
+                        // Process with booking assistant
+                        try {
+                          const response = await fetch('/api/booking-assistant/process-input', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              sessionId: sessionId,
+                              userInput: userInput
+                            })
+                          });
+                          
+                          const assistantStep = await response.json();
+                          console.log('Form input processed:', assistantStep);
+                          
+                          // Add user message to chat
+                          const userMessage = {
+                            id: Date.now().toString(),
+                            text: userInput,
+                            sender: 'user' as const,
+                            timestamp: new Date()
+                          };
+                          setMessages(prev => [...prev, userMessage]);
+                          
+                          // Add assistant response
+                          const assistantMessage = {
+                            id: (Date.now() + 3).toString(),
+                            text: assistantStep.message,
+                            sender: 'bot' as const,
+                            timestamp: new Date()
+                          };
+                          setMessages(prev => [...prev, assistantMessage]);
+                          
+                          // Make avatar speak the message
+                          if (avatarRef.current) {
+                            avatarRef.current.speak(assistantStep.message);
+                          }
+                        } catch (error) {
+                          console.error('Failed to process form input:', error);
+                          handleSendMessage(userInput);
+                        }
                       }
                     }}
                   />
                   <BrowserVoiceButton
-                    onTranscript={(transcript: string) => {
+                    onTranscript={async (transcript: string) => {
                       if (transcript.trim()) {
-                        handleSendMessage(transcript);
+                        // Process with booking assistant
+                        try {
+                          const response = await fetch('/api/booking-assistant/process-input', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              sessionId: sessionId,
+                              userInput: transcript
+                            })
+                          });
+                          
+                          const assistantStep = await response.json();
+                          console.log('Voice input processed:', assistantStep);
+                          
+                          // Add user message to chat
+                          const userMessage = {
+                            id: Date.now().toString(),
+                            text: transcript,
+                            sender: 'user' as const,
+                            timestamp: new Date()
+                          };
+                          setMessages(prev => [...prev, userMessage]);
+                          
+                          // Add assistant response
+                          const assistantMessage = {
+                            id: (Date.now() + 4).toString(),
+                            text: assistantStep.message,
+                            sender: 'bot' as const,
+                            timestamp: new Date()
+                          };
+                          setMessages(prev => [...prev, assistantMessage]);
+                          
+                          // Make avatar speak the message
+                          if (avatarRef.current) {
+                            avatarRef.current.speak(assistantStep.message);
+                          }
+                        } catch (error) {
+                          console.error('Failed to process voice input:', error);
+                          handleSendMessage(transcript);
+                        }
                       }
                     }}
                   />
