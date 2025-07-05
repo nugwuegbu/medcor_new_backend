@@ -574,13 +574,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       {/* Full Screen Avatar Background with Message Overlay */}
       <div className="flex-1 relative">
         {/* Avatar Background - Always Active */}
-        {/* Avatar Container - Adapts for chat, doctors view, and minimized state */}
+        {/* Avatar Container - Different styles for different views */}
         <div 
           ref={avatarContainerRef}
           className={`absolute ${
             showDoctorList
               ? 'w-24 h-24 rounded-full overflow-hidden shadow-lg z-[45] hover:scale-110 ring-4 ring-purple-600'
-              : 'inset-0 overflow-hidden'
+              : showChatInterface
+                ? 'inset-0 overflow-hidden'
+                : 'hidden'
           }`}
           style={{
             transition: isDragging ? 'none' : 'all 700ms ease-in-out',
