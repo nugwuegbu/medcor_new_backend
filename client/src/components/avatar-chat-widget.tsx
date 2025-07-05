@@ -984,7 +984,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setSelectedDate(null);
                       setBookingFormData(prev => ({ ...prev, selectedDate: null }));
                     } },
-                    { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); } },
+                    { icon: Users, label: "Doctors", angle: 60, action: () => { 
+                      setShowDoctorList(true); 
+                      setSelectedMenuItem("doctors");
+                      setShowChatInterface(false);
+                      setIsMinimized(true);
+                    } },
                     { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
                     { icon: Settings, label: "Settings", angle: 240, action: () => setSelectedMenuItem("settings") },
@@ -1027,12 +1032,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                         const message = e.currentTarget.value;
-                        setMessages(prev => [...prev, {
-                          id: Date.now().toString(),
-                          text: message,
-                          sender: "user",
-                          timestamp: new Date()
-                        }]);
+                        handleSendMessage(message);
                         e.currentTarget.value = '';
                       }
                     }}
@@ -1048,12 +1048,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       const input = document.querySelector('input[type="text"]') as HTMLInputElement;
                       if (input && input.value.trim()) {
                         const message = input.value;
-                        setMessages(prev => [...prev, {
-                          id: Date.now().toString(),
-                          text: message,
-                          sender: "user",
-                          timestamp: new Date()
-                        }]);
+                        handleSendMessage(message);
                         input.value = '';
                       }
                     }}
