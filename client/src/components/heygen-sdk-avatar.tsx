@@ -16,9 +16,10 @@ export interface HeyGenSDKAvatarRef {
 
 const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ apiKey, onMessage, isVisible, onReady }, ref) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "failed">("connecting");
+  const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "failed" | "reconnecting">("connecting");
   const videoRef = useRef<HTMLVideoElement>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const checkStreamInterval = useRef<NodeJS.Timeout | null>(null);
   const hasCalledOnReady = useRef(false);
 
   // Expose speak method through ref
@@ -116,16 +117,48 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
         setTimeout(checkStream, 1000);
         setTimeout(checkStream, 1500);
         
-        // Debug: Check avatar status after 2 seconds
-        setTimeout(() => {
+        // Monitor stream status and recreate if needed
+        if (checkStreamInterval.current) {
+          clearInterval(checkStreamInterval.current);
+        }
+        
+        checkStreamInterval.current = setInterval(async () => {
+          // Skip if already reconnecting
+          if (connectionStatus === "reconnecting") return;
+          
           const stream = AvatarManager.getMediaStream();
-          console.log("Avatar debug - Stream status:", {
+          const status = {
             hasStream: !!stream,
-            streamActive: stream?.active,
-            videoTracks: stream?.getVideoTracks().length,
-            audioTracks: stream?.getAudioTracks().length
-          });
-        }, 2000);
+            streamActive: stream?.active || false,
+            videoTracks: stream?.getVideoTracks().length || 0,
+            audioTracks: stream?.getAudioTracks().length || 0
+          };
+          console.log("Avatar debug - Stream status:", status);
+          
+          // If stream is dead, recreate
+          if (!stream || !stream.active || status.videoTracks === 0) {
+            console.log("Stream is inactive, recreating avatar...");
+            setConnectionStatus("reconnecting");
+            
+            // Clear the interval to prevent multiple recreations
+            if (checkStreamInterval.current) {
+              clearInterval(checkStreamInterval.current);
+              checkStreamInterval.current = null;
+            }
+            
+            // Clear the manager's avatar to force recreation
+            const manager = (window as any).__avatarManager;
+            if (manager && !manager.lock) {
+              manager.avatar = null;
+              manager.promise = null;
+            }
+            
+            // Reinitialize after a short delay
+            setTimeout(() => {
+              initAvatar();
+            }, 1000);
+          }
+        }, 5000);
 
       } catch (error) {
         console.error("Failed to initialize avatar:", error);
@@ -140,6 +173,9 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
     return () => {
       if (checkIntervalRef.current) {
         clearInterval(checkIntervalRef.current);
+      }
+      if (checkStreamInterval.current) {
+        clearInterval(checkStreamInterval.current);
       }
     };
   }, [apiKey, isVisible]);

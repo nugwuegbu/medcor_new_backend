@@ -103,15 +103,17 @@ export class AvatarManager {
       clearInterval(manager.healthCheckInterval);
     }
     
-    // Disable aggressive health check to prevent constant reconnections
-    // Only check if specifically requested
+    // Smart health check - only reconnect if truly disconnected
     manager.healthCheckInterval = setInterval(async () => {
       try {
-        // Only log status, don't auto-reconnect
         if (manager.avatar && manager.avatar.mediaStream) {
           const active = manager.avatar.mediaStream.active;
-          if (!active) {
-            console.log("Avatar stream inactive but not reconnecting automatically");
+          if (!active && !manager.lock) {
+            console.log("Avatar stream inactive, recreating session...");
+            // Only recreate if not already in progress
+            manager.avatar = null;
+            manager.promise = null;
+            // Will be recreated on next speak attempt
           }
         }
       } catch (error) {
@@ -136,10 +138,13 @@ export class AvatarManager {
         } catch (e: any) {
           console.error("Failed to speak:", e);
           
-          // If session is closed, log but don't recreate automatically
+          // If session is closed, recreate avatar for next attempt
           if (e.message?.includes('session state wrong') || e.message?.includes('closed')) {
-            console.log("Session closed/error but not recreating automatically to prevent loops");
-            // Don't recreate automatically to prevent session loops
+            console.log("Session closed, clearing avatar for recreation on next attempt");
+            manager.avatar = null;
+            manager.promise = null;
+            manager.lock = false;
+            // Don't throw error - avatar will be recreated on next speak attempt
           }
         }
       }
