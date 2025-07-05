@@ -456,7 +456,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           className={`absolute transition-all duration-700 ease-in-out ${
             isMinimized 
               ? 'top-20 right-4 w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 cursor-pointer hover:scale-110' 
-              : 'inset-0'
+              : 'inset-0 overflow-hidden'
           }`}
           onClick={() => {
             if (isMinimized) {
