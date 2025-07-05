@@ -87,6 +87,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [avatarPosition, setAvatarPosition] = useState({ x: null as number | null, y: null as number | null });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [hasDragged, setHasDragged] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -119,16 +120,32 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       // Avatar dimensions (96px for w-24 h-24)
       const avatarSize = 96;
       
-      // Keep avatar within chat widget bounds
-      const boundedX = Math.max(0, Math.min(widgetRect.width - avatarSize, newX));
-      const boundedY = Math.max(0, Math.min(widgetRect.height - avatarSize, newY));
+      // Define safe area boundaries for doctors view (avoiding back button)
+      let minY = 0;
+      let minX = 0;
+      
+      if (showDoctorList) {
+        // Keep avatar away from back button area (top 120px reserved for header and back button)
+        minY = 120;
+        // Keep some margin from left edge
+        minX = 20;
+      }
+      
+      // Keep avatar within chat widget bounds and safe area
+      const boundedX = Math.max(minX, Math.min(widgetRect.width - avatarSize - 20, newX));
+      const boundedY = Math.max(minY, Math.min(widgetRect.height - avatarSize - 20, newY));
       
       setAvatarPosition({ x: boundedX, y: boundedY });
+      setHasDragged(true); // Mark that actual dragging occurred
     };
     
     const handleMouseUp = () => {
       setIsDragging(false);
       document.body.classList.remove('dragging');
+      // Reset hasDragged after a short delay to prevent click trigger
+      setTimeout(() => {
+        setHasDragged(false);
+      }, 100);
     };
     
     if (isDragging) {
@@ -155,6 +172,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     setIsDragging(true);
     document.body.classList.add('dragging');
     e.preventDefault();
+    e.stopPropagation(); // Prevent click propagation
   };
 
   const toggleMessageExpanded = (messageId: string) => {
@@ -570,7 +588,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             ...(showDoctorList || isMinimized ? {
               cursor: isDragging ? 'grabbing' : 'grab',
               left: avatarPosition.x !== null ? `${avatarPosition.x}px` : 'auto',
-              top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '75px',
+              top: avatarPosition.y !== null ? `${avatarPosition.y}px` : (showDoctorList ? '200px' : '75px'),
               right: avatarPosition.x !== null ? 'auto' : '25px',
               userSelect: isDragging ? 'none' : 'auto'
             } : {})
@@ -578,7 +596,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           onMouseDown={handleAvatarMouseDown}
           onClick={(e) => {
             // Only handle click if not dragging
-            if (isDragging || (e.target as HTMLElement).closest('.drag-handle')) return;
+            if (isDragging || hasDragged) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
             
             if (isMinimized) {
               setIsMinimized(false);
