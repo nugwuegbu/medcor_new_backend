@@ -545,23 +545,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <span className="font-medium text-sm">Back</span>
         </button>
         
-        {/* Real HeyGen Avatar in small circle for doctor list */}
+        {/* Simple Avatar Circle for doctor list - no HeyGen instance */}
         <div 
-          className="absolute w-16 h-16 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-2 ring-purple-600"
+          className="absolute w-16 h-16 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-2 ring-purple-600 bg-purple-600 flex items-center justify-center"
           style={{ right: '16px', top: '16px' }}
         >
-          <HeyGenSDKAvatar 
-            ref={avatarRef}
-            key="doctor-list-avatar"
-            apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-            isVisible={true}
-            onMessage={(text) => {
-              console.log("Avatar message:", text);
-            }}
-            onReady={() => {
-              console.log("Doctor list avatar ready");
-            }}
-          />
+          <div className="text-white text-xs font-bold">AI</div>
         </div>
         
         {/* Main Content Area - Shows doctors within chat bounds */}
@@ -754,18 +743,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </div>
           </div>
         </div>
-        
-        {/* Avatar in circle */}
-        <div 
-          className="fixed w-24 h-24 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-4 ring-purple-600"
-          style={{ right: '25px', top: '75px' }}
-        >
-          <HeyGenSDKAvatar
-            ref={avatarRef}
-            apiKey={import.meta.env.VITE_HEYGEN_API_KEY || ''}
-            isVisible={true}
-          />
-        </div>
+
         
         {/* Mini Chat Widget at bottom of doctor list */}
         {messages.length > 0 && (
@@ -794,6 +772,45 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </div>
           </div>
         )}
+        
+        {/* Chat Input at bottom of doctor list */}
+        <div className="absolute bottom-4 left-4 right-4 z-50">
+          <div className="flex items-center gap-2 bg-white border border-purple-200 rounded-full px-4 py-2 shadow-lg">
+            <input
+              ref={inputRef}
+              type="text"
+              value={doctorsInputText}
+              onChange={(e) => setDoctorsInputText(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && doctorsInputText.trim()) {
+                  handleSendMessage(doctorsInputText.trim());
+                  setDoctorsInputText('');
+                }
+              }}
+              placeholder="Ask about doctors or appointments..."
+              className="flex-1 outline-none text-sm"
+            />
+            <BrowserVoiceButton 
+              onTranscript={(transcript) => {
+                setDoctorsInputText(transcript);
+                handleSendMessage(transcript);
+                setDoctorsInputText('');
+              }}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-600 hover:bg-purple-700 transition-colors"
+            />
+            <button
+              onClick={() => {
+                if (doctorsInputText.trim()) {
+                  handleSendMessage(doctorsInputText.trim());
+                  setDoctorsInputText('');
+                }
+              }}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 transition-colors"
+            >
+              <Send className="h-4 w-4 text-white" />
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
