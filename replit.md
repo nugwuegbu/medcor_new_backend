@@ -243,6 +243,7 @@ Changelog:
 - July 05, 2025. Updated calendar styling - today's date now displays in dark yellow (bg-yellow-600) instead of purple, selected dates remain purple for clear distinction
 - July 05, 2025. Fixed Doctors button functionality - now properly navigates to doctors page with correct state management (setShowDoctorList, setIsMinimized, setShowChatInterface)
 - July 05, 2025. Implemented comprehensive avatar state reset after booking completion - prevents avatar duplication by resetting all states (showBookingForm, showChatInterface, showDoctorList, isMinimized, selectedMenuItem, avatarPosition) when appointment is confirmed
+- July 06, 2025. Replaced Settings menu with Admin menu featuring UserCheck icon - creates empty admin page for doctors to access patient user information and management functions
 
 ## User Preferences
 

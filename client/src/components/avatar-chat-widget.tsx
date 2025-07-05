@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User, Bot, Upload } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -71,6 +71,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [selectedMenuItem, setSelectedMenuItem] = useState<string | null>(null);
   const [showDoctorList, setShowDoctorList] = useState(false);
   const [showRecordsList, setShowRecordsList] = useState(false);
+  const [showAdminPage, setShowAdminPage] = useState(false);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraPermissionRequested, setCameraPermissionRequested] = useState(false);
@@ -998,7 +999,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     } },
                     { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
-                    { icon: Settings, label: "Settings", angle: 240, action: () => setSelectedMenuItem("settings") },
+                    { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
                     { icon: Home, label: "Home", angle: 300, action: () => setSelectedMenuItem("home") }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
@@ -1493,6 +1494,29 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             <Send size={20} />
                           </button>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Admin Page View */}
+                {showAdminPage && (
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => {
+                        setShowAdminPage(false);
+                      }}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Empty Admin Page */}
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        {/* Empty admin page - doctors can view user information here */}
                       </div>
                     </div>
                   </div>
