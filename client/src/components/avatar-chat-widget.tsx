@@ -735,7 +735,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         >
           <HeyGenSDKAvatar
             ref={avatarRef}
-            apiKey={process.env.HEYGEN_API_KEY || ''}
+            apiKey={import.meta.env.VITE_HEYGEN_API_KEY || ''}
+            isVisible={true}
           />
         </div>
         
