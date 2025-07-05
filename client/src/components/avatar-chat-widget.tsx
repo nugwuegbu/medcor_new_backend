@@ -699,19 +699,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     </div>
                   </button>
                   
-                  {/* Circular AI Menu */}
-                  <div className="relative w-48 h-48">
-                    {/* Center Circle with User Account */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
-                    <button 
-                      onClick={() => setShowAuthOverlay(true)}
-                      className="absolute inset-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform cursor-pointer">
-                      <div className="text-white text-center">
-                        <User className="h-8 w-8 mx-auto mb-1" />
-                        <p className="text-xs font-medium">Account</p>
-                      </div>
-                    </button>
-                  
                   {/* Menu Items - Circular Layout */}
                   {[
                     { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); } },
@@ -744,12 +731,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       </button>
                     );
                   })}
-                  </div>
                 </div>
-              </div>
-              
-              {/* Text Input at Bottom - Same as Main Chat */}
-              <div className="p-4 border-t border-gray-200 bg-white/80">
+                </div>
+            </div>
+            
+            {/* Text Input at Bottom - Same as Main Chat */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white/80 z-30 pointer-events-auto">
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -992,7 +979,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     </div>
                   </div>
                 )}
-              </div>
             </div>
           </div>
         )}
