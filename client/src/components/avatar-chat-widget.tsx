@@ -561,7 +561,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           ref={avatarContainerRef}
           className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
             showDoctorList
-              ? 'w-24 h-24 rounded-full overflow-hidden shadow-lg z-50 hover:scale-110 ring-4 ring-purple-600'
+              ? 'w-96 h-96 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-4 ring-purple-600'
               : isMinimized 
                 ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 hover:scale-110' 
                 : 'inset-0 overflow-hidden'
