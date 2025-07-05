@@ -526,6 +526,270 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }, []);
 
   if (!isOpen) return null;
+  
+  // If doctor list is being shown during booking, hide the main chat widget
+  if (showDoctorList && !showChatInterface) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50">
+        {/* Back Button */}
+        <button
+          onClick={() => {
+            setShowDoctorList(false);
+            setShowChatInterface(true);
+          }}
+          className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span className="font-medium text-sm">Back</span>
+        </button>
+        
+        {/* Main Content Area - Shows doctors clearly */}
+        <div className="h-full pt-32 px-6 pb-24 overflow-y-auto relative">
+          <div className="opacity-100">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Our Doctors</h2>
+            <div className="grid grid-cols-3 gap-2 max-w-4xl mx-auto">
+            {/* Doctor 1 */}
+            <div 
+              className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={async () => {
+                if (bookingFormData.selectedDate) {
+                  setShowDoctorList(false);
+                  setBookingFormData(prev => ({ ...prev, doctorId: 1 }));
+                  setShowBookingForm(true);
+                  setShowChatInterface(true);
+                  
+                  // Process doctor selection with booking assistant
+                  try {
+                    const response = await fetch('/api/booking-assistant/select-doctor', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        sessionId: sessionId,
+                        doctorId: 1
+                      })
+                    });
+                    
+                    const assistantStep = await response.json();
+                    
+                    // Add assistant message to chat
+                    const assistantMessage = {
+                      id: Date.now().toString(),
+                      text: assistantStep.message,
+                      sender: 'bot' as const,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, assistantMessage]);
+                    
+                    // Make avatar speak the message
+                    if (avatarRef.current) {
+                      avatarRef.current.speak(assistantStep.message);
+                    }
+                  } catch (error) {
+                    console.error('Failed to process doctor selection with assistant:', error);
+                  }
+                }
+              }}
+            >
+              <div className="text-center">
+                <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
+                  <img 
+                    src={doctorPhoto}
+                    alt="Dr. Sarah Johnson"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h3 className="text-sm font-bold text-gray-800">Dr. Sarah Johnson</h3>
+                <p className="text-xs text-purple-600 font-medium">Cardiology</p>
+                <div className="flex items-center justify-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
+                  <Phone className="h-2.5 w-2.5" />
+                  <span>+44 20 7123 4567</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Doctor 2 */}
+            <div 
+              className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={async () => {
+                if (bookingFormData.selectedDate) {
+                  setShowDoctorList(false);
+                  setBookingFormData(prev => ({ ...prev, doctorId: 2 }));
+                  setShowBookingForm(true);
+                  setShowChatInterface(true);
+                  
+                  // Process doctor selection with booking assistant
+                  try {
+                    const response = await fetch('/api/booking-assistant/select-doctor', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        sessionId: sessionId,
+                        doctorId: 2
+                      })
+                    });
+                    
+                    const assistantStep = await response.json();
+                    
+                    // Add assistant message to chat
+                    const assistantMessage = {
+                      id: (Date.now() + 1).toString(),
+                      text: assistantStep.message,
+                      sender: 'bot' as const,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, assistantMessage]);
+                    
+                    // Make avatar speak the message
+                    if (avatarRef.current) {
+                      avatarRef.current.speak(assistantStep.message);
+                    }
+                  } catch (error) {
+                    console.error('Failed to process doctor 2 selection:', error);
+                  }
+                }
+              }}
+            >
+              <div className="text-center">
+                <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
+                  <img 
+                    src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face"
+                    alt="Dr. Michael Chen"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h3 className="text-sm font-bold text-gray-800">Dr. Michael Chen</h3>
+                <p className="text-xs text-purple-600 font-medium">Orthopedics</p>
+                <div className="flex items-center justify-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
+                  <Phone className="h-2.5 w-2.5" />
+                  <span>+44 20 7123 4568</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Doctor 3 */}
+            <div 
+              className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={async () => {
+                if (bookingFormData.selectedDate) {
+                  setShowDoctorList(false);
+                  setBookingFormData(prev => ({ ...prev, doctorId: 3 }));
+                  setShowBookingForm(true);
+                  setShowChatInterface(true);
+                  
+                  // Process doctor selection with booking assistant
+                  try {
+                    const response = await fetch('/api/booking-assistant/select-doctor', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        sessionId: sessionId,
+                        doctorId: 3
+                      })
+                    });
+                    
+                    const assistantStep = await response.json();
+                    
+                    // Add assistant message to chat
+                    const assistantMessage = {
+                      id: (Date.now() + 2).toString(),
+                      text: assistantStep.message,
+                      sender: 'bot' as const,
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, assistantMessage]);
+                    
+                    // Make avatar speak the message
+                    if (avatarRef.current) {
+                      avatarRef.current.speak(assistantStep.message);
+                    }
+                  } catch (error) {
+                    console.error('Failed to process doctor 3 selection:', error);
+                  }
+                }
+              }}
+            >
+              <div className="text-center">
+                <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
+                  <img 
+                    src={doctorEmilyPhoto}
+                    alt="Dr. Emily Rodriguez"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h3 className="text-sm font-bold text-gray-800">Dr. Emily Rodriguez</h3>
+                <p className="text-xs text-purple-600 font-medium">Pediatrics</p>
+                <div className="flex items-center justify-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
+                  <Phone className="h-2.5 w-2.5" />
+                  <span>+44 20 7123 4569</span>
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Avatar in circle */}
+        <div 
+          className="fixed w-24 h-24 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-4 ring-purple-600"
+          style={{ right: '25px', top: '75px' }}
+        >
+          <HeyGenSDKAvatar
+            ref={avatarRef}
+            apiKey={process.env.HEYGEN_API_KEY || ''}
+          />
+        </div>
+        
+        {/* Mini Chat Widget for Doctor Page */}
+        {messages.length > 0 && (
+          <div className="fixed bottom-4 right-4 w-52 h-32 bg-white rounded-lg shadow-lg border border-purple-200 z-50">
+            <div className="h-full flex flex-col">
+              <div className="bg-purple-600 text-white p-1 rounded-t-lg flex justify-between items-center">
+                <span className="text-xs font-medium">Assistant</span>
+                <button 
+                  onClick={() => setMessages([])}
+                  className="text-white hover:text-gray-200 text-xs"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-1.5 space-y-1">
+                {messages.slice(-2).map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`p-1 rounded text-[10px] ${
+                      msg.sender === 'user' 
+                        ? 'bg-purple-100 ml-auto max-w-[80%]' 
+                        : 'bg-gray-100 mr-auto max-w-[80%]'
+                    }`}
+                  >
+                    <p>{msg.text.length > 50 ? msg.text.substring(0, 50) + '...' : msg.text}</p>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="p-1 border-t">
+                <div className="flex gap-1">
+                  <button 
+                    className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded hover:bg-purple-200"
+                    onClick={() => handleDoctorsSendMessage("Continue")}
+                  >
+                    Continue
+                  </button>
+                  <button 
+                    className="text-[9px] bg-gray-100 text-gray-700 px-1 py-0.5 rounded hover:bg-gray-200"
+                    onClick={() => handleDoctorsSendMessage("Help")}
+                  >
+                    Help
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
@@ -813,7 +1077,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 )}
                 
                 {showDoctorList && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50">
                     {/* Back Button */}
                     <button
                       onClick={() => {
