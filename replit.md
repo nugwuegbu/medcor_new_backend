@@ -226,8 +226,6 @@ Changelog:
 - July 05, 2025. Added chat input with microphone functionality to doctors page - users can now send messages or use voice input from the doctors screen
 - July 05, 2025. Optimized HeyGen avatar performance - changed quality from High to Medium, switched from SYNC to ASYNC mode, added response caching for improved speed
 - July 05, 2025. Enhanced HeyGen performance with LRU-like cache, latency tracking, preloading common phrases, WebRTC connection metrics, and automatic session recovery
-- July 05, 2025. Optimized doctor cards - reduced size from w-16 h-16 to w-12 h-12, added scale transform on hover (1.05), enhanced shadow effects, and added purple ring accent
-- July 05, 2025. Reverted avatar quality back to High per user request for better visual experience
 
 ## User Preferences
 
