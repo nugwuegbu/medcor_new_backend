@@ -1606,13 +1606,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         )}
         
         {/* Booking Form View */}
-        {showBookingForm && (
+        {showBookingForm && showChatInterface && (
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
             {/* Back Button */}
             <button
               onClick={() => {
                 setShowBookingForm(false);
-                setShowDoctorList(true);
+                setShowChatInterface(true);
               }}
               className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
             >
