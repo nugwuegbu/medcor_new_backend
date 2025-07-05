@@ -1,0 +1,71 @@
+/*
+Replit-compatible optimized avatar integration using HeyGen API
+Features:
+- In-memory LRU caching to avoid redundant avatar generation
+- Latency measurement logging
+- Fallback to a pre-rendered video on errors
+- Simple Express server and static client
+
+Setup:
+1. Create a `.env` file with:
+   HEYGEN_API_KEY=your_api_key_here
+   AVATAR_ID=your_avatar_id_here
+2. Install dependencies:
+   npm install express node-fetch@2 lru-cache dotenv
+3. Run:
+   npm start
+*/
+
+require('dotenv').config();
+const express = require('express');
+const fetch = require('node-fetch');
+const LRU = require('lru-cache');
+const path = require('path');
+
+const app = express();
+// Cache up to 100 prompts, TTL 5 minutes
+const cache = new LRU({ max: 100, ttl: 1000 * 60 * 5 });
+
+// Serve static client files
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/avatar', async (req, res) => {
+  const prompt = req.query.prompt || 'default';
+  const cacheKey = prompt;
+
+  // Return cached URL if available
+  if (cache.has(cacheKey)) {
+    return res.json({ url: cache.get(cacheKey), cached: true });
+  }
+
+  const start = Date.now();
+  try {
+    const response = await fetch('https://api.heygen.com/v1/avatar/generate', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.HEYGEN_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ avatarId: process.env.AVATAR_ID, prompt })
+    });
+    const data = await response.json();
+    const url = data.videoUrl;
+
+    // Cache generated URL
+    cache.set(cacheKey, url);
+
+    const latency = Date.now() - start;
+    console.log(`Cache miss for '${prompt}', latency: ${latency}ms`);
+    res.json({ url, latency, cached: false });
+  } catch (err) {
+    console.error('Avatar generation error:', err);
+    // Fallback to pre-rendered video if available
+    if (cache.has('fallback')) {
+      return res.json({ url: cache.get('fallback'), fallback: true });
+    }
+    res.status(500).json({ error: 'Generation failed' });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));

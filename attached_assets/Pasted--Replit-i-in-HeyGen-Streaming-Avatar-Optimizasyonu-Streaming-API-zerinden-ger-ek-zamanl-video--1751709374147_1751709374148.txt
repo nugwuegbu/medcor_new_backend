@@ -1,0 +1,111 @@
+/*
+Replit için HeyGen Streaming Avatar Optimizasyonu
+- Streaming API üzerinden gerçek zamanlı video+audio akışı.
+- WebSocket proxy ile low-latency iletişim.
+- MediaSource Extensions (MSE) kullanarak tarayıcıda chunk bazlı oynatma.
+- LRU cache ile metadata ve küçük segmentleri önbelleğe alma.
+
+Kurulum:
+1. `.env` dosyasına ekleyin:
+   HEYGEN_API_KEY=api_keyiniz
+   AVATAR_ID=avatar_id
+   STREAM_ENDPOINT=wss://stream.heygen.com/v1/stream
+2. `npm install express ws lru-cache dotenv`
+3. `npm start`
+
+Dosyalar:
+- server.js: WebSocket proxy + caching
+- public/index.html: MSE tabanlı oynatıcı + kontrol UI
+*/
+
+// server.js
+require('dotenv').config();
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const LRU = require('lru-cache');
+const path = require('path');
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// Önbellek: Segment headers metadata için
+const metaCache = new LRU({ max: 200, ttl: 1000 * 60 * 10 });
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+wss.on('connection', (client) => {
+  let heygenSocket;
+  client.on('message', async (msg) => {
+    const { cmd, prompt } = JSON.parse(msg);
+    if (cmd === 'start') {
+      // HeyGen streaming endpoint'e bağlan
+      heygenSocket = new WebSocket(`${process.env.STREAM_ENDPOINT}?avatarId=${process.env.AVATAR_ID}&prompt=${encodeURIComponent(prompt)}`);
+      heygenSocket.on('open', () => client.send(JSON.stringify({ event: 'ready' })));
+      heygenSocket.on('message', (data) => {
+        // Binary video/audio chunk veya JSON metadata
+        if (typeof data === 'string') {
+          const meta = JSON.parse(data);
+          metaCache.set(meta.segmentId, data);
+          client.send(data);
+        } else {
+          client.send(data);
+        }
+      });
+      heygenSocket.on('close', () => client.send(JSON.stringify({ event: 'end' })));
+      heygenSocket.on('error', (e) => client.send(JSON.stringify({ event: 'error', message: e.message })));
+    }
+    else if (cmd === 'stop' && heygenSocket) {
+      heygenSocket.close();
+    }
+  });
+  client.on('close', () => heygenSocket && heygenSocket.close());
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Server http://localhost:${PORT}`));
+
+
+// public/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Streaming Avatar</title></head>
+<body>
+  <input id="prompt" placeholder="Prompt girin" style="width:70%"><button id="start">Başlat</button><button id="stop">Durdur</button>
+  <video id="video" controls autoplay style="width:100%;max-width:600px"></video>
+
+  <script>
+    const ws = new WebSocket(`ws://${location.host}`);
+    const video = document.getElementById('video');
+    let mediaSource, sourceBuffer;
+
+    ws.addEventListener('open', () => console.log('WS connected'));
+    ws.addEventListener('message', async (ev) => {
+      if (typeof ev.data === 'string') {
+        const msg = JSON.parse(ev.data);
+        if (msg.event === 'ready') {
+          console.log('Stream hazır');
+          mediaSource = new MediaSource();
+          video.src = URL.createObjectURL(mediaSource);
+          mediaSource.addEventListener('sourceopen', () => {
+            sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
+          });
+        } else if (msg.event === 'end') console.log('Stream bitti');
+        else if (msg.event === 'error') console.error(msg.message);
+      } else {
+        const chunk = await ev.data.arrayBuffer();
+        if (sourceBuffer && !sourceBuffer.updating) {
+          sourceBuffer.appendBuffer(chunk);
+        }
+      }
+    });
+
+    document.getElementById('start').onclick = () => {
+      const prompt = document.getElementById('prompt').value;
+      ws.send(JSON.stringify({ cmd: 'start', prompt }));
+    };
+    document.getElementById('stop').onclick = () => ws.send(JSON.stringify({ cmd: 'stop' }));
+  </script>
+</body>
+</html>

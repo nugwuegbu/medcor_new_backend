@@ -1,0 +1,145 @@
+/*
+High-Performance Streaming Avatar Optimization with HeyGen JS SDK on Replit
+- Real-time streaming using official HeyGen JS/TS SDK
+- Adaptive segment caching (LRU) + prefetching
+- Chunk-based playback via MediaSource Extensions
+- Network latency and segment processing time logging
+
+Setup:
+1. Add to `.env`:
+   HEYGEN_API_KEY=your_api_key
+   AVATAR_ID=your_avatar_id
+2. Install dependencies:
+   npm install express dotenv lru-cache heygen-sdk
+3. Run server:
+   npm start
+
+Configuration:
+- CACHE_MAX: Max segments to cache
+- PREFETCH_COUNT: Number of segments to prefetch
+*/
+
+require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const { HeyGenClient } = require('heygen-sdk');
+const LRU = require('lru-cache');
+
+// Configuration constants
+const CACHE_MAX = 100;
+const PREFETCH_COUNT = 3;
+
+// Initialize HeyGen SDK client\ const client = new HeyGenClient({ apiKey: process.env.HEYGEN_API_KEY });
+
+// In-memory LRU cache for segment data
+const segmentCache = new LRU({ max: CACHE_MAX, ttl: 1000 * 60 * 10 });
+
+const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Start streaming session and return initial segment metadata
+app.get('/start/:prompt', async (req, res) => {
+  const prompt = req.params.prompt;
+  try {
+    const session = await client.startStreaming({ avatarId: process.env.AVATAR_ID, prompt });
+    const segments = session.segments;
+
+    // Prefetch first few segments
+    for (let i = 0; i < Math.min(PREFETCH_COUNT, segments.length); i++) {
+      const seg = segments[i];
+      segmentCache.set(seg.id, await fetchSegment(seg.url));
+    }
+
+    res.json({ sessionId: session.id, segments: segments.map(s => ({ id: s.id, url: s.url, initRange: s.initRange })) });
+  } catch (err) {
+    console.error('Streaming start error:', err);
+    res.status(500).json({ error: 'Stream start failed' });
+  }
+});
+
+// Fetch individual segment, cache and prefetch next ones
+app.get('/segment/:id', async (req, res) => {
+  const id = req.params.id;
+  if (segmentCache.has(id)) {
+    return res.send(segmentCache.get(id));
+  }
+  try {
+    const meta = await client.getSegmentMetadata(id);
+    const data = await fetchSegment(meta.url);
+    segmentCache.set(id, data);
+
+    // Prefetch subsequent segments
+    const nextIds = await client.getNextSegmentIds(id, PREFETCH_COUNT);
+    nextIds.forEach(async nextId => {
+      if (!segmentCache.has(nextId)) {
+        const m = await client.getSegmentMetadata(nextId);
+        segmentCache.set(nextId, await fetchSegment(m.url));
+      }
+    });
+
+    res.send(data);
+  } catch (err) {
+    console.error('Segment fetch error:', err);
+    res.status(500).send('Failed to fetch segment');
+  }
+});
+
+// Utility to fetch segment data and log latency
+async function fetchSegment(url) {
+  const start = Date.now();
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+  console.log(`Fetched segment ${url} in ${Date.now() - start}ms`);
+  return Buffer.from(buffer);
+}
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+
+// public/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HeyGen SDK Streaming Avatar</title>
+</head>
+<body>
+  <input id="prompt" placeholder="Enter prompt" style="width:70%;" />
+  <button id="start">Start</button>
+  <video id="video" controls autoplay style="width:100%; max-width:600px;"></video>
+
+  <script>
+    let mediaSource, sourceBuffer;
+    const video = document.getElementById('video');
+    const startBtn = document.getElementById('start');
+
+    startBtn.onclick = async () => {
+      const prompt = document.getElementById('prompt').value;
+      const resp = await fetch(`/start/${encodeURIComponent(prompt)}`);
+      const { sessionId, segments } = await resp.json();
+
+      mediaSource = new MediaSource();
+      video.src = URL.createObjectURL(mediaSource);
+      mediaSource.addEventListener('sourceopen', () => {
+        sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
+        appendSegments(segments);
+      });
+    };
+
+    async function appendSegments(list) {
+      for (const seg of list) {
+        const res = await fetch(`/segment/${seg.id}`);
+        const buf = await res.arrayBuffer();
+        await appendBuffer(buf);
+      }
+    }
+
+    function appendBuffer(buf) {
+      return new Promise(resolve => {
+        sourceBuffer.appendBuffer(buf);
+        sourceBuffer.addEventListener('updateend', () => resolve(), { once: true });
+      });
+    }
+  </script>
+</body>
+</html>
