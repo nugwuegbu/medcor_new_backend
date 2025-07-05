@@ -59,6 +59,7 @@ function detectLanguageFromText(text: string): string {
 
 export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [doctorsMessages, setDoctorsMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [doctorsInputText, setDoctorsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
@@ -260,7 +261,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               avatarResponse: data.avatarResponse,
               showDoctors: false
             };
-            setMessages(prev => [...prev, botMessage]);
+            
+            // Add to appropriate message list based on current view
+            if (showDoctorList) {
+              setDoctorsMessages(prev => [...prev, botMessage]);
+            } else {
+              setMessages(prev => [...prev, botMessage]);
+            }
           }
         } catch (error) {
           console.error("Error fetching nearby places:", error);
@@ -281,7 +288,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           avatarResponse: data.avatarResponse,
           showDoctors: false
         };
-        setMessages(prev => [...prev, botMessage]);
+        
+        // Add to appropriate message list based on current view
+        if (showDoctorList) {
+          setDoctorsMessages(prev => [...prev, botMessage]);
+        } else {
+          setMessages(prev => [...prev, botMessage]);
+        }
         
         // Open the chat interface and navigate to doctors
         if (interfaceType === "DOCTORS") {
@@ -301,7 +314,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           avatarResponse: data.avatarResponse,
           showDoctors: false // Never show inline doctors
         };
-        setMessages(prev => [...prev, botMessage]);
+        
+        // Add to appropriate message list based on current view
+        if (showDoctorList) {
+          setDoctorsMessages(prev => [...prev, botMessage]);
+        } else {
+          setMessages(prev => [...prev, botMessage]);
+        }
       }
       
       // Make the HeyGen avatar speak the response with language detection
@@ -328,6 +347,32 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
     setMessages(prev => [...prev, userMessage]);
     setInputText("");
+    
+    // Track user messages and show auth after 2 messages
+    const newCount = userMessageCount + 1;
+    setUserMessageCount(newCount);
+    if (newCount === 2) {
+      setShowAuthOverlay(true);
+    }
+    
+    voiceChatMutation.mutate(text.trim());
+  };
+
+  const handleDoctorsSendMessage = async (text: string) => {
+    if (!text.trim()) return;
+
+    // Activate HeyGen avatar on first user interaction
+    setUserHasInteracted(true);
+
+    const userMessage: Message = {
+      id: `user_${Date.now()}`,
+      text: text.trim(),
+      sender: "user", 
+      timestamp: new Date()
+    };
+
+    setDoctorsMessages(prev => [...prev, userMessage]);
+    setDoctorsInputText("");
     
     // Track user messages and show auth after 2 messages
     const newCount = userMessageCount + 1;
@@ -702,9 +747,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     {/* Main Content Area - Shows doctors or messages */}
                     <div className="h-full pt-32 px-6 pb-24 overflow-y-auto">
                       {/* Show messages if any exist, otherwise show doctors */}
-                      {messages.length > 0 ? (
+                      {doctorsMessages.length > 0 ? (
                         <div className="max-w-2xl mx-auto space-y-4">
-                          {messages.map((msg, index) => (
+                          {doctorsMessages.map((msg, index) => (
                             <div
                               key={index}
                               className={`p-4 rounded-lg ${
@@ -803,8 +848,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           onChange={(e) => setDoctorsInputText(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && doctorsInputText.trim()) {
-                              handleSendMessage(doctorsInputText);
-                              setDoctorsInputText('');
+                              handleDoctorsSendMessage(doctorsInputText);
                               // Stay on doctors page - don't navigate away
                             }
                           }}
@@ -814,8 +858,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         <button
                           onClick={() => {
                             if (doctorsInputText.trim()) {
-                              handleSendMessage(doctorsInputText);
-                              setDoctorsInputText('');
+                              handleDoctorsSendMessage(doctorsInputText);
                               // Stay on doctors page - don't navigate away
                             }
                           }}
@@ -825,7 +868,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         </button>
                         <BrowserVoiceButton
                           onTranscript={(transcript: string) => {
-                            handleSendMessage(transcript);
+                            handleDoctorsSendMessage(transcript);
                             // Stay on doctors page - don't navigate away
                           }}
                         />
