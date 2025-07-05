@@ -849,9 +849,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               setShowChatInterface(true);
             }
           }}>
-          {isOpen && (
+          {isOpen && !showDoctorList && (
             <>
-              {/* Always show HeyGen avatar */}
+              {/* Show HeyGen avatar only when NOT in doctor list */}
               <HeyGenSDKAvatar 
                 ref={avatarRef}
                 key="single-avatar-instance"
