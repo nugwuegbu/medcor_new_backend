@@ -1,0 +1,101 @@
+/*
+HeyGen StreamingAvatar Chat Agent on Replit
+- Uses official HeyGen StreamingAvatar API (WebRTC) for video+audio stream
+- Chat UI with user input and dynamic avatar reaction
+- Minimal client-side logic; API handles TTS and avatar animation
+
+Setup:
+1. Create `.env`:
+   HEYGEN_API_KEY=your_api_key
+2. Install:
+   npm install express dotenv
+3. Run server:
+   npm start
+*/
+
+// server.js
+require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+
+// public/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HeyGen Chat Avatar</title>
+  <style>
+    body { margin:0; display:flex; height:100vh; overflow:hidden; font-family:sans-serif; }
+    #videoContainer { flex:1; background:#000; display:flex; align-items:center; justify-content:center; }
+    #chatUI { width:320px; border-left:1px solid #ccc; display:flex; flex-direction:column; }
+    #messages { flex:1; overflow:auto; padding:10px; }
+    .msg.user { text-align:right; margin:5px; color:#007bff; }
+    .msg.agent { text-align:left; margin:5px; color:#333; }
+    #inputBar { display:flex; }
+    #input { flex:1; padding:8px; border:none; border-top:1px solid #ccc; }
+    #send { padding:8px 12px; border:none; background:#007bff; color:#fff; cursor:pointer; }
+    video { max-width:100%; max-height:100%; }
+  </style>
+</head>
+<body>
+  <div id="videoContainer">
+    <video id="avatarVideo" autoplay playsinline muted></video>
+  </div>
+  <div id="chatUI">
+    <div id="messages"></div>
+    <div id="inputBar">
+      <input id="input" placeholder="Type your message..." />
+      <button id="send">Send</button>
+    </div>
+  </div>
+  <script type="module">
+    import { StreamingAvatar } from 'heygen-sdk';
+    // Initialize avatar
+    const avatar = new StreamingAvatar({ token: '" + process.env.HEYGEN_API_KEY + "' });
+    const videoEl = document.getElementById('avatarVideo');
+    avatar.on('stream_ready', stream => {
+      videoEl.srcObject = stream;
+      videoEl.play();
+    });
+    avatar.on('stream_closed', () => {
+      videoEl.srcObject = null;
+    });
+
+    // Chat UI
+    const messages = document.getElementById('messages');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+
+    function appendMessage(text, cls) {
+      const div = document.createElement('div');
+      div.className = `msg ${cls}`;
+      div.textContent = text;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    sendBtn.onclick = async () => {
+      const text = input.value.trim();
+      if (!text) return;
+      appendMessage(text, 'user');
+      input.value = '';
+      appendMessage('...', 'agent');
+
+      try {
+        // Speak triggers video+audio stream
+        await avatar.speak({ text });
+        // Remove placeholder when done
+        const placeholder = messages.querySelector('.msg.agent:last-child');
+        if (placeholder) placeholder.textContent = '';
+      } catch (e) {
+        console.error(e);
+        appendMessage('Error: Failed to speak', 'agent');
+      }
+    };
+  </script>
+</body>
+</html>
