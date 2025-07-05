@@ -451,17 +451,22 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       {/* Full Screen Avatar Background with Message Overlay */}
       <div className="flex-1 relative">
         {/* Avatar Background - Always Active */}
-        {/* Avatar Container with minimize transition */}
+        {/* Avatar Container - Adapts for chat, doctors view, and minimized state */}
         <div 
           className={`absolute transition-all duration-700 ease-in-out ${
-            isMinimized 
-              ? 'top-20 right-4 w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 cursor-pointer hover:scale-110' 
-              : 'inset-0 overflow-hidden'
+            showDoctorList
+              ? 'top-[75px] right-[25px] w-24 h-24 rounded-full overflow-hidden shadow-lg z-50 cursor-pointer hover:scale-110 ring-4 ring-purple-600'
+              : isMinimized 
+                ? 'top-20 right-4 w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 cursor-pointer hover:scale-110' 
+                : 'inset-0 overflow-hidden'
           }`}
           onClick={() => {
             if (isMinimized) {
               setIsMinimized(false);
               setShowInfoOverlay(false);
+            } else if (showDoctorList) {
+              setShowDoctorList(false);
+              setShowChatInterface(true);
             }
           }}>
           {isOpen && (
@@ -692,15 +697,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Small Avatar Circle in Top Right - Empty placeholder */}
-                    <div className="absolute top-[75px] right-[25px] z-50">
-                      <div 
-                        className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
-                        onClick={() => setShowDoctorList(false)}
-                      >
-                        <Bot className="h-10 w-10 text-white" />
-                      </div>
-                    </div>
+
                     
                     {/* Doctors Grid */}
                     <div className="h-full pt-32 px-6 pb-24 overflow-y-auto">
