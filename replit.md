@@ -230,6 +230,8 @@ Changelog:
 - July 05, 2025. Implemented file upload functionality in Records page - added centered upload button for medical documents (PDF, JPEG, PNG, DOC) with 50% smaller size
 - July 05, 2025. Added chat input with microphone to Records page bottom - matches main chat design with send button and placeholder text
 - July 05, 2025. Added chat history display in Records page - messages shown as cards with timestamps, user messages in purple, bot messages in white with shadow
+- July 05, 2025. Fixed Records page chat input to match main interface - added blue send button alongside microphone, consistent with main chat design
+- July 05, 2025. Improved Records page upload text readability - split long text into two lines for better display
 
 ## User Preferences
 

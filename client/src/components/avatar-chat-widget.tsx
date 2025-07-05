@@ -1021,8 +1021,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 }}
                               />
                             </label>
-                            <p className="text-gray-600 mt-3 text-xs">
-                              Upload your medical documents or photos (PDF, JPEG, PNG, DOC)
+                            <p className="text-gray-600 mt-3 text-xs text-center">
+                              Upload your medical documents or photos<br />
+                              (PDF, JPEG, PNG, DOC)
                             </p>
                           </div>
                         </div>
