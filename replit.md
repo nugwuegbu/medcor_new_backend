@@ -217,6 +217,7 @@ Changelog:
 - July 05, 2025. Fixed HeyGen avatar session closing issue - added automatic session recovery and error handling to recreate avatar when session expires
 - July 05, 2025. Fixed avatar aspect ratio distortion - changed video element from object-cover to object-contain to maintain proper proportions
 - July 05, 2025. Reverted avatar display back to object-cover to fill entire screen without black bars
+- July 05, 2025. Optimized doctors page layout - smaller doctor cards, repositioned back button and avatar circle, added chat/voice input at bottom
 
 ## User Preferences
 

@@ -13,6 +13,7 @@ import InfoOverlay from "./info-overlay";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
+import doctorPhotoEmily from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751697087292.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
 
 interface Message {
@@ -684,94 +685,124 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     {/* Back Button */}
                     <button
                       onClick={() => setShowDoctorList(false)}
-                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                      className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="font-medium text-sm">Back</span>
+                      <ChevronLeft className="h-3 w-3" />
+                      <span className="font-medium">Back</span>
                     </button>
                     
-                    {/* Small Avatar Circle in Top Right - Empty placeholder */}
-                    <div className="absolute top-[75px] right-[25px] z-50">
+                    {/* Small Bot Icon Circle in Top Right */}
+                    <div className="absolute top-[75px] right-[20px] z-50">
                       <div 
-                        className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
+                        className="w-16 h-16 rounded-full shadow-lg bg-gradient-to-br from-purple-600 to-blue-600 ring-2 ring-white/50 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
                         onClick={() => setShowDoctorList(false)}
                       >
-                        <Bot className="h-10 w-10 text-white" />
+                        <Bot className="h-8 w-8 text-white" />
                       </div>
                     </div>
                     
                     {/* Doctors Grid */}
-                    <div className="h-full pt-32 px-6 pb-6 overflow-y-auto">
-                      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Our Doctors</h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+                    <div className="h-full pt-36 px-4 pb-24 overflow-y-auto">
+                      <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Our Doctors</h2>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-w-6xl mx-auto">
                         {/* Doctor 1 */}
                         <div 
-                          className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                          className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(1, "Dr. Sarah Johnson", "5 years experience in cardiology, graduated from Johns Hopkins University.")}
                           onMouseLeave={handleDoctorHoverEnd}
                         >
                           <div className="text-center">
-                            <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
+                            <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden bg-gray-200">
                               <img 
                                 src={doctorPhoto}
                                 alt="Dr. Sarah Johnson"
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-800">Dr. Sarah Johnson</h3>
-                            <p className="text-sm text-purple-600 font-medium mb-2">Cardiology</p>
-                            <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
-                              <Phone className="h-4 w-4" />
-                              <span>+44 20 7123 4567</span>
+                            <h3 className="text-sm font-bold text-gray-800">Dr. Sarah Johnson</h3>
+                            <p className="text-xs text-purple-600 font-medium mb-1">Cardiology</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600">
+                              <Phone className="h-3 w-3" />
+                              <span className="text-xs">+44 20 7123 4567</span>
                             </div>
                           </div>
                         </div>
                         
                         {/* Doctor 2 */}
                         <div 
-                          className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                          className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(2, "Dr. Michael Chen", "7 years in orthopedics, Harvard Medical School graduate, expert in sports medicine.")}
                           onMouseLeave={handleDoctorHoverEnd}
                         >
                           <div className="text-center">
-                            <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
+                            <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden bg-gray-200">
                               <img 
                                 src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face"
                                 alt="Dr. Michael Chen"
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-800">Dr. Michael Chen</h3>
-                            <p className="text-sm text-purple-600 font-medium mb-2">Orthopedics</p>
-                            <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
-                              <Phone className="h-4 w-4" />
-                              <span>+44 20 7123 4568</span>
+                            <h3 className="text-sm font-bold text-gray-800">Dr. Michael Chen</h3>
+                            <p className="text-xs text-purple-600 font-medium mb-1">Orthopedics</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600">
+                              <Phone className="h-3 w-3" />
+                              <span className="text-xs">+44 20 7123 4568</span>
                             </div>
                           </div>
                         </div>
                         
                         {/* Doctor 3 */}
                         <div 
-                          className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                          className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(3, "Dr. Emily Rodriguez", "10 years of pediatric experience, Stanford University alumnus, child health specialist.")}
                           onMouseLeave={handleDoctorHoverEnd}
                         >
                           <div className="text-center">
-                            <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
+                            <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden bg-gray-200">
                               <img 
-                                src="https://images.unsplash.com/photo-1594824388853-2c5cb2d2f40e?w=300&h=300&fit=crop&crop=face"
+                                src={doctorPhotoEmily}
                                 alt="Dr. Emily Rodriguez"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover object-center"
                               />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-800">Dr. Emily Rodriguez</h3>
-                            <p className="text-sm text-purple-600 font-medium mb-2">Pediatrics</p>
-                            <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
-                              <Phone className="h-4 w-4" />
-                              <span>+44 20 7123 4569</span>
+                            <h3 className="text-sm font-bold text-gray-800">Dr. Emily Rodriguez</h3>
+                            <p className="text-xs text-purple-600 font-medium mb-1">Pediatrics</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600">
+                              <Phone className="h-3 w-3" />
+                              <span className="text-xs">+44 20 7123 4569</span>
                             </div>
                           </div>
                         </div>
+                      </div>
+                    </div>
+                    
+                    {/* Chat and Voice Input Section at Bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 border-t border-gray-200">
+                      <div className="flex items-center gap-2 max-w-4xl mx-auto">
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          value={inputText}
+                          onChange={(e) => setInputText(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(inputText)}
+                          placeholder="Send your message..."
+                          className="flex-1 px-4 py-2 text-sm rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                        <button
+                          onClick={() => handleSendMessage(inputText)}
+                          className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
+                        >
+                          <Send className="h-4 w-4" />
+                        </button>
+                        <BrowserVoiceButton
+                          onTranscript={(text: string) => {
+                            setInputText(text);
+                            // Auto-send when user stops speaking
+                            if (text.trim()) {
+                              handleSendMessage(text);
+                            }
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
