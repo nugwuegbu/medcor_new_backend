@@ -1,62 +1,18 @@
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { AvatarManager } from "../services/avatar-manager";
+import { useEffect, useRef, useState, memo } from "react";
 import { Loader } from "lucide-react";
-import { TaskType, TaskMode } from "@heygen/streaming-avatar";
+import { AvatarManager } from "@/services/avatar-manager";
 
 interface HeyGenSDKAvatarProps {
   apiKey: string;
-  onMessage?: (text: string) => void;
   isVisible: boolean;
   onReady?: () => void;
 }
 
-export interface HeyGenSDKAvatarRef {
-  speak: (params: { text: string; taskType?: TaskType; taskMode?: TaskMode }) => void;
-}
-
-const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ apiKey, onMessage, isVisible, onReady }, ref) => {
+const HeyGenSDKAvatar = memo(({ apiKey, isVisible, onReady }: HeyGenSDKAvatarProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "failed">("connecting");
   const videoRef = useRef<HTMLVideoElement>(null);
-  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasCalledOnReady = useRef(false);
-
-  // Expose speak method through ref
-  useImperativeHandle(ref, () => ({
-    speak: async ({ text, taskType = TaskType.TALK, taskMode = TaskMode.ASYNC }) => {
-      try {
-        const avatar = AvatarManager.getAvatar();
-        if (avatar) {
-          await avatar.speak({ text, taskType, taskMode });
-        }
-      } catch (e: any) {
-        console.error("Failed to speak:", e);
-        
-        // If session is closed, try to recreate the avatar
-        if (e.message?.includes('session state wrong') || e.message?.includes('closed')) {
-          console.log("Session closed, attempting to recreate avatar...");
-          try {
-            // Reset manager state
-            const manager = (window as any).__avatarManager;
-            manager.avatar = null;
-            manager.promise = null;
-            manager.lock = false;
-            
-            // Recreate avatar
-            await AvatarManager.getOrCreateAvatar(apiKey);
-            
-            // Retry speaking
-            const newAvatar = AvatarManager.getAvatar();
-            if (newAvatar) {
-              await newAvatar.speak({ text, taskType, taskMode });
-            }
-          } catch (recreateError) {
-            console.error("Failed to recreate avatar:", recreateError);
-          }
-        }
-      }
-    }
-  }), [apiKey]);
 
   useEffect(() => {
     if (!isVisible || !apiKey) return;
@@ -65,122 +21,42 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
       try {
         setIsLoading(true);
         setConnectionStatus("connecting");
-
-        // Get or create avatar
-        const avatar = await AvatarManager.getOrCreateAvatar(apiKey);
         
-        // Set up stream checking
-        const checkStream = () => {
-          const mediaStream = AvatarManager.getMediaStream();
-          if (mediaStream && videoRef.current) {
-            console.log("Attaching media stream to video element:", mediaStream);
-            videoRef.current.srcObject = mediaStream;
-            videoRef.current.muted = false; // Ensure audio is not muted
-            videoRef.current.volume = 1.0; // Set volume to maximum
+        const avatar = await AvatarManager.getOrCreateAvatar(apiKey);
+        console.log("Avatar is ready");
+        
+        const stream = AvatarManager.getMediaStream();
+        
+        if (stream && videoRef.current) {
+          videoRef.current.srcObject = stream;
+          
+          // Wait for video metadata to load
+          videoRef.current.onloadedmetadata = () => {
+            console.log("Video metadata loaded");
+            // Ensure audio is enabled
+            videoRef.current!.muted = false;
+            videoRef.current!.volume = 1.0;
             
-            // Optimize for real-time streaming
-            videoRef.current.preload = 'none'; // Don't preload for live streams
-            (videoRef.current as any).disablePictureInPicture = true;
+            // Play the video
+            videoRef.current!.play().catch(e => {
+              console.error("Video play error:", e);
+            });
             
-            // Set latency hint for WebRTC
-            if ('latencyHint' in videoRef.current) {
-              (videoRef.current as any).latencyHint = 0; // Minimize latency
-            }
-            
-            videoRef.current.onloadedmetadata = async () => {
-              console.log("Video metadata loaded");
-              try {
-                await videoRef.current!.play();
-                // Double-check audio is enabled
-                if (videoRef.current) {
-                  videoRef.current.muted = false;
-                  videoRef.current.volume = 1.0;
-                  console.log("Audio enabled: muted =", videoRef.current.muted, "volume =", videoRef.current.volume);
-                  
-                  // Monitor buffer and adjust playback
-                  setInterval(() => {
-                    if (videoRef.current && videoRef.current.buffered.length > 0) {
-                      const bufferedEnd = videoRef.current.buffered.end(0);
-                      const currentTime = videoRef.current.currentTime;
-                      const bufferSize = bufferedEnd - currentTime;
-                      
-                      if (bufferSize > 1.5) {
-                        // Too much buffer, skip forward slightly
-                        videoRef.current.currentTime = bufferedEnd - 0.5;
-                        console.log("Adjusted playback to reduce latency");
-                      }
-                    }
-                  }, 2000);
-                }
-              } catch (e) {
-                console.error("Video play error:", e);
-                // If autoplay fails, try to play with user interaction
-                if ((e as Error).name === 'NotAllowedError') {
-                  console.log("Autoplay blocked, user interaction needed");
-                }
-              }
-            };
             setConnectionStatus("connected");
             setIsLoading(false);
             
-            // Call onReady callback when avatar is ready (only once)
+            // Call onReady callback
             if (onReady && !hasCalledOnReady.current) {
               hasCalledOnReady.current = true;
               onReady();
             }
-            
-            // Clear the interval once connected
-            if (checkIntervalRef.current) {
-              clearInterval(checkIntervalRef.current);
-              checkIntervalRef.current = null;
-            }
-          }
-        };
-
-        // Check immediately and then periodically  
-        checkStream();
-        checkIntervalRef.current = setInterval(checkStream, 100);
+          };
+        } else {
+          console.error("No media stream available");
+          setConnectionStatus("failed");
+          setIsLoading(false);
+        }
         
-        // Force check after avatar is ready
-        setTimeout(checkStream, 500);
-        setTimeout(checkStream, 1000);
-        setTimeout(checkStream, 1500);
-        
-        // Debug: Check avatar status after 2 seconds
-        setTimeout(() => {
-          const stream = AvatarManager.getMediaStream();
-          const audioTracks = stream?.getAudioTracks() || [];
-          
-          console.log("Avatar debug - Stream status:", {
-            hasStream: !!stream,
-            streamActive: stream?.active,
-            videoTracks: stream?.getVideoTracks().length,
-            audioTracks: audioTracks.length,
-            audioTrackDetails: audioTracks.map(track => ({
-              enabled: track.enabled,
-              muted: track.muted,
-              label: track.label,
-              readyState: track.readyState
-            }))
-          });
-          
-          // Force enable all audio tracks
-          audioTracks.forEach(track => {
-            track.enabled = true;
-            console.log(`Audio track "${track.label}" enabled:`, track.enabled);
-          });
-          
-          // Check video element audio status
-          if (videoRef.current) {
-            console.log("Video element audio status:", {
-              muted: videoRef.current.muted,
-              volume: videoRef.current.volume,
-              paused: videoRef.current.paused,
-              readyState: videoRef.current.readyState
-            });
-          }
-        }, 2000);
-
       } catch (error) {
         console.error("Failed to initialize avatar:", error);
         setConnectionStatus("failed");
@@ -189,14 +65,7 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
     };
 
     initAvatar();
-
-    // Cleanup
-    return () => {
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-      }
-    };
-  }, [apiKey, isVisible]);
+  }, [apiKey, isVisible, onReady]);
 
   if (!isVisible) return null;
 
@@ -222,13 +91,6 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
         className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         playsInline
-        onLoadedMetadata={() => {
-          if (videoRef.current) {
-            videoRef.current.muted = false;
-            videoRef.current.volume = 1.0;
-            console.log("Video unmuted on metadata load");
-          }
-        }}
       />
     </div>
   );

@@ -4,7 +4,7 @@ import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
-import HeyGenSDKAvatar, { HeyGenSDKAvatarRef } from "./heygen-sdk-avatar";
+import HeyGenSDKAvatar from "./heygen-sdk-avatar";
 import ChatDoctorList from "./chat-doctor-list";
 import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
@@ -86,7 +86,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [isSpeaking, setIsSpeaking] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
+  const avatarRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const capturePhotoRef = useRef<(() => string | null) | null>(null);
   const doctorHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -518,13 +518,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             <>
               {/* Always show HeyGen avatar */}
               <HeyGenSDKAvatar 
-                ref={avatarRef}
                 key="single-avatar-instance"
                 apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
                 isVisible={true}
-                onMessage={(text) => {
-                  console.log("Avatar message:", text);
-                }}
                 onReady={() => {
                   console.log("Avatar is ready");
                   setHasGreeted(true);
