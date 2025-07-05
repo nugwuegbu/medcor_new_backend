@@ -869,9 +869,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               setAvatarPosition({ x: null, y: null });
             }
           }}>
-          {isOpen && !showDoctorList && showChatInterface && (
+          {isOpen && !showDoctorList && !showRecordsList && (
             <>
-              {/* Show HeyGen avatar only when in main chat interface */}
+              {/* Show HeyGen avatar when NOT in specific list views */}
               <HeyGenSDKAvatar 
                 ref={avatarRef}
                 key="single-avatar-instance"
