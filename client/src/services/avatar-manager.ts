@@ -96,6 +96,27 @@ export class AvatarManager {
 
     console.log("Avatar session created:", sessionInfo.session_id);
     manager.avatar = avatar;
+    manager.sessionId = sessionInfo.session_id;
+    
+    // Start session health check
+    if (manager.healthCheckInterval) {
+      clearInterval(manager.healthCheckInterval);
+    }
+    
+    manager.healthCheckInterval = setInterval(async () => {
+      try {
+        // Check if avatar is still connected
+        if (!manager.avatar || !manager.avatar.mediaStream || !manager.avatar.mediaStream.active) {
+          console.log("Avatar session lost, attempting to reconnect...");
+          manager.avatar = null;
+          manager.promise = null;
+          manager.lock = false;
+          await AvatarManager.getOrCreateAvatar(apiKey);
+        }
+      } catch (error) {
+        console.error("Health check error:", error);
+      }
+    }, 5000); // Check every 5 seconds
     
     // Set global speak function with language detection
     (window as any).heygenSpeak = async (text: string, language?: string) => {
