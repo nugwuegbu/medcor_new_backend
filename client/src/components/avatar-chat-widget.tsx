@@ -993,8 +993,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       </div>
                       
                       {/* Chat Input with Microphone for Records Page */}
-                      <div className="bg-white border-t p-4">
-                        <div className="flex items-center gap-2">
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-100 to-transparent p-6">
+                        <div className="relative max-w-2xl mx-auto">
                           <input
                             type="text"
                             value={recordsInputText}
@@ -1005,27 +1005,30 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 setRecordsInputText('');
                               }
                             }}
-                            placeholder="Type a message..."
-                            className="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="Send your message..."
+                            className="w-full px-6 py-4 pr-24 bg-white/90 backdrop-blur-sm rounded-full shadow-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
                           />
-                          <BrowserVoiceButton
-                            onTranscript={(transcript) => {
-                              setRecordsInputText(transcript);
-                              handleSendMessage(transcript);
-                              setRecordsInputText('');
-                            }}
-                          />
-                          {recordsInputText.trim() && (
-                            <button
-                              onClick={() => {
-                                handleSendMessage(recordsInputText);
+                          
+                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+                            {recordsInputText.trim() && (
+                              <button
+                                onClick={() => {
+                                  handleSendMessage(recordsInputText);
+                                  setRecordsInputText('');
+                                }}
+                                className="p-2.5 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-all hover:scale-110 shadow-md"
+                              >
+                                <Send size={18} className="transform rotate-45" />
+                              </button>
+                            )}
+                            <BrowserVoiceButton
+                              onTranscript={(transcript) => {
+                                setRecordsInputText(transcript);
+                                handleSendMessage(transcript);
                                 setRecordsInputText('');
                               }}
-                              className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
-                            >
-                              <Send size={20} />
-                            </button>
-                          )}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
