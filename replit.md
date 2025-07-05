@@ -225,6 +225,7 @@ Changelog:
 - July 05, 2025. FINAL AVATAR CONFIGURATION LOCKED: Video element must remain "absolute inset-0 w-full h-full object-cover" - DO NOT CHANGE
 - July 05, 2025. Added chat input with microphone functionality to doctors page - users can now send messages or use voice input from the doctors screen
 - July 05, 2025. Implemented drag functionality for circular avatar - users can click and drag the avatar to reposition it anywhere on screen when in doctors view or minimized state
+- July 05, 2025. Fixed avatar mirror issue - ensured single HeyGen avatar instance is used across all views to prevent duplicate sessions and sync problems
 
 ## User Preferences
 

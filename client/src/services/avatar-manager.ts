@@ -103,20 +103,21 @@ export class AvatarManager {
       clearInterval(manager.healthCheckInterval);
     }
     
+    // Disable aggressive health check to prevent constant reconnections
+    // Only check if specifically requested
     manager.healthCheckInterval = setInterval(async () => {
       try {
-        // Check if avatar is still connected
-        if (!manager.avatar || !manager.avatar.mediaStream || !manager.avatar.mediaStream.active) {
-          console.log("Avatar session lost, attempting to reconnect...");
-          manager.avatar = null;
-          manager.promise = null;
-          manager.lock = false;
-          await AvatarManager.getOrCreateAvatar(apiKey);
+        // Only log status, don't auto-reconnect
+        if (manager.avatar && manager.avatar.mediaStream) {
+          const active = manager.avatar.mediaStream.active;
+          if (!active) {
+            console.log("Avatar stream inactive but not reconnecting automatically");
+          }
         }
       } catch (error) {
         console.error("Health check error:", error);
       }
-    }, 5000); // Check every 5 seconds
+    }, 30000); // Check every 30 seconds
     
     // Set global speak function with language detection
     (window as any).heygenSpeak = async (text: string, language?: string) => {
@@ -135,27 +136,10 @@ export class AvatarManager {
         } catch (e: any) {
           console.error("Failed to speak:", e);
           
-          // If session is closed, try to recreate the avatar
+          // If session is closed, log but don't recreate automatically
           if (e.message?.includes('session state wrong') || e.message?.includes('closed')) {
-            console.log("Session closed, attempting to recreate avatar...");
-            manager.avatar = null;
-            manager.promise = null;
-            manager.lock = false;
-            
-            // Try to recreate avatar
-            try {
-              await AvatarManager.getOrCreateAvatar(apiKey);
-              // Retry speaking after recreating
-              if (manager.avatar) {
-                await manager.avatar.speak({
-                  text,
-                  taskType: TaskType.REPEAT,
-                  taskMode: TaskMode.SYNC
-                });
-              }
-            } catch (recreateError) {
-              console.error("Failed to recreate avatar:", recreateError);
-            }
+            console.log("Session closed/error but not recreating automatically to prevent loops");
+            // Don't recreate automatically to prevent session loops
           }
         }
       }
