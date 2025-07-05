@@ -82,6 +82,9 @@ const metrics = {
 };
 
 export class AvatarManager {
+  private static lastRecoveryAttempt = 0;
+  private static freezeDetectionInterval: NodeJS.Timeout | null = null;
+  
   private static preWarmConnection(apiKey: string) {
     // Pre-warm the connection in background
     setTimeout(() => {
@@ -161,6 +164,10 @@ export class AvatarManager {
         const connectionTime = (window as any).performance.now();
         console.log(`WebRTC connection established in ${Math.round(connectionTime)}ms`);
       }
+      
+      // Start freeze detection
+      this.startFreezeDetection();
+      
       // Avatar is ready, no automatic greeting
     });
 
@@ -338,6 +345,11 @@ export class AvatarManager {
   }
 
   static async cleanup() {
+    if (this.freezeDetectionInterval) {
+      clearInterval(this.freezeDetectionInterval);
+      this.freezeDetectionInterval = null;
+    }
+    
     if (globalAvatar) {
       console.log("Cleaning up avatar");
       try {
@@ -348,5 +360,70 @@ export class AvatarManager {
       globalAvatar = null;
       hasGreeted = false;
     }
+  }
+  
+  private static startFreezeDetection() {
+    if (this.freezeDetectionInterval) {
+      clearInterval(this.freezeDetectionInterval);
+    }
+    
+    let lastFrameCount = 0;
+    let freezeCount = 0;
+    
+    this.freezeDetectionInterval = setInterval(() => {
+      const video = document.querySelector('video');
+      if (!video) return;
+      
+      // Check if video is actually playing
+      const currentTime = video.currentTime;
+      
+      // Use webkitDecodedFrameCount if available (Chrome)
+      const frameCount = (video as any).webkitDecodedFrameCount || 
+                        (video as any).mozDecodedFrames || 
+                        currentTime;
+      
+      if (frameCount === lastFrameCount && !video.paused) {
+        freezeCount++;
+        console.log(`Video might be frozen (${freezeCount} checks)`);
+        
+        if (freezeCount >= 3) {
+          console.log("Video freeze detected - attempting recovery");
+          this.handleVideoFreeze();
+          freezeCount = 0;
+        }
+      } else {
+        freezeCount = 0;
+      }
+      
+      lastFrameCount = frameCount;
+    }, 1000);
+  }
+  
+  private static handleVideoFreeze() {
+    const video = document.querySelector('video');
+    const manager = (window as any).__avatarManager;
+    const stream = manager?.avatar?.mediaStream;
+    
+    if (!video || !stream) return;
+    
+    // Try various recovery methods
+    console.log("Attempting to recover from video freeze...");
+    
+    // Method 1: Toggle video tracks
+    const videoTracks = stream.getVideoTracks();
+    videoTracks.forEach(track => {
+      track.enabled = false;
+      setTimeout(() => {
+        track.enabled = true;
+      }, 50);
+    });
+    
+    // Method 2: Force video element reload
+    const currentSrc = video.srcObject;
+    video.srcObject = null;
+    setTimeout(() => {
+      video.srcObject = currentSrc;
+      video.play().catch(e => console.error("Failed to restart video:", e));
+    }, 100);
   }
 }

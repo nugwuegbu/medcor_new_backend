@@ -77,6 +77,16 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
             videoRef.current.srcObject = mediaStream;
             videoRef.current.muted = false; // Ensure audio is not muted
             videoRef.current.volume = 1.0; // Set volume to maximum
+            
+            // Optimize for real-time streaming
+            videoRef.current.preload = 'none'; // Don't preload for live streams
+            (videoRef.current as any).disablePictureInPicture = true;
+            
+            // Set latency hint for WebRTC
+            if ('latencyHint' in videoRef.current) {
+              (videoRef.current as any).latencyHint = 0; // Minimize latency
+            }
+            
             videoRef.current.onloadedmetadata = async () => {
               console.log("Video metadata loaded");
               try {
@@ -86,6 +96,21 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
                   videoRef.current.muted = false;
                   videoRef.current.volume = 1.0;
                   console.log("Audio enabled: muted =", videoRef.current.muted, "volume =", videoRef.current.volume);
+                  
+                  // Monitor buffer and adjust playback
+                  setInterval(() => {
+                    if (videoRef.current && videoRef.current.buffered.length > 0) {
+                      const bufferedEnd = videoRef.current.buffered.end(0);
+                      const currentTime = videoRef.current.currentTime;
+                      const bufferSize = bufferedEnd - currentTime;
+                      
+                      if (bufferSize > 1.5) {
+                        // Too much buffer, skip forward slightly
+                        videoRef.current.currentTime = bufferedEnd - 0.5;
+                        console.log("Adjusted playback to reduce latency");
+                      }
+                    }
+                  }, 2000);
                 }
               } catch (e) {
                 console.error("Video play error:", e);
