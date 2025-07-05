@@ -735,7 +735,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
                     {/* Back Button */}
                     <button
-                      onClick={() => setShowDoctorList(false)}
+                      onClick={() => {
+                        setShowDoctorList(false);
+                        setDoctorsMessages([]); // Clear doctor messages when closing
+                      }}
                       className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -744,28 +747,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     
 
                     
-                    {/* Main Content Area - Shows doctors or messages */}
-                    <div className="h-full pt-32 px-6 pb-24 overflow-y-auto">
-                      {/* Show messages if any exist, otherwise show doctors */}
-                      {doctorsMessages.length > 0 ? (
-                        <div className="max-w-2xl mx-auto space-y-4">
-                          {doctorsMessages.map((msg, index) => (
-                            <div
-                              key={index}
-                              className={`p-4 rounded-lg ${
-                                msg.sender === 'user' 
-                                  ? 'bg-purple-100 ml-auto max-w-[80%]' 
-                                  : 'bg-gray-100 mr-auto max-w-[80%]'
-                              }`}
-                            >
-                              <p className="text-sm">{msg.text}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <>
-                          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Our Doctors</h2>
-                          <div className="grid grid-cols-3 gap-3 max-w-5xl mx-auto">
+                    {/* Main Content Area - Shows doctors with messages overlay */}
+                    <div className="h-full pt-32 px-6 pb-24 overflow-y-auto relative">
+                      {/* Always show doctors in background */}
+                      <div className={`transition-opacity duration-300 ${doctorsMessages.length > 0 ? 'opacity-20' : 'opacity-100'}`}>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Our Doctors</h2>
+                        <div className="grid grid-cols-3 gap-3 max-w-5xl mx-auto">
                         {/* Doctor 1 */}
                         <div 
                           className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
@@ -835,7 +822,26 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           </div>
                         </div>
                       </div>
-                        </>
+                      </div>
+                      
+                      {/* Messages overlay */}
+                      {doctorsMessages.length > 0 && (
+                        <div className="absolute inset-0 pt-32 px-6 pb-24 overflow-y-auto bg-white bg-opacity-95">
+                          <div className="max-w-2xl mx-auto space-y-4">
+                            {doctorsMessages.map((msg, index) => (
+                              <div
+                                key={index}
+                                className={`p-4 rounded-lg ${
+                                  msg.sender === 'user' 
+                                    ? 'bg-purple-100 ml-auto max-w-[80%]' 
+                                    : 'bg-gray-100 mr-auto max-w-[80%]'
+                                }`}
+                              >
+                                <p className="text-sm">{msg.text}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                     
