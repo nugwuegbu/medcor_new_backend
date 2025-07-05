@@ -116,15 +116,54 @@ export async function generateChatResponse(message: string, language: string = "
     // Check if user is asking about doctors
     const doctorKeywords = [
       'doctor', 'doktor', 'physician', 'hekim',
-      'available', 'availability', 'müsait', 'uygun',
-      'appointment', 'randevu', 'book', 'schedule',
       'specialist', 'uzman', 'cardiologist', 'kardiyolog',
       'pediatrician', 'çocuk doktoru', 'dermatologist', 'dermatoloji',
       'who can i see', 'kim müsait', 'which doctor', 'hangi doktor'
     ];
     
+    // Check if user wants to book/make appointment
+    const bookKeywords = [
+      'book', 'booking', 'appointment', 'randevu', 
+      'schedule', 'reserve', 'rezervasyon',
+      'i wanna make a book', 'i want to book', 'make a booking',
+      'available', 'availability', 'müsait', 'uygun'
+    ];
+    
+    // Check if user wants settings
+    const settingsKeywords = [
+      'settings', 'setting', 'preference', 'preferences',
+      'ayar', 'ayarlar', 'configure', 'configuration',
+      'setup', 'options', 'seçenekler'
+    ];
+    
+    // Check if user wants to go home
+    const homeKeywords = [
+      'home', 'main', 'main page', 'homepage',
+      'ana sayfa', 'başlangıç', 'start', 'beginning',
+      'go back home', 'return home'
+    ];
+    
+    // Check if user wants to make a call
+    const callKeywords = [
+      'call', 'phone', 'telephone', 'ring',
+      'ara', 'telefon', 'contact', 'dial',
+      'i wanna call', 'make a call', 'phone call'
+    ];
+    
+    // Check if user wants to see records
+    const recordsKeywords = [
+      'record', 'records', 'history', 'medical records',
+      'kayıt', 'kayıtlar', 'geçmiş', 'past records',
+      'my records', 'patient records', 'medical history'
+    ];
+    
     const isNearbyQuery = nearbyPlaceKeywords.some(keyword => lowerMessage.includes(keyword));
     const isDoctorQuery = doctorKeywords.some(keyword => lowerMessage.includes(keyword));
+    const isBookQuery = bookKeywords.some(keyword => lowerMessage.includes(keyword));
+    const isSettingsQuery = settingsKeywords.some(keyword => lowerMessage.includes(keyword));
+    const isHomeQuery = homeKeywords.some(keyword => lowerMessage.includes(keyword));
+    const isCallQuery = callKeywords.some(keyword => lowerMessage.includes(keyword));
+    const isRecordsQuery = recordsKeywords.some(keyword => lowerMessage.includes(keyword));
     
     const systemPrompt = LANGUAGE_PROMPTS[language as keyof typeof LANGUAGE_PROMPTS] || LANGUAGE_PROMPTS.en;
     
@@ -132,8 +171,18 @@ export async function generateChatResponse(message: string, language: string = "
     
     if (isNearbyQuery) {
       enhancedPrompt = `${systemPrompt}\n\nThe user is asking about nearby places. If they ask about gas stations, restaurants, pharmacies, or other places, respond with: "NEARBY_SEARCH:[TYPE]" where TYPE is the place they're looking for (e.g., NEARBY_SEARCH:gas_station). Keep it in English.`;
+    } else if (isBookQuery) {
+      enhancedPrompt = `${systemPrompt}\n\nThe user wants to make a booking/appointment. Respond with: "OPEN_CHAT_INTERFACE:BOOK" followed by a short message like "Let me help you with booking an appointment." Keep it very brief.`;
+    } else if (isSettingsQuery) {
+      enhancedPrompt = `${systemPrompt}\n\nThe user wants to access settings. Respond with: "OPEN_CHAT_INTERFACE:SETTINGS" followed by a short message like "Opening settings for you." Keep it very brief.`;
+    } else if (isHomeQuery) {
+      enhancedPrompt = `${systemPrompt}\n\nThe user wants to go home. Respond with: "OPEN_CHAT_INTERFACE:HOME" followed by a short message like "Taking you back to the home page." Keep it very brief.`;
+    } else if (isCallQuery) {
+      enhancedPrompt = `${systemPrompt}\n\nThe user wants to make a call. Respond with: "OPEN_CHAT_INTERFACE:CALL" followed by a short message like "Let me help you make a call." Keep it very brief.`;
+    } else if (isRecordsQuery) {
+      enhancedPrompt = `${systemPrompt}\n\nThe user wants to see records. Respond with: "OPEN_CHAT_INTERFACE:RECORDS" followed by a short message like "Let me show you your medical records." Keep it very brief.`;
     } else if (isDoctorQuery) {
-      enhancedPrompt = `${systemPrompt}\n\nThe user is asking about available doctors or appointments. Respond with: "OPEN_CHAT_INTERFACE:DOCTORS" followed by a short message like "Let me show you our available doctors." Keep it very brief.`;
+      enhancedPrompt = `${systemPrompt}\n\nThe user is asking about available doctors. Respond with: "OPEN_CHAT_INTERFACE:DOCTORS" followed by a short message like "Let me show you our available doctors." Keep it very brief.`;
     }
     
     const response = await openai.chat.completions.create({

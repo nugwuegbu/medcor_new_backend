@@ -51,7 +51,7 @@ export default function HealthMonitor() {
     refetchInterval: 5000, // Refresh every 5 seconds
   });
   
-  const { data: logsData } = useQuery({
+  const { data: logsData } = useQuery<{ logs: string[] }>({
     queryKey: ['/api/health/logs'],
     enabled: showLogs,
   });
