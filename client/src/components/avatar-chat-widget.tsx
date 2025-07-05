@@ -1552,7 +1552,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         className={`
                           h-8 w-8 rounded-md text-xs font-medium transition-all
                           ${day <= 0 || day > 31 ? 'invisible' : ''}
-                          ${isToday ? 'bg-purple-600 text-white' : ''}
+                          ${isToday ? 'bg-yellow-600 text-white font-bold' : ''}
                           ${selectedDate?.getDate() === day && !isToday ? 'bg-purple-200 text-purple-800' : ''}
                           ${isSelectable && day > 0 && day <= 31 && !isToday && selectedDate?.getDate() !== day ? 'hover:bg-gray-100' : ''}
                           ${!isSelectable && day > 0 && day <= 31 ? 'text-gray-300 cursor-not-allowed' : ''}

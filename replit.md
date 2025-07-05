@@ -239,6 +239,8 @@ Changelog:
 - July 05, 2025. Fixed appointment booking interface sizing to fit properly within chat widget boundaries 
 - July 05, 2025. Corrected Select Doctor button to properly navigate to doctors page instead of main chat interface
 - July 05, 2025. Implemented MCP server booking assistant AI agent that activates when date is selected, guides users through doctor selection, processes form input via voice/text, and handles appointment confirmation with GPT-4o AI processing
+- July 05, 2025. Fixed booking calendar initialization - calendar now opens with no pre-selected date, Select Doctor button only activates after date selection
+- July 05, 2025. Updated calendar styling - today's date now displays in dark yellow (bg-yellow-600) instead of purple, selected dates remain purple for clear distinction
 
 ## User Preferences
 
