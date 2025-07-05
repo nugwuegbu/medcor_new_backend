@@ -82,6 +82,18 @@ const metrics = {
 };
 
 export class AvatarManager {
+  private static preWarmConnection(apiKey: string) {
+    // Pre-warm the connection in background
+    setTimeout(() => {
+      if (!(window as any).__avatarManager?.avatar) {
+        console.log("Pre-warming avatar connection...");
+        this.getOrCreateAvatar(apiKey).catch(e => 
+          console.log("Pre-warm failed (non-critical):", e.message)
+        );
+      }
+    }, 100);
+  }
+
   static async getOrCreateAvatar(apiKey: string): Promise<StreamingAvatar> {
     const manager = (window as any).__avatarManager;
     
@@ -129,7 +141,9 @@ export class AvatarManager {
     
     console.log("Creating new avatar instance");
     
-    const avatar = new StreamingAvatar({ token: apiKey });
+    const avatar = new StreamingAvatar({ 
+      token: apiKey
+    });
     
     // Set up event listeners
     avatar.on(StreamingEvents.AVATAR_START_TALKING, () => {
@@ -152,8 +166,8 @@ export class AvatarManager {
 
     // Start the avatar with optimized settings for better performance
     const sessionInfo = await avatar.createStartAvatar({
-      quality: AvatarQuality.Medium, // Changed from High to Medium for better speed
-      avatarName: "Ann_Doctor_Standing2_public",
+      quality: AvatarQuality.Low, // Keep Low quality for better speed
+      avatarName: "Ann_Doctor_Standing2_public", // Back to original avatar
       disableIdleTimeout: true,
       knowledgeBase: undefined // Explicitly set to avoid potential issues
     });
