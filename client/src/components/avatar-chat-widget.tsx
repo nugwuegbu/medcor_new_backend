@@ -87,7 +87,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [avatarPosition, setAvatarPosition] = useState({ x: null as number | null, y: null as number | null });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [hasDragged, setHasDragged] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -120,32 +119,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       // Avatar dimensions (96px for w-24 h-24)
       const avatarSize = 96;
       
-      // Define safe area boundaries for doctors view (avoiding back button)
-      let minY = 0;
-      let minX = 0;
-      
-      if (showDoctorList) {
-        // Keep avatar away from back button area (top 120px reserved for header and back button)
-        minY = 120;
-        // Keep some margin from left edge
-        minX = 20;
-      }
-      
-      // Keep avatar within chat widget bounds and safe area
-      const boundedX = Math.max(minX, Math.min(widgetRect.width - avatarSize - 20, newX));
-      const boundedY = Math.max(minY, Math.min(widgetRect.height - avatarSize - 20, newY));
+      // Keep avatar within chat widget bounds
+      const boundedX = Math.max(0, Math.min(widgetRect.width - avatarSize, newX));
+      const boundedY = Math.max(0, Math.min(widgetRect.height - avatarSize, newY));
       
       setAvatarPosition({ x: boundedX, y: boundedY });
-      setHasDragged(true); // Mark that actual dragging occurred
     };
     
     const handleMouseUp = () => {
       setIsDragging(false);
       document.body.classList.remove('dragging');
-      // Reset hasDragged after a short delay to prevent click trigger
-      setTimeout(() => {
-        setHasDragged(false);
-      }, 100);
     };
     
     if (isDragging) {
@@ -172,7 +155,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     setIsDragging(true);
     document.body.classList.add('dragging');
     e.preventDefault();
-    e.stopPropagation(); // Prevent click propagation
   };
 
   const toggleMessageExpanded = (messageId: string) => {
@@ -573,53 +555,45 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
       {/* Full Screen Avatar Background with Message Overlay */}
       <div className="flex-1 relative">
-        {/* HeyGen Avatar - Only visible when menu is closed and not in doctor list */}
-        {isOpen && !showDoctorList && !menuOpen && (
-          <div className="absolute inset-0 overflow-hidden">
-            <HeyGenSDKAvatar 
-              ref={avatarRef}
-              key="single-avatar-instance"
-              apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-              isVisible={true}
-              onMessage={(text) => {
-                console.log("Avatar message:", text);
-              }}
-              onReady={() => {
-                console.log("Avatar is ready");
-                setHasGreeted(true);
-              }}
-            />
-          </div>
-        )}
-        
-        {/* Small circular avatar for doctor view */}
-        {showDoctorList && (
-          <div 
-            ref={avatarContainerRef}
-            className="absolute w-24 h-24 rounded-full overflow-hidden shadow-lg z-[45] hover:scale-110 ring-4 ring-purple-600"
-            style={{
-              transition: isDragging ? 'none' : 'all 700ms ease-in-out',
+        {/* Avatar Background - Always Active */}
+        {/* Avatar Container - Adapts for chat, doctors view, and minimized state */}
+        <div 
+          ref={avatarContainerRef}
+          className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
+            showDoctorList
+              ? 'w-24 h-24 rounded-full overflow-hidden shadow-lg z-50 hover:scale-110 ring-4 ring-purple-600'
+              : isMinimized 
+                ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 hover:scale-110' 
+                : 'inset-0 overflow-hidden'
+          }`}
+          style={{
+            ...(showDoctorList || isMinimized ? {
               cursor: isDragging ? 'grabbing' : 'grab',
               left: avatarPosition.x !== null ? `${avatarPosition.x}px` : 'auto',
-              top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '200px',
+              top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '75px',
               right: avatarPosition.x !== null ? 'auto' : '25px',
-              userSelect: isDragging ? 'none' : 'auto',
-              willChange: 'transform'
-            }}
-            onMouseDown={handleAvatarMouseDown}
-            onClick={(e) => {
-              if (isDragging || hasDragged) {
-                e.preventDefault();
-                e.stopPropagation();
-                return;
-              }
+              userSelect: isDragging ? 'none' : 'auto'
+            } : {})
+          }}
+          onMouseDown={handleAvatarMouseDown}
+          onClick={(e) => {
+            // Only handle click if not dragging
+            if (isDragging || (e.target as HTMLElement).closest('.drag-handle')) return;
+            
+            if (isMinimized) {
+              setIsMinimized(false);
+              setShowInfoOverlay(false);
+            } else if (showDoctorList) {
               setShowDoctorList(false);
               setShowChatInterface(true);
-            }}>
-            {isOpen && (
+            }
+          }}>
+          {isOpen && (
+            <>
+              {/* Always show HeyGen avatar */}
               <HeyGenSDKAvatar 
                 ref={avatarRef}
-                key="single-avatar-instance-circular"
+                key="single-avatar-instance"
                 apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
                 isVisible={true}
                 onMessage={(text) => {
@@ -628,11 +602,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 onReady={() => {
                   console.log("Avatar is ready");
                   setHasGreeted(true);
+                  // Don't send automatic greeting - wait for user interaction
                 }}
               />
-            )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
         
         {/* White Content Area when minimized */}
         {isMinimized && (
@@ -670,34 +645,36 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         
         {/* Info Overlay hidden when minimized since content is shown in white area */}
         
-        {/* Chat Interface View - Main menu overlay */}
-        {showChatInterface && !showDoctorList && (
-          <div>
+        {/* Chat Interface View - Within Chat Container */}
+        {showChatInterface && (
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40 rounded-lg overflow-hidden">
             {/* Back Button - Top Left Corner */}
             <button
               onClick={() => setShowChatInterface(false)}
-              className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-[60]"
+              className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
             >
               <ChevronLeft className="h-4 w-4" />
               <span className="font-medium text-sm">Back</span>
             </button>
             
-            {/* Chat Interface Content - Menu centered */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-              <div className="flex flex-col items-center gap-4 pointer-events-auto">
-              
-                {/* Circular AI Menu */}
-                <div className="relative w-48 h-48">
-                  {/* Center Circle with User Account */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
-                  <button 
-                    onClick={() => setShowAuthOverlay(true)}
-                    className="absolute inset-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform cursor-pointer">
-                    <div className="text-white text-center">
-                      <User className="h-8 w-8 mx-auto mb-1" />
-                      <p className="text-xs font-medium">Account</p>
-                    </div>
-                  </button>
+            {/* Chat Interface Content */}
+            <div className="h-full flex flex-col">
+              {/* Menu Section - Centered */}
+              <div className="flex-1 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                  
+                  {/* Circular AI Menu */}
+                  <div className="relative w-48 h-48">
+                    {/* Center Circle with User Account */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                    <button 
+                      onClick={() => setShowAuthOverlay(true)}
+                      className="absolute inset-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform cursor-pointer">
+                      <div className="text-white text-center">
+                        <User className="h-8 w-8 mx-auto mb-1" />
+                        <p className="text-xs font-medium">Account</p>
+                      </div>
+                    </button>
                   
                   {/* Menu Items - Circular Layout */}
                   {[
@@ -731,12 +708,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       </button>
                     );
                   })}
+                  </div>
                 </div>
-                </div>
-            </div>
-            
-            {/* Text Input at Bottom - Same as Main Chat */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white/80 z-30 pointer-events-auto">
+              </div>
+              
+              {/* Text Input at Bottom - Same as Main Chat */}
+              <div className="p-4 border-t border-gray-200 bg-white/80">
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -979,6 +956,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     </div>
                   </div>
                 )}
+              </div>
             </div>
           </div>
         )}

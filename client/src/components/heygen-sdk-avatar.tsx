@@ -168,6 +168,7 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
         className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         playsInline
+        muted
       />
     </div>
   );

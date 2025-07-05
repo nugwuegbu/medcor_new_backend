@@ -103,22 +103,20 @@ export class AvatarManager {
       clearInterval(manager.healthCheckInterval);
     }
     
-    // Disable health check that's causing false positives and session drops
-    // HeyGen handles session management internally
-    // manager.healthCheckInterval = setInterval(async () => {
-    //   try {
-    //     // Check if avatar is still connected
-    //     if (!manager.avatar || !manager.avatar.mediaStream || !manager.avatar.mediaStream.active) {
-    //       console.log("Avatar session lost, attempting to reconnect...");
-    //       manager.avatar = null;
-    //       manager.promise = null;
-    //       manager.lock = false;
-    //       await AvatarManager.getOrCreateAvatar(apiKey);
-    //     }
-    //   } catch (error) {
-    //     console.error("Health check error:", error);
-    //   }
-    // }, 5000); // Check every 5 seconds
+    manager.healthCheckInterval = setInterval(async () => {
+      try {
+        // Check if avatar is still connected
+        if (!manager.avatar || !manager.avatar.mediaStream || !manager.avatar.mediaStream.active) {
+          console.log("Avatar session lost, attempting to reconnect...");
+          manager.avatar = null;
+          manager.promise = null;
+          manager.lock = false;
+          await AvatarManager.getOrCreateAvatar(apiKey);
+        }
+      } catch (error) {
+        console.error("Health check error:", error);
+      }
+    }, 5000); // Check every 5 seconds
     
     // Set global speak function with language detection
     (window as any).heygenSpeak = async (text: string, language?: string) => {
