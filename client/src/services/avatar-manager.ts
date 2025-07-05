@@ -86,6 +86,7 @@ export class AvatarManager {
   private static freezeDetectionInterval: NodeJS.Timeout | null = null;
   private static sessionPool: StreamingAvatar[] = [];
   private static isPreWarming = false;
+  private mediaStream: MediaStream | null = null;
   
   private static preWarmConnection(apiKey: string) {
     // Pre-warm multiple connections for instant switching
@@ -188,7 +189,8 @@ export class AvatarManager {
       // Store the media stream
       const stream = avatar.mediaStream;
       if (stream) {
-        this.mediaStream = stream;
+        // Store in window for global access
+        (window as any).avatarMediaStream = stream;
         console.log("Media stream stored:", stream);
         
         // Check audio tracks
@@ -201,6 +203,12 @@ export class AvatarManager {
             readyState: track.readyState,
             label: track.label
           });
+          
+          // Force unmute audio tracks
+          if (track.muted) {
+            track.enabled = true;
+            console.log(`Unmuted audio track ${index}`);
+          }
         });
       }
       

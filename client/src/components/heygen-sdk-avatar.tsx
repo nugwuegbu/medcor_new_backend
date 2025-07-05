@@ -222,6 +222,13 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
         className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         playsInline
+        onLoadedMetadata={() => {
+          if (videoRef.current) {
+            videoRef.current.muted = false;
+            videoRef.current.volume = 1.0;
+            console.log("Video unmuted on metadata load");
+          }
+        }}
       />
     </div>
   );
