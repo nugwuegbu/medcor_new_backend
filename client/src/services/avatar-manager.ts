@@ -96,7 +96,7 @@ export class AvatarManager {
           console.log("Pre-warming avatar connections...");
           const avatar = new StreamingAvatar({ token: apiKey });
           await avatar.createStartAvatar({
-            quality: AvatarQuality.Low,
+            quality: AvatarQuality.High,
             avatarName: "Ann_Doctor_Standing2_public",
             disableIdleTimeout: true
           });
@@ -196,9 +196,9 @@ export class AvatarManager {
       // Avatar is ready, no automatic greeting
     });
 
-    // Start the avatar with optimized settings for better performance
+    // Start the avatar with high quality settings
     const sessionInfo = await avatar.createStartAvatar({
-      quality: AvatarQuality.Low, // Keep Low quality for better speed
+      quality: AvatarQuality.High, // High quality for better visual experience
       avatarName: "Ann_Doctor_Standing2_public", // Back to original avatar
       disableIdleTimeout: true,
       knowledgeBase: undefined // Explicitly set to avoid potential issues
@@ -436,7 +436,7 @@ export class AvatarManager {
     
     // Method 1: Toggle video tracks
     const videoTracks = stream.getVideoTracks();
-    videoTracks.forEach(track => {
+    videoTracks.forEach((track: MediaStreamTrack) => {
       track.enabled = false;
       setTimeout(() => {
         track.enabled = true;
