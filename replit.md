@@ -219,6 +219,8 @@ Changelog:
 - July 05, 2025. Fixed HeyGen avatar black stripes issue - made chat widget full screen (inset-0) and restored object-cover for full screen video display
 - July 05, 2025. Restored chat widget to original dimensions (380px x 600px) while keeping HeyGen avatar full coverage with scale transform to eliminate black bars
 - July 05, 2025. Adjusted HeyGen avatar zoom level - reduced scale from 1.1 to 1.05 and positioned to 'center top' to prevent head cutoff
+- July 05, 2025. Redesigned doctor cards to be smaller and display 3 side-by-side - reduced padding from p-4 to p-3, image size from w-20 h-20 to w-16 h-16, text sizes adjusted
+- July 05, 2025. Updated Dr. Emily Rodriguez's photo with professional headshot from attached image
 
 ## User Preferences
 
