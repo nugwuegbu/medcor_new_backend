@@ -1084,98 +1084,96 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         
         {/* Booking Calendar View */}
         {showBookingCalendar && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm rounded-lg w-96 h-[600px] flex flex-col relative overflow-hidden">
-              {/* Back Button */}
-              <button
-                onClick={() => {
-                  setShowBookingCalendar(false);
-                }}
-                className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                <span className="font-medium text-sm">Back</span>
-              </button>
-              
-              {/* Calendar Content */}
-              <div className="flex-1 flex items-center justify-center p-6">
-                <div className="bg-white rounded-2xl shadow-lg p-4 w-full max-w-sm">
-                  <h3 className="text-base font-semibold text-gray-800 mb-3 text-center">Book an Appointment</h3>
-                  
-                  {/* Calendar Grid */}
-                  <div className="grid grid-cols-7 gap-1">
-                    {/* Week Days */}
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                      <div key={index} className="text-center text-xs text-gray-500 font-medium py-1">
-                        {day}
-                      </div>
-                    ))}
-                    
-                    {/* Calendar Days */}
-                    {Array.from({ length: 35 }, (_, i) => {
-                      const day = i - new Date().getDay() + 1;
-                      const isToday = day === new Date().getDate();
-                      const isSelectable = day >= new Date().getDate();
-                      
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => {
-                            if (isSelectable && day > 0 && day <= 31) {
-                              const newDate = new Date();
-                              newDate.setDate(day);
-                              setSelectedDate(newDate);
-                            }
-                          }}
-                          disabled={!isSelectable || day <= 0 || day > 31}
-                          className={`
-                            h-8 w-8 rounded-md text-xs font-medium transition-all
-                            ${day <= 0 || day > 31 ? 'invisible' : ''}
-                            ${isToday ? 'bg-purple-600 text-white' : ''}
-                            ${selectedDate?.getDate() === day && !isToday ? 'bg-purple-200 text-purple-800' : ''}
-                            ${isSelectable && day > 0 && day <= 31 && !isToday && selectedDate?.getDate() !== day ? 'hover:bg-gray-100' : ''}
-                            ${!isSelectable && day > 0 && day <= 31 ? 'text-gray-300 cursor-not-allowed' : ''}
-                          `}
-                        >
-                          {day > 0 && day <= 31 ? day : ''}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Selected Date */}
-                  {selectedDate && (
-                    <div className="mt-3 p-2 bg-purple-50 rounded-lg">
-                      <p className="text-xs text-purple-700">
-                        Selected: {selectedDate.toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
-                          day: 'numeric' 
-                        })}
-                      </p>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
+            {/* Back Button */}
+            <button
+              onClick={() => {
+                setShowBookingCalendar(false);
+              }}
+              className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="font-medium text-sm">Back</span>
+            </button>
+            
+            {/* Calendar Content */}
+            <div className="flex-1 flex items-center justify-center p-6">
+              <div className="bg-white rounded-2xl shadow-lg p-4 w-full max-w-sm">
+                <h3 className="text-base font-semibold text-gray-800 mb-3 text-center">Book an Appointment</h3>
+                
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {/* Week Days */}
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                    <div key={index} className="text-center text-xs text-gray-500 font-medium py-1">
+                      {day}
                     </div>
-                  )}
+                  ))}
                   
-                  {/* Book Button */}
-                  <button
-                    onClick={() => {
-                      if (selectedDate) {
-                        handleSendMessage(`I'd like to book an appointment on ${selectedDate.toLocaleDateString()}`);
-                        setShowBookingCalendar(false);
-                      }
-                    }}
-                    disabled={!selectedDate}
-                    className={`
-                      w-full mt-3 py-2 rounded-full font-medium transition-all text-sm
-                      ${selectedDate 
-                        ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg hover:shadow-xl' 
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      }
-                    `}
-                  >
-                    Continue Booking
-                  </button>
+                  {/* Calendar Days */}
+                  {Array.from({ length: 35 }, (_, i) => {
+                    const day = i - new Date().getDay() + 1;
+                    const isToday = day === new Date().getDate();
+                    const isSelectable = day >= new Date().getDate();
+                    
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          if (isSelectable && day > 0 && day <= 31) {
+                            const newDate = new Date();
+                            newDate.setDate(day);
+                            setSelectedDate(newDate);
+                          }
+                        }}
+                        disabled={!isSelectable || day <= 0 || day > 31}
+                        className={`
+                          h-8 w-8 rounded-md text-xs font-medium transition-all
+                          ${day <= 0 || day > 31 ? 'invisible' : ''}
+                          ${isToday ? 'bg-purple-600 text-white' : ''}
+                          ${selectedDate?.getDate() === day && !isToday ? 'bg-purple-200 text-purple-800' : ''}
+                          ${isSelectable && day > 0 && day <= 31 && !isToday && selectedDate?.getDate() !== day ? 'hover:bg-gray-100' : ''}
+                          ${!isSelectable && day > 0 && day <= 31 ? 'text-gray-300 cursor-not-allowed' : ''}
+                        `}
+                      >
+                        {day > 0 && day <= 31 ? day : ''}
+                      </button>
+                    );
+                  })}
                 </div>
+                
+                {/* Selected Date */}
+                {selectedDate && (
+                  <div className="mt-3 p-2 bg-purple-50 rounded-lg">
+                    <p className="text-xs text-purple-700">
+                      Selected: {selectedDate.toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Book Button */}
+                <button
+                  onClick={() => {
+                    if (selectedDate) {
+                      handleSendMessage(`I'd like to book an appointment on ${selectedDate.toLocaleDateString()}`);
+                      setShowBookingCalendar(false);
+                    }
+                  }}
+                  disabled={!selectedDate}
+                  className={`
+                    w-full mt-3 py-2 rounded-full font-medium transition-all text-sm
+                    ${selectedDate 
+                      ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg hover:shadow-xl' 
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  Continue Booking
+                </button>
               </div>
             </div>
           </div>

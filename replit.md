@@ -234,6 +234,7 @@ Changelog:
 - July 05, 2025. Improved Records page upload text readability - split long text into two lines for better display
 - July 05, 2025. Added booking calendar to Book menu - displays interactive calendar grid where users can select future dates for appointments, with selected date highlighted and Continue Booking button
 - July 05, 2025. Resized Book calendar to fit chat widget dimensions - calendar now displays in proper modal size (384px x 600px) instead of full screen
+- July 05, 2025. Fixed Book calendar containment - calendar now stays within chat widget boundaries using absolute positioning instead of fixed to prevent overflow
 
 ## User Preferences
 
