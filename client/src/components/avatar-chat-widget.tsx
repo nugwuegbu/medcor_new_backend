@@ -1316,6 +1316,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         setShowChatInterface(false);
                         setShowDoctorList(true);
                         setSelectedMenuItem('doctors');
+                        // Force page to show doctors view
+                        setIsMinimized(true);
                         
                       } catch (error) {
                         console.error('Failed to initialize booking assistant:', error);
@@ -1324,6 +1326,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         setShowChatInterface(false);
                         setShowDoctorList(true);
                         setSelectedMenuItem('doctors');
+                        // Force page to show doctors view
+                        setIsMinimized(true);
                       }
                     }
                   }}
