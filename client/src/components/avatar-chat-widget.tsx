@@ -699,10 +699,28 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     
 
                     
-                    {/* Doctors Grid */}
+                    {/* Main Content Area - Shows doctors or messages */}
                     <div className="h-full pt-32 px-6 pb-24 overflow-y-auto">
-                      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Our Doctors</h2>
-                      <div className="grid grid-cols-3 gap-3 max-w-5xl mx-auto">
+                      {/* Show messages if any exist, otherwise show doctors */}
+                      {messages.length > 0 ? (
+                        <div className="max-w-2xl mx-auto space-y-4">
+                          {messages.map((msg, index) => (
+                            <div
+                              key={index}
+                              className={`p-4 rounded-lg ${
+                                msg.sender === 'user' 
+                                  ? 'bg-purple-100 ml-auto max-w-[80%]' 
+                                  : 'bg-gray-100 mr-auto max-w-[80%]'
+                              }`}
+                            >
+                              <p className="text-sm">{msg.text}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <>
+                          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Our Doctors</h2>
+                          <div className="grid grid-cols-3 gap-3 max-w-5xl mx-auto">
                         {/* Doctor 1 */}
                         <div 
                           className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
@@ -772,6 +790,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           </div>
                         </div>
                       </div>
+                        </>
+                      )}
                     </div>
                     
                     {/* Chat Input with Microphone for Doctors Page */}
@@ -785,8 +805,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             if (e.key === 'Enter' && doctorsInputText.trim()) {
                               handleSendMessage(doctorsInputText);
                               setDoctorsInputText('');
-                              setShowDoctorList(false);
-                              setShowChatInterface(true);
+                              // Stay on doctors page - don't navigate away
                             }
                           }}
                           placeholder="Send your message..."
@@ -797,8 +816,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             if (doctorsInputText.trim()) {
                               handleSendMessage(doctorsInputText);
                               setDoctorsInputText('');
-                              setShowDoctorList(false);
-                              setShowChatInterface(true);
+                              // Stay on doctors page - don't navigate away
                             }
                           }}
                           className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
@@ -808,8 +826,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         <BrowserVoiceButton
                           onTranscript={(transcript: string) => {
                             handleSendMessage(transcript);
-                            setShowDoctorList(false);
-                            setShowChatInterface(true);
+                            // Stay on doctors page - don't navigate away
                           }}
                         />
                       </div>
