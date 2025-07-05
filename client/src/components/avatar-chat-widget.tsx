@@ -452,11 +452,20 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         {/* Avatar Background - Always Active */}
         {/* Avatar Container with minimize transition */}
         <div 
-          className={`absolute transition-all duration-700 ease-in-out ${
+          className={`absolute transition-all duration-700 ease-in-out overflow-hidden ${
             isMinimized 
-              ? 'top-20 right-4 w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 cursor-pointer hover:scale-110' 
+              ? 'top-20 right-4 w-32 h-32 rounded-full shadow-2xl z-50 cursor-pointer hover:scale-110' 
               : 'inset-0'
           }`}
+          style={!isMinimized ? {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
+            height: '100%'
+          } : {}}
           onClick={() => {
             if (isMinimized) {
               setIsMinimized(false);
@@ -697,23 +706,19 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         {/* Pulsing ring to show avatar is active */}
                         <div className="absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 animate-pulse opacity-50"></div>
                         
-                        {/* Avatar container */}
+                        {/* Avatar container - using main avatar in minimized state */}
                         <div 
-                          className="relative w-20 h-20 rounded-full shadow-2xl ring-4 ring-white/70 cursor-pointer hover:scale-110 transition-transform overflow-hidden"
-                          onClick={() => setShowDoctorList(false)}
+                          className="relative w-20 h-20 rounded-full shadow-2xl ring-4 ring-white/70 cursor-pointer hover:scale-110 transition-transform overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600"
+                          onClick={() => {
+                            setShowDoctorList(false);
+                            // Restore avatar to full screen
+                            setIsMinimized(false);
+                          }}
                         >
-                          <HeyGenSDKAvatar 
-                            ref={avatarRef}
-                            key="single-avatar-instance"
-                            apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-                            isVisible={true}
-                            onMessage={(text) => {
-                              console.log("Avatar message:", text);
-                            }}
-                            onReady={() => {
-                              console.log("Avatar is ready in doctors view");
-                            }}
-                          />
+                          {/* Always show chat icon since we can't duplicate the avatar */}
+                          <div className="w-full h-full flex items-center justify-center text-white">
+                            <MessageCircle className="h-8 w-8" />
+                          </div>
                         </div>
                         
                         {/* Active status indicator */}
