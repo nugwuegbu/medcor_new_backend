@@ -582,10 +582,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   {[
                     { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); } },
                     { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); } },
-                    { icon: FileText, label: "Records", angle: 120, action: () => setSelectedMenuItem("records") },
-                    { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
-                    { icon: Settings, label: "Settings", angle: 240, action: () => setSelectedMenuItem("settings") },
-                    { icon: Home, label: "Home", angle: 300, action: () => setSelectedMenuItem("home") }
+                    { icon: FileText, label: "Records", angle: 120, action: () => { setSelectedMenuItem("records"); setShowChatInterface(false); } },
+                    { icon: Phone, label: "Call", angle: 180, action: () => { setSelectedMenuItem("call"); setShowChatInterface(false); } },
+                    { icon: Settings, label: "Settings", angle: 240, action: () => { setSelectedMenuItem("settings"); setShowChatInterface(false); } },
+                    { icon: Home, label: "Home", angle: 300, action: () => { setSelectedMenuItem("home"); setShowChatInterface(false); } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
                     const x = Math.cos(angleRad) * 75;
@@ -664,7 +664,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               </div>
               
               {/* Content Area - Hidden for now */}
-              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ display: showCalendar || showDoctorList ? 'block' : 'none' }}>
+              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ display: 'none' }}>
                 
 
                 
