@@ -573,8 +573,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
       {/* Full Screen Avatar Background with Message Overlay */}
       <div className="flex-1 relative">
-        {/* HeyGen Avatar - Always visible in background */}
-        {isOpen && !showDoctorList && (
+        {/* HeyGen Avatar - Only visible when menu is closed and not in doctor list */}
+        {isOpen && !showDoctorList && !menuOpen && (
           <div className="absolute inset-0 overflow-hidden">
             <HeyGenSDKAvatar 
               ref={avatarRef}
