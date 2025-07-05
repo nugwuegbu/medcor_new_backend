@@ -979,7 +979,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     { icon: Calendar, label: "Book", angle: 0, action: () => { 
                       setShowChatInterface(false);
                       setShowBookingCalendar(true); 
-                      setSelectedMenuItem("book"); 
+                      setSelectedMenuItem("book");
+                      // Reset selected date when opening calendar
+                      setSelectedDate(null);
+                      setBookingFormData(prev => ({ ...prev, selectedDate: null }));
                     } },
                     { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); } },
                     { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
@@ -1505,6 +1508,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             <button
               onClick={() => {
                 setShowBookingCalendar(false);
+                // Reset selected date when closing calendar
+                setSelectedDate(null);
+                setBookingFormData(prev => ({ ...prev, selectedDate: null }));
               }}
               className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
             >
