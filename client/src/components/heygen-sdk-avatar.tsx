@@ -165,8 +165,7 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
 
       <video
         ref={videoRef}
-        className="w-full h-full object-contain"
-        style={{ backgroundColor: '#000' }}
+        className="w-full h-full object-cover"
         autoPlay
         playsInline
         muted
