@@ -962,32 +962,71 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Upload Button - Centered */}
-                    <div className="flex-1 flex items-center justify-center">
-                      <div className="text-center">
-                        <label htmlFor="records-file-upload" className="cursor-pointer">
-                          <div className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl transform hover:scale-105">
-                            <Upload size={18} />
-                            <span className="text-sm">Upload Medical Records</span>
+                    {/* Main Content Area */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      {/* Messages Display */}
+                      {messages.length > 0 ? (
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                          {messages.map((msg, index) => (
+                            <div
+                              key={msg.id}
+                              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                            >
+                              <div
+                                className={`max-w-[80%] ${
+                                  msg.sender === 'user'
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-white shadow-md'
+                                } rounded-2xl p-4`}
+                              >
+                                <p className={`text-sm ${msg.sender === 'user' ? 'text-white' : 'text-gray-800'}`}>
+                                  {msg.text.slice(0, 100)}
+                                  {msg.text.length > 100 && '...'}
+                                </p>
+                                {msg.text.length > 100 && (
+                                  <button className={`text-xs mt-2 ${msg.sender === 'user' ? 'text-purple-200' : 'text-purple-600'} hover:underline`}>
+                                    Click to read more
+                                  </button>
+                                )}
+                                <p className={`text-xs mt-2 ${msg.sender === 'user' ? 'text-purple-200' : 'text-gray-500'}`}>
+                                  {new Date(msg.timestamp).toLocaleTimeString('en-US', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    hour12: true 
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex-1 flex items-center justify-center">
+                          <div className="text-center">
+                            <label htmlFor="records-file-upload" className="cursor-pointer">
+                              <div className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl transform hover:scale-105">
+                                <Upload size={18} />
+                                <span className="text-sm">Upload Medical Records</span>
+                              </div>
+                              <input
+                                id="records-file-upload"
+                                type="file"
+                                className="hidden"
+                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    console.log('Medical record selected:', file.name);
+                                    // TODO: Handle file upload
+                                  }
+                                }}
+                              />
+                            </label>
+                            <p className="text-gray-600 mt-3 text-xs">
+                              Upload your medical documents or photos (PDF, JPEG, PNG, DOC)
+                            </p>
                           </div>
-                          <input
-                            id="records-file-upload"
-                            type="file"
-                            className="hidden"
-                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                console.log('Medical record selected:', file.name);
-                                // TODO: Handle file upload
-                              }
-                            }}
-                          />
-                        </label>
-                        <p className="text-gray-600 mt-3 text-xs">
-                          Upload your medical documents or photos (PDF, JPEG, PNG, DOC)
-                        </p>
-                      </div>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Chat Input with Microphone for Records Page */}
