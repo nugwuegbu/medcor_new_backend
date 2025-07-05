@@ -84,6 +84,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [avatarPosition, setAvatarPosition] = useState({ x: null as number | null, y: null as number | null });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -91,11 +94,65 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const capturePhotoRef = useRef<(() => string | null) | null>(null);
   const doctorHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSpeakTimeRef = useRef<number>(0);
+  const avatarContainerRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Handle mouse events for dragging
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+      
+      // Get viewport dimensions
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      
+      // Avatar dimensions (96px for w-24 h-24)
+      const avatarSize = 96;
+      
+      // Keep avatar within viewport bounds
+      const boundedX = Math.max(0, Math.min(vw - avatarSize, newX));
+      const boundedY = Math.max(0, Math.min(vh - avatarSize, newY));
+      
+      setAvatarPosition({ x: boundedX, y: boundedY });
+    };
+    
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.body.classList.remove('dragging');
+    };
+    
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragOffset.x, dragOffset.y]);
+
+  const handleAvatarMouseDown = (e: React.MouseEvent) => {
+    if (!showDoctorList && !isMinimized) return; // Only allow dragging in circular mode
+    
+    const rect = avatarContainerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+    setIsDragging(true);
+    document.body.classList.add('dragging');
+    e.preventDefault();
+  };
 
   const toggleMessageExpanded = (messageId: string) => {
     const newExpanded = new Set(expandedMessages);
@@ -498,14 +555,28 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         {/* Avatar Background - Always Active */}
         {/* Avatar Container - Adapts for chat, doctors view, and minimized state */}
         <div 
-          className={`absolute transition-all duration-700 ease-in-out ${
+          ref={avatarContainerRef}
+          className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
             showDoctorList
-              ? 'top-[75px] right-[25px] w-24 h-24 rounded-full overflow-hidden shadow-lg z-50 cursor-pointer hover:scale-110 ring-4 ring-purple-600'
+              ? 'w-24 h-24 rounded-full overflow-hidden shadow-lg z-50 hover:scale-110 ring-4 ring-purple-600'
               : isMinimized 
-                ? 'top-20 right-4 w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 cursor-pointer hover:scale-110' 
+                ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 hover:scale-110' 
                 : 'inset-0 overflow-hidden'
           }`}
-          onClick={() => {
+          style={{
+            ...(showDoctorList || isMinimized ? {
+              cursor: isDragging ? 'grabbing' : 'grab',
+              left: avatarPosition.x !== null ? `${avatarPosition.x}px` : showDoctorList ? undefined : '16px',
+              top: avatarPosition.y !== null ? `${avatarPosition.y}px` : showDoctorList ? '75px' : '80px',
+              right: avatarPosition.x !== null ? undefined : showDoctorList ? '25px' : undefined,
+              userSelect: isDragging ? 'none' : 'auto'
+            } : {})
+          }}
+          onMouseDown={handleAvatarMouseDown}
+          onClick={(e) => {
+            // Only handle click if not dragging
+            if (isDragging || (e.target as HTMLElement).closest('.drag-handle')) return;
+            
             if (isMinimized) {
               setIsMinimized(false);
               setShowInfoOverlay(false);
