@@ -1021,40 +1021,42 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         </div>
       </div>
 
-      {/* Input Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm">
-        <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Send your message..."
-            className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
-            disabled={voiceChatMutation.isPending}
-          />
+      {/* Input Section - Hide when showing menu pages */}
+      {!showCalendar && !showDoctorList && !selectedMenuItem && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm">
+          <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Send your message..."
+              className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
+              disabled={voiceChatMutation.isPending}
+            />
+            
+            <Button
+              size="sm"
+              onClick={() => handleSendMessage(inputText)}
+              disabled={!inputText.trim() || voiceChatMutation.isPending}
+              className="p-2 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
+              variant="ghost"
+            >
+              <Send className="h-5 w-5" />
+            </Button>
+            
+            <BrowserVoiceButton
+              onTranscript={(text) => {
+                handleSendMessage(text);
+              }}
+              disabled={voiceChatMutation.isPending}
+            />
+          </div>
           
-          <Button
-            size="sm"
-            onClick={() => handleSendMessage(inputText)}
-            disabled={!inputText.trim() || voiceChatMutation.isPending}
-            className="p-2 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
-            variant="ghost"
-          >
-            <Send className="h-5 w-5" />
-          </Button>
-          
-          <BrowserVoiceButton
-            onTranscript={(text) => {
-              handleSendMessage(text);
-            }}
-            disabled={voiceChatMutation.isPending}
-          />
-        </div>
-        
 
-      </div>
+        </div>
+      )}
 
       {/* Authentication Overlay */}
       {showAuthOverlay && (
