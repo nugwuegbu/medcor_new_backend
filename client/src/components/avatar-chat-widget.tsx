@@ -1213,20 +1213,20 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </button>
             
             {/* Form Content */}
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Book Appointment</h3>
+            <div className="flex-1 overflow-y-auto p-3 pt-16">
+              <div className="bg-white rounded-lg shadow-lg p-3 w-full max-w-full">
+                <h3 className="text-base font-semibold text-gray-800 mb-3 text-center">Book Appointment</h3>
                 
                 {/* Selected Date & Doctor Info */}
-                <div className="mb-4 p-3 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-purple-700">
+                <div className="mb-3 p-2 bg-purple-50 rounded-lg">
+                  <p className="text-xs text-purple-700">
                     Date: {bookingFormData.selectedDate?.toLocaleDateString('en-US', { 
                       weekday: 'short', 
                       month: 'short', 
                       day: 'numeric' 
                     })}
                   </p>
-                  <p className="text-sm text-purple-700">
+                  <p className="text-xs text-purple-700">
                     Doctor: {bookingFormData.doctorId === 1 ? 'Dr. Sarah Johnson' : 
                             bookingFormData.doctorId === 2 ? 'Dr. Michael Chen' : 
                             'Dr. Emily Rodriguez'}
@@ -1234,54 +1234,54 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 </div>
                 
                 {/* Form Fields */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
                     <input
                       type="text"
                       value={bookingFormData.patientName}
                       onChange={(e) => setBookingFormData(prev => ({ ...prev, patientName: e.target.value }))}
                       placeholder="Your full name"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
                     <input
                       type="email"
                       value={bookingFormData.patientEmail}
                       onChange={(e) => setBookingFormData(prev => ({ ...prev, patientEmail: e.target.value }))}
                       placeholder="your.email@example.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
                     <input
                       type="tel"
                       value={bookingFormData.patientPhone}
                       onChange={(e) => setBookingFormData(prev => ({ ...prev, patientPhone: e.target.value }))}
                       placeholder="+1 234 567 8900"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Reason</label>
                     <textarea
                       value={bookingFormData.reason}
                       onChange={(e) => setBookingFormData(prev => ({ ...prev, reason: e.target.value }))}
                       placeholder="Brief description of your concern"
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                      rows={2}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
                     />
                   </div>
                 </div>
                 
                 {/* Voice Input Note */}
-                <div className="mt-3 p-2 bg-blue-50 rounded-lg">
+                <div className="mt-2 p-2 bg-blue-50 rounded-lg">
                   <p className="text-xs text-blue-700 text-center">
                     💡 You can also fill this form by speaking to our AI assistant
                   </p>
@@ -1326,7 +1326,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   }}
                   disabled={!bookingFormData.patientName || !bookingFormData.patientEmail || !bookingFormData.patientPhone}
                   className={`
-                    w-full mt-4 py-3 rounded-full font-medium transition-all text-sm
+                    w-full mt-2 py-2 rounded-full font-medium transition-all text-xs
                     ${(bookingFormData.patientName && bookingFormData.patientEmail && bookingFormData.patientPhone)
                       ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg hover:shadow-xl' 
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
@@ -1337,11 +1337,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 </button>
                 
                 {/* Chat Input for Voice */}
-                <div className="mt-4 flex items-center gap-2 p-2 bg-gray-50 rounded-full">
+                <div className="mt-2 flex items-center gap-1 p-1.5 bg-gray-50 rounded-full">
                   <input
                     type="text"
                     placeholder="Or speak to fill the form..."
-                    className="flex-1 bg-transparent text-sm placeholder-gray-500 focus:outline-none"
+                    className="flex-1 bg-transparent text-xs placeholder-gray-500 focus:outline-none"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                         handleSendMessage(e.currentTarget.value);
