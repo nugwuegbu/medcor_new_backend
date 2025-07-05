@@ -99,6 +99,18 @@ The application uses a relational database with the following core entities:
 - **Follow-up automation**: Scheduled patient outreach campaigns
 - **Data analytics**: Patient satisfaction and engagement metrics
 
+### Self-Healing Agent (AI QA Test & Debug Engineer)
+- **Continuous monitoring**: Checks system health every 5 seconds
+- **Database health**: Monitors connection pool, response times, and errors
+- **Avatar session management**: Tracks HeyGen avatar sessions and auto-recovers from failures
+- **Memory management**: Monitors heap usage and triggers garbage collection when needed
+- **Error catching**: Captures uncaught exceptions and unhandled rejections
+- **Auto-fixing**: Attempts to automatically resolve common issues
+- **AI-powered analysis**: Uses OpenAI to analyze complex errors and suggest fixes
+- **Comprehensive logging**: Maintains detailed logs of all activities and issues
+- **Health API**: Provides real-time health status and metrics
+- **Issue tracking**: Records all issues with severity levels and fix attempts
+
 ## External Dependencies
 
 ### Core Dependencies
@@ -218,6 +230,7 @@ Changelog:
 - July 05, 2025. Fixed avatar aspect ratio distortion - changed video element from object-cover to object-contain to maintain proper proportions
 - July 05, 2025. Reverted avatar display back to object-cover to fill entire screen without black bars
 - July 05, 2025. Optimized doctors page layout - smaller doctor cards, repositioned back button and avatar circle, added chat/voice input at bottom
+- July 05, 2025. Integrated AI Self-Healing Agent - continuous monitoring, auto-fixing database/avatar issues, memory management, comprehensive error handling
 
 ## User Preferences
 

@@ -8,6 +8,7 @@ import { heygenService } from "./services/heygen";
 import { faceRecognitionAgent } from "./agents/face-recognition-agent";
 import { avatarRecorder } from "./services/avatar-recorder";
 import { googleMapsAgent } from "./agents/google-maps-agent";
+import { selfHealingAgent } from "./agents/self-healing-agent";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -1332,6 +1333,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: error instanceof Error ? error.message : "Unknown error"
       });
     }
+  });
+
+  // Self-healing agent endpoints
+  app.get("/api/health", async (req, res) => {
+    try {
+      const health = selfHealingAgent.getHealth();
+      const issues = selfHealingAgent.getRecentIssues();
+      
+      res.json({
+        status: "healthy",
+        health,
+        recentIssues: issues,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        status: "unhealthy",
+        error: "Failed to get health status"
+      });
+    }
+  });
+  
+  // Simulate issue for testing
+  app.post("/api/health/simulate", async (req, res) => {
+    try {
+      const { type, description } = req.body;
+      
+      if (!type || !description) {
+        return res.status(400).json({ error: "Type and description required" });
+      }
+      
+      await selfHealingAgent.simulateIssue(type as any, description);
+      res.json({ message: "Issue simulated", type, description });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to simulate issue" });
+    }
+  });
+  
+  // Get self-healing logs
+  app.get("/api/health/logs", async (req, res) => {
+    try {
+      const fs = await import('fs/promises');
+      const logContent = await fs.readFile('self-healing.log', 'utf-8');
+      const lines = logContent.split('\n').filter(line => line.trim());
+      const recentLogs = lines.slice(-50); // Last 50 lines
+      
+      res.json({
+        logs: recentLogs,
+        count: recentLogs.length
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to read logs" });
+    }
+  });
+
+  // Start self-healing agent
+  console.log("Starting self-healing agent...");
+  selfHealingAgent.start();
+  
+  // Listen for critical errors
+  selfHealingAgent.on('criticalError', ({ error, type }) => {
+    console.error(`[CRITICAL] ${type}:`, error);
+    // Could send alerts, emails, etc.
+  });
+  
+  // Listen for issues
+  selfHealingAgent.on('issue', (issue) => {
+    console.log(`[ISSUE] ${issue.type} - ${issue.severity}: ${issue.description}`);
   });
 
   const httpServer = createServer(app);
