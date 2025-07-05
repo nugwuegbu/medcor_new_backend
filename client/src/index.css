@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Animated Glow Border for Chat Widget */
+@keyframes glowBorder {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(147, 51, 234, 0.4),
+      0 0 40px rgba(168, 85, 247, 0.3),
+      0 0 60px rgba(147, 51, 234, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(219, 39, 119, 0.5),
+      0 0 50px rgba(236, 72, 153, 0.4),
+      0 0 80px rgba(168, 85, 247, 0.3);
+  }
+}
+
+.animate-glow-border {
+  animation: glowBorder 3s ease-in-out infinite;
+}
+
 /* Custom scrollbar for chat messages */
 @layer utilities {
   .scrollbar-thin::-webkit-scrollbar {
