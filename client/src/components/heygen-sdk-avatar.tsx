@@ -165,12 +165,7 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
 
       <video
         ref={videoRef}
-        className="absolute inset-0 w-full h-full"
-        style={{ 
-          objectFit: 'cover',
-          objectPosition: 'center top',
-          transform: 'scale(1.05)' // Reduced scale to show more of the avatar
-        }}
+        className="absolute inset-0 w-full h-full object-contain bg-white"
         autoPlay
         playsInline
         muted
