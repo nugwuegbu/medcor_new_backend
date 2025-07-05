@@ -224,8 +224,6 @@ Changelog:
 - July 05, 2025. Fixed avatar display issue - restored object-cover to eliminate white borders and maintain full screen coverage
 - July 05, 2025. FINAL AVATAR CONFIGURATION LOCKED: Video element must remain "absolute inset-0 w-full h-full object-cover" - DO NOT CHANGE
 - July 05, 2025. Added chat input with microphone functionality to doctors page - users can now send messages or use voice input from the doctors screen
-- July 05, 2025. Optimized HeyGen avatar performance - changed quality from High to Medium, switched from SYNC to ASYNC mode, added response caching for improved speed
-- July 05, 2025. Enhanced HeyGen performance with LRU-like cache, latency tracking, preloading common phrases, WebRTC connection metrics, and automatic session recovery
 
 ## User Preferences
 

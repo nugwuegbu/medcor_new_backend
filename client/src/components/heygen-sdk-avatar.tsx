@@ -23,7 +23,7 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
 
   // Expose speak method through ref
   useImperativeHandle(ref, () => ({
-    speak: async ({ text, taskType = TaskType.TALK, taskMode = TaskMode.ASYNC }) => {
+    speak: async ({ text, taskType = TaskType.TALK, taskMode = TaskMode.SYNC }) => {
       try {
         const avatar = AvatarManager.getAvatar();
         if (avatar) {
@@ -75,24 +75,19 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
           if (mediaStream && videoRef.current) {
             console.log("Attaching media stream to video element:", mediaStream);
             videoRef.current.srcObject = mediaStream;
-            videoRef.current.muted = false; // Ensure audio is not muted
-            videoRef.current.volume = 1.0; // Set volume to maximum
+            videoRef.current.muted = true; // Allow autoplay by muting initially
             videoRef.current.onloadedmetadata = async () => {
               console.log("Video metadata loaded");
               try {
                 await videoRef.current!.play();
-                // Double-check audio is enabled
-                if (videoRef.current) {
-                  videoRef.current.muted = false;
-                  videoRef.current.volume = 1.0;
-                  console.log("Audio enabled: muted =", videoRef.current.muted, "volume =", videoRef.current.volume);
-                }
+                // Try to unmute after playing starts
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.muted = false;
+                  }
+                }, 100);
               } catch (e) {
                 console.error("Video play error:", e);
-                // If autoplay fails, try to play with user interaction
-                if ((e as Error).name === 'NotAllowedError') {
-                  console.log("Autoplay blocked, user interaction needed");
-                }
               }
             };
             setConnectionStatus("connected");
@@ -124,36 +119,12 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
         // Debug: Check avatar status after 2 seconds
         setTimeout(() => {
           const stream = AvatarManager.getMediaStream();
-          const audioTracks = stream?.getAudioTracks() || [];
-          
           console.log("Avatar debug - Stream status:", {
             hasStream: !!stream,
             streamActive: stream?.active,
             videoTracks: stream?.getVideoTracks().length,
-            audioTracks: audioTracks.length,
-            audioTrackDetails: audioTracks.map(track => ({
-              enabled: track.enabled,
-              muted: track.muted,
-              label: track.label,
-              readyState: track.readyState
-            }))
+            audioTracks: stream?.getAudioTracks().length
           });
-          
-          // Force enable all audio tracks
-          audioTracks.forEach(track => {
-            track.enabled = true;
-            console.log(`Audio track "${track.label}" enabled:`, track.enabled);
-          });
-          
-          // Check video element audio status
-          if (videoRef.current) {
-            console.log("Video element audio status:", {
-              muted: videoRef.current.muted,
-              volume: videoRef.current.volume,
-              paused: videoRef.current.paused,
-              readyState: videoRef.current.readyState
-            });
-          }
         }, 2000);
 
       } catch (error) {
@@ -197,6 +168,7 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
         className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         playsInline
+        muted
       />
     </div>
   );

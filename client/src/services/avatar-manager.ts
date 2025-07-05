@@ -5,6 +5,7 @@ import StreamingAvatar, {
   TaskMode,
   VoiceEmotion 
 } from "@heygen/streaming-avatar";
+
 // Global variables to ensure only one instance
 let globalAvatar: StreamingAvatar | null = null;
 let globalInitPromise: Promise<any> | null = null;
@@ -21,79 +22,7 @@ if (typeof window !== 'undefined') {
   };
 }
 
-// Optimized cache with LRU-like behavior
-const MAX_CACHE_SIZE = 100;
-const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
-
-class OptimizedCache {
-  private cache = new Map<string, { 
-    timestamp: number; 
-    duration: number;
-    latency: number;
-    lastAccessed: number;
-  }>();
-
-  get(key: string) {
-    const item = this.cache.get(key);
-    if (item && Date.now() - item.timestamp < CACHE_TTL) {
-      item.lastAccessed = Date.now();
-      metrics.cacheHits++;
-      return item;
-    }
-    metrics.cacheMisses++;
-    return null;
-  }
-
-  set(key: string, value: { timestamp: number; duration: number; latency: number }) {
-    // Remove oldest items if cache is full
-    if (this.cache.size >= MAX_CACHE_SIZE) {
-      let oldestKey = '';
-      let oldestTime = Date.now();
-      
-      this.cache.forEach((v, k) => {
-        if (v.lastAccessed < oldestTime) {
-          oldestTime = v.lastAccessed;
-          oldestKey = k;
-        }
-      });
-      
-      if (oldestKey) {
-        this.cache.delete(oldestKey);
-      }
-    }
-    
-    this.cache.set(key, { ...value, lastAccessed: Date.now() });
-  }
-
-  has(key: string): boolean {
-    const item = this.cache.get(key);
-    return !!(item && Date.now() - item.timestamp < CACHE_TTL);
-  }
-}
-
-const responseCache = new OptimizedCache();
-
-// Metrics tracking
-const metrics = {
-  cacheHits: 0,
-  cacheMisses: 0,
-  averageLatency: 0,
-  totalRequests: 0
-};
-
 export class AvatarManager {
-  private static preWarmConnection(apiKey: string) {
-    // Pre-warm the connection in background
-    setTimeout(() => {
-      if (!(window as any).__avatarManager?.avatar) {
-        console.log("Pre-warming avatar connection...");
-        this.getOrCreateAvatar(apiKey).catch(e => 
-          console.log("Pre-warm failed (non-critical):", e.message)
-        );
-      }
-    }, 100);
-  }
-
   static async getOrCreateAvatar(apiKey: string): Promise<StreamingAvatar> {
     const manager = (window as any).__avatarManager;
     
@@ -141,9 +70,7 @@ export class AvatarManager {
     
     console.log("Creating new avatar instance");
     
-    const avatar = new StreamingAvatar({ 
-      token: apiKey
-    });
+    const avatar = new StreamingAvatar({ token: apiKey });
     
     // Set up event listeners
     avatar.on(StreamingEvents.AVATAR_START_TALKING, () => {
@@ -156,18 +83,13 @@ export class AvatarManager {
 
     avatar.on(StreamingEvents.STREAM_READY, async () => {
       console.log("Stream ready");
-      // Log connection quality metrics
-      if ((window as any).performance && (window as any).performance.now) {
-        const connectionTime = (window as any).performance.now();
-        console.log(`WebRTC connection established in ${Math.round(connectionTime)}ms`);
-      }
       // Avatar is ready, no automatic greeting
     });
 
-    // Start the avatar with optimized settings for better performance
+    // Start the avatar with default settings
     const sessionInfo = await avatar.createStartAvatar({
-      quality: AvatarQuality.Low, // Keep Low quality for better speed
-      avatarName: "Ann_Doctor_Standing2_public", // Back to original avatar
+      quality: AvatarQuality.High,
+      avatarName: "Ann_Doctor_Standing2_public",
       disableIdleTimeout: true,
       knowledgeBase: undefined // Explicitly set to avoid potential issues
     });
@@ -175,71 +97,20 @@ export class AvatarManager {
     console.log("Avatar session created:", sessionInfo.session_id);
     manager.avatar = avatar;
     
-    // Preload common responses for better performance
-    const commonPhrases = [
-      "Hello! How can I assist you today?",
-      "I understand your concern.",
-      "Let me help you with that.",
-      "Would you like to schedule an appointment?",
-      "Thank you for visiting MedCare AI."
-    ];
-    
-    // Preload in background without blocking
-    setTimeout(() => {
-      commonPhrases.forEach(phrase => {
-        const cacheKey = `${phrase}_auto`;
-        if (!responseCache.has(cacheKey)) {
-          console.log(`Preloading: "${phrase}"`);
-          // Just cache the metadata, actual speak will happen when needed
-          responseCache.set(cacheKey, {
-            timestamp: Date.now(),
-            duration: 0,
-            latency: 0
-          });
-        }
-      });
-    }, 2000);
-    
-    // Set global speak function with language detection and caching
+    // Set global speak function with language detection
     (window as any).heygenSpeak = async (text: string, language?: string) => {
       if (manager.avatar) {
         try {
-          // Check cache first for improved speed
-          const cacheKey = `${text}_${language || 'auto'}`;
-          const cached = responseCache.get(cacheKey);
-          
-          if (cached) {
-            console.log(`Cache hit! Latency: ${cached.latency}ms`);
-            metrics.cacheHits++;
-            // For cached responses, we still need to trigger the avatar to speak
-            // but the response will be faster as HeyGen may have internal caching
-          }
-          
           // Detect language from text if not provided
           const detectedLang = language || AvatarManager.detectLanguage(text);
           const voiceConfig = AvatarManager.getVoiceConfig(detectedLang);
           
-          const startTime = Date.now();
-          
-          // Speak with optimized parameters for better performance
+          // Speak with basic parameters only
           await manager.avatar.speak({
             text,
             taskType: TaskType.REPEAT,
-            taskMode: TaskMode.ASYNC // Changed from SYNC to ASYNC for non-blocking operation
+            taskMode: TaskMode.SYNC
           });
-          
-          // Cache the response timing with latency
-          const latency = Date.now() - startTime;
-          responseCache.set(cacheKey, {
-            timestamp: Date.now(),
-            duration: latency,
-            latency: latency
-          });
-          
-          // Update metrics
-          metrics.totalRequests++;
-          metrics.averageLatency = (metrics.averageLatency * (metrics.totalRequests - 1) + latency) / metrics.totalRequests;
-          console.log(`Response latency: ${latency}ms, Average: ${Math.round(metrics.averageLatency)}ms`);
         } catch (e: any) {
           console.error("Failed to speak:", e);
           
@@ -258,7 +129,7 @@ export class AvatarManager {
                 await manager.avatar.speak({
                   text,
                   taskType: TaskType.REPEAT,
-                  taskMode: TaskMode.ASYNC // Changed from SYNC to ASYNC for non-blocking operation
+                  taskMode: TaskMode.SYNC
                 });
               }
             } catch (recreateError) {
