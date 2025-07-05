@@ -217,6 +217,7 @@ Changelog:
 - July 05, 2025. Fixed HeyGen avatar session closing issue - added automatic session recovery and error handling to recreate avatar when session expires
 - July 05, 2025. Fixed avatar aspect ratio distortion - changed video element from object-cover to object-contain to maintain proper proportions
 - July 05, 2025. Fixed HeyGen avatar black stripes issue - made chat widget full screen (inset-0) and restored object-cover for full screen video display
+- July 05, 2025. Restored chat widget to original dimensions (380px x 600px) while keeping HeyGen avatar full coverage with scale transform to eliminate black bars
 
 ## User Preferences
 
