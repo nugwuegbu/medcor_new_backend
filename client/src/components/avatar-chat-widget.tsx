@@ -15,6 +15,7 @@ import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
 import doctorEmilyPhoto from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751701299986.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
+import Lottie from "lottie-react";
 
 interface Message {
   id: string;
@@ -83,6 +84,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [lottieAnimation, setLottieAnimation] = useState<any>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -95,6 +97,19 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Load lottie animation
+  useEffect(() => {
+    fetch('/chat-animation.lottie')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => setLottieAnimation(data))
+      .catch(error => console.error('Error loading lottie animation:', error));
+  }, []);
 
   const toggleMessageExpanded = (messageId: string) => {
     const newExpanded = new Set(expandedMessages);
@@ -427,7 +442,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-gray-600" />
+          {lottieAnimation ? (
+            <div className="w-5 h-5">
+              <Lottie animationData={lottieAnimation} loop={true} />
+            </div>
+          ) : (
+            <MessageSquare className="h-4 w-4 text-gray-600" />
+          )}
           <span className="text-gray-700 text-sm">AI Assistant</span>
         </div>
         
