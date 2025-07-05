@@ -218,6 +218,7 @@ Changelog:
 - July 05, 2025. Fixed avatar aspect ratio distortion - changed video element from object-cover to object-contain to maintain proper proportions
 - July 05, 2025. Fixed HeyGen avatar black stripes issue - made chat widget full screen (inset-0) and restored object-cover for full screen video display
 - July 05, 2025. Restored chat widget to original dimensions (380px x 600px) while keeping HeyGen avatar full coverage with scale transform to eliminate black bars
+- July 05, 2025. Adjusted HeyGen avatar zoom level - reduced scale from 1.1 to 1.05 and positioned to 'center top' to prevent head cutoff
 
 ## User Preferences
 

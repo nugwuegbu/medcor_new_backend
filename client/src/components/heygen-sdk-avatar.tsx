@@ -168,8 +168,8 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
         className="absolute inset-0 w-full h-full"
         style={{ 
           objectFit: 'cover',
-          objectPosition: 'center',
-          transform: 'scale(1.1)' // Slightly scale to ensure full coverage
+          objectPosition: 'center top',
+          transform: 'scale(1.05)' // Reduced scale to show more of the avatar
         }}
         autoPlay
         playsInline
