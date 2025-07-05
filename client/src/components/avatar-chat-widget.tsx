@@ -515,7 +515,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   if (!isOpen) return null;
 
   return (
-    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
+    <>
+      <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
@@ -883,7 +884,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           </div>
                         </div>
                       </div>
-                      </div>
                       
                       {/* Messages overlay - Use main messages */}
                       {messages.length > 0 && (
@@ -1129,6 +1129,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
