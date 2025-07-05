@@ -753,7 +753,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               </div>
               
               {/* Content Area - Hidden for now */}
-              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ display: showCalendar || showDoctorList ? 'block' : 'none' }}>
+              <div className="absolute bottom-0 left-0 right-0 p-6" style={{ display: showCalendar || showDoctorList || showRecordsList ? 'block' : 'none' }}>
                 
 
                 
