@@ -144,14 +144,3 @@
     @apply bg-secondary text-secondary-foreground hover:opacity-80 px-4 py-2 rounded-md font-medium transition-colors;
   }
 }
-
-/* Force HeyGen avatar video to maintain size */
-.heygen-avatar-video {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  z-index: 1;
-}

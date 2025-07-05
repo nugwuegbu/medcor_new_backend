@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User, Bot } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -13,7 +13,6 @@ import InfoOverlay from "./info-overlay";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
-import doctorPhotoEmily from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751697087292.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
 
 interface Message {
@@ -282,32 +281,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         };
         setMessages(prev => [...prev, botMessage]);
         
-        // Open the chat interface and navigate to the selected menu
-        setShowChatInterface(true);
-        setTimeout(() => {
-          switch (interfaceType) {
-            case "DOCTORS":
-              setShowDoctorList(true);
-              setSelectedMenuItem("doctors");
-              break;
-            case "BOOK":
-              setSelectedMenuItem("book");
-              break;
-            case "SETTINGS":
-              setSelectedMenuItem("settings");
-              break;
-            case "HOME":
-              setShowChatInterface(false); // Go back to main chat
-              setSelectedMenuItem(null);
-              break;
-            case "CALL":
-              setSelectedMenuItem("call");
-              break;
-            case "RECORDS":
-              setSelectedMenuItem("records");
-              break;
-          }
-        }, 300); // Small delay to ensure animation
+        // Open the chat interface and navigate to doctors
+        if (interfaceType === "DOCTORS") {
+          setShowChatInterface(true);
+          setTimeout(() => {
+            setShowDoctorList(true);
+            setSelectedMenuItem("doctors");
+          }, 300); // Small delay to ensure animation
+        }
       } else {
         // Normal response
         const botMessage: Message = {
@@ -470,20 +451,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         {/* Avatar Background - Always Active */}
         {/* Avatar Container with minimize transition */}
         <div 
-          className={`absolute transition-all duration-700 ease-in-out overflow-hidden ${
+          className={`absolute transition-all duration-700 ease-in-out ${
             isMinimized 
-              ? 'top-20 right-4 w-32 h-32 rounded-full shadow-2xl z-50 cursor-pointer hover:scale-110' 
+              ? 'top-20 right-4 w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 cursor-pointer hover:scale-110' 
               : 'inset-0'
           }`}
-          style={!isMinimized ? {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: '100%',
-            height: '100%'
-          } : {}}
           onClick={() => {
             if (isMinimized) {
               setIsMinimized(false);
@@ -580,12 +552,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   
                   {/* Menu Items - Circular Layout */}
                   {[
-                    { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); setShowChatInterface(true); } },
-                    { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); setShowChatInterface(false); } },
-                    { icon: FileText, label: "Records", angle: 120, action: () => { setSelectedMenuItem("records"); setShowChatInterface(true); } },
-                    { icon: Phone, label: "Call", angle: 180, action: () => { setSelectedMenuItem("call"); setShowChatInterface(true); } },
-                    { icon: Settings, label: "Settings", angle: 240, action: () => { setSelectedMenuItem("settings"); setShowChatInterface(true); } },
-                    { icon: Home, label: "Home", angle: 300, action: () => { setSelectedMenuItem("home"); setShowChatInterface(false); } }
+                    { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); } },
+                    { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); } },
+                    { icon: FileText, label: "Records", angle: 120, action: () => setSelectedMenuItem("records") },
+                    { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
+                    { icon: Settings, label: "Settings", angle: 240, action: () => setSelectedMenuItem("settings") },
+                    { icon: Home, label: "Home", angle: 300, action: () => setSelectedMenuItem("home") }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
                     const x = Math.cos(angleRad) * 75;
@@ -711,242 +683,95 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
                     {/* Back Button */}
                     <button
-                      onClick={() => {
-                        setShowDoctorList(false);
-                        setShowChatInterface(true);
-                      }}
-                      className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
+                      onClick={() => setShowDoctorList(false)}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
                     >
-                      <ChevronLeft className="h-3 w-3" />
-                      <span className="font-medium">Back</span>
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Small Avatar Circle in Top Right */}
-                    <div className="absolute top-[75px] right-[20px] z-50">
-                      <div className="relative">
-                        {/* Pulsing ring to show avatar is active */}
-                        <div className="absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 animate-pulse opacity-50"></div>
-                        
-                        {/* Avatar container - using main avatar in minimized state */}
-                        <div 
-                          className="relative w-20 h-20 rounded-full shadow-2xl ring-4 ring-white/70 cursor-pointer hover:scale-110 transition-transform overflow-hidden bg-gradient-to-br from-purple-600 to-blue-600"
-                          onClick={() => {
-                            setShowDoctorList(false);
-                            // Restore avatar to full screen
-                            setIsMinimized(false);
-                          }}
-                        >
-                          {/* Always show chat icon since we can't duplicate the avatar */}
-                          <div className="w-full h-full flex items-center justify-center text-white">
-                            <MessageCircle className="h-8 w-8" />
-                          </div>
-                        </div>
-                        
-                        {/* Active status indicator */}
-                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow-md">
-                          Active
-                        </div>
+                    {/* Small Avatar Circle in Top Right - Empty placeholder */}
+                    <div className="absolute top-[75px] right-[25px] z-50">
+                      <div 
+                        className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
+                        onClick={() => setShowDoctorList(false)}
+                      >
+                        <Bot className="h-10 w-10 text-white" />
                       </div>
                     </div>
                     
                     {/* Doctors Grid */}
-                    <div className="h-full pt-36 px-4 pb-24 overflow-y-auto">
-                      <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Our Doctors</h2>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-w-6xl mx-auto">
+                    <div className="h-full pt-32 px-6 pb-6 overflow-y-auto">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Our Doctors</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
                         {/* Doctor 1 */}
                         <div 
-                          className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
+                          className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(1, "Dr. Sarah Johnson", "5 years experience in cardiology, graduated from Johns Hopkins University.")}
                           onMouseLeave={handleDoctorHoverEnd}
                         >
                           <div className="text-center">
-                            <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden bg-gray-200">
+                            <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
                               <img 
                                 src={doctorPhoto}
                                 alt="Dr. Sarah Johnson"
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <h3 className="text-sm font-bold text-gray-800">Dr. Sarah Johnson</h3>
-                            <p className="text-xs text-purple-600 font-medium mb-1">Cardiology</p>
-                            <div className="flex items-center justify-center gap-1 text-gray-600">
-                              <Phone className="h-3 w-3" />
-                              <span className="text-xs">+44 20 7123 4567</span>
+                            <h3 className="text-lg font-bold text-gray-800">Dr. Sarah Johnson</h3>
+                            <p className="text-sm text-purple-600 font-medium mb-2">Cardiology</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
+                              <Phone className="h-4 w-4" />
+                              <span>+44 20 7123 4567</span>
                             </div>
                           </div>
                         </div>
                         
                         {/* Doctor 2 */}
                         <div 
-                          className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
+                          className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(2, "Dr. Michael Chen", "7 years in orthopedics, Harvard Medical School graduate, expert in sports medicine.")}
                           onMouseLeave={handleDoctorHoverEnd}
                         >
                           <div className="text-center">
-                            <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden bg-gray-200">
+                            <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
                               <img 
                                 src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face"
                                 alt="Dr. Michael Chen"
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <h3 className="text-sm font-bold text-gray-800">Dr. Michael Chen</h3>
-                            <p className="text-xs text-purple-600 font-medium mb-1">Orthopedics</p>
-                            <div className="flex items-center justify-center gap-1 text-gray-600">
-                              <Phone className="h-3 w-3" />
-                              <span className="text-xs">+44 20 7123 4568</span>
+                            <h3 className="text-lg font-bold text-gray-800">Dr. Michael Chen</h3>
+                            <p className="text-sm text-purple-600 font-medium mb-2">Orthopedics</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
+                              <Phone className="h-4 w-4" />
+                              <span>+44 20 7123 4568</span>
                             </div>
                           </div>
                         </div>
                         
                         {/* Doctor 3 */}
                         <div 
-                          className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
+                          className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
                           onMouseEnter={() => handleDoctorHover(3, "Dr. Emily Rodriguez", "10 years of pediatric experience, Stanford University alumnus, child health specialist.")}
                           onMouseLeave={handleDoctorHoverEnd}
                         >
                           <div className="text-center">
-                            <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden bg-gray-200">
+                            <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden bg-gray-200">
                               <img 
-                                src={doctorPhotoEmily}
+                                src="https://images.unsplash.com/photo-1594824388853-2c5cb2d2f40e?w=300&h=300&fit=crop&crop=face"
                                 alt="Dr. Emily Rodriguez"
-                                className="w-full h-full object-cover object-center"
+                                className="w-full h-full object-cover"
                               />
                             </div>
-                            <h3 className="text-sm font-bold text-gray-800">Dr. Emily Rodriguez</h3>
-                            <p className="text-xs text-purple-600 font-medium mb-1">Pediatrics</p>
-                            <div className="flex items-center justify-center gap-1 text-gray-600">
-                              <Phone className="h-3 w-3" />
-                              <span className="text-xs">+44 20 7123 4569</span>
+                            <h3 className="text-lg font-bold text-gray-800">Dr. Emily Rodriguez</h3>
+                            <p className="text-sm text-purple-600 font-medium mb-2">Pediatrics</p>
+                            <div className="flex items-center justify-center gap-1 text-gray-600 text-sm">
+                              <Phone className="h-4 w-4" />
+                              <span>+44 20 7123 4569</span>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                    
-                    {/* Chat and Voice Input Section at Bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 border-t border-gray-200">
-                      <div className="flex items-center gap-2 max-w-4xl mx-auto">
-                        <input
-                          ref={inputRef}
-                          type="text"
-                          value={inputText}
-                          onChange={(e) => setInputText(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(inputText)}
-                          placeholder="Send your message..."
-                          className="flex-1 px-4 py-2 text-sm rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                        <button
-                          onClick={() => handleSendMessage(inputText)}
-                          className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
-                        >
-                          <Send className="h-4 w-4" />
-                        </button>
-                        <BrowserVoiceButton
-                          onTranscript={(text: string) => {
-                            setInputText(text);
-                            // Auto-send when user stops speaking
-                            if (text.trim()) {
-                              handleSendMessage(text);
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Book/Appointment Page */}
-                {selectedMenuItem === "book" && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => {
-                        setSelectedMenuItem(null);
-                        setShowChatInterface(true);
-                      }}
-                      className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
-                    >
-                      <ChevronLeft className="h-3 w-3" />
-                      <span className="font-medium">Back</span>
-                    </button>
-                    
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <Calendar className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Book Appointment</h2>
-                        <p className="text-gray-600">Appointment booking feature coming soon!</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Settings Page */}
-                {selectedMenuItem === "settings" && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => {
-                        setSelectedMenuItem(null);
-                        setShowChatInterface(true);
-                      }}
-                      className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
-                    >
-                      <ChevronLeft className="h-3 w-3" />
-                      <span className="font-medium">Back</span>
-                    </button>
-                    
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <Settings className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Settings</h2>
-                        <p className="text-gray-600">Settings page coming soon!</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Call Page */}
-                {selectedMenuItem === "call" && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => {
-                        setSelectedMenuItem(null);
-                        setShowChatInterface(true);
-                      }}
-                      className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
-                    >
-                      <ChevronLeft className="h-3 w-3" />
-                      <span className="font-medium">Back</span>
-                    </button>
-                    
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <Phone className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Make a Call</h2>
-                        <p className="text-gray-600">Calling feature coming soon!</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Records Page */}
-                {selectedMenuItem === "records" && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => {
-                        setSelectedMenuItem(null);
-                        setShowChatInterface(true);
-                      }}
-                      className="absolute top-[80px] left-[20px] flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50 text-sm"
-                    >
-                      <ChevronLeft className="h-3 w-3" />
-                      <span className="font-medium">Back</span>
-                    </button>
-                    
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <FileText className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Medical Records</h2>
-                        <p className="text-gray-600">Medical records feature coming soon!</p>
                       </div>
                     </div>
                   </div>
