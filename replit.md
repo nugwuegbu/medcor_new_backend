@@ -216,6 +216,7 @@ Changelog:
 - July 05, 2025. Fixed weather greeting to properly display on first user message only
 - July 05, 2025. Fixed HeyGen avatar session closing issue - added automatic session recovery and error handling to recreate avatar when session expires
 - July 05, 2025. Fixed avatar aspect ratio distortion - changed video element from object-cover to object-contain to maintain proper proportions
+- July 05, 2025. Fixed HeyGen avatar black stripes issue - made chat widget full screen (inset-0) and restored object-cover for full screen video display
 
 ## User Preferences
 

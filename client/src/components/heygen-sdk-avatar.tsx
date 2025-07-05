@@ -147,7 +147,7 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
   if (!isVisible) return null;
 
   return (
-    <div className="w-full h-full relative bg-gradient-to-br from-blue-50 to-white rounded-lg overflow-hidden">
+    <div className="w-full h-full relative overflow-hidden">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10">
           <div className="text-center">
@@ -165,8 +165,11 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
 
       <video
         ref={videoRef}
-        className="w-full h-full object-contain"
-        style={{ backgroundColor: '#000' }}
+        className="absolute inset-0 w-full h-full"
+        style={{ 
+          objectFit: 'cover',
+          objectPosition: 'center'
+        }}
         autoPlay
         playsInline
         muted
