@@ -950,7 +950,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 
                 {/* Records View */}
                 {showRecordsList && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
                     {/* Back Button */}
                     <button
                       onClick={() => {
@@ -962,73 +962,70 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Records Page Content */}
-                    <div className="h-full flex flex-col">
-                      {/* Upload Button - Centered */}
-                      <div className="flex-1 flex items-center justify-center">
-                        <div className="text-center">
-                          <label htmlFor="records-file-upload" className="cursor-pointer">
-                            <div className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl transform hover:scale-105">
-                              <Upload size={18} />
-                              <span className="text-sm">Upload Medical Records</span>
-                            </div>
-                            <input
-                              id="records-file-upload"
-                              type="file"
-                              className="hidden"
-                              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  console.log('Medical record selected:', file.name);
-                                  // TODO: Handle file upload
-                                }
-                              }}
-                            />
-                          </label>
-                          <p className="text-gray-600 mt-3 text-xs">
-                            Upload your medical documents or photos (PDF, JPEG, PNG, DOC)
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Chat Input with Microphone for Records Page */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-100 to-transparent p-6">
-                        <div className="relative max-w-2xl mx-auto">
+                    {/* Upload Button - Centered */}
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="text-center">
+                        <label htmlFor="records-file-upload" className="cursor-pointer">
+                          <div className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl transform hover:scale-105">
+                            <Upload size={18} />
+                            <span className="text-sm">Upload Medical Records</span>
+                          </div>
                           <input
-                            type="text"
-                            value={recordsInputText}
-                            onChange={(e) => setRecordsInputText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && recordsInputText.trim()) {
-                                handleSendMessage(recordsInputText);
-                                setRecordsInputText('');
+                            id="records-file-upload"
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                console.log('Medical record selected:', file.name);
+                                // TODO: Handle file upload
                               }
                             }}
-                            placeholder="Send your message..."
-                            className="w-full px-6 py-4 pr-24 bg-white/90 backdrop-blur-sm rounded-full shadow-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
                           />
-                          
-                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-                            {recordsInputText.trim() && (
-                              <button
-                                onClick={() => {
-                                  handleSendMessage(recordsInputText);
-                                  setRecordsInputText('');
-                                }}
-                                className="p-2.5 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-all hover:scale-110 shadow-md"
-                              >
-                                <Send size={18} className="transform rotate-45" />
-                              </button>
-                            )}
-                            <BrowserVoiceButton
-                              onTranscript={(transcript) => {
-                                setRecordsInputText(transcript);
-                                handleSendMessage(transcript);
+                        </label>
+                        <p className="text-gray-600 mt-3 text-xs">
+                          Upload your medical documents or photos (PDF, JPEG, PNG, DOC)
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Chat Input with Microphone for Records Page */}
+                    <div className="bg-gradient-to-t from-gray-100 to-transparent p-6">
+                      <div className="relative max-w-2xl mx-auto">
+                        <input
+                          type="text"
+                          value={recordsInputText}
+                          onChange={(e) => setRecordsInputText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && recordsInputText.trim()) {
+                              handleSendMessage(recordsInputText);
+                              setRecordsInputText('');
+                            }
+                          }}
+                          placeholder="Send your message..."
+                          className="w-full px-6 py-4 pr-24 bg-white/90 backdrop-blur-sm rounded-full shadow-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
+                        />
+                        
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+                          {recordsInputText.trim() && (
+                            <button
+                              onClick={() => {
+                                handleSendMessage(recordsInputText);
                                 setRecordsInputText('');
                               }}
-                            />
-                          </div>
+                              className="p-2.5 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-all hover:scale-110 shadow-md"
+                            >
+                              <Send size={18} className="transform rotate-45" />
+                            </button>
+                          )}
+                          <BrowserVoiceButton
+                            onTranscript={(transcript) => {
+                              setRecordsInputText(transcript);
+                              handleSendMessage(transcript);
+                              setRecordsInputText('');
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
