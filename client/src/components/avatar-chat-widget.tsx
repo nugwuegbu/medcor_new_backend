@@ -577,18 +577,20 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         {/* Avatar Container - Adapts for chat, doctors view, and minimized state */}
         <div 
           ref={avatarContainerRef}
-          className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
+          className={`absolute ${
             showDoctorList
               ? 'w-24 h-24 rounded-full overflow-hidden shadow-lg z-[45] hover:scale-110 ring-4 ring-purple-600'
               : 'inset-0 overflow-hidden'
           }`}
           style={{
+            transition: isDragging ? 'none' : 'all 700ms ease-in-out',
             ...(showDoctorList ? {
               cursor: isDragging ? 'grabbing' : 'grab',
               left: avatarPosition.x !== null ? `${avatarPosition.x}px` : 'auto',
               top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '200px',
               right: avatarPosition.x !== null ? 'auto' : '25px',
-              userSelect: isDragging ? 'none' : 'auto'
+              userSelect: isDragging ? 'none' : 'auto',
+              willChange: 'transform'
             } : {})
           }}
           onMouseDown={handleAvatarMouseDown}
