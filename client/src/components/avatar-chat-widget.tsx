@@ -67,6 +67,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showChatInterface, setShowChatInterface] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<string | null>(null);
   const [showDoctorList, setShowDoctorList] = useState(false);
+  const [showRecordsList, setShowRecordsList] = useState(false);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraPermissionRequested, setCameraPermissionRequested] = useState(false);
@@ -142,7 +143,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }, [isDragging, dragOffset.x, dragOffset.y]);
 
   const handleAvatarMouseDown = (e: React.MouseEvent) => {
-    if (!showDoctorList && !isMinimized) return; // Only allow dragging in circular mode
+    if (!showDoctorList && !showRecordsList && !isMinimized) return; // Only allow dragging in circular mode
     
     const rect = avatarContainerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -547,14 +548,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         <div 
           ref={avatarContainerRef}
           className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
-            showDoctorList
+            showDoctorList || showRecordsList
               ? 'w-24 h-24 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-4 ring-purple-600'
               : isMinimized 
                 ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 hover:scale-110' 
                 : 'inset-0 overflow-hidden'
           }`}
           style={{
-            ...(showDoctorList || isMinimized ? {
+            ...(showDoctorList || showRecordsList || isMinimized ? {
               cursor: isDragging ? 'grabbing' : 'grab',
               left: avatarPosition.x !== null ? `${avatarPosition.x}px` : 'auto',
               top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '75px',
@@ -572,6 +573,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               setShowInfoOverlay(false);
             } else if (showDoctorList) {
               setShowDoctorList(false);
+              setShowChatInterface(true);
+            } else if (showRecordsList) {
+              setShowRecordsList(false);
               setShowChatInterface(true);
             }
           }}>
@@ -667,7 +671,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   {[
                     { icon: Calendar, label: "Book", angle: 0, action: () => { setShowCalendar(true); setSelectedMenuItem("book"); } },
                     { icon: Users, label: "Doctors", angle: 60, action: () => { setShowDoctorList(true); setSelectedMenuItem("doctors"); } },
-                    { icon: FileText, label: "Records", angle: 120, action: () => setSelectedMenuItem("records") },
+                    { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
                     { icon: Settings, label: "Settings", angle: 240, action: () => setSelectedMenuItem("settings") },
                     { icon: Home, label: "Home", angle: 300, action: () => setSelectedMenuItem("home") }
@@ -938,6 +942,29 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             // Stay on doctors page - don't navigate away
                           }}
                         />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Records View */}
+                {showRecordsList && (
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => {
+                        setShowRecordsList(false);
+                      }}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Empty Records Page */}
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        {/* Empty records page content */}
                       </div>
                     </div>
                   </div>
