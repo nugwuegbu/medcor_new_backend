@@ -1047,17 +1047,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         />
                         
                         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-                          {recordsInputText.trim() && (
-                            <button
-                              onClick={() => {
-                                handleSendMessage(recordsInputText);
-                                setRecordsInputText('');
-                              }}
-                              className="p-2.5 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-all hover:scale-110 shadow-md"
-                            >
-                              <Send size={18} className="transform rotate-45" />
-                            </button>
-                          )}
                           <BrowserVoiceButton
                             onTranscript={(transcript) => {
                               setRecordsInputText(transcript);
@@ -1065,6 +1054,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               setRecordsInputText('');
                             }}
                           />
+                          <button
+                            onClick={() => {
+                              if (recordsInputText.trim()) {
+                                handleSendMessage(recordsInputText);
+                                setRecordsInputText('');
+                              }
+                            }}
+                            className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all hover:scale-110 shadow-md"
+                          >
+                            <Send size={20} />
+                          </button>
                         </div>
                       </div>
                     </div>
