@@ -527,30 +527,42 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   if (!isOpen) return null;
   
-  // If doctor list is being shown during booking, hide the main chat widget
+  // If doctor list is being shown during booking, show contained within chat widget
   if (showDoctorList && !showChatInterface) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50">
+      <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
         {/* Back Button */}
         <button
           onClick={() => {
             setShowDoctorList(false);
             setShowChatInterface(true);
           }}
-          className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+          className="absolute top-4 left-4 flex items-center gap-1 px-3 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
         >
           <ChevronLeft className="h-4 w-4" />
           <span className="font-medium text-sm">Back</span>
         </button>
         
-        {/* Main Content Area - Shows doctors clearly */}
-        <div className="h-full pt-32 px-6 pb-24 overflow-y-auto relative">
+        {/* Avatar in circle */}
+        <div 
+          className="absolute w-16 h-16 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-2 ring-purple-600"
+          style={{ right: '16px', top: '16px' }}
+        >
+          <HeyGenSDKAvatar
+            ref={avatarRef}
+            apiKey={import.meta.env.VITE_HEYGEN_API_KEY || ''}
+            isVisible={true}
+          />
+        </div>
+        
+        {/* Main Content Area - Shows doctors within chat bounds */}
+        <div className="flex-1 pt-16 px-4 pb-4 overflow-y-auto">
           <div className="opacity-100">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Our Doctors</h2>
-            <div className="grid grid-cols-3 gap-2 max-w-4xl mx-auto">
+            <h2 className="text-lg font-bold text-gray-800 mb-4 text-center">Our Doctors</h2>
+            <div className="space-y-3">
             {/* Doctor 1 */}
             <div 
-              className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
+              className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
               onClick={async () => {
                 if (bookingFormData.selectedDate) {
                   setShowDoctorList(false);
@@ -590,26 +602,28 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 }
               }}
             >
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                   <img 
                     src={doctorPhoto}
                     alt="Dr. Sarah Johnson"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h3 className="text-sm font-bold text-gray-800">Dr. Sarah Johnson</h3>
-                <p className="text-xs text-purple-600 font-medium">Cardiology</p>
-                <div className="flex items-center justify-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
-                  <Phone className="h-2.5 w-2.5" />
-                  <span>+44 20 7123 4567</span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-gray-800 truncate">Dr. Sarah Johnson</h3>
+                  <p className="text-xs text-purple-600 font-medium">Cardiology</p>
+                  <div className="flex items-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
+                    <Phone className="h-2.5 w-2.5" />
+                    <span>+44 20 7123 4567</span>
+                  </div>
                 </div>
               </div>
             </div>
             
             {/* Doctor 2 */}
             <div 
-              className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
+              className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
               onClick={async () => {
                 if (bookingFormData.selectedDate) {
                   setShowDoctorList(false);
@@ -649,26 +663,28 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 }
               }}
             >
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                   <img 
                     src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face"
                     alt="Dr. Michael Chen"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h3 className="text-sm font-bold text-gray-800">Dr. Michael Chen</h3>
-                <p className="text-xs text-purple-600 font-medium">Orthopedics</p>
-                <div className="flex items-center justify-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
-                  <Phone className="h-2.5 w-2.5" />
-                  <span>+44 20 7123 4568</span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-gray-800 truncate">Dr. Michael Chen</h3>
+                  <p className="text-xs text-purple-600 font-medium">Orthopedics</p>
+                  <div className="flex items-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
+                    <Phone className="h-2.5 w-2.5" />
+                    <span>+44 20 7123 4568</span>
+                  </div>
                 </div>
               </div>
             </div>
             
             {/* Doctor 3 */}
             <div 
-              className="bg-white rounded-lg shadow-md p-2 hover:shadow-lg transition-shadow cursor-pointer"
+              className="bg-white rounded-lg shadow-md p-3 hover:shadow-lg transition-shadow cursor-pointer"
               onClick={async () => {
                 if (bookingFormData.selectedDate) {
                   setShowDoctorList(false);
@@ -708,19 +724,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 }
               }}
             >
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-full mx-auto mb-1.5 overflow-hidden bg-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                   <img 
                     src={doctorEmilyPhoto}
                     alt="Dr. Emily Rodriguez"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h3 className="text-sm font-bold text-gray-800">Dr. Emily Rodriguez</h3>
-                <p className="text-xs text-purple-600 font-medium">Pediatrics</p>
-                <div className="flex items-center justify-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
-                  <Phone className="h-2.5 w-2.5" />
-                  <span>+44 20 7123 4569</span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-gray-800 truncate">Dr. Emily Rodriguez</h3>
+                  <p className="text-xs text-purple-600 font-medium">Pediatrics</p>
+                  <div className="flex items-center gap-1 text-gray-600 mt-1" style={{ fontSize: '10px' }}>
+                    <Phone className="h-2.5 w-2.5" />
+                    <span>+44 20 7123 4569</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -740,11 +758,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           />
         </div>
         
-        {/* Mini Chat Widget for Doctor Page */}
+        {/* Mini Chat Widget at bottom of doctor list */}
         {messages.length > 0 && (
-          <div className="fixed bottom-4 right-4 w-52 h-32 bg-white rounded-lg shadow-lg border border-purple-200 z-50">
+          <div className="absolute bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg border border-purple-200 z-50 max-h-24">
             <div className="h-full flex flex-col">
-              <div className="bg-purple-600 text-white p-1 rounded-t-lg flex justify-between items-center">
+              <div className="bg-purple-600 text-white px-2 py-1 rounded-t-lg flex justify-between items-center">
                 <span className="text-xs font-medium">Assistant</span>
                 <button 
                   onClick={() => setMessages([])}
@@ -754,36 +772,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 </button>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-1.5 space-y-1">
-                {messages.slice(-2).map((msg, index) => (
+              <div className="flex-1 overflow-y-auto p-2">
+                {messages.slice(-1).map((msg, index) => (
                   <div
                     key={index}
-                    className={`p-1 rounded text-[10px] ${
-                      msg.sender === 'user' 
-                        ? 'bg-purple-100 ml-auto max-w-[80%]' 
-                        : 'bg-gray-100 mr-auto max-w-[80%]'
-                    }`}
+                    className="text-xs text-gray-700"
                   >
-                    <p>{msg.text.length > 50 ? msg.text.substring(0, 50) + '...' : msg.text}</p>
+                    <p>{msg.text.length > 60 ? msg.text.substring(0, 60) + '...' : msg.text}</p>
                   </div>
                 ))}
-              </div>
-              
-              <div className="p-1 border-t">
-                <div className="flex gap-1">
-                  <button 
-                    className="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded hover:bg-purple-200"
-                    onClick={() => handleDoctorsSendMessage("Continue")}
-                  >
-                    Continue
-                  </button>
-                  <button 
-                    className="text-[9px] bg-gray-100 text-gray-700 px-1 py-0.5 rounded hover:bg-gray-200"
-                    onClick={() => handleDoctorsSendMessage("Help")}
-                  >
-                    Help
-                  </button>
-                </div>
               </div>
             </div>
           </div>
