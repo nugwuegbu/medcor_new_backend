@@ -25,8 +25,8 @@ interface Message {
 }
 
 interface AvatarChatWidgetProps {
-  isOpen?: boolean;
-  onClose?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 // Enhanced language detection function
@@ -418,38 +418,31 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     */
   }, []);
 
-  // Default to open if not specified
-  const widgetIsOpen = isOpen !== undefined ? isOpen : true;
-  
-  if (!widgetIsOpen) return null;
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-purple-900/5 to-blue-900/5 flex flex-col z-50">
-      {/* Header - Transparent overlay */}
-      <div className="absolute top-0 left-0 right-0 z-50 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-white/80" />
-            <span className="text-white/80 text-sm font-medium">AI Assistant</span>
-          </div>
-          
-          {/* User Camera View in center */}
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <UserCameraView 
-              isEnabled={cameraEnabled}
-              onPermissionRequest={handleCameraPermissionRequest}
-              capturePhotoRef={capturePhotoRef}
-            />
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <span className="text-white font-bold text-xl">medcor</span>
-            {onClose && (
-              <Button variant="ghost" size="sm" onClick={onClose} className="h-9 w-9 p-0 hover:bg-white/20">
-                <X className="h-6 w-6 text-white" />
-              </Button>
-            )}
-          </div>
+    <div className="fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-gray-600" />
+          <span className="text-gray-700 text-sm">AI Assistant</span>
+        </div>
+        
+        {/* User Camera View in center */}
+        <div className="absolute left-1/2 transform -translate-x-1/2">
+          <UserCameraView 
+            isEnabled={cameraEnabled}
+            onPermissionRequest={handleCameraPermissionRequest}
+            capturePhotoRef={capturePhotoRef}
+          />
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <span className="text-purple-600 font-bold text-lg">medcor</span>
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+            <X className="h-5 w-5" />
+          </Button>
         </div>
       </div>
 
@@ -469,21 +462,25 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               setShowInfoOverlay(false);
             }
           }}>
-          {/* Always show HeyGen avatar */}
-          <HeyGenSDKAvatar 
-            ref={avatarRef}
-            key="single-avatar-instance"
-            apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-            isVisible={true}
-            onMessage={(text) => {
-              console.log("Avatar message:", text);
-            }}
-            onReady={() => {
-              console.log("Avatar is ready");
-              setHasGreeted(true);
-              // Don't send automatic greeting - wait for user interaction
-            }}
-          />
+          {isOpen && (
+            <>
+              {/* Always show HeyGen avatar */}
+              <HeyGenSDKAvatar 
+                ref={avatarRef}
+                key="single-avatar-instance"
+                apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+                isVisible={true}
+                onMessage={(text) => {
+                  console.log("Avatar message:", text);
+                }}
+                onReady={() => {
+                  console.log("Avatar is ready");
+                  setHasGreeted(true);
+                  // Don't send automatic greeting - wait for user interaction
+                }}
+              />
+            </>
+          )}
         </div>
         
         {/* White Content Area when minimized */}
@@ -693,13 +690,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Small Avatar Circle in Top Right */}
+                    {/* Small Avatar Circle in Top Right - Empty placeholder */}
                     <div className="absolute top-[75px] right-[25px] z-50">
                       <div 
-                        className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform"
+                        className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg overflow-hidden ring-4 ring-white/50 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
                         onClick={() => setShowDoctorList(false)}
                       >
-                        {/* HeyGen Avatar - Using existing ref */}
                         <Bot className="h-10 w-10 text-white" />
                       </div>
                     </div>
@@ -880,39 +876,39 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         </div>
       </div>
 
-      {/* Input Section - Full Width with Transparent Background */}
-      <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/20 to-transparent">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-3 bg-white/90 backdrop-blur-md rounded-full px-6 py-4 shadow-2xl">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Send your message..."
-              className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-600 text-lg"
-              disabled={voiceChatMutation.isPending}
-            />
-            
-            <Button
-              size="sm"
-              onClick={() => handleSendMessage(inputText)}
-              disabled={!inputText.trim() || voiceChatMutation.isPending}
-              className="p-3 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
-              variant="ghost"
-            >
-              <Send className="h-6 w-6" />
-            </Button>
-            
-            <BrowserVoiceButton
-              onTranscript={(text) => {
-                handleSendMessage(text);
-              }}
-              disabled={voiceChatMutation.isPending}
-            />
-          </div>
+      {/* Input Section */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm">
+        <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Send your message..."
+            className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
+            disabled={voiceChatMutation.isPending}
+          />
+          
+          <Button
+            size="sm"
+            onClick={() => handleSendMessage(inputText)}
+            disabled={!inputText.trim() || voiceChatMutation.isPending}
+            className="p-2 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
+            variant="ghost"
+          >
+            <Send className="h-5 w-5" />
+          </Button>
+          
+          <BrowserVoiceButton
+            onTranscript={(text) => {
+              handleSendMessage(text);
+            }}
+            disabled={voiceChatMutation.isPending}
+          />
         </div>
+        
+
       </div>
 
       {/* Authentication Overlay */}
