@@ -84,21 +84,46 @@ const metrics = {
 export class AvatarManager {
   private static lastRecoveryAttempt = 0;
   private static freezeDetectionInterval: NodeJS.Timeout | null = null;
+  private static sessionPool: StreamingAvatar[] = [];
+  private static isPreWarming = false;
   
   private static preWarmConnection(apiKey: string) {
-    // Pre-warm the connection in background
-    setTimeout(() => {
-      if (!(window as any).__avatarManager?.avatar) {
-        console.log("Pre-warming avatar connection...");
-        this.getOrCreateAvatar(apiKey).catch(e => 
-          console.log("Pre-warm failed (non-critical):", e.message)
-        );
-      }
-    }, 100);
+    // Pre-warm multiple connections for instant switching
+    if (!this.isPreWarming && this.sessionPool.length < 2) {
+      this.isPreWarming = true;
+      setTimeout(async () => {
+        try {
+          console.log("Pre-warming avatar connections...");
+          const avatar = new StreamingAvatar({ token: apiKey });
+          await avatar.createStartAvatar({
+            quality: AvatarQuality.Low,
+            avatarName: "Ann_Doctor_Standing2_public",
+            disableIdleTimeout: true
+          });
+          this.sessionPool.push(avatar);
+          console.log("Pre-warmed avatar ready in pool");
+        } catch (e) {
+          console.log("Pre-warm failed:", (e as Error).message);
+        }
+        this.isPreWarming = false;
+      }, 1000);
+    }
   }
 
   static async getOrCreateAvatar(apiKey: string): Promise<StreamingAvatar> {
     const manager = (window as any).__avatarManager;
+    
+    // Check if we have a pre-warmed avatar in the pool
+    if (this.sessionPool.length > 0) {
+      const pooledAvatar = this.sessionPool.shift();
+      console.log("Using pre-warmed avatar from pool - instant connection!");
+      manager.avatar = pooledAvatar;
+      
+      // Start pre-warming another one
+      this.preWarmConnection(apiKey);
+      
+      return pooledAvatar!;
+    }
     
     // If we already have an avatar, return it
     if (manager.avatar) {
