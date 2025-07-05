@@ -184,6 +184,26 @@ export class AvatarManager {
 
     avatar.on(StreamingEvents.STREAM_READY, async () => {
       console.log("Stream ready");
+      
+      // Store the media stream
+      const stream = avatar.mediaStream;
+      if (stream) {
+        this.mediaStream = stream;
+        console.log("Media stream stored:", stream);
+        
+        // Check audio tracks
+        const audioTracks = stream.getAudioTracks();
+        console.log("Audio tracks available:", audioTracks.length);
+        audioTracks.forEach((track, index) => {
+          console.log(`Audio track ${index}:`, {
+            enabled: track.enabled,
+            muted: track.muted,
+            readyState: track.readyState,
+            label: track.label
+          });
+        });
+      }
+      
       // Log connection quality metrics
       if ((window as any).performance && (window as any).performance.now) {
         const connectionTime = (window as any).performance.now();
