@@ -59,7 +59,6 @@ function detectLanguageFromText(text: string): string {
 
 export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [doctorsMessages, setDoctorsMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [doctorsInputText, setDoctorsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
@@ -322,12 +321,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               showDoctors: false
             };
             
-            // Add to appropriate message list based on current view
-            if (showDoctorList) {
-              setDoctorsMessages(prev => [...prev, botMessage]);
-            } else {
-              setMessages(prev => [...prev, botMessage]);
-            }
+            // Add to main message list
+            setMessages(prev => [...prev, botMessage]);
           }
         } catch (error) {
           console.error("Error fetching nearby places:", error);
@@ -349,12 +344,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           showDoctors: false
         };
         
-        // Add to appropriate message list based on current view
-        if (showDoctorList) {
-          setDoctorsMessages(prev => [...prev, botMessage]);
-        } else {
-          setMessages(prev => [...prev, botMessage]);
-        }
+        // Add to main message list
+        setMessages(prev => [...prev, botMessage]);
         
         // Open the chat interface and navigate to doctors
         if (interfaceType === "DOCTORS") {
@@ -375,12 +366,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           showDoctors: false // Never show inline doctors
         };
         
-        // Add to appropriate message list based on current view
-        if (showDoctorList) {
-          setDoctorsMessages(prev => [...prev, botMessage]);
-        } else {
-          setMessages(prev => [...prev, botMessage]);
-        }
+        // Add to main message list
+        setMessages(prev => [...prev, botMessage]);
       }
       
       // Make the HeyGen avatar speak the response with language detection
@@ -431,7 +418,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       timestamp: new Date()
     };
 
-    setDoctorsMessages(prev => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setDoctorsInputText("");
     
     // Track user messages and show auth after 2 messages
@@ -811,7 +798,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     <button
                       onClick={() => {
                         setShowDoctorList(false);
-                        setDoctorsMessages([]); // Clear doctor messages when closing
+                        // Keep messages - continuous conversation
                       }}
                       className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
                     >
@@ -824,7 +811,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     {/* Main Content Area - Shows doctors with messages overlay */}
                     <div className="h-full pt-32 px-6 pb-24 overflow-y-auto relative">
                       {/* Always show doctors in background */}
-                      <div className={`transition-opacity duration-300 ${doctorsMessages.length > 0 ? 'opacity-20' : 'opacity-100'}`}>
+                      <div className={`transition-opacity duration-300 ${messages.length > 0 ? 'opacity-20' : 'opacity-100'}`}>
                         <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Our Doctors</h2>
                         <div className="grid grid-cols-3 gap-2 max-w-4xl mx-auto">
                         {/* Doctor 1 */}
@@ -898,11 +885,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       </div>
                       </div>
                       
-                      {/* Messages overlay */}
-                      {doctorsMessages.length > 0 && (
+                      {/* Messages overlay - Use main messages */}
+                      {messages.length > 0 && (
                         <div className="absolute inset-0 pt-32 px-6 pb-24 overflow-y-auto bg-white bg-opacity-95">
                           <div className="max-w-2xl mx-auto space-y-4">
-                            {doctorsMessages.map((msg, index) => (
+                            {messages.map((msg, index) => (
                               <div
                                 key={index}
                                 className={`p-4 rounded-lg ${
