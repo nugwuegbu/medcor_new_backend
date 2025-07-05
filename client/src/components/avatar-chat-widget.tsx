@@ -827,10 +827,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     
 
                     
-                    {/* Main Content Area - Shows doctors with messages overlay */}
+                    {/* Main Content Area - Shows doctors clearly */}
                     <div className="h-full pt-32 px-6 pb-24 overflow-y-auto relative">
-                      {/* Always show doctors in background */}
-                      <div className={`transition-opacity duration-300 ${messages.length > 0 ? 'opacity-20' : 'opacity-100'}`}>
+                      {/* Always show doctors clearly */}
+                      <div className="opacity-100">
                         <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Our Doctors</h2>
                         <div className="grid grid-cols-3 gap-2 max-w-4xl mx-auto">
                         {/* Doctor 1 */}
@@ -1018,62 +1018,60 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       </div>
                       </div>
                       
-                      {/* Messages overlay */}
+                      {/* Small Chat Widget for Doctor Page */}
                       {messages.length > 0 && (
-                        <div className="absolute inset-0 pt-32 px-6 pb-24 overflow-y-auto bg-white bg-opacity-95">
-                          <div className="max-w-2xl mx-auto space-y-4">
-                            {messages.map((msg, index) => (
-                              <div
-                                key={index}
-                                className={`p-4 rounded-lg ${
-                                  msg.sender === 'user' 
-                                    ? 'bg-purple-100 ml-auto max-w-[80%]' 
-                                    : 'bg-gray-100 mr-auto max-w-[80%]'
-                                }`}
+                        <div className="fixed bottom-20 right-4 w-80 h-60 bg-white rounded-lg shadow-xl border-2 border-purple-200 z-50">
+                          <div className="h-full flex flex-col">
+                            {/* Chat Header */}
+                            <div className="bg-purple-600 text-white p-2 rounded-t-lg flex justify-between items-center">
+                              <span className="text-sm font-medium">Booking Assistant</span>
+                              <button 
+                                onClick={() => setMessages([])}
+                                className="text-white hover:text-gray-200"
                               >
-                                <p className="text-sm">{msg.text}</p>
+                                ×
+                              </button>
+                            </div>
+                            
+                            {/* Messages */}
+                            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                              {messages.map((msg, index) => (
+                                <div
+                                  key={index}
+                                  className={`p-2 rounded-md text-xs ${
+                                    msg.sender === 'user' 
+                                      ? 'bg-purple-100 ml-auto max-w-[85%]' 
+                                      : 'bg-gray-100 mr-auto max-w-[85%]'
+                                  }`}
+                                >
+                                  <p>{msg.text}</p>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Quick Reply Buttons */}
+                            <div className="p-2 border-t">
+                              <div className="flex gap-1">
+                                <button 
+                                  className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full hover:bg-purple-200"
+                                  onClick={() => handleDoctorsSendMessage("Continue booking")}
+                                >
+                                  Continue
+                                </button>
+                                <button 
+                                  className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-200"
+                                  onClick={() => handleDoctorsSendMessage("Need help")}
+                                >
+                                  Help
+                                </button>
                               </div>
-                            ))}
+                            </div>
                           </div>
                         </div>
                       )}
                     </div>
                     
-                    {/* Chat Input with Microphone for Doctors Page */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-white border-t p-4">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={doctorsInputText}
-                          onChange={(e) => setDoctorsInputText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && doctorsInputText.trim()) {
-                              handleDoctorsSendMessage(doctorsInputText);
-                              // Stay on doctors page - don't navigate away
-                            }
-                          }}
-                          placeholder="Send your message..."
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
-                        <button
-                          onClick={() => {
-                            if (doctorsInputText.trim()) {
-                              handleDoctorsSendMessage(doctorsInputText);
-                              // Stay on doctors page - don't navigate away
-                            }
-                          }}
-                          className="p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
-                        >
-                          <Send className="h-5 w-5" />
-                        </button>
-                        <BrowserVoiceButton
-                          onTranscript={(transcript: string) => {
-                            handleDoctorsSendMessage(transcript);
-                            // Stay on doctors page - don't navigate away
-                          }}
-                        />
-                      </div>
-                    </div>
+
                   </div>
                 )}
                 
