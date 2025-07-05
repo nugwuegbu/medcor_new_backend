@@ -106,19 +106,22 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
       
-      const newX = e.clientX - dragOffset.x;
-      const newY = e.clientY - dragOffset.y;
+      // Get chat widget container bounds
+      const chatWidget = document.querySelector('.chat-widget-container');
+      if (!chatWidget) return;
       
-      // Get viewport dimensions
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
+      const widgetRect = chatWidget.getBoundingClientRect();
+      
+      // Calculate new position relative to widget
+      const newX = e.clientX - widgetRect.left - dragOffset.x;
+      const newY = e.clientY - widgetRect.top - dragOffset.y;
       
       // Avatar dimensions (96px for w-24 h-24)
       const avatarSize = 96;
       
-      // Keep avatar within viewport bounds
-      const boundedX = Math.max(0, Math.min(vw - avatarSize, newX));
-      const boundedY = Math.max(0, Math.min(vh - avatarSize, newY));
+      // Keep avatar within chat widget bounds
+      const boundedX = Math.max(0, Math.min(widgetRect.width - avatarSize, newX));
+      const boundedY = Math.max(0, Math.min(widgetRect.height - avatarSize, newY));
       
       setAvatarPosition({ x: boundedX, y: boundedY });
     };
@@ -525,7 +528,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border">
+    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border relative">
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
@@ -566,9 +569,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           style={{
             ...(showDoctorList || isMinimized ? {
               cursor: isDragging ? 'grabbing' : 'grab',
-              left: avatarPosition.x !== null ? `${avatarPosition.x}px` : showDoctorList ? undefined : '16px',
-              top: avatarPosition.y !== null ? `${avatarPosition.y}px` : showDoctorList ? '75px' : '80px',
-              right: avatarPosition.x !== null ? undefined : showDoctorList ? '25px' : undefined,
+              left: avatarPosition.x !== null ? `${avatarPosition.x}px` : 'auto',
+              top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '75px',
+              right: avatarPosition.x !== null ? 'auto' : '25px',
               userSelect: isDragging ? 'none' : 'auto'
             } : {})
           }}
