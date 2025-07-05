@@ -59,6 +59,7 @@ function detectLanguageFromText(text: string): string {
 
 export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [doctorsMessages, setDoctorsMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [doctorsInputText, setDoctorsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
@@ -321,8 +322,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               showDoctors: false
             };
             
-            // Add to main message list
-            setMessages(prev => [...prev, botMessage]);
+            // Add to appropriate message list based on current view
+            if (showDoctorList) {
+              setDoctorsMessages(prev => [...prev, botMessage]);
+            } else {
+              setMessages(prev => [...prev, botMessage]);
+            }
           }
         } catch (error) {
           console.error("Error fetching nearby places:", error);
@@ -344,8 +349,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           showDoctors: false
         };
         
-        // Add to main message list
-        setMessages(prev => [...prev, botMessage]);
+        // Add to appropriate message list based on current view
+        if (showDoctorList) {
+          setDoctorsMessages(prev => [...prev, botMessage]);
+        } else {
+          setMessages(prev => [...prev, botMessage]);
+        }
         
         // Open the chat interface and navigate to doctors
         if (interfaceType === "DOCTORS") {
@@ -366,8 +375,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           showDoctors: false // Never show inline doctors
         };
         
-        // Add to main message list
-        setMessages(prev => [...prev, botMessage]);
+        // Add to appropriate message list based on current view
+        if (showDoctorList) {
+          setDoctorsMessages(prev => [...prev, botMessage]);
+        } else {
+          setMessages(prev => [...prev, botMessage]);
+        }
       }
       
       // Make the HeyGen avatar speak the response with language detection
@@ -418,7 +431,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setDoctorsMessages(prev => [...prev, userMessage]);
     setDoctorsInputText("");
     
     // Track user messages and show auth after 2 messages
@@ -515,8 +528,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   if (!isOpen) return null;
 
   return (
-    <>
-      <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
+    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
@@ -799,7 +811,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     <button
                       onClick={() => {
                         setShowDoctorList(false);
-                        // Keep messages - continuous conversation
+                        setDoctorsMessages([]); // Clear doctor messages when closing
                       }}
                       className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
                     >
@@ -812,7 +824,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     {/* Main Content Area - Shows doctors with messages overlay */}
                     <div className="h-full pt-32 px-6 pb-24 overflow-y-auto relative">
                       {/* Always show doctors in background */}
-                      <div className={`transition-opacity duration-300 ${messages.length > 0 ? 'opacity-20' : 'opacity-100'}`}>
+                      <div className={`transition-opacity duration-300 ${doctorsMessages.length > 0 ? 'opacity-20' : 'opacity-100'}`}>
                         <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Our Doctors</h2>
                         <div className="grid grid-cols-3 gap-2 max-w-4xl mx-auto">
                         {/* Doctor 1 */}
@@ -884,12 +896,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           </div>
                         </div>
                       </div>
+                      </div>
                       
-                      {/* Messages overlay - Use main messages */}
-                      {messages.length > 0 && (
+                      {/* Messages overlay */}
+                      {doctorsMessages.length > 0 && (
                         <div className="absolute inset-0 pt-32 px-6 pb-24 overflow-y-auto bg-white bg-opacity-95">
                           <div className="max-w-2xl mx-auto space-y-4">
-                            {messages.map((msg, index) => (
+                            {doctorsMessages.map((msg, index) => (
                               <div
                                 key={index}
                                 className={`p-4 rounded-lg ${
@@ -1129,6 +1142,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
