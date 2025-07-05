@@ -580,15 +580,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
             showDoctorList
               ? 'w-24 h-24 rounded-full overflow-hidden shadow-lg z-[45] hover:scale-110 ring-4 ring-purple-600'
-              : isMinimized 
-                ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-[45] hover:scale-110' 
-                : 'inset-0 overflow-hidden'
+              : 'inset-0 overflow-hidden'
           }`}
           style={{
-            ...(showDoctorList || isMinimized ? {
+            ...(showDoctorList ? {
               cursor: isDragging ? 'grabbing' : 'grab',
               left: avatarPosition.x !== null ? `${avatarPosition.x}px` : 'auto',
-              top: avatarPosition.y !== null ? `${avatarPosition.y}px` : (showDoctorList ? '200px' : '75px'),
+              top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '200px',
               right: avatarPosition.x !== null ? 'auto' : '25px',
               userSelect: isDragging ? 'none' : 'auto'
             } : {})
@@ -602,10 +600,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               return;
             }
             
-            if (isMinimized) {
-              setIsMinimized(false);
-              setShowInfoOverlay(false);
-            } else if (showDoctorList) {
+            if (showDoctorList) {
               setShowDoctorList(false);
               setShowChatInterface(true);
             }
