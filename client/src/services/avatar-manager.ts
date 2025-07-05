@@ -90,7 +90,8 @@ export class AvatarManager {
     const sessionInfo = await avatar.createStartAvatar({
       quality: AvatarQuality.High,
       avatarName: "Ann_Doctor_Standing2_public",
-      disableIdleTimeout: true
+      disableIdleTimeout: true,
+      knowledgeBase: undefined // Explicitly set to avoid potential issues
     });
 
     console.log("Avatar session created:", sessionInfo.session_id);
@@ -110,8 +111,31 @@ export class AvatarManager {
             taskType: TaskType.REPEAT,
             taskMode: TaskMode.SYNC
           });
-        } catch (e) {
+        } catch (e: any) {
           console.error("Failed to speak:", e);
+          
+          // If session is closed, try to recreate the avatar
+          if (e.message?.includes('session state wrong') || e.message?.includes('closed')) {
+            console.log("Session closed, attempting to recreate avatar...");
+            manager.avatar = null;
+            manager.promise = null;
+            manager.lock = false;
+            
+            // Try to recreate avatar
+            try {
+              await AvatarManager.getOrCreateAvatar(apiKey);
+              // Retry speaking after recreating
+              if (manager.avatar) {
+                await manager.avatar.speak({
+                  text,
+                  taskType: TaskType.REPEAT,
+                  taskMode: TaskMode.SYNC
+                });
+              }
+            } catch (recreateError) {
+              console.error("Failed to recreate avatar:", recreateError);
+            }
+          }
         }
       }
     };

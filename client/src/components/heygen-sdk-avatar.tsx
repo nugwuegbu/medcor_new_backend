@@ -23,13 +23,40 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
 
   // Expose speak method through ref
   useImperativeHandle(ref, () => ({
-    speak: ({ text, taskType = TaskType.TALK, taskMode = TaskMode.SYNC }) => {
-      const avatar = AvatarManager.getAvatar();
-      if (avatar) {
-        avatar.speak({ text, taskType, taskMode });
+    speak: async ({ text, taskType = TaskType.TALK, taskMode = TaskMode.SYNC }) => {
+      try {
+        const avatar = AvatarManager.getAvatar();
+        if (avatar) {
+          await avatar.speak({ text, taskType, taskMode });
+        }
+      } catch (e: any) {
+        console.error("Failed to speak:", e);
+        
+        // If session is closed, try to recreate the avatar
+        if (e.message?.includes('session state wrong') || e.message?.includes('closed')) {
+          console.log("Session closed, attempting to recreate avatar...");
+          try {
+            // Reset manager state
+            const manager = (window as any).__avatarManager;
+            manager.avatar = null;
+            manager.promise = null;
+            manager.lock = false;
+            
+            // Recreate avatar
+            await AvatarManager.getOrCreateAvatar(apiKey);
+            
+            // Retry speaking
+            const newAvatar = AvatarManager.getAvatar();
+            if (newAvatar) {
+              await newAvatar.speak({ text, taskType, taskMode });
+            }
+          } catch (recreateError) {
+            console.error("Failed to recreate avatar:", recreateError);
+          }
+        }
       }
     }
-  }), []);
+  }), [apiKey]);
 
   useEffect(() => {
     if (!isVisible || !apiKey) return;

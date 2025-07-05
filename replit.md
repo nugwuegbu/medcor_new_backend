@@ -214,6 +214,7 @@ Changelog:
 - July 05, 2025. Fixed avatar repetition issue - removed duplicate HeyGen avatar instance on doctors page and disabled hover speech to prevent continuous speaking
 - July 05, 2025. Added Turkish language support with proper system prompts and automatic detection from message content
 - July 05, 2025. Fixed weather greeting to properly display on first user message only
+- July 05, 2025. Fixed HeyGen avatar session closing issue - added automatic session recovery and error handling to recreate avatar when session expires
 
 ## User Preferences
 
