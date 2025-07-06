@@ -556,9 +556,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const videoState = videoPlayerManager.handleUserInteraction(sessionId, message);
       console.log(`🎬 Video Player State: ${videoState.mode}, Video: ${videoState.videoUrl}, Audio: ${videoState.audioProvider}`);
 
-      // 🧪 DISABLED: Test protocol for normal ADANA02 flow
-      const triggers: string[] = []; // testProtocol.detectTestTrigger(message);
-      if (false && triggers.length > 0) {
+      // 🧪 ADANA TRIGGERS: Check for adana01, adana02, adana03
+      const adanaTriggers = ['adana01', 'adana02', 'adana03'];
+      const triggerFound = adanaTriggers.find(trigger => message.toLowerCase().includes(trigger));
+      
+      if (triggerFound) {
+        console.log(`🎬 ADANA TRIGGER DETECTED: ${triggerFound} in message "${message}"`);
+        
+        let videoMode = 'idle';
+        let videoUrl = '/waiting_heygen.mp4';
+        let audioProvider = 'elevenlabs';
+        let shouldActivateHeyGen = false;
+        
+        if (triggerFound === 'adana01') {
+          videoMode = 'idle';
+          videoUrl = '/waiting_heygen.mp4';
+          audioProvider = null;
+        } else if (triggerFound === 'adana02') {
+          videoMode = 'speaking';
+          videoUrl = '/speak_heygen.mp4';
+          audioProvider = 'elevenlabs';
+        } else if (triggerFound === 'adana03') {
+          videoMode = 'heygen_active';
+          videoUrl = 'none';
+          shouldActivateHeyGen = true;
+          audioProvider = 'heygen';
+        }
+        
+        // Generate appropriate response message
+        let responseMessage = `ADANA${triggerFound.slice(-2)} test activated. `;
+        if (triggerFound === 'adana01') {
+          responseMessage += 'Idle mode - waiting video loop active.';
+        } else if (triggerFound === 'adana02') {
+          responseMessage += 'Speaking mode - synchronized video and ElevenLabs audio.';
+        } else if (triggerFound === 'adana03') {
+          responseMessage += 'Full avatar mode - HeyGen activation.';
+        }
+        
+        // Generate TTS for ADANA02
+        let audioUrl: string | undefined;
+        if (triggerFound === 'adana02') {
+          try {
+            const ttsResponse = await textToSpeechService.generateSpeech(responseMessage, 'tr');
+            audioUrl = `data:audio/mp3;base64,${ttsResponse.audioContent}`;
+            console.log(`🎵 Generated TTS audio for ADANA02: ${audioUrl.length} characters`);
+          } catch (error) {
+            console.error('TTS generation error for ADANA02:', error);
+          }
+        }
+        
+        return res.json({
+          message: responseMessage,
+          videoMode,
+          videoUrl,
+          audioProvider,
+          shouldActivateHeyGen,
+          audioUrl,
+          testMode: false, // This is real ADANA mode, not test mode
+          language
+        });
+      }
+      
+      const triggers = testProtocol.detectTestTrigger(message);
+      if (triggers.length > 0) {
         console.log(`🧪 TEST TRIGGERS DETECTED: ${triggers.join(', ')} in message "${message}"`);
         
         // Use the first trigger for testing
