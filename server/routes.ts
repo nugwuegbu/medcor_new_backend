@@ -682,6 +682,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // NUCLEAR OPTION: Destroy all video sessions
+  app.post("/api/video/player/nuclear-reset", async (req, res) => {
+    try {
+      videoPlayerManager.destroyAllSessions();
+      res.json({
+        success: true,
+        message: "All video sessions destroyed"
+      });
+    } catch (error) {
+      console.error("Nuclear reset error:", error);
+      res.status(500).json({ message: "Failed to reset video sessions" });
+    }
+  });
+
   // Get current player state
   app.get("/api/video/player/state/:sessionId", async (req, res) => {
     try {

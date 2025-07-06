@@ -211,14 +211,42 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
       await handleUserInput();
     };
     
-    // Also expose immediate stop function
-    const immediateStop = () => {
-      console.log('🛑 IMMEDIATE STOP CALLED');
+    // NUCLEAR OPTION: Stop ALL videos on the entire page AND destroy all sessions
+    const immediateStop = async () => {
+      console.log('🛑 NUCLEAR VIDEO STOP - STOPPING ALL VIDEOS + DESTROYING ALL SESSIONS');
+      
+      // 1. Stop all DOM video elements first
+      const allVideos = document.querySelectorAll('video');
+      allVideos.forEach((video, index) => {
+        console.log(`🛑 Stopping video ${index + 1}/${allVideos.length}`);
+        video.pause();
+        video.currentTime = 0;
+        video.style.display = 'none';
+        video.style.visibility = 'hidden';
+        video.removeAttribute('src');
+        video.load();
+      });
+      
+      // 2. Also target our specific ref if it exists
       if (videoRef.current) {
+        console.log('🛑 Also stopping videoRef.current');
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
         videoRef.current.style.display = 'none';
       }
+      
+      // 3. Call backend to destroy all sessions
+      try {
+        const response = await fetch('/api/video/player/nuclear-reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        console.log('🗑️ Backend sessions destroyed:', data.message);
+      } catch (error) {
+        console.error('❌ Failed to destroy backend sessions:', error);
+      }
+      
       setPlayerState(prev => prev ? { ...prev, mode: 'heygen' } : null);
       onModeChange('heygen');
     };

@@ -108,6 +108,13 @@ export class VideoPlayerManager {
     return this.playerStates.get(sessionId) || null;
   }
 
+  // NUCLEAR OPTION: Destroy all sessions and force clean state
+  destroyAllSessions(): void {
+    console.log(`🗑️ NUCLEAR RESET: Destroying all ${this.playerStates.size} video sessions`);
+    this.playerStates.clear();
+    console.log('✅ All video player sessions destroyed');
+  }
+
   // Upload a new video
   async uploadVideo(videoData: InsertVideo): Promise<Video> {
     const video = await storage.createVideo(videoData);
