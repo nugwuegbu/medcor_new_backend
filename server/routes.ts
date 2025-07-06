@@ -556,9 +556,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const videoState = videoPlayerManager.handleUserInteraction(sessionId, message);
       console.log(`🎬 Video Player State: ${videoState.mode}, Video: ${videoState.videoUrl}, Audio: ${videoState.audioProvider}`);
 
-      // 🧪 TEST PROTOCOL: Check for test triggers
-      const triggers = testProtocol.detectTestTrigger(message);
-      if (triggers.length > 0) {
+      // 🧪 DISABLED: Test protocol for normal ADANA02 flow
+      const triggers: string[] = []; // testProtocol.detectTestTrigger(message);
+      if (false && triggers.length > 0) {
         console.log(`🧪 TEST TRIGGERS DETECTED: ${triggers.join(', ')} in message "${message}"`);
         
         // Use the first trigger for testing
