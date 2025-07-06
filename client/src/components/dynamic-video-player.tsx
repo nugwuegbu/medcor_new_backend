@@ -159,12 +159,16 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
   };
 
   // Handle user interaction (message send, typing, etc.)
-  const handleUserInput = async () => {
+  const handleUserInput = useCallback(async () => {
+    console.log('🎬 handleUserInput called - Current mode:', playerState?.mode);
     await updateInteraction();
     if (playerState?.mode === 'loop') {
+      console.log('🎬 Switching from loop to HeyGen mode');
       await switchToHeyGen();
+    } else {
+      console.log('🎬 Already in HeyGen mode, no switch needed');
     }
-  };
+  }, [playerState, updateInteraction, switchToHeyGen]);
 
   // Expose interaction handler to parent component
   useEffect(() => {
@@ -174,10 +178,13 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
     };
     
     (window as any).triggerVideoPlayerInteraction = handleInteraction;
+    console.log('✅ triggerVideoPlayerInteraction exposed on window');
+    
     return () => {
       delete (window as any).triggerVideoPlayerInteraction;
+      console.log('🗑️ triggerVideoPlayerInteraction removed from window');
     };
-  }, [playerState]);
+  }, [playerState, handleUserInput]);
 
   if (!isInitialized || !playerState) {
     return (

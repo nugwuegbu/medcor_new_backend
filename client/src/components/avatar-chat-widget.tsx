@@ -405,13 +405,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // Trigger video player interaction (switch to HeyGen mode)
-    console.log('💬 Sending message, triggering video player interaction...');
+    // CRITICAL: Force switch to HeyGen mode when user sends message
+    console.log('💬 User sending message, MUST switch to HeyGen NOW');
     if ((window as any).triggerVideoPlayerInteraction) {
       console.log('🎬 Calling triggerVideoPlayerInteraction');
-      (window as any).triggerVideoPlayerInteraction();
+      await (window as any).triggerVideoPlayerInteraction();
+      console.log('✅ HeyGen switch triggered successfully');
     } else {
-      console.log('⚠️ triggerVideoPlayerInteraction not found on window');
+      console.error('❌ CRITICAL ERROR: triggerVideoPlayerInteraction not found on window');
+      // Fallback: Force mode change directly
+      setVideoPlayerMode('heygen');
+      console.log('⚠️ Fallback: Forced mode to heygen directly');
     }
 
     // Activate HeyGen avatar on first user interaction
@@ -439,6 +443,19 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   const handleDoctorsSendMessage = async (text: string) => {
     if (!text.trim()) return;
+
+    // CRITICAL: Force switch to HeyGen mode when user sends message from doctors view
+    console.log('💬 User sending message from doctors view, MUST switch to HeyGen NOW');
+    if ((window as any).triggerVideoPlayerInteraction) {
+      console.log('🎬 Calling triggerVideoPlayerInteraction');
+      await (window as any).triggerVideoPlayerInteraction();
+      console.log('✅ HeyGen switch triggered successfully');
+    } else {
+      console.error('❌ CRITICAL ERROR: triggerVideoPlayerInteraction not found on window');
+      // Fallback: Force mode change directly
+      setVideoPlayerMode('heygen');
+      console.log('⚠️ Fallback: Forced mode to heygen directly');
+    }
 
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
@@ -913,20 +930,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           }}>
           {isOpen && !showDoctorList && !showRecordsList && (
             <>
-              {/* Show either DynamicVideoPlayer OR HeyGen based on mode */}
-              {videoPlayerMode === 'loop' ? (
-                /* adana01 Dynamic Video Player - shows when idle */
-                <DynamicVideoPlayer
-                  sessionId={sessionId}
-                  onUserInteraction={() => {
-                    // Handle user interaction when switching from loop to HeyGen
+              {/* Always render DynamicVideoPlayer for proper state management */}
+              <DynamicVideoPlayer
+                sessionId={sessionId}
+                onUserInteraction={() => {
+                  // Handle user interaction when switching from loop to HeyGen
+                  if (videoPlayerMode === 'loop') {
                     setVideoPlayerMode('heygen');
-                  }}
-                  onModeChange={(mode) => setVideoPlayerMode(mode)}
-                  heyGenProps={null}
-                />
-              ) : (
-                /* HeyGen Avatar - shows when user interacts */
+                  }
+                }}
+                onModeChange={(mode) => setVideoPlayerMode(mode)}
+                heyGenProps={null}
+              />
+              
+              {/* Show HeyGen Avatar when in heygen mode */}
+              {videoPlayerMode === 'heygen' && (
                 <HeyGenSDKAvatar 
                   ref={avatarRef}
                   key="single-avatar-instance"
