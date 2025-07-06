@@ -122,10 +122,11 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
           clearInterval(checkStreamInterval.current);
         }
         
+        // TEMPORARILY DISABLED AGGRESSIVE HEALTH CHECK
+        // Only recreate avatar when speak() fails, not via polling
+        
+        // Optional: Very infrequent check (30 seconds) only for debugging
         checkStreamInterval.current = setInterval(async () => {
-          // Skip if already reconnecting
-          if (connectionStatus === "reconnecting") return;
-          
           const stream = AvatarManager.getMediaStream();
           const status = {
             hasStream: !!stream,
@@ -134,31 +135,8 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
             audioTracks: stream?.getAudioTracks().length || 0
           };
           console.log("Avatar debug - Stream status:", status);
-          
-          // If stream is dead, recreate
-          if (!stream || !stream.active || status.videoTracks === 0) {
-            console.log("Stream is inactive, recreating avatar...");
-            setConnectionStatus("reconnecting");
-            
-            // Clear the interval to prevent multiple recreations
-            if (checkStreamInterval.current) {
-              clearInterval(checkStreamInterval.current);
-              checkStreamInterval.current = null;
-            }
-            
-            // Clear the manager's avatar to force recreation
-            const manager = (window as any).__avatarManager;
-            if (manager && !manager.lock) {
-              manager.avatar = null;
-              manager.promise = null;
-            }
-            
-            // Reinitialize after a short delay
-            setTimeout(() => {
-              initAvatar();
-            }, 1000);
-          }
-        }, 5000);
+          // NO AUTO-RECREATION - let speak() handle errors
+        }, 30000); // Very infrequent checks only for logging
 
       } catch (error) {
         console.error("Failed to initialize avatar:", error);
