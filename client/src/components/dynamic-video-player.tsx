@@ -77,6 +77,7 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
 
   const switchToHeyGen = async () => {
     try {
+      console.log('🎬 Switching to HeyGen mode...');
       const response = await fetch('/api/video/player/switch-heygen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,9 +86,15 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
 
       const data = await response.json();
       if (data.success) {
+        console.log('🎬 Successfully switched to HeyGen mode:', data.playerState);
         setPlayerState(data.playerState);
         onModeChange(data.playerState.mode);
         onUserInteraction();
+        
+        // Make sure HeyGen avatar is visible
+        if (data.playerState.mode === 'heygen') {
+          console.log('🎬 HeyGen mode activated - avatar should be visible');
+        }
       }
     } catch (error) {
       console.error('Failed to switch to HeyGen:', error);
@@ -240,8 +247,25 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
       ) : playerState.mode === 'heygen' ? (
         <div className="absolute inset-0">
           {/* HeyGen avatar will be rendered here by parent component */}
-          {heyGenProps && (
-            <HeyGenSDKAvatar {...heyGenProps} />
+          {console.log('🎬 Rendering HeyGen mode - heyGenProps:', !!heyGenProps)}
+          {heyGenProps ? (
+            <>
+              {console.log('🎬 HeyGen props available, rendering avatar')}
+              <HeyGenSDKAvatar 
+                ref={heyGenProps.ref}
+                apiKey={heyGenProps.apiKey}
+                isVisible={heyGenProps.isVisible}
+                onMessage={heyGenProps.onMessage}
+                onReady={heyGenProps.onReady}
+              />
+            </>
+          ) : (
+            <>
+              {console.log('🎬 No HeyGen props available')}
+              <div className="absolute inset-0 bg-purple-500 flex items-center justify-center text-white">
+                HeyGen Mode - Loading Avatar...
+              </div>
+            </>
           )}
         </div>
       ) : (
