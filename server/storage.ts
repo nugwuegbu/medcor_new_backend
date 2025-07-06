@@ -389,9 +389,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getVideo(id: string): Promise<Video | undefined> {
-    console.log(`📹 DatabaseStorage: Looking for video ${id}`);
     const [video] = await db.select().from(videos).where(eq(videos.id, id));
-    console.log(`📹 DatabaseStorage: Found video:`, video);
     return video;
   }
 

@@ -26,9 +26,7 @@ export class VideoPlayerManager {
 
   // Initialize player for session  
   async initializePlayer(sessionId: string, videoId: string = 'adana01'): Promise<VideoPlayerState> {
-    console.log(`📹 Looking for video: ${videoId}`);
     const video = await storage.getVideo(videoId);
-    console.log(`📹 Found video:`, video);
     if (!video) {
       throw new Error(`Video ${videoId} not found`);
     }

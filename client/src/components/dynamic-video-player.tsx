@@ -202,6 +202,7 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
           loop={false} // We handle looping manually to track loop count
           onEnded={handleVideoEnded}
           className="absolute inset-0 w-full h-full object-cover"
+
         />
       ) : playerState.mode === 'heygen' ? (
         <div className="absolute inset-0">
@@ -216,15 +217,7 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
         </div>
       )}
       
-      {/* Debug info (remove in production) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="absolute top-4 left-4 bg-black/50 text-white text-xs p-2 rounded">
-          <div>Mode: {playerState.mode}</div>
-          <div>Playing: {playerState.isPlaying ? 'Yes' : 'No'}</div>
-          <div>Video: {playerState.currentVideo}</div>
-          <div>Loops: {playerState.loopCount}</div>
-        </div>
-      )}
+
     </div>
   );
 }
