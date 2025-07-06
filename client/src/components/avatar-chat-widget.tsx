@@ -320,22 +320,28 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       return await response.json();
     },
     onSuccess: async (data) => {
-      // 🎬 VIDEO PLAYER: Update video states from response
+      // 🎬 ADANA DYNAMIC VIDEO: Update video states from backend response
       if (data.videoMode) {
-        setVideoMode(data.videoMode);
-        console.log(`🎬 Video Mode Updated: ${data.videoMode}`);
+        setDynamicPlayerMode(data.videoMode);
+        console.log(`🎬 ADANA Video Mode Updated: ${data.videoMode}`);
       }
       if (data.videoUrl) {
-        setVideoUrl(data.videoUrl);
-        console.log(`📹 Video URL Updated: ${data.videoUrl}`);
+        setDynamicVideoUrl(data.videoUrl);
+        console.log(`📹 ADANA Video URL Updated: ${data.videoUrl}`);
       }
       if (data.audioProvider !== undefined) {
-        setAudioProvider(data.audioProvider);
-        console.log(`🎵 Audio Provider Updated: ${data.audioProvider}`);
+        setDynamicAudioProvider(data.audioProvider);
+        console.log(`🎵 ADANA Audio Provider Updated: ${data.audioProvider}`);
       }
       if (data.shouldActivateHeyGen !== undefined) {
         setShouldActivateHeyGen(data.shouldActivateHeyGen);
         console.log(`🤖 HeyGen Activation: ${data.shouldActivateHeyGen}`);
+      }
+      
+      // ADANA02 SPEAKING: If backend says we're speaking, activate speaking mode
+      if (data.videoMode === 'speaking' && data.videoUrl === '/speak_heygen.mp4') {
+        setIsAvatarSpeaking(true);
+        console.log(`🎬 ADANA02 SPEAKING MODE ACTIVATED`);
       }
 
       // 🧪 TEST MODE: Check if this is a test protocol response
@@ -542,9 +548,32 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         setMessages(prev => [...prev, botMessage]);
       }
       
-      // Make the HeyGen avatar speak the response with language detection
-      if ((window as any).heygenSpeak) {
-        // Detect language from response text
+      // 🔊 ADANA02 AUDIO: Play audio from backend response
+      if (data.audioUrl && !data.testMode) {
+        console.log(`🔊 ADANA02 AUDIO: Playing ${data.audioProvider || 'unknown'} voice...`);
+        try {
+          const audio = new Audio(data.audioUrl);
+          audio.volume = 0.8;
+          audio.play().then(() => {
+            console.log(`✅ ADANA02 AUDIO: Voice played successfully`);
+          }).catch(err => {
+            console.error(`❌ ADANA02 AUDIO: Failed to play voice:`, err);
+          });
+          
+          // When audio ends, switch back to ADANA01 waiting video
+          audio.addEventListener('ended', () => {
+            console.log(`🔇 ADANA02 AUDIO: Audio ended, switching to ADANA01`);
+            setDynamicPlayerMode('waiting');
+            setDynamicVideoUrl('/waiting_heygen.mp4');
+            setIsAvatarSpeaking(false);
+          });
+        } catch (error) {
+          console.error('❌ ADANA02 AUDIO: Audio creation failed:', error);
+        }
+      }
+      
+      // Fallback: Make HeyGen avatar speak if no audio URL provided
+      if (!data.audioUrl && (window as any).heygenSpeak) {
         const detectedLang = detectLanguageFromText(data.message);
         (window as any).heygenSpeak(data.message, detectedLang);
       }
@@ -1082,33 +1111,25 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 }}
               />
               
-              {/* Video Player Manager Overlay - Smart Video Switching */}
-              {(videoMode === 'idle' || videoMode === 'speaking') && videoUrl !== 'none' && !shouldActivateHeyGen && !isTestModeActive && (
+              {/* ADANA Dynamic Video Player - Uses dynamicVideoUrl */}
+              {!shouldActivateHeyGen && !isTestModeActive && (
                 <video
                   ref={videoOverlayRef}
                   className="absolute inset-0 w-full h-full object-cover z-10"
-                  src={videoUrl}
+                  src={dynamicVideoUrl}
                   autoPlay
-                  loop={videoMode === 'idle'}
+                  loop={dynamicPlayerMode === 'waiting'}
                   muted
                   playsInline
-                  onLoadStart={() => console.log(`🎬 Video Player loading: ${videoUrl}`)}
-                  onCanPlay={() => console.log(`✅ Video Player ready: ${videoMode}`)}
-                  onError={(e) => console.error(`❌ Video Player error:`, e)}
+                  onLoadStart={() => console.log(`🎬 ADANA Video loading: ${dynamicVideoUrl}`)}
+                  onCanPlay={() => console.log(`✅ ADANA Video ready: ${dynamicPlayerMode}`)}
+                  onError={(e) => console.error(`❌ ADANA Video error:`, e)}
                   onEnded={() => {
-                    if (videoMode === 'speaking') {
-                      console.log(`🔇 Speaking video ended, notifying backend`);
-                      fetch('/api/video-player/speech-complete', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ sessionId })
-                      }).then(response => response.json()).then(data => {
-                        if (data.success) {
-                          setVideoMode(data.mode);
-                          setVideoUrl(data.videoUrl);
-                          setAudioProvider(data.audioProvider);
-                        }
-                      }).catch(console.error);
+                    if (dynamicPlayerMode === 'speaking') {
+                      console.log(`🔇 ADANA02 speaking video ended, switching to ADANA01`);
+                      setDynamicPlayerMode('waiting');
+                      setDynamicVideoUrl('/waiting_heygen.mp4');
+                      setIsAvatarSpeaking(false);
                     }
                   }}
                 />
