@@ -678,8 +678,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     },
     onError: (error) => {
       console.error('Voice chat mutation error:', error);
+      console.log('🚨 MUTATION ERROR: Input should remain enabled');
       // Mutation failed, but keep input functional
       // Don't clear inputText, let user retry
+      
+      // Force focus back to input after error
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          console.log('🔍 Input focus restored after error');
+        }
+      }, 100);
     }
   });
 
@@ -2375,7 +2384,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               // ADANA State Machine - User interaction resets inactivity timer
               if (e.target.value.length > 0 && !isUserTyping) {
                 setIsUserTyping(true);
-                startInactivityTimer(); // Reset inactivity timer on user interaction
                 console.log('⌨️ ADANA: User typing detected, resetting inactivity timer');
               }
               
@@ -2390,6 +2398,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             placeholder="Send your message..."
             className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
             disabled={false}
+            readOnly={false}
           />
           
           <Button
