@@ -5,6 +5,7 @@ interface DynamicVideoPlayerProps {
   sessionId: string;
   onUserInteraction: () => void;
   onModeChange: (mode: 'loop' | 'heygen' | 'idle') => void;
+  heyGenProps?: any; // HeyGen avatar props when in heygen mode
 }
 
 interface PlayerState {
@@ -17,7 +18,7 @@ interface PlayerState {
   sessionActive: boolean;
 }
 
-export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onModeChange }: DynamicVideoPlayerProps) {
+export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onModeChange, heyGenProps }: DynamicVideoPlayerProps) {
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -158,9 +159,13 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
   // Handle video events
   const handleVideoEnded = () => {
     if (playerState?.mode === 'loop' && videoRef.current) {
-      // Loop the video
-      videoRef.current.currentTime = 0;
-      videoRef.current.play();
+      // Loop the video - ensure it plays full duration
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.currentTime = 0;
+          videoRef.current.play().catch(e => console.error('Video restart failed:', e));
+        }
+      }, 100);
     }
   };
 
@@ -200,9 +205,32 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
           autoPlay
           muted
           loop={false} // We handle looping manually to track loop count
+          preload="auto" // Preload the entire video
+          playsInline
           onEnded={handleVideoEnded}
+          onLoadedMetadata={() => {
+            // Ensure video starts from beginning and plays full duration
+            if (videoRef.current) {
+              videoRef.current.currentTime = 0;
+              console.log('Video loaded - Duration:', videoRef.current.duration);
+            }
+          }}
+          onCanPlay={() => {
+            // Auto-play when video is ready
+            if (videoRef.current) {
+              videoRef.current.play().catch(e => console.error('Video play failed:', e));
+            }
+          }}
+          onTimeUpdate={() => {
+            // Log video progress for debugging
+            if (videoRef.current) {
+              const progress = (videoRef.current.currentTime / videoRef.current.duration * 100).toFixed(1);
+              if (videoRef.current.currentTime > 0 && videoRef.current.currentTime % 2 < 0.1) {
+                console.log(`Video progress: ${progress}% (${videoRef.current.currentTime.toFixed(1)}s / ${videoRef.current.duration.toFixed(1)}s)`);
+              }
+            }
+          }}
           className="absolute inset-0 w-full h-full object-cover"
-
         />
       ) : playerState.mode === 'heygen' ? (
         <div className="absolute inset-0">

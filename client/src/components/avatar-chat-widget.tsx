@@ -905,6 +905,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               {/* adana01 Dynamic Video Player - replaces HeyGen when idle */}
               <DynamicVideoPlayer
                 sessionId={sessionId}
+                onUserInteraction={() => {
+                  // Handle user interaction when switching from loop to HeyGen
+                  if (videoPlayerMode === 'loop') {
+                    setVideoPlayerMode('heygen');
+                  }
+                }}
                 onModeChange={(mode) => setVideoPlayerMode(mode)}
                 heyGenProps={{
                   ref: avatarRef,
