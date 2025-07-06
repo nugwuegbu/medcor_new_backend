@@ -101,6 +101,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     selectedDate: null as Date | null
   });
   
+  // Test mode video placeholder states
+  const [testVideoMode, setTestVideoMode] = useState<string | null>(null);
+  const [testVideoUrl, setTestVideoUrl] = useState<string | null>(null);
+  const [isTestModeActive, setIsTestModeActive] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -284,11 +289,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         console.log(`🎬 Video Mode: ${data.videoMode}, Video URL: ${data.videoUrl}`);
         console.log(`🎵 Audio Provider: ${data.testInfo.audioProvider}`);
         
-        // Handle test video display - DO NOT MODIFY UI, ONLY LOG
+        // Handle test video display - Activate placeholder video
         if (data.videoUrl && data.videoUrl.startsWith('/')) {
-          console.log(`📹 TEST VIDEO: ${data.videoUrl} - Background functionality test`);
+          console.log(`📹 TEST VIDEO: ${data.videoUrl} - Activating placeholder video`);
+          setTestVideoUrl(data.videoUrl);
+          setTestVideoMode(data.videoMode);
+          setIsTestModeActive(true);
         } else if (data.videoUrl === 'heygen_live') {
-          console.log(`🤖 TEST VIDEO: HeyGen live avatar - Background functionality test`);
+          console.log(`🤖 TEST VIDEO: HeyGen live avatar - Deactivating placeholder video`);
+          setTestVideoUrl(null);
+          setTestVideoMode(null);
+          setIsTestModeActive(false);
         }
         
         // Handle test audio - Play without affecting UI
@@ -962,6 +973,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   // Don't send automatic greeting - wait for user interaction
                 }}
               />
+              
+              {/* Test Mode Video Placeholder Overlay */}
+              {isTestModeActive && testVideoUrl && (
+                <video
+                  className="absolute inset-0 w-full h-full object-cover z-10"
+                  src={testVideoUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  onLoadStart={() => console.log(`🎬 Loading test video: ${testVideoUrl}`)}
+                  onCanPlay={() => console.log(`✅ Test video ready: ${testVideoMode}`)}
+                  onError={(e) => console.error(`❌ Test video error:`, e)}
+                />
+              )}
             </>
           )}
         </div>
