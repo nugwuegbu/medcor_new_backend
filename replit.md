@@ -186,10 +186,18 @@ The application uses a relational database with the following core entities:
 5. **Continuous Mode**: HeyGen stays active for subsequent messages
 
 ### Backend Services
-- **Avatar Orchestrator**: Manages video states and HeyGen session health
-- **Text-to-Speech Service**: Automatic provider selection (ElevenLabs/OpenAI)
+- **Avatar Orchestrator**: Manages video states, language detection, and HeyGen session health
+- **Text-to-Speech Service**: Intelligent provider selection based on detected language
+- **Voice Configuration**: Language-specific voice mapping (Turkish→ElevenLabs, English→OpenAI)
+- **Multi-Language Support**: Automatic language detection from user input
 - **Health Monitoring**: Periodic HeyGen session validation
 - **Session Management**: Background preparation and cleanup
+
+### Language Detection & Voice Mapping
+- **Turkish Detection**: Recognizes Turkish characters and medical terms
+- **Turkish Voice**: ElevenLabs voice ID `pWeLcyFEBT5svt9WMYAO` for medical assistant
+- **English Voice**: OpenAI TTS with 'nova' voice for professional communication
+- **Auto-Switch**: System adapts to user's language preference automatically
 
 ### API Endpoints
 - `/api/avatar/initialize` - Start new avatar session

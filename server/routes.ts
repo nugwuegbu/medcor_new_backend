@@ -1480,13 +1480,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/avatar/message", async (req, res) => {
     try {
-      const { sessionId, message } = req.body;
+      const { sessionId, message, aiResponse } = req.body;
       
-      if (!sessionId || !message) {
-        return res.status(400).json({ error: "Session ID and message are required" });
+      if (!sessionId || !message || !aiResponse) {
+        return res.status(400).json({ error: "Session ID, message, and AI response are required" });
       }
       
-      const response = await avatarOrchestrator.handleUserMessage(sessionId, message);
+      const response = await avatarOrchestrator.handleUserMessage(sessionId, message, aiResponse);
       res.json(response);
     } catch (error) {
       console.error("Avatar message handling error:", error);

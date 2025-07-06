@@ -46,13 +46,17 @@ export class AvatarOrchestrator {
     };
   }
 
-  async handleUserMessage(sessionId: string, message: string): Promise<AvatarResponse> {
+  async handleUserMessage(sessionId: string, message: string, aiResponse: string): Promise<AvatarResponse> {
     const state = this.sessions.get(sessionId);
     if (!state) {
       return this.initializeSession(sessionId);
     }
 
     state.lastActivity = new Date();
+    
+    // Detect language from user message
+    const detectedLanguage = this.detectLanguage(message);
+    console.log(`Detected language: ${detectedLanguage} for message: "${message}"`);
     
     // Kullanıcı mesaj gönderdiğinde speaking moduna geç
     state.mode = 'speaking';
@@ -71,21 +75,32 @@ export class AvatarOrchestrator {
         message: 'Switching to HeyGen avatar...'
       };
     } else {
-      // ElevenLabs fallback kullan
+      // Language-based TTS fallback
       state.mode = 'elevenlabs_fallback';
       this.sessions.set(sessionId, state);
       
       try {
-        const audioResponse = await textToSpeechService.generateSpeech(message);
+        let audioResponse;
+        let provider;
+        
+        if (detectedLanguage === 'tr') {
+          // Turkish: Use ElevenLabs with Turkish voice
+          audioResponse = await textToSpeechService.generateSpeech(aiResponse, 'tr', 'elevenlabs');
+          provider = 'ElevenLabs Turkish';
+        } else {
+          // English/Other: Use OpenAI TTS
+          audioResponse = await textToSpeechService.generateSpeech(aiResponse, 'en', 'openai');
+          provider = 'OpenAI English';
+        }
         
         return {
           mode: 'elevenlabs_fallback',
           videoUrl: '/speak_heygen.mp4',
           audioUrl: audioResponse.audioUrl,
-          message: 'Using ElevenLabs voice...'
+          message: `Using ${provider} voice...`
         };
       } catch (error) {
-        console.error('ElevenLabs fallback failed:', error);
+        console.error('TTS fallback failed:', error);
         return {
           mode: 'speaking',
           videoUrl: '/speak_heygen.mp4',
@@ -93,6 +108,14 @@ export class AvatarOrchestrator {
         };
       }
     }
+  }
+
+  private detectLanguage(text: string): 'tr' | 'en' {
+    // Turkish specific characters and patterns
+    const turkishChars = /[çğıöşüÇĞIİÖŞÜ]/;
+    const turkishWords = /\b(ve|ile|bir|bu|şu|o|ben|sen|biz|siz|onlar|nasıl|ne|nerede|neden|kim|hangi|kaç|merhaba|selam|teşekkür|günaydın|iyi|kötü|doktor|randevu|sağlık|hasta|tedavi)\b/i;
+    
+    return (turkishChars.test(text) || turkishWords.test(text)) ? 'tr' : 'en';
   }
 
   async getSessionState(sessionId: string): Promise<AvatarState | null> {

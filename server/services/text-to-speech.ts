@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { elevenLabsService } from './elevenlabs';
+import { getVoiceForLanguage } from '../config/voices';
 
 interface TTSRequest {
   text: string;
@@ -24,17 +25,23 @@ export class TextToSpeechService {
     this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   }
 
-  async generateSpeech(request: TTSRequest): Promise<TTSResponse> {
-    const { text, voice, provider = 'elevenlabs', language = 'en' } = request;
-
-    // Detect language from text to choose appropriate provider
-    const isTurkish = this.detectTurkish(text);
+  async generateSpeech(text: string, language = 'en', provider?: 'openai' | 'elevenlabs'): Promise<TTSResponse> {
+    const detectedLang = (language === 'tr' || this.detectTurkish(text)) ? 'tr' : 'en';
     
-    // Use ElevenLabs for Turkish or when explicitly requested
-    if (provider === 'elevenlabs' || isTurkish) {
-      return this.generateElevenLabsSpeech(text, voice);
+    // Auto-select provider based on language if not specified
+    if (!provider) {
+      provider = detectedLang === 'tr' ? 'elevenlabs' : 'openai';
+    }
+    
+    console.log(`TTS: ${detectedLang} language detected, using ${provider} provider`);
+    
+    // Get appropriate voice for language and provider
+    const voiceConfig = getVoiceForLanguage(detectedLang, provider);
+    
+    if (provider === 'elevenlabs') {
+      return this.generateElevenLabsSpeech(text, voiceConfig.voiceId);
     } else {
-      return this.generateOpenAISpeech(text, voice);
+      return this.generateOpenAISpeech(text, voiceConfig.voiceId);
     }
   }
 

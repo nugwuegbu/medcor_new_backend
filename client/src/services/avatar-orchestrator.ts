@@ -32,11 +32,11 @@ export class AvatarOrchestratorClient {
     return response.json();
   }
 
-  async handleUserMessage(sessionId: string, message: string): Promise<AvatarResponse> {
+  async handleUserMessage(sessionId: string, message: string, aiResponse: string): Promise<AvatarResponse> {
     const response = await fetch('/api/avatar/message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId, message })
+      body: JSON.stringify({ sessionId, message, aiResponse })
     });
 
     if (!response.ok) {
