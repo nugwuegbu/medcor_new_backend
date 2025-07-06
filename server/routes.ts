@@ -13,6 +13,7 @@ import { textToSpeechService } from "./services/text-to-speech";
 import { elevenLabsService } from "./services/elevenlabs";
 import { avatarOrchestrator } from "./services/avatar-orchestrator";
 import { aiVideoHeyGenHealthAgent } from "./agents/ai-video-heygen-health-agent";
+import { testProtocol } from "./services/test-protocol";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -544,6 +545,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`Voice chat request: ${message} (session: ${sessionId})`);
+
+      // 🧪 TEST PROTOCOL: Check for adana01 trigger
+      if (testProtocol.detectTestTrigger(message)) {
+        console.log(`🧪 TEST TRIGGER DETECTED: adana01 in message "${message}"`);
+        
+        const testInfo = await testProtocol.executeTestProtocol(sessionId);
+        const testResponse = await testProtocol.generateTestResponse(testInfo.currentStage);
+        
+        // Generate TTS for test message if needed
+        let audioUrl: string | undefined;
+        if (testResponse.testInfo.audioProvider !== 'silent') {
+          try {
+            let ttsResponse;
+            
+            if (testResponse.testInfo.audioProvider === 'elevenlabs') {
+              // Use ElevenLabs for English voice (medical assistant voice)
+              ttsResponse = await textToSpeechService.generateSpeech(
+                testResponse.message, 
+                'en', 
+                'elevenlabs'
+              );
+            } else if (testResponse.testInfo.audioProvider === 'heygen_voice') {
+              // For HeyGen stage, use ElevenLabs with special message
+              ttsResponse = await textToSpeechService.generateSpeech(
+                testResponse.message, 
+                'en', 
+                'elevenlabs'
+              );
+            } else {
+              // Fallback to OpenAI
+              ttsResponse = await textToSpeechService.generateSpeech(
+                testResponse.message, 
+                'en', 
+                'openai'
+              );
+            }
+            
+            audioUrl = 'data:audio/mpeg;base64,' + ttsResponse.audio.toString('base64');
+            console.log(`🎵 Generated TTS audio for stage: ${testResponse.testInfo.stage} using ${testResponse.testInfo.audioProvider}`);
+          } catch (error) {
+            console.error('TTS generation failed for test:', error);
+          }
+        }
+        
+        return res.json({
+          message: testResponse.message,
+          testMode: true,
+          testInfo: testResponse.testInfo,
+          videoMode: testResponse.mode,
+          videoUrl: testResponse.videoUrl,
+          audioUrl,
+          sessionId,
+          success: true,
+          instructions: "Test Protocol Active - Watch video transitions and listen for audio changes"
+        });
+      }
 
       // Check chat history to see if this is user's first response
       const previousMessages = await storage.getChatMessages(sessionId);
@@ -1598,6 +1655,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Health summary error:", error);
       res.status(500).json({ error: "Failed to get health summary" });
+    }
+  });
+
+  // Test Protocol endpoints
+  app.post("/api/test/protocol/start", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID is required" });
+      }
+      
+      const testInfo = await testProtocol.executeTestProtocol(sessionId);
+      const testResponse = await testProtocol.generateTestResponse(testInfo.currentStage);
+      
+      res.json({
+        ...testResponse,
+        testInfo,
+        instructions: testProtocol.getTestInstructions()
+      });
+    } catch (error) {
+      console.error("Test protocol start error:", error);
+      res.status(500).json({ error: "Failed to start test protocol" });
+    }
+  });
+
+  app.post("/api/test/protocol/next", async (req, res) => {
+    try {
+      const stageInfo = await testProtocol.nextStage();
+      
+      if (stageInfo.isComplete) {
+        return res.json({
+          message: "Test protocol completed",
+          isComplete: true,
+          testInfo: stageInfo
+        });
+      }
+      
+      const testResponse = await testProtocol.generateTestResponse(stageInfo.currentStage);
+      
+      res.json({
+        ...testResponse,
+        testInfo: stageInfo,
+        isComplete: false
+      });
+    } catch (error) {
+      console.error("Test protocol next error:", error);
+      res.status(500).json({ error: "Failed to advance test protocol" });
+    }
+  });
+
+  app.get("/api/test/protocol/status", async (req, res) => {
+    try {
+      const isActive = testProtocol.isInTestMode();
+      const instructions = testProtocol.getTestInstructions();
+      
+      res.json({
+        isActive,
+        instructions,
+        currentStage: isActive ? testProtocol.getCurrentStageInfo() : null
+      });
+    } catch (error) {
+      console.error("Test protocol status error:", error);
+      res.status(500).json({ error: "Failed to get test protocol status" });
+    }
+  });
+
+  app.post("/api/test/protocol/reset", async (req, res) => {
+    try {
+      testProtocol.resetProtocol();
+      res.json({ success: true, message: "Test protocol reset" });
+    } catch (error) {
+      console.error("Test protocol reset error:", error);
+      res.status(500).json({ error: "Failed to reset test protocol" });
     }
   });
 
