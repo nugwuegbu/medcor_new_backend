@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+// Using built-in fetch API (Node.js 18+)
 
 interface ElevenLabsVoiceResponse {
   audio: Buffer;
@@ -56,7 +56,8 @@ export class ElevenLabsService {
         throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
       }
 
-      const audioBuffer = await response.buffer();
+      const audioArrayBuffer = await response.arrayBuffer();
+      const audioBuffer = Buffer.from(audioArrayBuffer);
       
       return {
         audio: audioBuffer,
@@ -64,7 +65,7 @@ export class ElevenLabsService {
       };
     } catch (error) {
       console.error('ElevenLabs TTS error:', error);
-      throw new Error(`Failed to generate speech: ${error.message}`);
+      throw new Error(`Failed to generate speech: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -83,7 +84,7 @@ export class ElevenLabsService {
       return await response.json();
     } catch (error) {
       console.error('ElevenLabs get voices error:', error);
-      throw new Error(`Failed to fetch voices: ${error.message}`);
+      throw new Error(`Failed to fetch voices: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -102,7 +103,7 @@ export class ElevenLabsService {
       return await response.json();
     } catch (error) {
       console.error('ElevenLabs get voice info error:', error);
-      throw new Error(`Failed to fetch voice info: ${error.message}`);
+      throw new Error(`Failed to fetch voice info: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }
