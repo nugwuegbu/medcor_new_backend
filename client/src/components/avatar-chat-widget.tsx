@@ -2248,13 +2248,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             value={inputText}
             onChange={(e) => {
               setInputText(e.target.value);
-              // Dynamic typing detection - sadece functionality
+              // Basit typing detection - UX'e dokunmadan
               if (e.target.value.length > 0 && !isUserTyping) {
-                handleTypingStart();
+                setIsUserTyping(true);
+                console.log('⌨️ User typing started');
               }
               if (typingTimer) clearTimeout(typingTimer);
               const newTimer = setTimeout(() => {
-                handleTypingStop();
+                setIsUserTyping(false);
+                console.log('⏸️ User typing stopped');
               }, 1000);
               setTypingTimer(newTimer);
             }}
