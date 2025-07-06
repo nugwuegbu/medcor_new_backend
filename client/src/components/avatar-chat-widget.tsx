@@ -913,31 +913,35 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           }}>
           {isOpen && !showDoctorList && !showRecordsList && (
             <>
-              {/* adana01 Dynamic Video Player - replaces HeyGen when idle */}
-              <DynamicVideoPlayer
-                sessionId={sessionId}
-                onUserInteraction={() => {
-                  // Handle user interaction when switching from loop to HeyGen
-                  if (videoPlayerMode === 'loop') {
+              {/* Show either DynamicVideoPlayer OR HeyGen based on mode */}
+              {videoPlayerMode === 'loop' ? (
+                /* adana01 Dynamic Video Player - shows when idle */
+                <DynamicVideoPlayer
+                  sessionId={sessionId}
+                  onUserInteraction={() => {
+                    // Handle user interaction when switching from loop to HeyGen
                     setVideoPlayerMode('heygen');
-                  }
-                }}
-                onModeChange={(mode) => setVideoPlayerMode(mode)}
-                heyGenProps={{
-                  ref: avatarRef,
-                  key: "single-avatar-instance",
-                  apiKey: "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg==",
-                  isVisible: true,
-                  onMessage: (text) => {
+                  }}
+                  onModeChange={(mode) => setVideoPlayerMode(mode)}
+                  heyGenProps={null}
+                />
+              ) : (
+                /* HeyGen Avatar - shows when user interacts */
+                <HeyGenSDKAvatar 
+                  ref={avatarRef}
+                  key="single-avatar-instance"
+                  apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+                  isVisible={true}
+                  onMessage={(text: string) => {
                     console.log("Avatar message:", text);
-                  },
-                  onReady: () => {
+                  }}
+                  onReady={() => {
                     console.log("Avatar is ready");
                     setHasGreeted(true);
                     // Don't send automatic greeting - wait for user interaction
-                  }
-                }}
-              />
+                  }}
+                />
+              )}
             </>
           )}
         </div>

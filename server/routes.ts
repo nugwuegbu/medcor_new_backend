@@ -642,6 +642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/video/player/switch-heygen", async (req, res) => {
     try {
       const { sessionId } = req.body;
+      console.log('🎬 BACKEND: Switching to HeyGen mode for session:', sessionId);
 
       if (!sessionId) {
         return res.status(400).json({ message: "Session ID is required" });

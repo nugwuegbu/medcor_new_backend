@@ -232,27 +232,9 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
         />
       ) : playerState.mode === 'heygen' ? (
         <div key="heygen-container" className="absolute inset-0 z-0">
-          {/* HeyGen avatar will be rendered here by parent component */}
-          {console.log('🎬 Rendering HeyGen mode - heyGenProps:', !!heyGenProps)}
-          {heyGenProps ? (
-            <>
-              {console.log('🎬 HeyGen props available, rendering avatar')}
-              <HeyGenSDKAvatar 
-                ref={heyGenProps.ref}
-                apiKey={heyGenProps.apiKey}
-                isVisible={heyGenProps.isVisible}
-                onMessage={heyGenProps.onMessage}
-                onReady={heyGenProps.onReady}
-              />
-            </>
-          ) : (
-            <>
-              {console.log('🎬 No HeyGen props available')}
-              <div className="absolute inset-0 bg-purple-500 flex items-center justify-center text-white">
-                HeyGen Mode - Loading Avatar...
-              </div>
-            </>
-          )}
+          {console.log('🎬 HEYGEN MODE - NO VIDEO SHOULD BE PLAYING')}
+          {/* In HeyGen mode, DynamicVideoPlayer should NOT render anything */}
+          {/* HeyGen avatar is handled by parent component */}
         </div>
       ) : (
         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
