@@ -2246,7 +2246,18 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             ref={inputRef}
             type="text"
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            onChange={(e) => {
+              setInputText(e.target.value);
+              // Dynamic typing detection - sadece functionality
+              if (e.target.value.length > 0 && !isUserTyping) {
+                handleTypingStart();
+              }
+              if (typingTimer) clearTimeout(typingTimer);
+              const newTimer = setTimeout(() => {
+                handleTypingStop();
+              }, 1000);
+              setTypingTimer(newTimer);
+            }}
             onKeyPress={handleKeyPress}
             placeholder="Send your message..."
             className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
