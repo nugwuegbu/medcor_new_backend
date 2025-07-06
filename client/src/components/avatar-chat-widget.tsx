@@ -837,7 +837,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }
 
   return (
-    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-red-500 rounded-2xl shadow-2xl overflow-hidden flex flex-col border-4 border-yellow-500" style={{ right: '16px', left: 'auto', zIndex: 9999, opacity: 1, display: 'flex' }}>
+    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-glow-border" style={{ right: '16px', left: 'auto', zIndex: 999999 }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">

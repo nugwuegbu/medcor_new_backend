@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
 import AvatarChatWidget from "./avatar-chat-widget";
