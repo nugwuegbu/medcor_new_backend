@@ -80,15 +80,31 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
             videoRef.current.onloadedmetadata = async () => {
               console.log("Video metadata loaded");
               try {
-                await videoRef.current!.play();
-                // Try to unmute after playing starts
-                setTimeout(() => {
-                  if (videoRef.current) {
-                    videoRef.current.muted = false;
-                  }
-                }, 100);
+                // Ensure audio is enabled before playing
+                if (videoRef.current) {
+                  videoRef.current.muted = false;
+                  videoRef.current.volume = 1.0;
+                  videoRef.current.autoplay = true;
+                  await videoRef.current.play();
+                  console.log("Video playing with audio enabled");
+                }
               } catch (e) {
                 console.error("Video play error:", e);
+                // Try playing muted first, then unmute
+                if (videoRef.current) {
+                  try {
+                    videoRef.current.muted = true;
+                    await videoRef.current.play();
+                    setTimeout(() => {
+                      if (videoRef.current) {
+                        videoRef.current.muted = false;
+                        videoRef.current.volume = 1.0;
+                      }
+                    }, 500);
+                  } catch (retryError) {
+                    console.error("Retry video play error:", retryError);
+                  }
+                }
               }
             };
             setConnectionStatus("connected");

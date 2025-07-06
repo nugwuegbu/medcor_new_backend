@@ -246,6 +246,7 @@ Changelog:
 - July 06, 2025. Replaced Settings menu with Admin menu featuring UserCheck icon - creates empty admin page for doctors to access patient user information and management functions
 - July 06, 2025. Implemented adana01 dynamic video player system to reduce HeyGen credit consumption - backend architecture with VideoPlayerManager, multer file upload, loop video playback with automatic HeyGen switching on user interaction, 3-minute inactivity timeout, and comprehensive API endpoints for video management
 - July 06, 2025. COMPLETE REMOVAL of adana01 dynamic video player system - all video player endpoints and manager code removed from both frontend and backend, system reverted to direct HeyGen integration only as per user decision
+- July 06, 2025. AUDIO RESTORATION COMPLETED - Fixed HeyGen avatar audio functionality by improving video element audio initialization, ensuring proper volume and muted/unmuted states for browser autoplay compliance
 
 ## User Preferences
 
