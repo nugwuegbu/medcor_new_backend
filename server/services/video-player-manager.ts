@@ -26,6 +26,18 @@ export class VideoPlayerManager {
 
   // Initialize player for session  
   async initializePlayer(sessionId: string, videoId: string = 'adana01'): Promise<VideoPlayerState> {
+    // CRITICAL: Check if player already exists and preserve its mode
+    const existingState = this.playerStates.get(sessionId);
+    
+    if (existingState) {
+      console.log(`🎬 Player already exists for session ${sessionId} with mode: ${existingState.mode}`);
+      // If player is in HeyGen mode, don't reset to loop
+      if (existingState.mode === 'heygen') {
+        console.log(`🚫 Preserving HeyGen mode - NOT resetting to loop`);
+        return existingState;
+      }
+    }
+
     const video = await storage.getVideo(videoId);
     if (!video) {
       throw new Error(`Video ${videoId} not found`);

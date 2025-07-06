@@ -103,14 +103,16 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
     } catch (error) {
       console.error('Failed to switch to HeyGen:', error);
       // Fallback to local state update
-      const newState = { 
-        ...playerState, 
-        mode: 'heygen' as const,
-        lastInteraction: new Date().toISOString()
-      };
-      setPlayerState(newState);
-      onModeChange('heygen');
-      onUserInteraction();
+      if (playerState) {
+        const newState = { 
+          ...playerState, 
+          mode: 'heygen' as const,
+          lastInteraction: new Date()
+        };
+        setPlayerState(newState);
+        onModeChange('heygen');
+        onUserInteraction();
+      }
     }
   };
 
@@ -208,11 +210,13 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
     );
   }
 
+  // Debug logs outside JSX
+  console.log('🎬 RENDER DEBUG - playerState:', playerState);
+  console.log('🎬 RENDER DEBUG - mode:', playerState.mode);
+  console.log('🎬 RENDER DEBUG - videoUrl:', videoUrl);
+
   return (
     <div className="absolute inset-0">
-      {console.log('🎬 RENDER DEBUG - playerState:', playerState)}
-      {console.log('🎬 RENDER DEBUG - mode:', playerState.mode)}
-      {console.log('🎬 RENDER DEBUG - videoUrl:', videoUrl)}
       {playerState.mode === 'loop' && videoUrl ? (
         <video
           key="loop-video-element" // Force React to unmount/remount on mode change
