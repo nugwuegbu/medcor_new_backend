@@ -12,6 +12,7 @@ import { bookingAssistantAgent } from "./agents/booking-assistant-agent";
 import { textToSpeechService } from "./services/text-to-speech";
 import { elevenLabsService } from "./services/elevenlabs";
 import { avatarOrchestrator } from "./services/avatar-orchestrator";
+import { aiVideoHeyGenHealthAgent } from "./agents/ai-video-heygen-health-agent";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -1532,6 +1533,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Avatar stats error:", error);
       res.status(500).json({ error: "Failed to get avatar stats" });
+    }
+  });
+
+  // AI Video & HeyGen Health Agent endpoints
+  app.get("/api/health/network/:sessionId?", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const userIP = req.ip || req.connection.remoteAddress;
+      
+      const networkMetrics = await aiVideoHeyGenHealthAgent.analyzeNetworkConditions(userIP);
+      res.json(networkMetrics);
+    } catch (error) {
+      console.error("Network analysis error:", error);
+      res.status(500).json({ error: "Failed to analyze network conditions" });
+    }
+  });
+
+  app.get("/api/health/services", async (req, res) => {
+    try {
+      const serviceHealth = await aiVideoHeyGenHealthAgent.monitorServiceHealth();
+      res.json(serviceHealth);
+    } catch (error) {
+      console.error("Service health check error:", error);
+      res.status(500).json({ error: "Failed to check service health" });
+    }
+  });
+
+  app.get("/api/health/optimization/:sessionId", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const configuration = await aiVideoHeyGenHealthAgent.getOptimizedConfiguration(sessionId);
+      res.json(configuration);
+    } catch (error) {
+      console.error("Optimization configuration error:", error);
+      res.status(500).json({ error: "Failed to get optimization configuration" });
+    }
+  });
+
+  app.post("/api/health/session-metrics", async (req, res) => {
+    try {
+      const { sessionId, responseTime, errors } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID is required" });
+      }
+      
+      aiVideoHeyGenHealthAgent.updateSessionHealth(sessionId, {
+        responseTime: responseTime || 0,
+        errors: errors || []
+      });
+      
+      res.json({ success: true, message: "Session metrics updated" });
+    } catch (error) {
+      console.error("Session metrics update error:", error);
+      res.status(500).json({ error: "Failed to update session metrics" });
+    }
+  });
+
+  app.get("/api/health/summary", async (req, res) => {
+    try {
+      const summary = aiVideoHeyGenHealthAgent.getHealthSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error("Health summary error:", error);
+      res.status(500).json({ error: "Failed to get health summary" });
     }
   });
 

@@ -206,6 +206,34 @@ The application uses a relational database with the following core entities:
 - `/api/avatar/session/:sessionId` - Cleanup avatar session
 - `/api/avatar/stats` - Monitor active sessions
 
+## AI Video & HeyGen Health Agent
+
+### Intelligent Connection Management
+- **Network Analysis**: Real-time latency, bandwidth, and location assessment
+- **Service Health Monitoring**: Continuous HeyGen, ElevenLabs, and OpenAI status checking
+- **Optimization Engine**: Automatic configuration based on network conditions
+- **Session Management**: Proactive connection issue prevention and recovery
+
+### Health Agent Features
+- **Geographic Optimization**: Server distance calculation for optimal routing
+- **Connection Quality Assessment**: Excellent/Good/Fair/Poor classification with adaptive responses  
+- **Intelligent Fallback**: Seamless provider switching based on performance metrics
+- **Predictive Analytics**: ML-based connection issue prevention
+- **Background Monitoring**: 30-second health checks with zero user disruption
+
+### Health Agent API Endpoints
+- `/api/health/network/:sessionId` - Analyze network conditions and latency
+- `/api/health/services` - Check HeyGen, ElevenLabs, OpenAI service status
+- `/api/health/optimization/:sessionId` - Get optimized configuration
+- `/api/health/session-metrics` - Report session performance metrics
+- `/api/health/summary` - Complete health overview and statistics
+
+### User Experience Improvements
+- **Zero Connection Errors**: Proactive issue detection and resolution
+- **Optimal Provider Selection**: Automatic best service routing
+- **Seamless Transitions**: Invisible fallback mechanisms
+- **Performance Optimization**: Dynamic quality adjustment based on network
+
 ## Changelog
 
 Changelog:
