@@ -14,6 +14,7 @@ import { elevenLabsService } from "./services/elevenlabs";
 import { avatarOrchestrator } from "./services/avatar-orchestrator";
 import { aiVideoHeyGenHealthAgent } from "./agents/ai-video-heygen-health-agent";
 import { testProtocol } from "./services/test-protocol";
+import { videoPlayerManager, VideoPlayerMode } from "./services/video-player-manager";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -546,6 +547,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Voice chat request: ${message} (session: ${sessionId})`);
 
+      // 🎬 VIDEO PLAYER MANAGER: Handle user interaction
+      const videoState = videoPlayerManager.handleUserInteraction(sessionId, message);
+      console.log(`🎬 Video Player State: ${videoState.mode}, Video: ${videoState.videoUrl}, Audio: ${videoState.audioProvider}`);
+
       // 🧪 TEST PROTOCOL: Check for test triggers
       const triggers = testProtocol.detectTestTrigger(message);
       if (triggers.length > 0) {
@@ -764,7 +769,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionId,
         success: true,
         showDoctors: askingAboutDoctors,
-        openChatInterface: openChatInterface
+        openChatInterface: openChatInterface,
+        videoMode: videoState.mode,
+        videoUrl: videoState.videoUrl,
+        audioProvider: videoState.audioProvider,
+        shouldActivateHeyGen: videoState.shouldActivateHeyGen
       });
     } catch (error) {
       console.error("Voice chat error:", error);
@@ -794,6 +803,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to save settings" });
+    }
+  });
+
+  // Video Player Manager endpoints
+  app.post("/api/video-player/initialize", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID is required" });
+      }
+      
+      const playerState = videoPlayerManager.initializeSession(sessionId);
+      
+      res.json({
+        success: true,
+        sessionId,
+        mode: playerState.mode,
+        videoUrl: playerState.currentVideo,
+        audioProvider: playerState.audioProvider,
+        userInteractionCount: playerState.userInteractionCount
+      });
+    } catch (error) {
+      console.error("Video player initialization error:", error);
+      res.status(500).json({ 
+        error: "Failed to initialize video player",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/video-player/state/:sessionId", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      const playerState = videoPlayerManager.getPlayerState(sessionId);
+      
+      if (!playerState) {
+        return res.status(404).json({ error: "Player session not found" });
+      }
+      
+      res.json({
+        sessionId,
+        mode: playerState.mode,
+        videoUrl: playerState.currentVideo,
+        audioProvider: playerState.audioProvider,
+        userInteractionCount: playerState.userInteractionCount,
+        lastInteractionTime: playerState.lastInteractionTime,
+        isPlaying: playerState.isPlaying
+      });
+    } catch (error) {
+      console.error("Video player state error:", error);
+      res.status(500).json({ 
+        error: "Failed to get video player state",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.post("/api/video-player/speech-complete", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID is required" });
+      }
+      
+      const result = videoPlayerManager.handleSpeechComplete(sessionId);
+      
+      res.json({
+        success: true,
+        sessionId,
+        mode: result.mode,
+        videoUrl: result.videoUrl,
+        audioProvider: result.audioProvider
+      });
+    } catch (error) {
+      console.error("Speech complete error:", error);
+      res.status(500).json({ 
+        error: "Failed to handle speech completion",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.delete("/api/video-player/session/:sessionId", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      videoPlayerManager.cleanupSession(sessionId);
+      
+      res.json({
+        success: true,
+        message: "Session cleaned up successfully",
+        sessionId
+      });
+    } catch (error) {
+      console.error("Session cleanup error:", error);
+      res.status(500).json({ 
+        error: "Failed to cleanup session",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/video-player/stats", async (req, res) => {
+    try {
+      const stats = videoPlayerManager.getSessionStats();
+      
+      res.json({
+        success: true,
+        stats
+      });
+    } catch (error) {
+      console.error("Video player stats error:", error);
+      res.status(500).json({ 
+        error: "Failed to get video player stats",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

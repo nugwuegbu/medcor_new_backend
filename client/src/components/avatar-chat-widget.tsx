@@ -23,6 +23,10 @@ interface Message {
   timestamp: Date;
   avatarResponse?: any;
   showDoctors?: boolean;
+  videoMode?: string;
+  videoUrl?: string;
+  audioProvider?: string;
+  shouldActivateHeyGen?: boolean;
 }
 
 interface AvatarChatWidgetProps {
@@ -107,6 +111,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [isTestModeActive, setIsTestModeActive] = useState(false);
   const [currentTestStage, setCurrentTestStage] = useState<number>(0);
   const [testStageTimer, setTestStageTimer] = useState<NodeJS.Timeout | null>(null);
+  
+  // Video Player Manager states
+  const [videoMode, setVideoMode] = useState<string>('idle');
+  const [videoUrl, setVideoUrl] = useState<string>('/waiting_heygen.mp4');
+  const [audioProvider, setAudioProvider] = useState<string | null>(null);
+  const [shouldActivateHeyGen, setShouldActivateHeyGen] = useState(false);
+  const videoOverlayRef = useRef<HTMLVideoElement>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -210,8 +221,24 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           setCameraPermissionRequested(true);
         }
       }, 2000);
+      
+      // Initialize Video Player Manager when chat opens
+      if (sessionId) {
+        fetch('/api/video-player/initialize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        }).then(response => response.json()).then(data => {
+          if (data.success) {
+            setVideoMode(data.mode);
+            setVideoUrl(data.videoUrl);
+            setAudioProvider(data.audioProvider);
+            console.log(`🎬 Video Player Manager initialized: ${data.mode}`);
+          }
+        }).catch(console.error);
+      }
     }
-  }, [isOpen, cameraPermissionRequested]);
+  }, [isOpen, cameraPermissionRequested, sessionId]);
   
   // Request location and get weather (try browser first, fallback to IP)
   const requestLocationAndWeather = async () => {
@@ -285,6 +312,24 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       return await response.json();
     },
     onSuccess: async (data) => {
+      // 🎬 VIDEO PLAYER: Update video states from response
+      if (data.videoMode) {
+        setVideoMode(data.videoMode);
+        console.log(`🎬 Video Mode Updated: ${data.videoMode}`);
+      }
+      if (data.videoUrl) {
+        setVideoUrl(data.videoUrl);
+        console.log(`📹 Video URL Updated: ${data.videoUrl}`);
+      }
+      if (data.audioProvider !== undefined) {
+        setAudioProvider(data.audioProvider);
+        console.log(`🎵 Audio Provider Updated: ${data.audioProvider}`);
+      }
+      if (data.shouldActivateHeyGen !== undefined) {
+        setShouldActivateHeyGen(data.shouldActivateHeyGen);
+        console.log(`🤖 HeyGen Activation: ${data.shouldActivateHeyGen}`);
+      }
+
       // 🧪 TEST MODE: Check if this is a test protocol response
       if (data.testMode && data.testInfo) {
         console.log(`🧪 TEST MODE DETECTED: ${data.testInfo.protocolName}`);
@@ -1013,6 +1058,38 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 }}
               />
               
+              {/* Video Player Manager Overlay - Smart Video Switching */}
+              {(videoMode === 'idle' || videoMode === 'speaking') && videoUrl !== 'none' && !shouldActivateHeyGen && !isTestModeActive && (
+                <video
+                  ref={videoOverlayRef}
+                  className="absolute inset-0 w-full h-full object-cover z-10"
+                  src={videoUrl}
+                  autoPlay
+                  loop={videoMode === 'idle'}
+                  muted
+                  playsInline
+                  onLoadStart={() => console.log(`🎬 Video Player loading: ${videoUrl}`)}
+                  onCanPlay={() => console.log(`✅ Video Player ready: ${videoMode}`)}
+                  onError={(e) => console.error(`❌ Video Player error:`, e)}
+                  onEnded={() => {
+                    if (videoMode === 'speaking') {
+                      console.log(`🔇 Speaking video ended, notifying backend`);
+                      fetch('/api/video-player/speech-complete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId })
+                      }).then(response => response.json()).then(data => {
+                        if (data.success) {
+                          setVideoMode(data.mode);
+                          setVideoUrl(data.videoUrl);
+                          setAudioProvider(data.audioProvider);
+                        }
+                      }).catch(console.error);
+                    }
+                  }}
+                />
+              )}
+
               {/* Test Mode Video Placeholder Overlay */}
               {isTestModeActive && testVideoUrl && (
                 <video
