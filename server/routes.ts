@@ -15,6 +15,7 @@ import { avatarOrchestrator } from "./services/avatar-orchestrator";
 import { aiVideoHeyGenHealthAgent } from "./agents/ai-video-heygen-health-agent";
 import { testProtocol } from "./services/test-protocol";
 import { videoPlayerManager, VideoPlayerMode } from "./services/video-player-manager";
+import { dynamicVideoPlayerManager } from "./services/dynamic-video-player";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -547,7 +548,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Voice chat request: ${message} (session: ${sessionId})`);
 
-      // 🎬 VIDEO PLAYER MANAGER: Handle user interaction
+      // 🎬 DYNAMIC VIDEO PLAYER: Handle user message
+      const dynamicPlayerState = dynamicVideoPlayerManager.handleUserMessage(sessionId, message, 'elevenlabs');
+      console.log(`🎬 Dynamic Player State: ${dynamicPlayerState.mode}, Video: ${dynamicPlayerState.currentVideo}, Audio: ${dynamicPlayerState.audioProvider}`);
+
+      // 🎬 VIDEO PLAYER MANAGER: Handle user interaction (legacy support)
       const videoState = videoPlayerManager.handleUserInteraction(sessionId, message);
       console.log(`🎬 Video Player State: ${videoState.mode}, Video: ${videoState.videoUrl}, Audio: ${videoState.audioProvider}`);
 
@@ -770,10 +775,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         showDoctors: askingAboutDoctors,
         openChatInterface: openChatInterface,
+        // Legacy video player (for compatibility)
         videoMode: videoState.mode,
         videoUrl: videoState.videoUrl,
         audioProvider: videoState.audioProvider,
-        shouldActivateHeyGen: videoState.shouldActivateHeyGen
+        shouldActivateHeyGen: videoState.shouldActivateHeyGen,
+        // Dynamic video player state
+        dynamicPlayerMode: dynamicPlayerState.mode,
+        dynamicVideoUrl: dynamicPlayerState.currentVideo,
+        dynamicAudioProvider: dynamicPlayerState.audioProvider,
+        isTyping: dynamicPlayerState.isTyping,
+        isSpeaking: dynamicPlayerState.isSpeaking,
+        interactionCount: dynamicPlayerState.userInteractionCount
       });
     } catch (error) {
       console.error("Voice chat error:", error);
@@ -946,6 +959,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: 'Failed to get test protocol status',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
+    }
+  });
+
+  // Dynamic Video Player endpoints
+  app.post('/api/dynamic-player/initialize', async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required' });
+      }
+      
+      const state = dynamicVideoPlayerManager.initializeSession(sessionId);
+      res.json({ success: true, state });
+    } catch (error) {
+      console.error('Dynamic player initialization error:', error);
+      res.status(500).json({ error: 'Failed to initialize dynamic player' });
+    }
+  });
+
+  app.post('/api/dynamic-player/typing-start', async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required' });
+      }
+      
+      const state = dynamicVideoPlayerManager.handleUserStartsTyping(sessionId);
+      res.json({ success: true, state });
+    } catch (error) {
+      console.error('Dynamic player typing start error:', error);
+      res.status(500).json({ error: 'Failed to handle typing start' });
+    }
+  });
+
+  app.post('/api/dynamic-player/typing-stop', async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required' });
+      }
+      
+      const state = dynamicVideoPlayerManager.handleUserStopsTyping(sessionId);
+      res.json({ success: true, state });
+    } catch (error) {
+      console.error('Dynamic player typing stop error:', error);
+      res.status(500).json({ error: 'Failed to handle typing stop' });
+    }
+  });
+
+  app.post('/api/dynamic-player/speech-start', async (req, res) => {
+    try {
+      const { sessionId, duration } = req.body;
+      
+      if (!sessionId || !duration) {
+        return res.status(400).json({ error: 'Session ID and duration are required' });
+      }
+      
+      const state = dynamicVideoPlayerManager.handleSpeechStart(sessionId, duration);
+      res.json({ success: true, state });
+    } catch (error) {
+      console.error('Dynamic player speech start error:', error);
+      res.status(500).json({ error: 'Failed to handle speech start' });
+    }
+  });
+
+  app.post('/api/dynamic-player/speech-end', async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required' });
+      }
+      
+      const state = dynamicVideoPlayerManager.handleSpeechEnd(sessionId);
+      res.json({ success: true, state });
+    } catch (error) {
+      console.error('Dynamic player speech end error:', error);
+      res.status(500).json({ error: 'Failed to handle speech end' });
+    }
+  });
+
+  app.get('/api/dynamic-player/status/:sessionId', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const status = dynamicVideoPlayerManager.getRealtimeStatus(sessionId);
+      res.json({ sessionId, ...status });
+    } catch (error) {
+      console.error('Dynamic player status error:', error);
+      res.status(500).json({ error: 'Failed to get dynamic player status' });
     }
   });
 

@@ -116,6 +116,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [videoMode, setVideoMode] = useState<string>('idle');
   const [videoUrl, setVideoUrl] = useState<string>('/waiting_heygen.mp4');
   const [audioProvider, setAudioProvider] = useState<string | null>(null);
+  
+  // Dynamic Video Player states
+  const [dynamicPlayerMode, setDynamicPlayerMode] = useState<string>('waiting');
+  const [dynamicVideoUrl, setDynamicVideoUrl] = useState<string>('/waiting_heygen.mp4');
+  const [dynamicAudioProvider, setDynamicAudioProvider] = useState<string | null>(null);
+  const [isUserTyping, setIsUserTyping] = useState<boolean>(false);
+  const [isAvatarSpeaking, setIsAvatarSpeaking] = useState<boolean>(false);
+  const [typingTimer, setTypingTimer] = useState<NodeJS.Timeout | null>(null);
   const [shouldActivateHeyGen, setShouldActivateHeyGen] = useState(false);
   const videoOverlayRef = useRef<HTMLVideoElement>(null);
   
