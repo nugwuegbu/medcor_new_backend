@@ -173,15 +173,23 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
 
   // Handle user interaction (message send, typing, etc.)
   const handleUserInput = useCallback(async () => {
-    console.log('🎬 handleUserInput called - Current mode:', playerState?.mode);
-    await updateInteraction();
-    if (playerState?.mode === 'loop') {
-      console.log('🎬 Switching from loop to HeyGen mode');
-      await switchToHeyGen();
-    } else {
-      console.log('🎬 Already in HeyGen mode, no switch needed');
+    console.log('🎬 handleUserInput called - FORCE STOPPING VIDEO');
+    
+    // IMMEDIATE VIDEO STOP - No conditions, just stop
+    if (videoRef.current) {
+      console.log('🛑 IMMEDIATE VIDEO STOP');
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      videoRef.current.style.display = 'none';
     }
-  }, [playerState, updateInteraction, switchToHeyGen]);
+    
+    // Force mode change immediately
+    setPlayerState(prev => prev ? { ...prev, mode: 'heygen' } : null);
+    onModeChange('heygen');
+    
+    await updateInteraction();
+    await switchToHeyGen();
+  }, [updateInteraction, switchToHeyGen, onModeChange]);
 
   // CRITICAL FIX: Force video pause when switching to heygen mode
   useEffect(() => {
@@ -199,18 +207,32 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
   // Expose interaction handler to parent component
   useEffect(() => {
     const handleInteraction = async () => {
-      console.log('🎬 Video Player Interaction triggered - Current mode:', playerState?.mode);
+      console.log('🎬 Video Player Interaction triggered - FORCE STOPPING VIDEO');
       await handleUserInput();
     };
     
+    // Also expose immediate stop function
+    const immediateStop = () => {
+      console.log('🛑 IMMEDIATE STOP CALLED');
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+        videoRef.current.style.display = 'none';
+      }
+      setPlayerState(prev => prev ? { ...prev, mode: 'heygen' } : null);
+      onModeChange('heygen');
+    };
+    
     (window as any).triggerVideoPlayerInteraction = handleInteraction;
-    console.log('✅ triggerVideoPlayerInteraction exposed on window');
+    (window as any).immediateStopVideo = immediateStop;
+    console.log('✅ triggerVideoPlayerInteraction and immediateStopVideo exposed on window');
     
     return () => {
       delete (window as any).triggerVideoPlayerInteraction;
-      console.log('🗑️ triggerVideoPlayerInteraction removed from window');
+      delete (window as any).immediateStopVideo;
+      console.log('🗑️ Video functions removed from window');
     };
-  }, [playerState, handleUserInput]);
+  }, [playerState, handleUserInput, onModeChange]);
 
   if (!isInitialized || !playerState) {
     return (

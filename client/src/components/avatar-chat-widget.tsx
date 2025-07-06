@@ -405,6 +405,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
+    // IMMEDIATE VIDEO STOP - First priority
+    console.log('🛑 IMMEDIATE VIDEO STOP ON MESSAGE SEND');
+    if ((window as any).immediateStopVideo) {
+      (window as any).immediateStopVideo();
+      console.log('✅ Immediate video stop called');
+    }
+
     // CRITICAL: Force switch to HeyGen mode when user sends message
     console.log('💬 User sending message, MUST switch to HeyGen NOW');
     if ((window as any).triggerVideoPlayerInteraction) {
@@ -443,6 +450,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   const handleDoctorsSendMessage = async (text: string) => {
     if (!text.trim()) return;
+
+    // IMMEDIATE VIDEO STOP - First priority
+    console.log('🛑 IMMEDIATE VIDEO STOP ON DOCTORS MESSAGE SEND');
+    if ((window as any).immediateStopVideo) {
+      (window as any).immediateStopVideo();
+      console.log('✅ Immediate video stop called from doctors view');
+    }
 
     // CRITICAL: Force switch to HeyGen mode when user sends message from doctors view
     console.log('💬 User sending message from doctors view, MUST switch to HeyGen NOW');
