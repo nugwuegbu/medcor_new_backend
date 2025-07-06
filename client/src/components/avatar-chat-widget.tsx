@@ -386,6 +386,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           }
         }
         
+        // Reset input text after test completion
+        setInputText('');
+        
         // Handle test audio - Play without affecting UI
         if (data.audioUrl) {
           console.log(`🔊 TEST AUDIO: Playing ${data.testInfo.audioProvider} voice...`);
@@ -537,6 +540,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         const detectedLang = detectLanguageFromText(data.message);
         (window as any).heygenSpeak(data.message, detectedLang);
       }
+    },
+    onError: (error) => {
+      console.error('Voice chat mutation error:', error);
+      // Reset input state on error to prevent permanent disable
+      setInputText('');
     }
   });
 
