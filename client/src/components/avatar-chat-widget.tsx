@@ -837,7 +837,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }
 
   return (
-    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-glow-border" style={{ right: '16px', left: 'auto', zIndex: 999999 }}>
+    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-glow-border" style={{ right: '16px', left: 'auto', zIndex: 1000 }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
@@ -873,7 +873,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               ? 'w-24 h-24 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-4 ring-purple-600'
               : isMinimized 
                 ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 hover:scale-110' 
-                : 'inset-0 overflow-hidden'
+                : 'inset-0 overflow-hidden z-0'
           }`}
           style={{
             ...(showDoctorList || showRecordsList || isMinimized ? {

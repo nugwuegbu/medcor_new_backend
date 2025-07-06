@@ -210,10 +210,10 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
               }
             }
           }}
-          className="absolute inset-0 w-full h-full object-cover z-10"
+          className="absolute inset-0 w-full h-full object-cover z-0"
         />
       ) : playerState.mode === 'heygen' ? (
-        <div key="heygen-container" className="absolute inset-0 z-20">
+        <div key="heygen-container" className="absolute inset-0 z-0">
           {/* HeyGen avatar will be rendered here by parent component */}
           {console.log('🎬 Rendering HeyGen mode - heyGenProps:', !!heyGenProps)}
           {heyGenProps ? (
