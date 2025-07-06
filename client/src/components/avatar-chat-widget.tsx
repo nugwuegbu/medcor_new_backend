@@ -2282,13 +2282,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             onKeyPress={handleKeyPress}
             placeholder="Send your message..."
             className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
-            disabled={voiceChatMutation.isPending}
+            disabled={false}
           />
           
           <Button
             size="sm"
             onClick={() => handleSendMessage(inputText)}
-            disabled={!inputText.trim() || voiceChatMutation.isPending}
+            disabled={!inputText.trim()}
             className="p-2 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
             variant="ghost"
           >
@@ -2299,7 +2299,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             onTranscript={(text) => {
               handleSendMessage(text);
             }}
-            disabled={voiceChatMutation.isPending}
+            disabled={false}
           />
         </div>
         
