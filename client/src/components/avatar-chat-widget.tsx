@@ -2248,15 +2248,34 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             value={inputText}
             onChange={(e) => {
               setInputText(e.target.value);
-              // Basit typing detection - UX'e dokunmadan
+              // ADANA Dynamic Video System - Typing detection
               if (e.target.value.length > 0 && !isUserTyping) {
                 setIsUserTyping(true);
-                console.log('⌨️ User typing started');
+                setDynamicPlayerMode('speaking');
+                setDynamicVideoUrl('/speak_heygen.mp4');
+                console.log('⌨️ ADANA01 → ADANA02: User typing started');
+                
+                // Notify backend
+                fetch('/api/dynamic-player/typing-start', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sessionId })
+                }).catch(err => console.error('Dynamic player notify error:', err));
               }
+              
               if (typingTimer) clearTimeout(typingTimer);
               const newTimer = setTimeout(() => {
                 setIsUserTyping(false);
-                console.log('⏸️ User typing stopped');
+                setDynamicPlayerMode('waiting');
+                setDynamicVideoUrl('/waiting_heygen.mp4');
+                console.log('⏸️ ADANA02 → ADANA01: User typing stopped');
+                
+                // Notify backend
+                fetch('/api/dynamic-player/typing-stop', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sessionId })
+                }).catch(err => console.error('Dynamic player notify error:', err));
               }, 1000);
               setTypingTimer(newTimer);
             }}
