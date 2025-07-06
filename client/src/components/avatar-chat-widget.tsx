@@ -59,6 +59,25 @@ function detectLanguageFromText(text: string): string {
 }
 
 export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
+  console.log("🔴 AVATAR CHAT WIDGET - isOpen:", isOpen);
+  
+  // Early return if not open
+  if (!isOpen) {
+    console.log("🔴 AVATAR CHAT WIDGET - NOT OPEN, RETURNING NULL");
+    return null;
+  }
+  
+  // Debug: Add visible test element
+  useEffect(() => {
+    const testDiv = document.createElement('div');
+    testDiv.style.cssText = 'position: fixed; bottom: 100px; right: 20px; background: red; color: white; padding: 10px; z-index: 9999; font-size: 20px;';
+    testDiv.textContent = 'CHAT WIDGET SHOULD BE HERE';
+    document.body.appendChild(testDiv);
+    
+    return () => {
+      document.body.removeChild(testDiv);
+    };
+  }, []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [doctorsInputText, setDoctorsInputText] = useState("");
