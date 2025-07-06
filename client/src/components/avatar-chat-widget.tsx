@@ -284,26 +284,37 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         console.log(`🎬 Video Mode: ${data.videoMode}, Video URL: ${data.videoUrl}`);
         console.log(`🎵 Audio Provider: ${data.testInfo.audioProvider}`);
         
-        // Handle test video display
+        // Handle test video display - DO NOT MODIFY UI, ONLY LOG
         if (data.videoUrl && data.videoUrl.startsWith('/')) {
-          // Placeholder video - show as background video element
-          console.log(`📹 Showing placeholder video: ${data.videoUrl}`);
-          // TODO: Implement placeholder video display logic
+          console.log(`📹 TEST VIDEO: ${data.videoUrl} - Background functionality test`);
         } else if (data.videoUrl === 'heygen_live') {
-          // HeyGen live avatar
-          console.log(`🤖 Switching to HeyGen live avatar`);
+          console.log(`🤖 TEST VIDEO: HeyGen live avatar - Background functionality test`);
         }
         
-        // Handle test audio
+        // Handle test audio - Play without affecting UI
         if (data.audioUrl) {
-          console.log(`🔊 Playing test audio: ${data.audioUrl.substring(0, 50)}...`);
+          console.log(`🔊 TEST AUDIO: Playing ${data.testInfo.audioProvider} voice...`);
           try {
-            const audio = new Audio(data.audioUrl);
-            audio.play();
+            const testAudio = new Audio(data.audioUrl);
+            testAudio.volume = 0.8; // Slightly lower volume for test
+            testAudio.play().then(() => {
+              console.log(`✅ TEST AUDIO: ${data.testInfo.audioProvider} voice played successfully`);
+            }).catch(err => {
+              console.error(`❌ TEST AUDIO: Failed to play ${data.testInfo.audioProvider} voice:`, err);
+            });
           } catch (error) {
-            console.error('Failed to play test audio:', error);
+            console.error('❌ TEST AUDIO: Audio creation failed:', error);
           }
         }
+        
+        // Log test results for debugging
+        console.log(`📊 TEST RESULTS SUMMARY:`, {
+          protocol: data.testInfo.protocolName,
+          stage: data.testInfo.currentStage?.name,
+          audioProvider: data.testInfo.audioProvider,
+          videoMode: data.videoMode,
+          success: true
+        });
         
         // Add test message to chat
         const botMessage: Message = {
