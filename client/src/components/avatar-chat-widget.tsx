@@ -399,8 +399,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     if (!text.trim()) return;
 
     // Trigger video player interaction (switch to HeyGen mode)
+    console.log('💬 Sending message, triggering video player interaction...');
     if ((window as any).triggerVideoPlayerInteraction) {
+      console.log('🎬 Calling triggerVideoPlayerInteraction');
       (window as any).triggerVideoPlayerInteraction();
+    } else {
+      console.log('⚠️ triggerVideoPlayerInteraction not found on window');
     }
 
     // Activate HeyGen avatar on first user interaction

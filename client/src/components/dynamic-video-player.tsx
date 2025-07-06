@@ -179,7 +179,12 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
 
   // Expose interaction handler to parent component
   useEffect(() => {
-    (window as any).triggerVideoPlayerInteraction = handleUserInput;
+    const handleInteraction = () => {
+      console.log('🎬 Video Player Interaction triggered - Current mode:', playerState?.mode);
+      handleUserInput();
+    };
+    
+    (window as any).triggerVideoPlayerInteraction = handleInteraction;
     return () => {
       delete (window as any).triggerVideoPlayerInteraction;
     };
