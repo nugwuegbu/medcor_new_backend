@@ -27,10 +27,14 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
   
 
 
-  // Initialize player on component mount
+  // Initialize player on component mount - only if not already initialized
   useEffect(() => {
-    initializePlayer();
-    console.log("🎬 Video Player Manager initialized: idle");
+    if (!playerState) {
+      initializePlayer();
+      console.log("🎬 Video Player Manager initialized: idle");
+    } else {
+      console.log("🎬 Player already initialized with mode:", playerState.mode);
+    }
   }, [sessionId]);
 
   // COMPLETELY REMOVE INACTIVITY CHECKS
@@ -73,6 +77,13 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
 
   const switchToHeyGen = async () => {
     console.log('🎬 FORCE SWITCHING TO HEYGEN MODE');
+    
+    // CRITICAL: Stop the video immediately
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.src = ''; // Clear the source to stop buffering
+      console.log('🛑 Video stopped and cleared');
+    }
     
     try {
       // Tell backend to switch to HeyGen mode
@@ -222,13 +233,13 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
           }}
           onCanPlay={() => {
             // Auto-play when video is ready
-            if (videoRef.current) {
+            if (videoRef.current && playerState.mode === 'loop') {
               videoRef.current.play().catch(e => console.error('Video play failed:', e));
             }
           }}
           onTimeUpdate={() => {
             // Log video progress for debugging
-            if (videoRef.current) {
+            if (videoRef.current && playerState.mode === 'loop') {
               const progress = (videoRef.current.currentTime / videoRef.current.duration * 100).toFixed(1);
               if (videoRef.current.currentTime > 0 && videoRef.current.currentTime % 2 < 0.1) {
                 console.log(`Video progress: ${progress}% (${videoRef.current.currentTime.toFixed(1)}s / ${videoRef.current.duration.toFixed(1)}s)`);
@@ -238,11 +249,10 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
           className="absolute inset-0 w-full h-full object-cover z-0"
         />
       ) : playerState.mode === 'heygen' ? (
-        <div key="heygen-container" className="absolute inset-0 z-0">
+        <>
           {console.log('🎬 HEYGEN MODE - NO VIDEO SHOULD BE PLAYING')}
-          {/* In HeyGen mode, DynamicVideoPlayer should NOT render anything */}
-          {/* HeyGen avatar is handled by parent component */}
-        </div>
+          {/* In HeyGen mode, return nothing - parent will render HeyGen avatar */}
+        </>
       ) : (
         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
           <p className="text-gray-500">Player in idle mode</p>
