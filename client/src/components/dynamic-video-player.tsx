@@ -212,6 +212,9 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
 
   return (
     <div className="absolute inset-0">
+      {console.log('🎬 RENDER DEBUG - playerState:', playerState)}
+      {console.log('🎬 RENDER DEBUG - mode:', playerState.mode)}
+      {console.log('🎬 RENDER DEBUG - videoUrl:', videoUrl)}
       {playerState.mode === 'loop' && videoUrl ? (
         <video
           ref={videoRef}
