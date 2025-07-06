@@ -10,7 +10,7 @@ import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
 import InfoOverlay from "./info-overlay";
-import DynamicVideoPlayer from "./dynamic-video-player";
+
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -71,7 +71,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [doctorsInputText, setDoctorsInputText] = useState("");
   const [recordsInputText, setRecordsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
-  const [videoPlayerMode, setVideoPlayerMode] = useState<'loop' | 'heygen' | 'idle'>('loop');
+
   const [showCalendar, setShowCalendar] = useState(false);
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -412,18 +412,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       console.log('✅ Immediate video stop called');
     }
 
-    // CRITICAL: Force switch to HeyGen mode when user sends message
-    console.log('💬 User sending message, MUST switch to HeyGen NOW');
-    if ((window as any).triggerVideoPlayerInteraction) {
-      console.log('🎬 Calling triggerVideoPlayerInteraction');
-      await (window as any).triggerVideoPlayerInteraction();
-      console.log('✅ HeyGen switch triggered successfully');
-    } else {
-      console.error('❌ CRITICAL ERROR: triggerVideoPlayerInteraction not found on window');
-      // Fallback: Force mode change directly
-      setVideoPlayerMode('heygen');
-      console.log('⚠️ Fallback: Forced mode to heygen directly');
-    }
+    // Direct HeyGen mode - no video player interaction needed
+    console.log('💬 User sending message with direct HeyGen integration');
 
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
@@ -458,18 +448,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       console.log('✅ Immediate video stop called from doctors view');
     }
 
-    // CRITICAL: Force switch to HeyGen mode when user sends message from doctors view
-    console.log('💬 User sending message from doctors view, MUST switch to HeyGen NOW');
-    if ((window as any).triggerVideoPlayerInteraction) {
-      console.log('🎬 Calling triggerVideoPlayerInteraction');
-      await (window as any).triggerVideoPlayerInteraction();
-      console.log('✅ HeyGen switch triggered successfully');
-    } else {
-      console.error('❌ CRITICAL ERROR: triggerVideoPlayerInteraction not found on window');
-      // Fallback: Force mode change directly
-      setVideoPlayerMode('heygen');
-      console.log('⚠️ Fallback: Forced mode to heygen directly');
-    }
+    // Direct HeyGen mode for doctors view - no video player interaction needed
+    console.log('💬 User sending message from doctors view with direct HeyGen integration');
 
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
@@ -944,36 +924,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           }}>
           {isOpen && !showDoctorList && !showRecordsList && (
             <>
-              {/* Always render DynamicVideoPlayer for proper state management */}
-              <DynamicVideoPlayer
-                sessionId={sessionId}
-                onUserInteraction={() => {
-                  // Handle user interaction when switching from loop to HeyGen
-                  if (videoPlayerMode === 'loop') {
-                    setVideoPlayerMode('heygen');
-                  }
+              {/* Direct HeyGen Avatar Integration */}
+              <HeyGenSDKAvatar 
+                ref={avatarRef}
+                key="single-avatar-instance"
+                apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+                isVisible={true}
+                onMessage={(text: string) => {
+                  console.log("Avatar message:", text);
                 }}
-                onModeChange={(mode) => setVideoPlayerMode(mode)}
-                heyGenProps={null}
-              />
-              
-              {/* Show HeyGen Avatar when in heygen mode */}
-              {videoPlayerMode === 'heygen' && (
-                <HeyGenSDKAvatar 
-                  ref={avatarRef}
-                  key="single-avatar-instance"
-                  apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-                  isVisible={true}
-                  onMessage={(text: string) => {
-                    console.log("Avatar message:", text);
-                  }}
-                  onReady={() => {
+                onReady={() => {
                     console.log("Avatar is ready");
                     setHasGreeted(true);
                     // Don't send automatic greeting - wait for user interaction
                   }}
                 />
-              )}
             </>
           )}
         </div>
