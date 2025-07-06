@@ -8,16 +8,19 @@ interface HeyGenSDKAvatarProps {
   onMessage?: (text: string) => void;
   isVisible: boolean;
   onReady?: () => void;
+  placeholderVideo?: string;
 }
 
 export interface HeyGenSDKAvatarRef {
   speak: (params: { text: string; taskType?: TaskType; taskMode?: TaskMode }) => void;
 }
 
-const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ apiKey, onMessage, isVisible, onReady }, ref) => {
+const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ apiKey, onMessage, isVisible, onReady, placeholderVideo }, ref) => {
   const [isLoading, setIsLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "failed" | "reconnecting">("connecting");
+  const [showPlaceholder, setShowPlaceholder] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const placeholderVideoRef = useRef<HTMLVideoElement>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const checkStreamInterval = useRef<NodeJS.Timeout | null>(null);
   const hasCalledOnReady = useRef(false);
@@ -180,6 +183,28 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
     };
   }, [apiKey, isVisible]);
 
+  // Listen for test mode events
+  useEffect(() => {
+    const handleTestMode = (event: CustomEvent) => {
+      if (event.detail.videoUrl && event.detail.videoUrl.startsWith('/')) {
+        console.log(`🎬 Switching to placeholder video: ${event.detail.videoUrl}`);
+        setShowPlaceholder(true);
+        if (placeholderVideoRef.current) {
+          placeholderVideoRef.current.src = event.detail.videoUrl;
+          placeholderVideoRef.current.play();
+        }
+      } else if (event.detail.videoUrl === 'heygen_live') {
+        console.log(`🤖 Switching back to HeyGen live avatar`);
+        setShowPlaceholder(false);
+      }
+    };
+
+    window.addEventListener('testModeVideo', handleTestMode as EventListener);
+    return () => {
+      window.removeEventListener('testModeVideo', handleTestMode as EventListener);
+    };
+  }, []);
+
   if (!isVisible) return null;
 
   return (
@@ -199,9 +224,22 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
         </div>
       )}
 
+      {/* Placeholder Video for Test Mode */}
+      {showPlaceholder && (
+        <video
+          ref={placeholderVideoRef}
+          className="absolute inset-0 w-full h-full object-cover z-20"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+      )}
+
+      {/* HeyGen Live Avatar */}
       <video
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover"
+        className={`absolute inset-0 w-full h-full object-cover ${showPlaceholder ? 'z-10' : 'z-20'}`}
         autoPlay
         playsInline
         muted

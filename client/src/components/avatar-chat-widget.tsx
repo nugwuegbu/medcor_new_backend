@@ -286,12 +286,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         
         // Handle test video display
         if (data.videoUrl && data.videoUrl.startsWith('/')) {
-          // Placeholder video - show as background video element
+          // Placeholder video - trigger custom event for avatar component
           console.log(`📹 Showing placeholder video: ${data.videoUrl}`);
-          // TODO: Implement placeholder video display logic
+          window.dispatchEvent(new CustomEvent('testModeVideo', {
+            detail: { videoUrl: data.videoUrl }
+          }));
         } else if (data.videoUrl === 'heygen_live') {
           // HeyGen live avatar
           console.log(`🤖 Switching to HeyGen live avatar`);
+          window.dispatchEvent(new CustomEvent('testModeVideo', {
+            detail: { videoUrl: 'heygen_live' }
+          }));
         }
         
         // Handle test audio
