@@ -20,76 +20,68 @@ export class TestProtocol {
   
   private testProtocols: { [key: string]: TestProtocolConfig } = {
     'adana01': {
-      name: 'ADANA01: Waiting Video + ElevenLabs + HeyGen',
-      description: 'Test waiting video with ElevenLabs voice, then HeyGen avatar',
+      name: 'ADANA01: API Credit Saving Mode',
+      description: 'Static waiting video only - saves HeyGen and ElevenLabs credits when user inactive',
       stages: [
         {
-          stage: 'waiting_video',
-          description: 'Waiting video with ElevenLabs voice',
+          stage: 'waiting_static',
+          description: 'Static waiting video - no API calls',
           videoUrl: '/waiting_heygen.mp4',
-          audioProvider: 'elevenlabs',
-          duration: 4000,
-          message: 'ADANA01 Test: This is waiting video. My voice is ElevenLabs voice. You should hear clear audio with static avatar.'
-        },
-        {
-          stage: 'heygen_active',
-          description: 'HeyGen avatar with HeyGen voice',
-          videoUrl: 'heygen_live',
-          audioProvider: 'heygen',
-          duration: 5000,
-          message: 'ADANA01 Test: Now I am HeyGen voice with HeyGen avatar. This is realistic interactive avatar with natural voice.'
+          audioProvider: 'none',
+          duration: 1000,
+          message: 'ADANA01: System in credit-saving mode. Static waiting video active.'
         }
       ]
     },
     'adana02': {
-      name: 'ADANA02: Speaking Video + ElevenLabs + HeyGen',
-      description: 'Test speaking video with ElevenLabs voice, then HeyGen avatar',
+      name: 'ADANA02: Placeholder Mode with Fake Speaking',
+      description: 'Waiting video → Speaking video + ElevenLabs voice → Back to waiting (HeyGen not activated)',
       stages: [
         {
-          stage: 'speak_video_with_voice',
-          description: 'Speaking video with ElevenLabs voice',
+          stage: 'waiting_to_speaking_transition',
+          description: 'Transition from waiting to speaking video',
+          videoUrl: '/waiting_heygen.mp4',
+          audioProvider: 'none',
+          duration: 1000,
+          message: 'ADANA02: Preparing to speak...'
+        },
+        {
+          stage: 'fake_speaking_with_voice',
+          description: 'Fake speaking video with ElevenLabs voice',
           videoUrl: '/speak_heygen.mp4',
           audioProvider: 'elevenlabs',
           duration: 4000,
-          message: 'ADANA02 Test: Hi, I am ElevenLabs voice. This is speaking video with mouth movements and ElevenLabs voice provider.'
+          message: 'ADANA02: Hi, I am speaking with fake mouth movements and ElevenLabs voice. HeyGen is not active.'
         },
         {
-          stage: 'heygen_active',
-          description: 'HeyGen avatar with HeyGen voice',
-          videoUrl: 'heygen_live',
-          audioProvider: 'heygen',
-          duration: 5000,
-          message: 'ADANA02 Test: Now I am HeyGen voice with HeyGen avatar. This is realistic interactive avatar with natural voice.'
+          stage: 'speaking_to_waiting_transition',
+          description: 'Transition back to waiting video',
+          videoUrl: '/waiting_heygen.mp4',
+          audioProvider: 'none',
+          duration: 1000,
+          message: 'ADANA02: Returning to waiting mode...'
         }
       ]
     },
     'adana03': {
-      name: 'ADANA03: All Voices Test',
-      description: 'Test all voice providers with different videos',
+      name: 'ADANA03: Full HeyGen Avatar Activation',
+      description: 'Deactivate placeholder videos and activate real HeyGen avatar system',
       stages: [
         {
-          stage: 'elevenlabs_test',
-          description: 'ElevenLabs voice test',
-          videoUrl: '/waiting_heygen.mp4',
-          audioProvider: 'elevenlabs',
-          duration: 4000,
-          message: 'ADANA03 Test: Hi, I am ElevenLabs voice. This is waiting video with ElevenLabs voice provider.'
+          stage: 'placeholder_deactivation',
+          description: 'Deactivating placeholder system',
+          videoUrl: 'none',
+          audioProvider: 'none',
+          duration: 1000,
+          message: 'ADANA03: Deactivating placeholder videos and preparing HeyGen avatar...'
         },
         {
-          stage: 'openai_test',
-          description: 'OpenAI voice test',
-          videoUrl: '/speak_heygen.mp4',
-          audioProvider: 'openai',
-          duration: 4000,
-          message: 'ADANA03 Test: Hi, I am OpenAI voice. This is speaking video with OpenAI voice provider.'
-        },
-        {
-          stage: 'heygen_test',
-          description: 'HeyGen voice test',
+          stage: 'heygen_activation',
+          description: 'Real HeyGen avatar with live interaction',
           videoUrl: 'heygen_live',
           audioProvider: 'heygen',
           duration: 5000,
-          message: 'ADANA03 Test: Hi, I am HeyGen voice. This is HeyGen avatar with HeyGen voice provider.'
+          message: 'ADANA03: HeyGen avatar now active! Real-time interactive avatar with natural voice synthesis.'
         }
       ]
     }

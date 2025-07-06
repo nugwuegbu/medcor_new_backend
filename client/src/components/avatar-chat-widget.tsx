@@ -105,6 +105,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [testVideoMode, setTestVideoMode] = useState<string | null>(null);
   const [testVideoUrl, setTestVideoUrl] = useState<string | null>(null);
   const [isTestModeActive, setIsTestModeActive] = useState(false);
+  const [currentTestStage, setCurrentTestStage] = useState<number>(0);
+  const [testStageTimer, setTestStageTimer] = useState<NodeJS.Timeout | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -289,17 +291,54 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         console.log(`🎬 Video Mode: ${data.videoMode}, Video URL: ${data.videoUrl}`);
         console.log(`🎵 Audio Provider: ${data.testInfo.audioProvider}`);
         
-        // Handle test video display - Activate placeholder video
+        // Handle test video display with stage progression
         if (data.videoUrl && data.videoUrl.startsWith('/')) {
           console.log(`📹 TEST VIDEO: ${data.videoUrl} - Activating placeholder video`);
           setTestVideoUrl(data.videoUrl);
           setTestVideoMode(data.videoMode);
           setIsTestModeActive(true);
+          
+          // Auto-progress through stages for ADANA02 
+          if (data.testInfo.protocolName.includes('ADANA02') && data.testInfo.totalStages > 1) {
+            console.log(`🔄 ADANA02: Starting stage progression...`);
+            
+            // Clear any existing timer
+            if (testStageTimer) {
+              clearTimeout(testStageTimer);
+            }
+            
+            // Set timer for stage transitions (1 second pauses)
+            const timer = setTimeout(() => {
+              console.log(`⏭️ ADANA02: Progressing to next stage...`);
+              // This will be handled by a separate API call for stage progression
+            }, 1000);
+            
+            setTestStageTimer(timer);
+          }
+          
         } else if (data.videoUrl === 'heygen_live') {
           console.log(`🤖 TEST VIDEO: HeyGen live avatar - Deactivating placeholder video`);
           setTestVideoUrl(null);
           setTestVideoMode(null);
           setIsTestModeActive(false);
+          
+          // Clear stage timer
+          if (testStageTimer) {
+            clearTimeout(testStageTimer);
+            setTestStageTimer(null);
+          }
+          
+        } else if (data.videoUrl === 'none') {
+          console.log(`🚫 TEST VIDEO: Deactivating all placeholder videos`);
+          setTestVideoUrl(null);
+          setTestVideoMode(null);
+          setIsTestModeActive(false);
+          
+          // Clear stage timer
+          if (testStageTimer) {
+            clearTimeout(testStageTimer);
+            setTestStageTimer(null);
+          }
         }
         
         // Handle test audio - Play without affecting UI
