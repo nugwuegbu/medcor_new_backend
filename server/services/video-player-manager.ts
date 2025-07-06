@@ -80,14 +80,10 @@ export class VideoPlayerManager {
   }
 
   // Check if should switch back to loop mode due to inactivity
+  // DISABLED: Once in HeyGen mode, stay in HeyGen mode permanently
   checkInactivityTimeout(sessionId: string): boolean {
-    const state = this.playerStates.get(sessionId);
-    if (!state || state.mode !== 'heygen') {
-      return false;
-    }
-
-    const timeSinceInteraction = Date.now() - state.lastInteraction.getTime();
-    return timeSinceInteraction > this.INTERACTION_TIMEOUT;
+    // Always return false - never switch back to loop once HeyGen is activated
+    return false;
   }
 
   // Get current player state
