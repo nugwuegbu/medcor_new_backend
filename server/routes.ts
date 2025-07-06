@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage as dbStorage } from "./storage";
 import { insertAppointmentSchema, insertChatMessageSchema } from "@shared/schema";
 import { generateChatResponse } from "./services/openai";
 import { heygenService } from "./services/heygen";
@@ -51,6 +51,68 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Voice avatar chat endpoint - NO AUTH REQUIRED (placed before auth middleware)
+  app.post("/api/chat/voice", async (req, res) => {
+    try {
+      const { message, sessionId, language = "en", userId, userImage, locationWeather } = req.body;
+      
+      if (!message || !sessionId) {
+        return res.status(400).json({ error: "Message and sessionId are required" });
+      }
+
+      console.log(`Voice chat request: ${message} (session: ${sessionId})`);
+
+      // Get AI response
+      const aiResponse = await generateChatResponse(message, language, userImage, locationWeather);
+      
+      // Generate avatar response
+      let avatarResponse = null;
+      try {
+        avatarResponse = await heygenService.generateAvatarResponse(message, aiResponse, language);
+      } catch (error) {
+        console.error('Error generating avatar response:', error);
+        avatarResponse = { 
+          success: false, 
+          error: 'Failed to generate avatar response' 
+        };
+      }
+      
+      console.log(`Avatar response generated:`, avatarResponse);
+
+      // Save chat messages
+      const chatMessageData = {
+        sessionId,
+        message,
+        response: aiResponse,
+        language,
+        avatarResponse: avatarResponse,
+        userId: userId || null
+      };
+      
+      console.log('Attempting to save chat message with data:', chatMessageData);
+      
+      try {
+        await dbStorage.createChatMessage(chatMessageData);
+        console.log('Chat message saved successfully');
+      } catch (dbError) {
+        console.error('Database error when saving chat message:', dbError);
+        throw dbError;
+      }
+
+      res.json({ 
+        success: true, 
+        response: aiResponse, 
+        avatarResponse: avatarResponse 
+      });
+    } catch (error) {
+      console.error('Voice chat error:', error);
+      res.status(500).json({ 
+        error: "Failed to process voice chat",
+        details: error.message 
+      });
+    }
+  });
+
   // Configure authentication
   configureSession(app);
   configureOAuthProviders();
@@ -160,7 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all doctors
   app.get("/api/doctors", async (req, res) => {
     try {
-      const doctors = await storage.getAllDoctors();
+      const doctors = await dbStorage.getAllDoctors();
       res.json(doctors);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch doctors" });
@@ -171,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/doctors/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const doctor = await storage.getDoctor(id);
+      const doctor = await dbStorage.getDoctor(id);
       if (!doctor) {
         return res.status(404).json({ message: "Doctor not found" });
       }
@@ -185,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/appointments", async (req, res) => {
     try {
       const validatedData = insertAppointmentSchema.parse(req.body);
-      const appointment = await storage.createAppointment(validatedData);
+      const appointment = await dbStorage.createAppointment(validatedData);
       res.status(201).json(appointment);
     } catch (error) {
       res.status(400).json({ message: "Invalid appointment data" });
@@ -195,7 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all appointments
   app.get("/api/appointments", async (req, res) => {
     try {
-      const appointments = await storage.getAllAppointments();
+      const appointments = await dbStorage.getAllAppointments();
       res.json(appointments);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch appointments" });
@@ -225,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Save chat message
-      const chatMessage = await storage.createChatMessage({
+      const chatMessage = await dbStorage.createChatMessage({
         sessionId,
         message,
         response,
@@ -424,7 +486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/chat/:sessionId", async (req, res) => {
     try {
       const sessionId = req.params.sessionId;
-      const messages = await storage.getChatMessages(sessionId);
+      const messages = await dbStorage.getChatMessages(sessionId);
       res.json(messages);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch chat history" });
@@ -756,175 +818,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Voice avatar chat endpoint
-  app.post("/api/chat/voice", async (req, res) => {
-    try {
-      const { message, sessionId, language = "en", userId, userImage, locationWeather } = req.body;
-      
-      if (!message || !sessionId) {
-        return res.status(400).json({ error: "Message and sessionId are required" });
-      }
-
-      console.log(`Voice chat request: ${message} (session: ${sessionId})`);
-
-      // Check chat history to see if this is user's first response
-      const previousMessages = await storage.getChatMessages(sessionId);
-      const userMessages = previousMessages.filter(m => m.message && m.message.trim() !== '');
-      const isFirstUserResponse = userMessages.length === 0;
-      
-      let compliment = "";
-      
-      // Analyze user image whenever it's provided
-      if (userImage) {
-        try {
-          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-          
-          // Analyze image with GPT-4 Vision
-          const imageAnalysisResponse = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-              {
-                role: "system",
-                content: "You are a kind AI that notices nice details about people. Give 1 brief compliment about something specific you see (clothing, style, accessories). Be genuine and warm. Keep it under 15 words. Example: 'I love your elegant blue dress!'"
-              },
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: "Give a brief compliment about their appearance."
-                  },
-                  {
-                    type: "image_url",
-                    image_url: {
-                      url: `data:image/jpeg;base64,${userImage}`
-                    }
-                  }
-                ]
-              }
-            ],
-            max_tokens: 30
-          });
-          
-          compliment = imageAnalysisResponse.choices[0].message.content || "";
-          console.log("=== OpenAI Photo Analysis Response ===");
-          console.log("Compliment generated:", compliment);
-          console.log("=====================================");
-        } catch (error) {
-          console.error("Image analysis failed:", error);
-        }
-      }
-
-      // Generate AI response using OpenAI
-      let aiResponse = await generateChatResponse(message, language);
-      
-      // Add weather and compliment to the response if available
-      if (isFirstUserResponse) {
-        let prefix = "";
-        if (locationWeather) {
-          prefix += `So your location is ${locationWeather} `;
-          console.log("Weather info added:", locationWeather);
-        }
-        if (compliment) {
-          prefix += `${compliment} `;
-        }
-        if (prefix) {
-          aiResponse = `${prefix}${aiResponse}`;
-          console.log("=== Final Combined Response ===");
-          console.log("Full message:", aiResponse);
-          console.log("==============================");
-        }
-      } else {
-        console.log(`AI response: ${aiResponse}`);
-      }
-      
-      // Check if AI response includes special commands
-      const askingAboutDoctors = aiResponse.includes('DOCTOR_SEARCH:');
-      const openChatInterface = aiResponse.includes('OPEN_CHAT_INTERFACE:');
-      
-      // Generate avatar response using HeyGen
-      let avatarResponse;
-      try {
-        // Try creating a direct streaming session
-        const streamingResponse = await fetch("https://api.heygen.com/v1/streaming.new", {
-          method: "POST",
-          headers: {
-            "x-api-key": process.env.HEYGEN_API_KEY || "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg==",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            quality: "high",
-            avatar_name: "anna_public_3_20240108",
-            voice: {
-              voice_id: "1bd001e7e50f421d891986aad5158bc8"
-            }
-          })
-        });
-
-        if (streamingResponse.ok) {
-          const data = await streamingResponse.json();
-          console.log("Direct HeyGen response:", data);
-          avatarResponse = {
-            text: aiResponse,
-            sessionId,
-            sessionData: data.data
-          };
-        } else {
-          console.error("HeyGen direct API error:", await streamingResponse.text());
-          avatarResponse = await heygenService.generateAvatarResponse({
-            text: aiResponse,
-            sessionId,
-            language
-          });
-        }
-      } catch (error) {
-        console.error("HeyGen streaming error:", error);
-        avatarResponse = await heygenService.generateAvatarResponse({
-          text: aiResponse,
-          sessionId,
-          language
-        });
-      }
-      
-      console.log(`Avatar response generated:`, avatarResponse);
-
-      // Save chat messages
-      const chatMessageData = {
-        sessionId,
-        message,
-        response: aiResponse,
-        language,
-        avatarResponse: avatarResponse,
-        userId: userId || null
-      };
-      
-      console.log('Attempting to save chat message with data:', chatMessageData);
-      
-      try {
-        await storage.createChatMessage(chatMessageData);
-        console.log('Chat message saved successfully');
-      } catch (dbError) {
-        console.error('Database error when saving chat message:', dbError);
-        throw dbError;
-      }
-
-      res.json({
-        message: aiResponse,
-        avatarResponse,
-        sessionId,
-        success: true,
-        showDoctors: askingAboutDoctors,
-        openChatInterface: openChatInterface
-      });
-    } catch (error) {
-      console.error("Voice chat error:", error);
-      console.error("Error stack:", error.stack);
-      res.status(500).json({ 
-        error: "Failed to process voice chat",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
 
   // Settings endpoints
   app.post("/api/settings", async (req, res) => {
@@ -1141,7 +1034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Store the chat message
-      await storage.createChatMessage({
+      await dbStorage.createChatMessage({
         sessionId,
         userId: userId || null,
         message,
