@@ -42,16 +42,16 @@ export class TestProtocol {
       ]
     },
     'adana02': {
-      name: 'ADANA02: Speaking Video + OpenAI + HeyGen',
-      description: 'Test speaking video with OpenAI voice, then HeyGen avatar',
+      name: 'ADANA02: Speaking Video + ElevenLabs + HeyGen',
+      description: 'Test speaking video with ElevenLabs voice, then HeyGen avatar',
       stages: [
         {
           stage: 'speak_video_with_voice',
-          description: 'Speaking video with OpenAI voice',
+          description: 'Speaking video with ElevenLabs voice',
           videoUrl: '/speak_heygen.mp4',
-          audioProvider: 'openai',
+          audioProvider: 'elevenlabs',
           duration: 4000,
-          message: 'ADANA02 Test: This is speaking video with mouth movements. My voice is OpenAI voice. You should hear clear audio with animated mouth.'
+          message: 'ADANA02 Test: Hi, I am ElevenLabs voice. This is speaking video with mouth movements and ElevenLabs voice provider.'
         },
         {
           stage: 'heygen_active',
@@ -73,7 +73,7 @@ export class TestProtocol {
           videoUrl: '/waiting_heygen.mp4',
           audioProvider: 'elevenlabs',
           duration: 4000,
-          message: 'ADANA03 Test: I am ElevenLabs voice. This is waiting video with ElevenLabs voice provider.'
+          message: 'ADANA03 Test: Hi, I am ElevenLabs voice. This is waiting video with ElevenLabs voice provider.'
         },
         {
           stage: 'openai_test',
@@ -81,7 +81,7 @@ export class TestProtocol {
           videoUrl: '/speak_heygen.mp4',
           audioProvider: 'openai',
           duration: 4000,
-          message: 'ADANA03 Test: I am OpenAI voice. This is speaking video with OpenAI voice provider.'
+          message: 'ADANA03 Test: Hi, I am OpenAI voice. This is speaking video with OpenAI voice provider.'
         },
         {
           stage: 'heygen_test',
@@ -89,7 +89,7 @@ export class TestProtocol {
           videoUrl: 'heygen_live',
           audioProvider: 'heygen',
           duration: 5000,
-          message: 'ADANA03 Test: I am HeyGen voice. This is HeyGen avatar with HeyGen voice provider.'
+          message: 'ADANA03 Test: Hi, I am HeyGen voice. This is HeyGen avatar with HeyGen voice provider.'
         }
       ]
     }
