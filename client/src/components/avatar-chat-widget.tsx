@@ -548,11 +548,18 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         const detectedLang = detectLanguageFromText(data.message);
         (window as any).heygenSpeak(data.message, detectedLang);
       }
+      
+      // Force focus back to input after response
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
     },
     onError: (error) => {
       console.error('Voice chat mutation error:', error);
-      // Reset input state on error to prevent permanent disable
-      setInputText('');
+      // Mutation failed, but keep input functional
+      // Don't clear inputText, let user retry
     }
   });
 
@@ -570,7 +577,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setInputText("");
     
     // Track user messages and show auth after 2 messages
     const newCount = userMessageCount + 1;
@@ -579,7 +585,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       setShowAuthOverlay(true);
     }
     
+    // Start mutation first, then clear input
     voiceChatMutation.mutate(text.trim());
+    setInputText("");
   };
 
   const handleDoctorsSendMessage = async (text: string) => {
@@ -596,7 +604,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setDoctorsInputText("");
     
     // Track user messages and show auth after 2 messages
     const newCount = userMessageCount + 1;
@@ -606,6 +613,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     }
     
     voiceChatMutation.mutate(text.trim());
+    setDoctorsInputText("");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
