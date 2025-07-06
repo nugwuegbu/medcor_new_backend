@@ -2255,6 +2255,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             type="text"
             value={inputText}
             onChange={(e) => {
+              console.log('🔍 INPUT DEBUG: Value changed to:', e.target.value);
+              console.log('🔍 INPUT DEBUG: Input disabled?', e.target.disabled);
+              console.log('🔍 INPUT DEBUG: Mutation pending?', voiceChatMutation.isPending);
+              
               setInputText(e.target.value);
               // ADANA Dynamic Video System - Typing detection
               if (e.target.value.length > 0 && !isUserTyping) {
