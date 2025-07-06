@@ -117,15 +117,18 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [videoUrl, setVideoUrl] = useState<string>('/waiting_heygen.mp4');
   const [audioProvider, setAudioProvider] = useState<string | null>(null);
   
-  // Dynamic Video Player states
-  const [dynamicPlayerMode, setDynamicPlayerMode] = useState<string>('waiting');
+  // ADANA State Machine - Advanced Architecture
+  const [playerState, setPlayerState] = useState<'Idle' | 'LightRespond' | 'FullAvatar'>('Idle');
+  const [questionCount, setQuestionCount] = useState<number>(0);
   const [dynamicVideoUrl, setDynamicVideoUrl] = useState<string>('/waiting_heygen.mp4');
   const [dynamicAudioProvider, setDynamicAudioProvider] = useState<string | null>(null);
   const [isUserTyping, setIsUserTyping] = useState<boolean>(false);
   const [isAvatarSpeaking, setIsAvatarSpeaking] = useState<boolean>(false);
   const [typingTimer, setTypingTimer] = useState<NodeJS.Timeout | null>(null);
+  const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null);
   const [shouldActivateHeyGen, setShouldActivateHeyGen] = useState(false);
   const videoOverlayRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -287,6 +290,111 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       }
     } catch (error) {
       console.error("Error getting weather:", error);
+    }
+  };
+
+  // ADANA State Machine Functions - Advanced Architecture
+  const transitionToIdle = () => {
+    console.log('🔄 ADANA State: Transitioning to Idle');
+    setPlayerState('Idle');
+    setDynamicVideoUrl('/waiting_heygen.mp4');
+    setShouldActivateHeyGen(false);
+    setIsAvatarSpeaking(false);
+    startInactivityTimer();
+  };
+
+  const transitionToLightRespond = () => {
+    console.log('🔄 ADANA State: Transitioning to LightRespond');
+    setPlayerState('LightRespond');
+    setDynamicVideoUrl('/speak_heygen.mp4');
+    setIsAvatarSpeaking(true);
+    clearInactivityTimer();
+    incrementQuestionCount();
+  };
+
+  const transitionToFullAvatar = () => {
+    console.log('🔄 ADANA State: Transitioning to FullAvatar');
+    setPlayerState('FullAvatar');
+    setShouldActivateHeyGen(true);
+    clearInactivityTimer();
+    startInactivityTimer();
+  };
+
+  const incrementQuestionCount = () => {
+    setQuestionCount(prev => {
+      const newCount = prev + 1;
+      console.log(`🔢 ADANA Question Count: ${newCount}`);
+      return newCount;
+    });
+  };
+
+  const startInactivityTimer = () => {
+    clearInactivityTimer();
+    const timer = setTimeout(() => {
+      console.log('⏰ ADANA Inactivity timeout - returning to Idle');
+      transitionToIdle();
+    }, 3 * 60 * 1000); // 3 minutes
+    setInactivityTimer(timer);
+  };
+
+  const clearInactivityTimer = () => {
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer);
+      setInactivityTimer(null);
+    }
+  };
+
+  const syncPlay = async (videoUrl: string, audioUrl: string) => {
+    console.log('🎬 ADANA Sync Play: Video + Audio synchronization');
+    
+    try {
+      // Stop any existing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+
+      // Load and prepare audio
+      const audio = new Audio(audioUrl);
+      audio.volume = 0.8;
+      audioRef.current = audio;
+
+      // Set video URL
+      setDynamicVideoUrl(videoUrl);
+
+      // Wait for video to be ready, then sync play
+      if (videoOverlayRef.current) {
+        const handleCanPlay = () => {
+          console.log('🎬 ADANA Sync: Starting synchronized playback');
+          
+          // Start both at the same time
+          Promise.all([
+            videoOverlayRef.current?.play(),
+            audio.play()
+          ]).then(() => {
+            console.log('✅ ADANA Sync: Video + Audio playing');
+          }).catch(err => {
+            console.error('❌ ADANA Sync: Playback failed:', err);
+          });
+        };
+
+        videoOverlayRef.current.addEventListener('canplay', handleCanPlay, { once: true });
+
+        // Handle audio end for state transitions
+        audio.addEventListener('ended', () => {
+          console.log('🔇 ADANA Sync: Audio ended, checking transitions');
+          setIsAvatarSpeaking(false);
+          
+          if (questionCount >= 1) { // Changed from 2 to 1 for faster testing
+            transitionToFullAvatar();
+          } else {
+            transitionToIdle();
+          }
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ ADANA Sync: Setup failed:', error);
     }
   };
 
@@ -548,28 +656,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         setMessages(prev => [...prev, botMessage]);
       }
       
-      // 🔊 ADANA02 AUDIO: Play audio from backend response
+      // 🔊 ADANA STATE MACHINE: Trigger LightRespond for audio + video sync
       if (data.audioUrl && !data.testMode) {
-        console.log(`🔊 ADANA02 AUDIO: Playing ${data.audioProvider || 'unknown'} voice...`);
-        try {
-          const audio = new Audio(data.audioUrl);
-          audio.volume = 0.8;
-          audio.play().then(() => {
-            console.log(`✅ ADANA02 AUDIO: Voice played successfully`);
-          }).catch(err => {
-            console.error(`❌ ADANA02 AUDIO: Failed to play voice:`, err);
-          });
-          
-          // When audio ends, switch back to ADANA01 waiting video
-          audio.addEventListener('ended', () => {
-            console.log(`🔇 ADANA02 AUDIO: Audio ended, switching to ADANA01`);
-            setDynamicPlayerMode('waiting');
-            setDynamicVideoUrl('/waiting_heygen.mp4');
-            setIsAvatarSpeaking(false);
-          });
-        } catch (error) {
-          console.error('❌ ADANA02 AUDIO: Audio creation failed:', error);
-        }
+        console.log(`🔊 ADANA State Machine: Triggering LightRespond with synchronized playback`);
+        transitionToLightRespond();
+        syncPlay('/speak_heygen.mp4', data.audioUrl);
       }
       
       // Fallback: Make HeyGen avatar speak if no audio URL provided
@@ -1118,18 +1209,22 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   className="absolute inset-0 w-full h-full object-cover z-10"
                   src={dynamicVideoUrl}
                   autoPlay
-                  loop={dynamicPlayerMode === 'waiting'}
+                  loop={playerState === 'Idle'}
                   muted
                   playsInline
                   onLoadStart={() => console.log(`🎬 ADANA Video loading: ${dynamicVideoUrl}`)}
-                  onCanPlay={() => console.log(`✅ ADANA Video ready: ${dynamicPlayerMode}`)}
+                  onCanPlay={() => console.log(`✅ ADANA Video ready: ${playerState}`)}
                   onError={(e) => console.error(`❌ ADANA Video error:`, e)}
                   onEnded={() => {
-                    if (dynamicPlayerMode === 'speaking') {
-                      console.log(`🔇 ADANA02 speaking video ended, switching to ADANA01`);
-                      setDynamicPlayerMode('waiting');
-                      setDynamicVideoUrl('/waiting_heygen.mp4');
+                    if (playerState === 'LightRespond') {
+                      console.log(`🔇 ADANA02 video ended, checking transitions`);
                       setIsAvatarSpeaking(false);
+                      
+                      if (questionCount >= 2) {
+                        transitionToFullAvatar();
+                      } else {
+                        transitionToIdle();
+                      }
                     }
                   }}
                 />
@@ -2277,34 +2372,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             value={inputText}
             onChange={(e) => {
               setInputText(e.target.value);
-              // ADANA Dynamic Video System - Typing detection
+              // ADANA State Machine - User interaction resets inactivity timer
               if (e.target.value.length > 0 && !isUserTyping) {
                 setIsUserTyping(true);
-                setDynamicPlayerMode('speaking');
-                setDynamicVideoUrl('/speak_heygen.mp4');
-                console.log('⌨️ ADANA01 → ADANA02: User typing started');
-                
-                // Notify backend
-                fetch('/api/dynamic-player/typing-start', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ sessionId })
-                }).catch(err => console.error('Dynamic player notify error:', err));
+                startInactivityTimer(); // Reset inactivity timer on user interaction
+                console.log('⌨️ ADANA: User typing detected, resetting inactivity timer');
               }
               
               if (typingTimer) clearTimeout(typingTimer);
               const newTimer = setTimeout(() => {
                 setIsUserTyping(false);
-                setDynamicPlayerMode('waiting');
-                setDynamicVideoUrl('/waiting_heygen.mp4');
-                console.log('⏸️ ADANA02 → ADANA01: User typing stopped');
-                
-                // Notify backend
-                fetch('/api/dynamic-player/typing-stop', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ sessionId })
-                }).catch(err => console.error('Dynamic player notify error:', err));
+                console.log('⏸️ ADANA: User typing stopped');
               }, 1000);
               setTypingTimer(newTimer);
             }}
