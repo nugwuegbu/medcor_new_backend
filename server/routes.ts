@@ -9,6 +9,8 @@ import { faceRecognitionAgent } from "./agents/face-recognition-agent";
 import { avatarRecorder } from "./services/avatar-recorder";
 import { googleMapsAgent } from "./agents/google-maps-agent";
 import { bookingAssistantAgent } from "./agents/booking-assistant-agent";
+import { textToSpeechService } from "./services/text-to-speech";
+import { elevenLabsService } from "./services/elevenlabs";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -932,72 +934,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Text-to-speech endpoint
+  // Text-to-speech endpoint with ElevenLabs and OpenAI
   app.post("/api/text-to-speech", async (req, res) => {
     try {
-      const { text, language = "en", voice = "female" } = req.body;
+      const { text, provider = "elevenlabs", voice, language = "en" } = req.body;
 
       if (!text) {
         return res.status(400).json({ message: "Text is required" });
       }
 
-      // In real implementation, this would use:
-      // - OpenAI's TTS API
-      // - Azure Speech Services
-      // - Google Cloud Text-to-Speech
-      // - ElevenLabs API
-      
-      // Mock TTS response
-      const mockAudioUrl = `https://api.example.com/tts/audio/${Date.now()}.mp3`;
+      console.log(`TTS request: "${text}" with provider: ${provider}`);
 
-      res.json({
-        audioUrl: mockAudioUrl,
-        duration: Math.ceil(text.length / 10), // Rough estimate
-        language,
-        voice
+      const ttsResponse = await textToSpeechService.generateSpeech({
+        text,
+        provider,
+        voice,
+        language
       });
+
+      // Set response headers for audio streaming
+      res.set({
+        'Content-Type': ttsResponse.contentType,
+        'Content-Length': ttsResponse.audio.length,
+        'Cache-Control': 'public, max-age=3600'
+      });
+
+      res.send(ttsResponse.audio);
     } catch (error) {
-      res.status(500).json({ message: "Text-to-speech conversion failed" });
+      console.error("TTS error:", error);
+      res.status(500).json({ 
+        message: "Text-to-speech conversion failed",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
   // Get available voices for TTS
   app.get("/api/voices", async (req, res) => {
     try {
-      const voices = [
+      const voices = await textToSpeechService.getAvailableVoices();
+
+      // Add our custom Turkish voice ID
+      const customVoices = [
         {
-          id: "nurse_sarah",
-          name: "Sarah (Nurse)",
-          language: "en",
+          id: "pWeLcyFEBT5svt9WMYAO",
+          name: "Turkish Medical Assistant",
+          provider: "elevenlabs",
+          language: "tr",
           gender: "female",
-          description: "Warm, caring nurse voice"
-        },
-        {
-          id: "doctor_james",
-          name: "Dr. James",
-          language: "en", 
-          gender: "male",
-          description: "Professional doctor voice"
-        },
-        {
-          id: "assistant_maria",
-          name: "Maria (Assistant)",
-          language: "es",
-          gender: "female",
-          description: "Spanish medical assistant"
-        },
-        {
-          id: "doctor_chen",
-          name: "Dr. Chen",
-          language: "zh",
-          gender: "male",
-          description: "Mandarin specialist voice"
+          description: "Turkish speaking medical assistant voice"
         }
       ];
 
-      res.json(voices);
+      res.json({
+        custom: customVoices,
+        elevenlabs: voices.elevenlabs,
+        openai: voices.openai
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch voices" });
+      console.error("Failed to get voices:", error);
+      res.status(500).json({ message: "Failed to get available voices" });
+    }
+  });
+
+  // ElevenLabs specific TTS endpoint
+  app.post("/api/elevenlabs/tts", async (req, res) => {
+    try {
+      const { text, voiceId = "pWeLcyFEBT5svt9WMYAO" } = req.body;
+
+      if (!text) {
+        return res.status(400).json({ message: "Text is required" });
+      }
+
+      console.log(`ElevenLabs TTS request: "${text}" with voice: ${voiceId}`);
+
+      const response = await elevenLabsService.textToSpeech({
+        text,
+        voiceId,
+        stability: 0.5,
+        similarityBoost: 0.8,
+        style: 0.0,
+        useSpeakerBoost: true
+      });
+
+      res.set({
+        'Content-Type': response.contentType,
+        'Content-Length': response.audio.length,
+        'Cache-Control': 'public, max-age=3600'
+      });
+
+      res.send(response.audio);
+    } catch (error) {
+      console.error("ElevenLabs TTS error:", error);
+      res.status(500).json({ 
+        message: "ElevenLabs TTS failed",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get ElevenLabs voice info
+  app.get("/api/elevenlabs/voice/:voiceId", async (req, res) => {
+    try {
+      const { voiceId } = req.params;
+      const voiceInfo = await elevenLabsService.getVoiceInfo(voiceId);
+      res.json(voiceInfo);
+    } catch (error) {
+      console.error("Failed to get voice info:", error);
+      res.status(500).json({ message: "Failed to get voice info" });
     }
   });
 
