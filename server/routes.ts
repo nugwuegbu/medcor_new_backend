@@ -551,16 +551,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (triggers.length > 0) {
         console.log(`🧪 TEST TRIGGERS DETECTED: ${triggers.join(', ')} in message "${message}"`);
         
-        // If multiple triggers, run them sequentially
-        const allResults = [];
-        for (const trigger of triggers) {
-          const testInfo = await testProtocol.executeTestProtocol(sessionId, trigger);
-          const testResponse = await testProtocol.generateTestResponse(testInfo.currentStage);
-          allResults.push({ trigger, testInfo, testResponse });
-        }
+        // Use the first trigger for testing
+        const trigger = triggers[0];
+        const testInfo = await testProtocol.executeTestProtocol(sessionId, trigger);
+        const testResponse = await testProtocol.generateTestResponse(testInfo.currentStage);
         
-        // Use the first test for the response
-        const { testInfo, testResponse } = allResults[0];
+        console.log(`🧪 Test Stage: ${testResponse.testInfo.stage}`);
+        console.log(`🎬 Video URL: ${testResponse.videoUrl}`);
+        console.log(`🎵 Audio Provider: ${testResponse.testInfo.audioProvider}`);
+        console.log(`💬 Message: ${testResponse.message}`);
         
         // Generate TTS for test message if needed
         let audioUrl: string | undefined;
@@ -600,9 +599,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             audioUrl = 'data:audio/mpeg;base64,' + ttsResponse.audio.toString('base64');
             console.log(`🎵 Generated TTS audio for stage: ${testResponse.testInfo.stage} using ${testResponse.testInfo.audioProvider}`);
+            console.log(`🎵 Audio URL length: ${audioUrl?.length || 0} characters`);
           } catch (error) {
             console.error('TTS generation failed for test:', error);
+            console.error('Error details:', error.message);
           }
+        } else {
+          console.log(`🔇 Silent stage: ${testResponse.testInfo.stage}`);
         }
         
         return res.json({

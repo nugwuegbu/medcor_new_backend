@@ -278,6 +278,47 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       return await response.json();
     },
     onSuccess: async (data) => {
+      // 🧪 TEST MODE: Check if this is a test protocol response
+      if (data.testMode && data.testInfo) {
+        console.log(`🧪 TEST MODE DETECTED: ${data.testInfo.protocolName}`);
+        console.log(`🎬 Video Mode: ${data.videoMode}, Video URL: ${data.videoUrl}`);
+        console.log(`🎵 Audio Provider: ${data.testInfo.audioProvider}`);
+        
+        // Handle test video display
+        if (data.videoUrl && data.videoUrl.startsWith('/')) {
+          // Placeholder video - show as background video element
+          console.log(`📹 Showing placeholder video: ${data.videoUrl}`);
+          // TODO: Implement placeholder video display logic
+        } else if (data.videoUrl === 'heygen_live') {
+          // HeyGen live avatar
+          console.log(`🤖 Switching to HeyGen live avatar`);
+        }
+        
+        // Handle test audio
+        if (data.audioUrl) {
+          console.log(`🔊 Playing test audio: ${data.audioUrl.substring(0, 50)}...`);
+          try {
+            const audio = new Audio(data.audioUrl);
+            audio.play();
+          } catch (error) {
+            console.error('Failed to play test audio:', error);
+          }
+        }
+        
+        // Add test message to chat
+        const botMessage: Message = {
+          id: `bot_${Date.now()}`,
+          text: data.message,
+          sender: "bot",
+          timestamp: new Date(),
+          avatarResponse: data.avatarResponse,
+          showDoctors: false
+        };
+        
+        setMessages(prev => [...prev, botMessage]);
+        return; // Skip normal processing for test mode
+      }
+      
       // Check if the response contains a nearby search command
       if (data.message.includes("NEARBY_SEARCH:")) {
         console.log("NEARBY_SEARCH detected in response:", data.message);
