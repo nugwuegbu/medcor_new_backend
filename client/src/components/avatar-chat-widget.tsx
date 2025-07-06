@@ -867,7 +867,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   return (
     <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
+      <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm z-50 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-gray-600" />
           <span className="text-gray-700 text-sm">AI Assistant</span>
@@ -887,6 +887,83 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
             <X className="h-5 w-5" />
           </Button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col bg-gradient-to-br from-purple-50 to-blue-50 relative">
+        {/* HeyGen Avatar Background */}
+        <div className="absolute inset-0 z-10">
+          <HeyGenSDKAvatar
+            ref={avatarRef}
+            apiKey={import.meta.env.VITE_HEYGEN_API_KEY || ""}
+            onMessage={(text) => console.log("Avatar message:", text)}
+            isVisible={userHasInteracted}
+            onReady={() => {
+              console.log("Avatar is ready");
+              setIsAvatarReady(true);
+            }}
+          />
+        </div>
+
+        {/* Messages Display */}
+        <div className="flex-1 overflow-y-auto p-4 z-20 relative">
+          <div className="space-y-3">
+            {messages.map((message, index) => (
+              <div
+                key={message.id}
+                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] px-3 py-2 rounded-lg ${
+                    message.sender === "user"
+                      ? "bg-purple-600 text-white"
+                      : "bg-white/90 backdrop-blur-sm text-gray-800 shadow-sm"
+                  }`}
+                >
+                  <p className="text-sm">{message.text}</p>
+                  <p className="text-xs opacity-70 mt-1">
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Chat Input Area */}
+        <div className="p-4 bg-white/90 backdrop-blur-sm border-t border-gray-200 z-30">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 relative">
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your message..."
+                className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                disabled={voiceChatMutation.isPending}
+              />
+              
+              <Button
+                onClick={() => handleSendMessage(inputText)}
+                disabled={!inputText.trim() || voiceChatMutation.isPending}
+                size="sm"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 p-0"
+              >
+                <Send className="h-4 w-4 text-white" />
+              </Button>
+            </div>
+            
+            <BrowserVoiceButton
+              onTranscript={(text) => {
+                handleSendMessage(text);
+              }}
+              disabled={voiceChatMutation.isPending}
+            />
+          </div>
         </div>
       </div>
 
