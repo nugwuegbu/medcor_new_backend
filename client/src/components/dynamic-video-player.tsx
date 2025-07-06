@@ -24,6 +24,8 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
   const [isInitialized, setIsInitialized] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+
 
   // Initialize player on component mount
   useEffect(() => {
@@ -31,28 +33,20 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
     console.log("🎬 Video Player Manager initialized: idle");
   }, [sessionId]);
 
-  // Setup inactivity checker
+  // COMPLETELY REMOVE INACTIVITY CHECKS
   useEffect(() => {
-    // IMPORTANT: NO inactivity checks in HeyGen mode - once activated, stay in HeyGen
-    if (playerState?.mode === 'loop') {
-      // Only check for inactivity in LOOP mode to switch TO HeyGen
-      inactivityTimerRef.current = setInterval(() => {
-        checkInactivity();
-      }, 10000);
-    } else {
-      // Clear timer when in HeyGen mode or any other mode
-      if (inactivityTimerRef.current) {
-        clearInterval(inactivityTimerRef.current);
-        inactivityTimerRef.current = null;
-      }
+    // Clear any existing timers
+    if (inactivityTimerRef.current) {
+      clearInterval(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
     }
-
+    
     return () => {
       if (inactivityTimerRef.current) {
         clearInterval(inactivityTimerRef.current);
       }
     };
-  }, [playerState?.mode]);
+  }, []);
 
   const initializePlayer = async () => {
     try {
@@ -78,29 +72,17 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
   };
 
   const switchToHeyGen = async () => {
-    try {
-      console.log('🎬 Switching to HeyGen mode...');
-      const response = await fetch('/api/video/player/switch-heygen', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        console.log('🎬 Successfully switched to HeyGen mode:', data.playerState);
-        setPlayerState(data.playerState);
-        onModeChange(data.playerState.mode);
-        onUserInteraction();
-        
-        // Make sure HeyGen avatar is visible
-        if (data.playerState.mode === 'heygen') {
-          console.log('🎬 HeyGen mode activated - avatar should be visible');
-        }
-      }
-    } catch (error) {
-      console.error('Failed to switch to HeyGen:', error);
-    }
+    console.log('🎬 FORCE SWITCHING TO HEYGEN MODE');
+    // Update local state
+    const newState = { 
+      ...playerState, 
+      mode: 'heygen' as const,
+      lastInteraction: new Date().toISOString()
+    };
+    setPlayerState(newState);
+    onModeChange('heygen');
+    onUserInteraction();
+    console.log('🎬 HEYGEN MODE FORCED - NO GOING BACK');
   };
 
   const switchToLoop = async () => {
@@ -129,28 +111,8 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
   };
 
   const checkInactivity = async () => {
-    try {
-      const response = await fetch('/api/video/player/check-inactivity', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId })
-      });
-
-      const data = await response.json();
-      if (data.success && data.switched) {
-        setPlayerState(data.playerState);
-        setVideoUrl(data.videoUrl);
-        onModeChange(data.playerState.mode);
-        
-        // Restart video when auto-switching back to loop
-        if (videoRef.current) {
-          videoRef.current.currentTime = 0;
-          videoRef.current.play();
-        }
-      }
-    } catch (error) {
-      console.error('Failed to check inactivity:', error);
-    }
+    // COMPLETELY DISABLED - Never switch back to loop
+    return;
   };
 
   const updateInteraction = async () => {
@@ -217,6 +179,7 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
       {console.log('🎬 RENDER DEBUG - videoUrl:', videoUrl)}
       {playerState.mode === 'loop' && videoUrl ? (
         <video
+          key="loop-video-element" // Force React to unmount/remount on mode change
           ref={videoRef}
           src={videoUrl}
           autoPlay
@@ -247,10 +210,10 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
               }
             }
           }}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover z-10"
         />
       ) : playerState.mode === 'heygen' ? (
-        <div className="absolute inset-0">
+        <div key="heygen-container" className="absolute inset-0 z-20">
           {/* HeyGen avatar will be rendered here by parent component */}
           {console.log('🎬 Rendering HeyGen mode - heyGenProps:', !!heyGenProps)}
           {heyGenProps ? (
