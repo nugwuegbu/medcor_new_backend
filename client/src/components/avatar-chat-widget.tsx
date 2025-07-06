@@ -117,18 +117,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [videoUrl, setVideoUrl] = useState<string>('/waiting_heygen.mp4');
   const [audioProvider, setAudioProvider] = useState<string | null>(null);
   
-  // ADANA State Machine - Advanced Architecture
-  const [playerState, setPlayerState] = useState<'Idle' | 'LightRespond' | 'FullAvatar'>('Idle');
-  const [questionCount, setQuestionCount] = useState<number>(0);
-  const [dynamicVideoUrl, setDynamicVideoUrl] = useState<string>('/waiting_heygen.mp4');
-  const [dynamicAudioProvider, setDynamicAudioProvider] = useState<string | null>(null);
-  const [isUserTyping, setIsUserTyping] = useState<boolean>(false);
-  const [isAvatarSpeaking, setIsAvatarSpeaking] = useState<boolean>(false);
-  const [typingTimer, setTypingTimer] = useState<NodeJS.Timeout | null>(null);
-  const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null);
-  const [shouldActivateHeyGen, setShouldActivateHeyGen] = useState(false);
-  const videoOverlayRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Basic HeyGen avatar state
+  const [shouldActivateHeyGen, setShouldActivateHeyGen] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -293,109 +283,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     }
   };
 
-  // ADANA State Machine Functions - Advanced Architecture
-  const transitionToIdle = () => {
-    console.log('🔄 ADANA State: Transitioning to Idle');
-    setPlayerState('Idle');
-    setDynamicVideoUrl('/waiting_heygen.mp4');
-    setShouldActivateHeyGen(false);
-    setIsAvatarSpeaking(false);
-    startInactivityTimer();
-  };
-
-  const transitionToLightRespond = () => {
-    console.log('🔄 ADANA State: Transitioning to LightRespond');
-    setPlayerState('LightRespond');
-    setDynamicVideoUrl('/speak_heygen.mp4');
-    setIsAvatarSpeaking(true);
-    clearInactivityTimer();
-    incrementQuestionCount();
-  };
-
-  const transitionToFullAvatar = () => {
-    console.log('🔄 ADANA State: Transitioning to FullAvatar');
-    setPlayerState('FullAvatar');
+  // Basic HeyGen avatar functions
+  const initializeHeyGenAvatar = () => {
     setShouldActivateHeyGen(true);
-    clearInactivityTimer();
-    startInactivityTimer();
-  };
-
-  const incrementQuestionCount = () => {
-    setQuestionCount(prev => {
-      const newCount = prev + 1;
-      console.log(`🔢 ADANA Question Count: ${newCount}`);
-      return newCount;
-    });
-  };
-
-  const startInactivityTimer = () => {
-    clearInactivityTimer();
-    const timer = setTimeout(() => {
-      console.log('⏰ ADANA Inactivity timeout - returning to Idle');
-      transitionToIdle();
-    }, 3 * 60 * 1000); // 3 minutes
-    setInactivityTimer(timer);
-  };
-
-  const clearInactivityTimer = () => {
-    if (inactivityTimer) {
-      clearTimeout(inactivityTimer);
-      setInactivityTimer(null);
-    }
-  };
-
-  const syncPlay = async (videoUrl: string, audioUrl: string) => {
-    console.log('🎬 ADANA Sync Play: Video + Audio synchronization');
-    
-    try {
-      // Stop any existing audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-
-      // Load and prepare audio
-      const audio = new Audio(audioUrl);
-      audio.volume = 0.8;
-      audioRef.current = audio;
-
-      // Set video URL
-      setDynamicVideoUrl(videoUrl);
-
-      // Wait for video to be ready, then sync play
-      if (videoOverlayRef.current) {
-        const handleCanPlay = () => {
-          console.log('🎬 ADANA Sync: Starting synchronized playback');
-          
-          // Start both at the same time
-          Promise.all([
-            videoOverlayRef.current?.play(),
-            audio.play()
-          ]).then(() => {
-            console.log('✅ ADANA Sync: Video + Audio playing');
-          }).catch(err => {
-            console.error('❌ ADANA Sync: Playback failed:', err);
-          });
-        };
-
-        videoOverlayRef.current.addEventListener('canplay', handleCanPlay, { once: true });
-
-        // Handle audio end for state transitions
-        audio.addEventListener('ended', () => {
-          console.log('🔇 ADANA Sync: Audio ended, checking transitions');
-          setIsAvatarSpeaking(false);
-          
-          if (questionCount >= 1) { // Changed from 2 to 1 for faster testing
-            transitionToFullAvatar();
-          } else {
-            transitionToIdle();
-          }
-        });
-      }
-
-    } catch (error) {
-      console.error('❌ ADANA Sync: Setup failed:', error);
-    }
   };
 
   // Voice chat mutation
@@ -428,127 +318,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       return await response.json();
     },
     onSuccess: async (data) => {
-      // 🎬 ADANA DYNAMIC VIDEO: Update video states from backend response
-      if (data.videoMode) {
-        setDynamicPlayerMode(data.videoMode);
-        console.log(`🎬 ADANA Video Mode Updated: ${data.videoMode}`);
-      }
-      if (data.videoUrl) {
-        setDynamicVideoUrl(data.videoUrl);
-        console.log(`📹 ADANA Video URL Updated: ${data.videoUrl}`);
-      }
-      if (data.audioProvider !== undefined) {
-        setDynamicAudioProvider(data.audioProvider);
-        console.log(`🎵 ADANA Audio Provider Updated: ${data.audioProvider}`);
-      }
+      // Basic HeyGen avatar activation
       if (data.shouldActivateHeyGen !== undefined) {
         setShouldActivateHeyGen(data.shouldActivateHeyGen);
         console.log(`🤖 HeyGen Activation: ${data.shouldActivateHeyGen}`);
       }
-      
-      // ADANA02 SPEAKING: If backend says we're speaking, activate speaking mode
-      if (data.videoMode === 'speaking' && data.videoUrl === '/speak_heygen.mp4') {
-        setIsAvatarSpeaking(true);
-        console.log(`🎬 ADANA02 SPEAKING MODE ACTIVATED`);
-      }
 
-      // 🧪 TEST MODE: Check if this is a test protocol response
-      if (data.testMode && data.testInfo) {
-        console.log(`🧪 TEST MODE DETECTED: ${data.testInfo.protocolName}`);
-        console.log(`🎬 Video Mode: ${data.videoMode}, Video URL: ${data.videoUrl}`);
-        console.log(`🎵 Audio Provider: ${data.testInfo.audioProvider}`);
-        
-        // Handle test video display with stage progression
-        if (data.videoUrl && data.videoUrl.startsWith('/')) {
-          console.log(`📹 TEST VIDEO: ${data.videoUrl} - Activating placeholder video`);
-          setTestVideoUrl(data.videoUrl);
-          setTestVideoMode(data.videoMode);
-          setIsTestModeActive(true);
-          
-          // Auto-progress through stages for ADANA02 
-          if (data.testInfo.protocolName.includes('ADANA02') && data.testInfo.totalStages > 1) {
-            console.log(`🔄 ADANA02: Starting stage progression...`);
-            
-            // Clear any existing timer
-            if (testStageTimer) {
-              clearTimeout(testStageTimer);
-            }
-            
-            // Set timer for stage transitions (1 second pauses)
-            const timer = setTimeout(() => {
-              console.log(`⏭️ ADANA02: Progressing to next stage...`);
-              // This will be handled by a separate API call for stage progression
-            }, 1000);
-            
-            setTestStageTimer(timer);
-          }
-          
-        } else if (data.videoUrl === 'heygen_live') {
-          console.log(`🤖 TEST VIDEO: HeyGen live avatar - Deactivating placeholder video`);
-          setTestVideoUrl(null);
-          setTestVideoMode(null);
-          setIsTestModeActive(false);
-          
-          // Clear stage timer
-          if (testStageTimer) {
-            clearTimeout(testStageTimer);
-            setTestStageTimer(null);
-          }
-          
-        } else if (data.videoUrl === 'none') {
-          console.log(`🚫 TEST VIDEO: Deactivating all placeholder videos`);
-          setTestVideoUrl(null);
-          setTestVideoMode(null);
-          setIsTestModeActive(false);
-          
-          // Clear stage timer
-          if (testStageTimer) {
-            clearTimeout(testStageTimer);
-            setTestStageTimer(null);
-          }
-        }
-        
-        // Reset input text after test completion
-        setInputText('');
-        
-        // Handle test audio - Play without affecting UI
-        if (data.audioUrl) {
-          console.log(`🔊 TEST AUDIO: Playing ${data.testInfo.audioProvider} voice...`);
-          try {
-            const testAudio = new Audio(data.audioUrl);
-            testAudio.volume = 0.8; // Slightly lower volume for test
-            testAudio.play().then(() => {
-              console.log(`✅ TEST AUDIO: ${data.testInfo.audioProvider} voice played successfully`);
-            }).catch(err => {
-              console.error(`❌ TEST AUDIO: Failed to play ${data.testInfo.audioProvider} voice:`, err);
-            });
-          } catch (error) {
-            console.error('❌ TEST AUDIO: Audio creation failed:', error);
-          }
-        }
-        
-        // Log test results for debugging
-        console.log(`📊 TEST RESULTS SUMMARY:`, {
-          protocol: data.testInfo.protocolName,
-          stage: data.testInfo.currentStage?.name,
-          audioProvider: data.testInfo.audioProvider,
-          videoMode: data.videoMode,
-          success: true
-        });
-        
-        // Add test message to chat
-        const botMessage: Message = {
-          id: `bot_${Date.now()}`,
-          text: data.message,
-          sender: "bot",
-          timestamp: new Date(),
-          avatarResponse: data.avatarResponse,
-          showDoctors: false
-        };
-        
-        setMessages(prev => [...prev, botMessage]);
-        return; // Skip normal processing for test mode
-      }
+
       
       // Check if the response contains a nearby search command
       if (data.message.includes("NEARBY_SEARCH:")) {
