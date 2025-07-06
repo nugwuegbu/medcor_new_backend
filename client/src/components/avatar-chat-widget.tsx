@@ -66,18 +66,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     console.log("🔴 AVATAR CHAT WIDGET - NOT OPEN, RETURNING NULL");
     return null;
   }
-  
-  // Debug: Add visible test element
-  useEffect(() => {
-    const testDiv = document.createElement('div');
-    testDiv.style.cssText = 'position: fixed; bottom: 100px; right: 20px; background: red; color: white; padding: 10px; z-index: 9999; font-size: 20px;';
-    testDiv.textContent = 'CHAT WIDGET SHOULD BE HERE';
-    document.body.appendChild(testDiv);
-    
-    return () => {
-      document.body.removeChild(testDiv);
-    };
-  }, []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [doctorsInputText, setDoctorsInputText] = useState("");
@@ -849,7 +837,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }
 
   return (
-    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
+    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-red-500 rounded-2xl shadow-2xl overflow-hidden flex flex-col border-4 border-yellow-500" style={{ right: '16px', left: 'auto', zIndex: 9999, opacity: 1, display: 'flex' }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
