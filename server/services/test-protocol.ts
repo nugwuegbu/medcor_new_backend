@@ -126,9 +126,14 @@ export class TestProtocol {
     console.log(`🧪 TEST PROTOCOL ACTIVATED: ${protocol.name} for session: ${sessionId}`);
     console.log(`📋 Total test stages: ${protocol.stages.length}`);
 
-    const stageInfo = this.getCurrentStageInfo();
+    const stage = protocol.stages[this.currentStage] || protocol.stages[0];
+    const progress = Math.round(((this.currentStage + 1) / protocol.stages.length) * 100);
+
     return {
-      ...stageInfo,
+      isTestMode: this.isTestMode,
+      currentStage: stage,
+      totalStages: protocol.stages.length,
+      progress,
       protocolName: protocol.name,
       protocolDescription: protocol.description
     };
