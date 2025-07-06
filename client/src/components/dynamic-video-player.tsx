@@ -73,16 +73,34 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
 
   const switchToHeyGen = async () => {
     console.log('🎬 FORCE SWITCHING TO HEYGEN MODE');
-    // Update local state
-    const newState = { 
-      ...playerState, 
-      mode: 'heygen' as const,
-      lastInteraction: new Date().toISOString()
-    };
-    setPlayerState(newState);
-    onModeChange('heygen');
-    onUserInteraction();
-    console.log('🎬 HEYGEN MODE FORCED - NO GOING BACK');
+    
+    try {
+      // Tell backend to switch to HeyGen mode
+      const response = await fetch('/api/video/player/switch-heygen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setPlayerState(data.playerState);
+        onModeChange('heygen');
+        onUserInteraction();
+        console.log('🎬 HEYGEN MODE FORCED - Backend updated');
+      }
+    } catch (error) {
+      console.error('Failed to switch to HeyGen:', error);
+      // Fallback to local state update
+      const newState = { 
+        ...playerState, 
+        mode: 'heygen' as const,
+        lastInteraction: new Date().toISOString()
+      };
+      setPlayerState(newState);
+      onModeChange('heygen');
+      onUserInteraction();
+    }
   };
 
   const switchToLoop = async () => {
@@ -141,18 +159,18 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
   };
 
   // Handle user interaction (message send, typing, etc.)
-  const handleUserInput = () => {
-    updateInteraction();
+  const handleUserInput = async () => {
+    await updateInteraction();
     if (playerState?.mode === 'loop') {
-      switchToHeyGen();
+      await switchToHeyGen();
     }
   };
 
   // Expose interaction handler to parent component
   useEffect(() => {
-    const handleInteraction = () => {
+    const handleInteraction = async () => {
       console.log('🎬 Video Player Interaction triggered - Current mode:', playerState?.mode);
-      handleUserInput();
+      await handleUserInput();
     };
     
     (window as any).triggerVideoPlayerInteraction = handleInteraction;
