@@ -2106,7 +2106,38 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             disabled={voiceChatMutation.isPending}
           />
         </div>
-        
+
+        {/* Chat Input Area - Main Interface */}
+        <div className="mt-4 flex items-center gap-2 px-4 pb-4">
+          <div className="flex-1 relative">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+              disabled={voiceChatMutation.isPending}
+            />
+            
+            <Button
+              onClick={() => handleSendMessage(inputText)}
+              disabled={!inputText.trim() || voiceChatMutation.isPending}
+              size="sm"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300"
+            >
+              <Send className="h-4 w-4 text-white" />
+            </Button>
+          </div>
+          
+          <BrowserVoiceButton
+            onTranscript={(text) => {
+              handleSendMessage(text);
+            }}
+            disabled={voiceChatMutation.isPending}
+          />
+        </div>
 
       </div>
 
