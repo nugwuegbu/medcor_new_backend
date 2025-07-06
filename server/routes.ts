@@ -42,7 +42,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate avatar response
       let avatarResponse = null;
       try {
-        avatarResponse = await heygenService.generateAvatarResponse(message, aiResponse);
+        avatarResponse = await heygenService.generateAvatarResponse({
+          text: aiResponse,
+          sessionId,
+          language
+        });
       } catch (error) {
         console.error('Error generating avatar response:', error);
         avatarResponse = { 

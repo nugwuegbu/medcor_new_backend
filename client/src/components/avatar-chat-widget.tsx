@@ -828,7 +828,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 handleSendMessage(transcript);
                 setDoctorsInputText('');
               }}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-600 hover:bg-purple-700 transition-colors"
             />
             <button
               onClick={() => {
