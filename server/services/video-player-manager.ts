@@ -62,21 +62,16 @@ export class VideoPlayerManager {
     return state;
   }
 
-  // Switch back to loop mode after timeout
+  // Switch back to loop mode after timeout - DISABLED
   switchToLoop(sessionId: string): VideoPlayerState {
     const state = this.playerStates.get(sessionId);
     if (!state) {
       throw new Error(`Player session ${sessionId} not found`);
     }
 
-    state.mode = 'loop';
-    state.isPlaying = true;
-    state.lastInteraction = new Date();
-    state.loopCount++;
-    
-    console.log(`🎬 Switching back to loop mode for session: ${sessionId}, loop count: ${state.loopCount}`);
-    this.playerStates.set(sessionId, state);
-    return state;
+    // DISABLED: Never switch back to loop once HeyGen is activated
+    console.log(`🎬 Ignoring switch to loop request for session: ${sessionId} - staying in HeyGen mode`);
+    return state; // Return current state without changing mode
   }
 
   // Check if should switch back to loop mode due to inactivity

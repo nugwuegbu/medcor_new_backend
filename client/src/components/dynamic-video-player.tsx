@@ -33,12 +33,14 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
 
   // Setup inactivity checker
   useEffect(() => {
-    if (playerState?.mode === 'heygen') {
-      // Check for inactivity every 10 seconds
+    // IMPORTANT: NO inactivity checks in HeyGen mode - once activated, stay in HeyGen
+    if (playerState?.mode === 'loop') {
+      // Only check for inactivity in LOOP mode to switch TO HeyGen
       inactivityTimerRef.current = setInterval(() => {
         checkInactivity();
       }, 10000);
     } else {
+      // Clear timer when in HeyGen mode or any other mode
       if (inactivityTimerRef.current) {
         clearInterval(inactivityTimerRef.current);
         inactivityTimerRef.current = null;
