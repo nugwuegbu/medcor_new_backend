@@ -7,12 +7,19 @@ export interface AvatarState {
 }
 
 export interface AvatarResponse {
-  mode: 'waiting' | 'speaking' | 'heygen_active' | 'elevenlabs_fallback';
+  mode: 'waiting' | 'speaking' | 'heygen_active' | 'elevenlabs_fallback' | 'waiting_video' | 'speak_video_with_voice' | 'heygen_transition' | 'test_complete';
   videoUrl?: string;
   audioUrl?: string;
   sessionId?: string;
   message?: string;
   shouldTransition?: boolean;
+  testMode?: boolean;
+  testInfo?: {
+    stage: string;
+    description: string;
+    audioProvider: string;
+    duration: number;
+  };
 }
 
 export class AvatarOrchestratorClient {

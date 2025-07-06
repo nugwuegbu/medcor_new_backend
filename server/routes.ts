@@ -546,12 +546,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Voice chat request: ${message} (session: ${sessionId})`);
 
-      // 🧪 TEST PROTOCOL: Check for adana01 trigger
-      if (testProtocol.detectTestTrigger(message)) {
-        console.log(`🧪 TEST TRIGGER DETECTED: adana01 in message "${message}"`);
+      // 🧪 TEST PROTOCOL: Check for test triggers
+      const triggers = testProtocol.detectTestTrigger(message);
+      if (triggers.length > 0) {
+        console.log(`🧪 TEST TRIGGERS DETECTED: ${triggers.join(', ')} in message "${message}"`);
         
-        const testInfo = await testProtocol.executeTestProtocol(sessionId);
-        const testResponse = await testProtocol.generateTestResponse(testInfo.currentStage);
+        // If multiple triggers, run them sequentially
+        const allResults = [];
+        for (const trigger of triggers) {
+          const testInfo = await testProtocol.executeTestProtocol(sessionId, trigger);
+          const testResponse = await testProtocol.generateTestResponse(testInfo.currentStage);
+          allResults.push({ trigger, testInfo, testResponse });
+        }
+        
+        // Use the first test for the response
+        const { testInfo, testResponse } = allResults[0];
         
         // Generate TTS for test message if needed
         let audioUrl: string | undefined;
@@ -566,12 +575,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 'en', 
                 'elevenlabs'
               );
-            } else if (testResponse.testInfo.audioProvider === 'heygen_voice') {
-              // For HeyGen stage, use ElevenLabs with special message
+            } else if (testResponse.testInfo.audioProvider === 'openai') {
+              // Use OpenAI TTS
               ttsResponse = await textToSpeechService.generateSpeech(
                 testResponse.message, 
                 'en', 
-                'elevenlabs'
+                'openai'
+              );
+            } else if (testResponse.testInfo.audioProvider === 'heygen') {
+              // HeyGen voice - use avatar's built-in TTS (mark as HeyGen)
+              ttsResponse = await textToSpeechService.generateSpeech(
+                testResponse.message, 
+                'en', 
+                'elevenlabs' // Use ElevenLabs as fallback for HeyGen test
               );
             } else {
               // Fallback to OpenAI
@@ -592,13 +608,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({
           message: testResponse.message,
           testMode: true,
-          testInfo: testResponse.testInfo,
+          testInfo: {
+            ...testResponse.testInfo,
+            protocolName: testInfo.protocolName,
+            protocolDescription: testInfo.protocolDescription,
+            allTriggers: triggers,
+            totalProtocols: triggers.length
+          },
           videoMode: testResponse.mode,
           videoUrl: testResponse.videoUrl,
           audioUrl,
           sessionId,
           success: true,
-          instructions: "Test Protocol Active - Watch video transitions and listen for audio changes"
+          instructions: `Test Protocol Active: ${triggers.join(' + ')} - Watch video transitions and listen for audio changes`
         });
       }
 

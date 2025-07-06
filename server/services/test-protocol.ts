@@ -2,74 +2,136 @@ interface TestProtocolStage {
   stage: string;
   description: string;
   videoUrl?: string;
-  audioProvider?: 'elevenlabs' | 'openai' | 'silent';
+  audioProvider?: 'elevenlabs' | 'openai' | 'heygen' | 'silent';
   duration: number;
   message: string;
+}
+
+interface TestProtocolConfig {
+  name: string;
+  description: string;
+  stages: TestProtocolStage[];
 }
 
 export class TestProtocol {
   private isTestMode = false;
   private currentStage = 0;
-  private testStages: TestProtocolStage[] = [
-    {
-      stage: 'waiting',
-      description: 'Waiting video with ElevenLabs voice',
-      videoUrl: '/waiting_heygen.mp4',
-      audioProvider: 'elevenlabs',
-      duration: 4000,
-      message: 'This is waiting video. My voice is ElevenLabs. You should see a static avatar video with my voice speaking.'
+  private currentProtocol: string = '';
+  
+  private testProtocols: { [key: string]: TestProtocolConfig } = {
+    'adana01': {
+      name: 'ADANA01: Waiting Video + ElevenLabs + HeyGen',
+      description: 'Test waiting video with ElevenLabs voice, then HeyGen avatar',
+      stages: [
+        {
+          stage: 'waiting_video',
+          description: 'Waiting video with ElevenLabs voice',
+          videoUrl: '/waiting_heygen.mp4',
+          audioProvider: 'elevenlabs',
+          duration: 4000,
+          message: 'ADANA01 Test: This is waiting video. My voice is ElevenLabs voice. You should hear clear audio with static avatar.'
+        },
+        {
+          stage: 'heygen_active',
+          description: 'HeyGen avatar with HeyGen voice',
+          videoUrl: 'heygen_live',
+          audioProvider: 'heygen',
+          duration: 5000,
+          message: 'ADANA01 Test: Now I am HeyGen voice with HeyGen avatar. This is realistic interactive avatar with natural voice.'
+        }
+      ]
     },
-    {
-      stage: 'speaking_placeholder',
-      description: 'Mouth moving video with ElevenLabs voice',
-      videoUrl: '/speak_heygen.mp4',
-      audioProvider: 'elevenlabs',
-      duration: 5000,
-      message: 'This is mouth moving video. ElevenLabs voice continues. You should see animated mouth movements synchronized with my speech.'
+    'adana02': {
+      name: 'ADANA02: Speaking Video + OpenAI + HeyGen',
+      description: 'Test speaking video with OpenAI voice, then HeyGen avatar',
+      stages: [
+        {
+          stage: 'speak_video_with_voice',
+          description: 'Speaking video with OpenAI voice',
+          videoUrl: '/speak_heygen.mp4',
+          audioProvider: 'openai',
+          duration: 4000,
+          message: 'ADANA02 Test: This is speaking video with mouth movements. My voice is OpenAI voice. You should hear clear audio with animated mouth.'
+        },
+        {
+          stage: 'heygen_active',
+          description: 'HeyGen avatar with HeyGen voice',
+          videoUrl: 'heygen_live',
+          audioProvider: 'heygen',
+          duration: 5000,
+          message: 'ADANA02 Test: Now I am HeyGen voice with HeyGen avatar. This is realistic interactive avatar with natural voice.'
+        }
+      ]
     },
-    {
-      stage: 'heygen_transition',
-      description: 'Switching to HeyGen realistic interactive avatar',
-      videoUrl: 'heygen_live',
-      audioProvider: 'silent',
-      duration: 2000,
-      message: 'Now I switch to HeyGen realistic interactive avatar. Connection establishing.'
-    },
-    {
-      stage: 'heygen_active',
-      description: 'HeyGen connection active with realistic avatar',
-      videoUrl: 'heygen_live',
-      audioProvider: 'heygen_voice',
-      duration: 8000,
-      message: 'I am HeyGen connection. This is realistic interactive avatar. Full synchronization active with natural movements and expressions.'
-    },
-    {
-      stage: 'test_complete',
-      description: 'Test protocol completed',
-      videoUrl: '/waiting_heygen.mp4',
-      audioProvider: 'silent',
-      duration: 2000,
-      message: 'Test protocol completed successfully. All systems verified.'
+    'adana03': {
+      name: 'ADANA03: All Voices Test',
+      description: 'Test all voice providers with different videos',
+      stages: [
+        {
+          stage: 'elevenlabs_test',
+          description: 'ElevenLabs voice test',
+          videoUrl: '/waiting_heygen.mp4',
+          audioProvider: 'elevenlabs',
+          duration: 4000,
+          message: 'ADANA03 Test: I am ElevenLabs voice. This is waiting video with ElevenLabs voice provider.'
+        },
+        {
+          stage: 'openai_test',
+          description: 'OpenAI voice test',
+          videoUrl: '/speak_heygen.mp4',
+          audioProvider: 'openai',
+          duration: 4000,
+          message: 'ADANA03 Test: I am OpenAI voice. This is speaking video with OpenAI voice provider.'
+        },
+        {
+          stage: 'heygen_test',
+          description: 'HeyGen voice test',
+          videoUrl: 'heygen_live',
+          audioProvider: 'heygen',
+          duration: 5000,
+          message: 'ADANA03 Test: I am HeyGen voice. This is HeyGen avatar with HeyGen voice provider.'
+        }
+      ]
     }
-  ];
+  };
 
-  detectTestTrigger(message: string): boolean {
-    return message.toLowerCase().includes('adana01');
+  detectTestTrigger(message: string): string[] {
+    const msg = message.toLowerCase().replace(/[\s,]+/g, ' '); // Normalize spaces and commas
+    const triggers: string[] = [];
+    
+    if (msg.includes('adana01')) triggers.push('adana01');
+    if (msg.includes('adana02')) triggers.push('adana02');
+    if (msg.includes('adana03')) triggers.push('adana03');
+    
+    return triggers;
   }
 
-  async executeTestProtocol(sessionId: string): Promise<{
+  async executeTestProtocol(sessionId: string, protocolName: string): Promise<{
     isTestMode: boolean;
     currentStage: TestProtocolStage;
     totalStages: number;
     progress: number;
+    protocolName: string;
+    protocolDescription: string;
   }> {
+    const protocol = this.testProtocols[protocolName];
+    if (!protocol) {
+      throw new Error(`Unknown test protocol: ${protocolName}`);
+    }
+
     this.isTestMode = true;
     this.currentStage = 0;
+    this.currentProtocol = protocolName;
 
-    console.log(`🧪 TEST PROTOCOL ACTIVATED for session: ${sessionId}`);
-    console.log(`📋 Total test stages: ${this.testStages.length}`);
+    console.log(`🧪 TEST PROTOCOL ACTIVATED: ${protocol.name} for session: ${sessionId}`);
+    console.log(`📋 Total test stages: ${protocol.stages.length}`);
 
-    return this.getCurrentStageInfo();
+    const stageInfo = this.getCurrentStageInfo();
+    return {
+      ...stageInfo,
+      protocolName: protocol.name,
+      protocolDescription: protocol.description
+    };
   }
 
   async nextStage(): Promise<{
@@ -109,13 +171,18 @@ export class TestProtocol {
     totalStages: number;
     progress: number;
   } {
-    const stage = this.testStages[this.currentStage] || this.testStages[0];
-    const progress = Math.round(((this.currentStage + 1) / this.testStages.length) * 100);
+    const protocol = this.testProtocols[this.currentProtocol];
+    if (!protocol) {
+      throw new Error(`No active protocol: ${this.currentProtocol}`);
+    }
+    
+    const stage = protocol.stages[this.currentStage] || protocol.stages[0];
+    const progress = Math.round(((this.currentStage + 1) / protocol.stages.length) * 100);
 
     return {
       isTestMode: this.isTestMode,
       currentStage: stage,
-      totalStages: this.testStages.length,
+      totalStages: protocol.stages.length,
       progress
     };
   }
