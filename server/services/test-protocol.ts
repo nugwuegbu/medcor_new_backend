@@ -17,6 +17,8 @@ export class TestProtocol {
   private isTestMode = false;
   private currentStage = 0;
   private currentProtocol: string = '';
+  private stageTimer: NodeJS.Timeout | null = null;
+  private sessionStages: Map<string, { currentStage: number; protocolName: string }> = new Map();
   
   private testProtocols: { [key: string]: TestProtocolConfig } = {
     'adana01': {
@@ -111,15 +113,26 @@ export class TestProtocol {
       throw new Error(`Unknown test protocol: ${protocolName}`);
     }
 
+    // Initialize or get session stage data
+    if (!this.sessionStages.has(sessionId)) {
+      this.sessionStages.set(sessionId, { currentStage: 0, protocolName });
+    }
+    
+    const sessionData = this.sessionStages.get(sessionId)!;
     this.isTestMode = true;
-    this.currentStage = 0;
+    this.currentStage = sessionData.currentStage;
     this.currentProtocol = protocolName;
 
     console.log(`🧪 TEST PROTOCOL ACTIVATED: ${protocol.name} for session: ${sessionId}`);
-    console.log(`📋 Total test stages: ${protocol.stages.length}`);
+    console.log(`📋 Total test stages: ${protocol.stages.length}, Current stage: ${this.currentStage}`);
 
     const stage = protocol.stages[this.currentStage] || protocol.stages[0];
     const progress = Math.round(((this.currentStage + 1) / protocol.stages.length) * 100);
+
+    // Auto-advance to next stage after stage duration (except for single-stage protocols)
+    if (protocol.stages.length > 1) {
+      this.scheduleNextStage(sessionId, protocolName, stage.duration);
+    }
 
     return {
       isTestMode: this.isTestMode,
@@ -129,6 +142,78 @@ export class TestProtocol {
       protocolName: protocol.name,
       protocolDescription: protocol.description
     };
+  }
+
+  private scheduleNextStage(sessionId: string, protocolName: string, duration: number): void {
+    // Clear existing timer
+    if (this.stageTimer) {
+      clearTimeout(this.stageTimer);
+    }
+
+    this.stageTimer = setTimeout(() => {
+      this.advanceToNextStage(sessionId, protocolName);
+    }, duration);
+  }
+
+  async advanceToNextStage(sessionId: string, protocolName: string): Promise<{
+    hasNextStage: boolean;
+    currentStage?: TestProtocolStage;
+    totalStages: number;
+    progress: number;
+  }> {
+    const protocol = this.testProtocols[protocolName];
+    if (!protocol) {
+      return { hasNextStage: false, totalStages: 0, progress: 100 };
+    }
+
+    const sessionData = this.sessionStages.get(sessionId);
+    if (!sessionData) {
+      return { hasNextStage: false, totalStages: protocol.stages.length, progress: 100 };
+    }
+
+    const nextStageIndex = sessionData.currentStage + 1;
+    
+    if (nextStageIndex < protocol.stages.length) {
+      // Advance to next stage
+      sessionData.currentStage = nextStageIndex;
+      this.currentStage = nextStageIndex;
+      
+      const stage = protocol.stages[nextStageIndex];
+      const progress = Math.round(((nextStageIndex + 1) / protocol.stages.length) * 100);
+      
+      console.log(`🔄 STAGE PROGRESSION: ${protocolName} → Stage ${nextStageIndex + 1}/${protocol.stages.length}: ${stage.stage}`);
+      
+      // Schedule next stage if not the last one
+      if (nextStageIndex + 1 < protocol.stages.length) {
+        this.scheduleNextStage(sessionId, protocolName, stage.duration);
+      }
+      
+      return {
+        hasNextStage: true,
+        currentStage: stage,
+        totalStages: protocol.stages.length,
+        progress
+      };
+    } else {
+      // Protocol completed
+      console.log(`✅ TEST PROTOCOL COMPLETED: ${protocolName} for session: ${sessionId}`);
+      this.sessionStages.delete(sessionId);
+      this.isTestMode = false;
+      
+      return {
+        hasNextStage: false,
+        totalStages: protocol.stages.length,
+        progress: 100
+      };
+    }
+  }
+
+  cleanupSession(sessionId: string): void {
+    this.sessionStages.delete(sessionId);
+    if (this.stageTimer) {
+      clearTimeout(this.stageTimer);
+      this.stageTimer = null;
+    }
   }
 
   async nextStage(): Promise<{
@@ -162,15 +247,57 @@ export class TestProtocol {
     };
   }
 
-  getCurrentStageInfo(): {
+  getCurrentStageInfo(sessionId?: string): {
     isTestMode: boolean;
-    currentStage: TestProtocolStage;
+    currentStage: TestProtocolStage | null;
+    currentStageIndex: number;
     totalStages: number;
     progress: number;
+    protocolName: string;
   } {
+    // If sessionId provided, use session-specific data
+    if (sessionId) {
+      const sessionData = this.sessionStages.get(sessionId);
+      if (sessionData) {
+        const protocol = this.testProtocols[sessionData.protocolName];
+        if (protocol) {
+          const stage = protocol.stages[sessionData.currentStage] || protocol.stages[0];
+          const progress = Math.round(((sessionData.currentStage + 1) / protocol.stages.length) * 100);
+          
+          return {
+            isTestMode: true,
+            currentStage: stage,
+            currentStageIndex: sessionData.currentStage,
+            totalStages: protocol.stages.length,
+            progress,
+            protocolName: protocol.name
+          };
+        }
+      }
+    }
+    
+    // Fallback to global state
+    if (!this.isTestMode || !this.currentProtocol) {
+      return {
+        isTestMode: false,
+        currentStage: null,
+        currentStageIndex: 0,
+        totalStages: 0,
+        progress: 0,
+        protocolName: ''
+      };
+    }
+    
     const protocol = this.testProtocols[this.currentProtocol];
     if (!protocol) {
-      throw new Error(`No active protocol: ${this.currentProtocol}`);
+      return {
+        isTestMode: false,
+        currentStage: null,
+        currentStageIndex: 0,
+        totalStages: 0,
+        progress: 0,
+        protocolName: ''
+      };
     }
     
     const stage = protocol.stages[this.currentStage] || protocol.stages[0];
@@ -179,8 +306,10 @@ export class TestProtocol {
     return {
       isTestMode: this.isTestMode,
       currentStage: stage,
+      currentStageIndex: this.currentStage,
       totalStages: protocol.stages.length,
-      progress
+      progress,
+      protocolName: protocol.name
     };
   }
 

@@ -925,6 +925,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test Protocol endpoints
+  app.get('/api/test-protocol/status/:sessionId', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const status = testProtocol.getCurrentStageInfo(sessionId);
+      
+      res.json({
+        sessionId,
+        isTestMode: status.isTestMode,
+        currentStage: status.currentStage,
+        currentStageIndex: status.currentStageIndex,
+        totalStages: status.totalStages,
+        progress: status.progress,
+        protocolName: status.protocolName
+      });
+    } catch (error) {
+      console.error('Test protocol status error:', error);
+      res.status(500).json({ 
+        error: 'Failed to get test protocol status',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // API testing endpoints
   app.post("/api/test/heygen", async (req, res) => {
     try {
