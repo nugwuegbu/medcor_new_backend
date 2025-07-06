@@ -104,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         response: aiResponse, 
         avatarResponse: avatarResponse 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Voice chat error:', error);
       res.status(500).json({ 
         error: "Failed to process voice chat",

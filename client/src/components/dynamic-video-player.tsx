@@ -183,6 +183,19 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
     }
   }, [playerState, updateInteraction, switchToHeyGen]);
 
+  // CRITICAL FIX: Force video pause when switching to heygen mode
+  useEffect(() => {
+    if (playerState?.mode === 'heygen' && videoRef.current) {
+      console.log('🛑 CRITICAL FIX: FORCING VIDEO PAUSE - Mode is heygen');
+      const video = videoRef.current;
+      video.pause();
+      video.currentTime = 0;
+      // Remove src to completely stop video
+      video.removeAttribute('src');
+      video.load();
+    }
+  }, [playerState?.mode]);
+
   // Expose interaction handler to parent component
   useEffect(() => {
     const handleInteraction = async () => {

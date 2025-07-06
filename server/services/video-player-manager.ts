@@ -26,15 +26,25 @@ export class VideoPlayerManager {
 
   // Initialize player for session  
   async initializePlayer(sessionId: string, videoId: string = 'adana01'): Promise<VideoPlayerState> {
-    // CRITICAL: Check if player already exists and preserve its mode
-    const existingState = this.playerStates.get(sessionId);
+    // CRITICAL: Clean up any existing sessions first to prevent conflicts
+    console.log(`🧹 Cleaning up existing sessions before creating ${sessionId}`);
+    const existingSessions = Array.from(this.playerStates.keys());
     
+    // If this exact session exists, preserve its mode
+    const existingState = this.playerStates.get(sessionId);
     if (existingState) {
       console.log(`🎬 Player already exists for session ${sessionId} with mode: ${existingState.mode}`);
-      // If player is in HeyGen mode, don't reset to loop
       if (existingState.mode === 'heygen') {
         console.log(`🚫 Preserving HeyGen mode - NOT resetting to loop`);
         return existingState;
+      }
+    }
+    
+    // Clean up OTHER sessions to prevent conflicts
+    for (const otherSessionId of existingSessions) {
+      if (otherSessionId !== sessionId) {
+        console.log(`🗑️ Removing conflicting session: ${otherSessionId}`);
+        this.playerStates.delete(otherSessionId);
       }
     }
 
@@ -54,7 +64,7 @@ export class VideoPlayerManager {
     };
 
     this.playerStates.set(sessionId, playerState);
-    console.log(`🎬 Video Player Manager initialized: ${playerState.mode}`);
+    console.log(`🎬 Video Player Manager initialized: ${playerState.mode} (cleaned up ${existingSessions.length - 1} other sessions)`);
     return playerState;
   }
 
