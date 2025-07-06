@@ -657,8 +657,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       }
       
       // 🔊 ADANA STATE MACHINE: Trigger LightRespond for audio + video sync
-      if (data.audioUrl && !data.testMode) {
+      if (data.audioUrl) {
         console.log(`🔊 ADANA State Machine: Triggering LightRespond with synchronized playback`);
+        console.log(`🎵 Audio URL length: ${data.audioUrl.length} characters`);
         transitionToLightRespond();
         syncPlay('/speak_heygen.mp4', data.audioUrl);
       }
