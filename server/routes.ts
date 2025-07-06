@@ -889,14 +889,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Avatar response generated:`, avatarResponse);
 
       // Save chat messages
-      await storage.createChatMessage({
+      const chatMessageData = {
         sessionId,
         message,
         response: aiResponse,
         language,
         avatarResponse: avatarResponse,
         userId: userId || null
-      });
+      };
+      
+      console.log('Attempting to save chat message with data:', chatMessageData);
+      
+      try {
+        await storage.createChatMessage(chatMessageData);
+        console.log('Chat message saved successfully');
+      } catch (dbError) {
+        console.error('Database error when saving chat message:', dbError);
+        throw dbError;
+      }
 
       res.json({
         message: aiResponse,
