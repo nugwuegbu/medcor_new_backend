@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, varchar, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -77,6 +77,20 @@ export const faceRecognitionLogs = pgTable("face_recognition_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const videos = pgTable("videos", {
+  id: varchar("id").primaryKey(),
+  filename: varchar("filename").notNull(),
+  originalName: varchar("original_name"),
+  url: varchar("url").notNull(),
+  duration: integer("duration").notNull(), // seconds
+  fileSize: integer("file_size"), // bytes
+  mimeType: varchar("mime_type"),
+  purpose: varchar("purpose").default("adana01"), // "adana01", "avatar_loop", etc.
+  isActive: boolean("is_active").default(true),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  metadata: jsonb("metadata") // Additional video data
+});
+
 export const insertDoctorSchema = createInsertSchema(doctors).omit({
   id: true,
 });
@@ -110,3 +124,8 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export const insertVideoSchema = createInsertSchema(videos);
+
+export type Video = typeof videos.$inferSelect;
+export type InsertVideo = z.infer<typeof insertVideoSchema>;

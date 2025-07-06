@@ -1,3 +1,6 @@
+import { storage } from '../storage';
+import { type Video, type InsertVideo } from '@shared/schema';
+
 // Video Player Manager - Dynamic video loop system with HeyGen integration
 export interface VideoPlayerState {
   id: string;
@@ -9,18 +12,9 @@ export interface VideoPlayerState {
   sessionActive: boolean;
 }
 
-export interface VideoUploadData {
-  id: string;
-  filename: string;
-  url: string;
-  duration: number; // in seconds
-  uploadedAt: Date;
-}
-
 export class VideoPlayerManager {
   private static instance: VideoPlayerManager;
   private playerStates: Map<string, VideoPlayerState> = new Map();
-  private uploadedVideos: Map<string, VideoUploadData> = new Map();
   private readonly INTERACTION_TIMEOUT = 180000; // 3 minutes in milliseconds
 
   static getInstance(): VideoPlayerManager {
@@ -30,9 +24,11 @@ export class VideoPlayerManager {
     return VideoPlayerManager.instance;
   }
 
-  // Initialize player for session
-  initializePlayer(sessionId: string, videoId: string = 'adana01'): VideoPlayerState {
-    const video = this.uploadedVideos.get(videoId);
+  // Initialize player for session  
+  async initializePlayer(sessionId: string, videoId: string = 'adana01'): Promise<VideoPlayerState> {
+    console.log(`📹 Looking for video: ${videoId}`);
+    const video = await storage.getVideo(videoId);
+    console.log(`📹 Found video:`, video);
     if (!video) {
       throw new Error(`Video ${videoId} not found`);
     }
@@ -102,19 +98,20 @@ export class VideoPlayerManager {
   }
 
   // Upload a new video
-  uploadVideo(videoData: VideoUploadData): void {
-    this.uploadedVideos.set(videoData.id, videoData);
-    console.log(`📹 Video uploaded: ${videoData.id} - ${videoData.filename}`);
+  async uploadVideo(videoData: InsertVideo): Promise<Video> {
+    const video = await storage.createVideo(videoData);
+    console.log(`📹 Video uploaded to storage: ${video.id} - ${video.filename}`);
+    return video;
   }
 
   // Get video data
-  getVideo(videoId: string): VideoUploadData | null {
-    return this.uploadedVideos.get(videoId) || null;
+  async getVideo(videoId: string): Promise<Video | null> {
+    return await storage.getVideo(videoId) || null;
   }
 
   // Get all uploaded videos
-  getAllVideos(): VideoUploadData[] {
-    return Array.from(this.uploadedVideos.values());
+  async getAllVideos(): Promise<Video[]> {
+    return await storage.getAllVideos();
   }
 
   // Update interaction timestamp
@@ -146,8 +143,8 @@ export class VideoPlayerManager {
   }
 
   // Get loop video URL for continuous playback
-  getLoopVideoUrl(videoId: string): string | null {
-    const video = this.uploadedVideos.get(videoId);
+  async getLoopVideoUrl(videoId: string): Promise<string | null> {
+    const video = await storage.getVideo(videoId);
     return video ? video.url : null;
   }
 }

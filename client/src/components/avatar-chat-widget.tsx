@@ -10,6 +10,7 @@ import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
 import InfoOverlay from "./info-overlay";
+import DynamicVideoPlayer from "./dynamic-video-player";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -63,6 +64,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [doctorsInputText, setDoctorsInputText] = useState("");
   const [recordsInputText, setRecordsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
+  const [videoPlayerMode, setVideoPlayerMode] = useState<'loop' | 'heygen' | 'idle'>('loop');
   const [showCalendar, setShowCalendar] = useState(false);
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -395,6 +397,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
+
+    // Trigger video player interaction (switch to HeyGen mode)
+    if ((window as any).triggerVideoPlayerInteraction) {
+      (window as any).triggerVideoPlayerInteraction();
+    }
 
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
@@ -895,19 +902,23 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           }}>
           {isOpen && !showDoctorList && !showRecordsList && (
             <>
-              {/* Show HeyGen avatar when NOT in specific list views */}
-              <HeyGenSDKAvatar 
-                ref={avatarRef}
-                key="single-avatar-instance"
-                apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
-                isVisible={true}
-                onMessage={(text) => {
-                  console.log("Avatar message:", text);
-                }}
-                onReady={() => {
-                  console.log("Avatar is ready");
-                  setHasGreeted(true);
-                  // Don't send automatic greeting - wait for user interaction
+              {/* adana01 Dynamic Video Player - replaces HeyGen when idle */}
+              <DynamicVideoPlayer
+                sessionId={sessionId}
+                onModeChange={(mode) => setVideoPlayerMode(mode)}
+                heyGenProps={{
+                  ref: avatarRef,
+                  key: "single-avatar-instance",
+                  apiKey: "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg==",
+                  isVisible: true,
+                  onMessage: (text) => {
+                    console.log("Avatar message:", text);
+                  },
+                  onReady: () => {
+                    console.log("Avatar is ready");
+                    setHasGreeted(true);
+                    // Don't send automatic greeting - wait for user interaction
+                  }
                 }}
               />
             </>

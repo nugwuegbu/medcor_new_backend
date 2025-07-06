@@ -1,4 +1,6 @@
-import { doctors, appointments, chatMessages, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser } from "@shared/schema";
+import { doctors, appointments, chatMessages, videos, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser, type Video, type InsertVideo } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -20,6 +22,12 @@ export interface IStorage {
   
   getChatMessages(sessionId: string): Promise<ChatMessage[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  
+  getAllVideos(): Promise<Video[]>;
+  getVideo(id: string): Promise<Video | undefined>;
+  createVideo(video: InsertVideo): Promise<Video>;
+  updateVideo(id: string, updates: Partial<Video>): Promise<Video>;
+  deleteVideo(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -27,6 +35,7 @@ export class MemStorage implements IStorage {
   private doctors: Map<number, Doctor>;
   private appointments: Map<number, Appointment>;
   private chatMessages: Map<number, ChatMessage>;
+  private videos: Map<string, Video>;
   private currentUserId: number;
   private currentDoctorId: number;
   private currentAppointmentId: number;
@@ -37,6 +46,7 @@ export class MemStorage implements IStorage {
     this.doctors = new Map();
     this.appointments = new Map();
     this.chatMessages = new Map();
+    this.videos = new Map();
     this.currentUserId = 1;
     this.currentDoctorId = 1;
     this.currentAppointmentId = 1;
@@ -262,6 +272,143 @@ export class MemStorage implements IStorage {
     this.chatMessages.set(id, message);
     return message;
   }
+
+  // Video operations
+  async getAllVideos(): Promise<Video[]> {
+    return Array.from(this.videos.values());
+  }
+
+  async getVideo(id: string): Promise<Video | undefined> {
+    return this.videos.get(id);
+  }
+
+  async createVideo(insertVideo: InsertVideo): Promise<Video> {
+    const video: Video = {
+      ...insertVideo,
+      uploadedAt: insertVideo.uploadedAt || new Date()
+    };
+    this.videos.set(video.id, video);
+    console.log(`📹 Video stored in memory: ${video.id} (${video.duration}s)`);
+    return video;
+  }
+
+  async updateVideo(id: string, updates: Partial<Video>): Promise<Video> {
+    const existingVideo = this.videos.get(id);
+    if (!existingVideo) {
+      throw new Error(`Video with id ${id} not found`);
+    }
+    const updatedVideo = { ...existingVideo, ...updates };
+    this.videos.set(id, updatedVideo);
+    return updatedVideo;
+  }
+
+  async deleteVideo(id: string): Promise<void> {
+    this.videos.delete(id);
+  }
 }
 
-export const storage = new MemStorage();
+// Database Storage with PostgreSQL persistence
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(videos).where(eq(videos.id, id.toString()));
+    return undefined; // Not implemented for this demo
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return undefined; // Not implemented
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return undefined; // Not implemented
+  }
+
+  async getUserByOAuthId(provider: string, providerId: string): Promise<User | undefined> {
+    return undefined; // Not implemented  
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    throw new Error("Not implemented");
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    throw new Error("Not implemented");
+  }
+
+  async updateUserLastLogin(id: number): Promise<void> {
+    // Not implemented
+  }
+
+  async linkOAuthAccount(userId: number, provider: string, providerId: string): Promise<void> {
+    // Not implemented
+  }
+
+  // Doctor operations  
+  async getAllDoctors(): Promise<Doctor[]> {
+    return await db.select().from(doctors);
+  }
+
+  async getDoctor(id: number): Promise<Doctor | undefined> {
+    const [doctor] = await db.select().from(doctors).where(eq(doctors.id, id));
+    return doctor;
+  }
+
+  async createDoctor(doctor: InsertDoctor): Promise<Doctor> {
+    const [newDoctor] = await db.insert(doctors).values(doctor).returning();
+    return newDoctor;
+  }
+
+  // Appointment operations
+  async getAllAppointments(): Promise<Appointment[]> {
+    return await db.select().from(appointments);
+  }
+
+  async getAppointment(id: number): Promise<Appointment | undefined> {
+    const [appointment] = await db.select().from(appointments).where(eq(appointments.id, id));
+    return appointment;
+  }
+
+  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
+    const [newAppointment] = await db.insert(appointments).values(appointment).returning();
+    return newAppointment;
+  }
+
+  // Chat message operations
+  async getChatMessages(sessionId: string): Promise<ChatMessage[]> {
+    return await db.select().from(chatMessages).where(eq(chatMessages.sessionId, sessionId));
+  }
+
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const [newMessage] = await db.insert(chatMessages).values(message).returning();
+    return newMessage;
+  }
+
+  // Video operations  
+  async getAllVideos(): Promise<Video[]> {
+    return await db.select().from(videos);
+  }
+
+  async getVideo(id: string): Promise<Video | undefined> {
+    console.log(`📹 DatabaseStorage: Looking for video ${id}`);
+    const [video] = await db.select().from(videos).where(eq(videos.id, id));
+    console.log(`📹 DatabaseStorage: Found video:`, video);
+    return video;
+  }
+
+  async createVideo(insertVideo: InsertVideo): Promise<Video> {
+    const [video] = await db.insert(videos).values(insertVideo).returning();
+    console.log(`📹 Video stored in database: ${video.id} (${video.duration}s)`);
+    return video;
+  }
+
+  async updateVideo(id: string, updates: Partial<Video>): Promise<Video> {
+    const [video] = await db.update(videos).set(updates).where(eq(videos.id, id)).returning();
+    return video;
+  }
+
+  async deleteVideo(id: string): Promise<void> {
+    await db.delete(videos).where(eq(videos.id, id));
+  }
+}
+
+export const storage = new DatabaseStorage();

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import HeyGenSDKAvatar from './heygen-sdk-avatar';
 
 interface DynamicVideoPlayerProps {
   sessionId: string;
@@ -203,12 +204,11 @@ export default function DynamicVideoPlayer({ sessionId, onUserInteraction, onMod
           className="absolute inset-0 w-full h-full object-cover"
         />
       ) : playerState.mode === 'heygen' ? (
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+        <div className="absolute inset-0">
           {/* HeyGen avatar will be rendered here by parent component */}
-          <div className="text-center text-gray-500">
-            <p>HeyGen Avatar Mode</p>
-            <p className="text-sm">Waiting for avatar to load...</p>
-          </div>
+          {heyGenProps && (
+            <HeyGenSDKAvatar {...heyGenProps} />
+          )}
         </div>
       ) : (
         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">

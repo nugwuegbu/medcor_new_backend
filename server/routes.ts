@@ -535,7 +535,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         uploadedAt: new Date()
       };
 
-      videoPlayerManager.uploadVideo(videoData);
+      await videoPlayerManager.uploadVideo(videoData);
+      
+      // Pre-load adana01 video if this is the main waiting video
+      if (videoId === 'adana01') {
+        console.log(`📹 adana01 waiting video configured: ${duration}s loop`);
+      }
 
       console.log(`📹 Video uploaded successfully: ${videoId}`);
       res.json({
@@ -558,11 +563,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Session ID is required" });
       }
 
-      const playerState = videoPlayerManager.initializePlayer(sessionId, videoId);
+      const playerState = await videoPlayerManager.initializePlayer(sessionId, videoId);
+      const videoUrl = await videoPlayerManager.getLoopVideoUrl(videoId);
       res.json({
         success: true,
         playerState: playerState,
-        videoUrl: videoPlayerManager.getLoopVideoUrl(videoId)
+        videoUrl: videoUrl
       });
     } catch (error) {
       console.error("Player initialization error:", error);
@@ -601,10 +607,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const playerState = videoPlayerManager.switchToLoop(sessionId);
+      const videoUrl = await videoPlayerManager.getLoopVideoUrl(playerState.currentVideo!);
       res.json({
         success: true,
         playerState: playerState,
-        videoUrl: videoPlayerManager.getLoopVideoUrl(playerState.currentVideo!)
+        videoUrl: videoUrl
       });
     } catch (error) {
       console.error("Loop switch error:", error);
@@ -622,10 +629,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Player session not found" });
       }
 
+      const videoUrl = playerState.currentVideo ? await videoPlayerManager.getLoopVideoUrl(playerState.currentVideo) : null;
       res.json({
         success: true,
         playerState: playerState,
-        videoUrl: playerState.currentVideo ? videoPlayerManager.getLoopVideoUrl(playerState.currentVideo) : null
+        videoUrl: videoUrl
       });
     } catch (error) {
       console.error("Get player state error:", error);
@@ -646,11 +654,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (shouldSwitch) {
         const playerState = videoPlayerManager.switchToLoop(sessionId);
+        const videoUrl = await videoPlayerManager.getLoopVideoUrl(playerState.currentVideo!);
         res.json({
           success: true,
           switched: true,
           playerState: playerState,
-          videoUrl: videoPlayerManager.getLoopVideoUrl(playerState.currentVideo!)
+          videoUrl: videoUrl
         });
       } else {
         res.json({
