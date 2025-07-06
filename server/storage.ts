@@ -1,6 +1,4 @@
-import { users, doctors, appointments, chatMessages, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser } from "@shared/schema";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { doctors, appointments, chatMessages, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -22,8 +20,6 @@ export interface IStorage {
   
   getChatMessages(sessionId: string): Promise<ChatMessage[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
-  
-  // Video methods removed - adana01 system discontinued
 }
 
 export class MemStorage implements IStorage {
@@ -31,7 +27,6 @@ export class MemStorage implements IStorage {
   private doctors: Map<number, Doctor>;
   private appointments: Map<number, Appointment>;
   private chatMessages: Map<number, ChatMessage>;
-  // private videos removed - adana01 system discontinued
   private currentUserId: number;
   private currentDoctorId: number;
   private currentAppointmentId: number;
@@ -42,7 +37,6 @@ export class MemStorage implements IStorage {
     this.doctors = new Map();
     this.appointments = new Map();
     this.chatMessages = new Map();
-    // this.videos removed - adana01 system discontinued
     this.currentUserId = 1;
     this.currentDoctorId = 1;
     this.currentAppointmentId = 1;
@@ -268,88 +262,6 @@ export class MemStorage implements IStorage {
     this.chatMessages.set(id, message);
     return message;
   }
-
-  // Video operations
-  // Video methods removed - adana01 system discontinued
 }
 
-// Database Storage with PostgreSQL persistence
-export class DatabaseStorage implements IStorage {
-  // User operations
-  async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return undefined; // Not implemented
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    return undefined; // Not implemented
-  }
-
-  async getUserByOAuthId(provider: string, providerId: string): Promise<User | undefined> {
-    return undefined; // Not implemented  
-  }
-
-  async createUser(user: InsertUser): Promise<User> {
-    throw new Error("Not implemented");
-  }
-
-  async updateUser(id: number, updates: Partial<User>): Promise<User> {
-    throw new Error("Not implemented");
-  }
-
-  async updateUserLastLogin(id: number): Promise<void> {
-    // Not implemented
-  }
-
-  async linkOAuthAccount(userId: number, provider: string, providerId: string): Promise<void> {
-    // Not implemented
-  }
-
-  // Doctor operations  
-  async getAllDoctors(): Promise<Doctor[]> {
-    return await db.select().from(doctors);
-  }
-
-  async getDoctor(id: number): Promise<Doctor | undefined> {
-    const [doctor] = await db.select().from(doctors).where(eq(doctors.id, id));
-    return doctor;
-  }
-
-  async createDoctor(doctor: InsertDoctor): Promise<Doctor> {
-    const [newDoctor] = await db.insert(doctors).values(doctor).returning();
-    return newDoctor;
-  }
-
-  // Appointment operations
-  async getAllAppointments(): Promise<Appointment[]> {
-    return await db.select().from(appointments);
-  }
-
-  async getAppointment(id: number): Promise<Appointment | undefined> {
-    const [appointment] = await db.select().from(appointments).where(eq(appointments.id, id));
-    return appointment;
-  }
-
-  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
-    const [newAppointment] = await db.insert(appointments).values(appointment).returning();
-    return newAppointment;
-  }
-
-  // Chat message operations
-  async getChatMessages(sessionId: string): Promise<ChatMessage[]> {
-    return await db.select().from(chatMessages).where(eq(chatMessages.sessionId, sessionId));
-  }
-
-  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
-    const [newMessage] = await db.insert(chatMessages).values(message).returning();
-    return newMessage;
-  }
-
-  // Video operations removed - adana01 system discontinued
-}
-
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();

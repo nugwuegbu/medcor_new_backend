@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage as dbStorage } from "./storage";
+import { storage } from "./storage";
 import { insertAppointmentSchema, insertChatMessageSchema } from "@shared/schema";
 import { generateChatResponse } from "./services/openai";
 import { heygenService } from "./services/heygen";
@@ -9,8 +9,8 @@ import { faceRecognitionAgent } from "./agents/face-recognition-agent";
 import { avatarRecorder } from "./services/avatar-recorder";
 import { googleMapsAgent } from "./agents/google-maps-agent";
 import { bookingAssistantAgent } from "./agents/booking-assistant-agent";
-
-// Video upload dependencies removed - adana01 system discontinued
+import { textToSpeechService } from "./services/text-to-speech";
+import { elevenLabsService } from "./services/elevenlabs";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -22,75 +22,7 @@ import {
   isAuthenticated
 } from "./auth/oauth-providers";
 
-// Multer configuration removed - adana01 video system discontinued
-
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Voice avatar chat endpoint - NO AUTH REQUIRED (placed before auth middleware)
-  app.post("/api/chat/voice", async (req, res) => {
-    try {
-      const { message, sessionId, language = "en", userId, userImage, locationWeather } = req.body;
-      
-      if (!message || !sessionId) {
-        return res.status(400).json({ error: "Message and sessionId are required" });
-      }
-
-      console.log(`Voice chat request: ${message} (session: ${sessionId})`);
-
-      // Get AI response
-      const aiResponse = await generateChatResponse(message, language);
-      
-      // Generate avatar response
-      let avatarResponse = null;
-      try {
-        avatarResponse = await heygenService.generateAvatarResponse({
-          text: aiResponse,
-          sessionId,
-          language
-        });
-      } catch (error) {
-        console.error('Error generating avatar response:', error);
-        avatarResponse = { 
-          success: false, 
-          error: 'Failed to generate avatar response' 
-        };
-      }
-      
-      console.log(`Avatar response generated:`, avatarResponse);
-
-      // Save chat messages
-      const chatMessageData = {
-        sessionId,
-        message,
-        response: aiResponse,
-        language,
-        avatarResponse: avatarResponse,
-        userId: userId || null
-      };
-      
-      console.log('Attempting to save chat message with data:', chatMessageData);
-      
-      try {
-        await dbStorage.createChatMessage(chatMessageData);
-        console.log('Chat message saved successfully');
-      } catch (dbError) {
-        console.error('Database error when saving chat message:', dbError);
-        throw dbError;
-      }
-
-      res.json({ 
-        success: true, 
-        response: aiResponse, 
-        avatarResponse: avatarResponse 
-      });
-    } catch (error: any) {
-      console.error('Voice chat error:', error);
-      res.status(500).json({ 
-        error: "Failed to process voice chat",
-        details: error.message 
-      });
-    }
-  });
-
   // Configure authentication
   configureSession(app);
   configureOAuthProviders();
@@ -200,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all doctors
   app.get("/api/doctors", async (req, res) => {
     try {
-      const doctors = await dbStorage.getAllDoctors();
+      const doctors = await storage.getAllDoctors();
       res.json(doctors);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch doctors" });
@@ -211,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/doctors/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const doctor = await dbStorage.getDoctor(id);
+      const doctor = await storage.getDoctor(id);
       if (!doctor) {
         return res.status(404).json({ message: "Doctor not found" });
       }
@@ -225,7 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/appointments", async (req, res) => {
     try {
       const validatedData = insertAppointmentSchema.parse(req.body);
-      const appointment = await dbStorage.createAppointment(validatedData);
+      const appointment = await storage.createAppointment(validatedData);
       res.status(201).json(appointment);
     } catch (error) {
       res.status(400).json({ message: "Invalid appointment data" });
@@ -235,7 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all appointments
   app.get("/api/appointments", async (req, res) => {
     try {
-      const appointments = await dbStorage.getAllAppointments();
+      const appointments = await storage.getAllAppointments();
       res.json(appointments);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch appointments" });
@@ -265,7 +197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Save chat message
-      const chatMessage = await dbStorage.createChatMessage({
+      const chatMessage = await storage.createChatMessage({
         sessionId,
         message,
         response,
@@ -464,7 +396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/chat/:sessionId", async (req, res) => {
     try {
       const sessionId = req.params.sessionId;
-      const messages = await dbStorage.getChatMessages(sessionId);
+      const messages = await storage.getChatMessages(sessionId);
       res.json(messages);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch chat history" });
@@ -552,9 +484,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // All video player endpoints removed - system now uses direct HeyGen integration only
-
-
   // Speech-to-text endpoint
   app.post("/api/speech-to-text", async (req, res) => {
     try {
@@ -603,6 +532,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Voice avatar chat endpoint
+  app.post("/api/chat/voice", async (req, res) => {
+    try {
+      const { message, sessionId, language = "en", userId, userImage, locationWeather } = req.body;
+      
+      if (!message || !sessionId) {
+        return res.status(400).json({ error: "Message and sessionId are required" });
+      }
+
+      console.log(`Voice chat request: ${message} (session: ${sessionId})`);
+
+      // Check chat history to see if this is user's first response
+      const previousMessages = await storage.getChatMessages(sessionId);
+      const userMessages = previousMessages.filter(m => m.message && m.message.trim() !== '');
+      const isFirstUserResponse = userMessages.length === 0;
+      
+      let compliment = "";
+      
+      // Analyze user image whenever it's provided
+      if (userImage) {
+        try {
+          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+          
+          // Analyze image with GPT-4 Vision
+          const imageAnalysisResponse = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: "You are a kind AI that notices nice details about people. Give 1 brief compliment about something specific you see (clothing, style, accessories). Be genuine and warm. Keep it under 15 words. Example: 'I love your elegant blue dress!'"
+              },
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: "Give a brief compliment about their appearance."
+                  },
+                  {
+                    type: "image_url",
+                    image_url: {
+                      url: `data:image/jpeg;base64,${userImage}`
+                    }
+                  }
+                ]
+              }
+            ],
+            max_tokens: 30
+          });
+          
+          compliment = imageAnalysisResponse.choices[0].message.content || "";
+          console.log("=== OpenAI Photo Analysis Response ===");
+          console.log("Compliment generated:", compliment);
+          console.log("=====================================");
+        } catch (error) {
+          console.error("Image analysis failed:", error);
+        }
+      }
+
+      // Generate AI response using OpenAI
+      let aiResponse = await generateChatResponse(message, language);
+      
+      // Add weather and compliment to the response if available
+      if (isFirstUserResponse) {
+        let prefix = "";
+        if (locationWeather) {
+          prefix += `So your location is ${locationWeather} `;
+          console.log("Weather info added:", locationWeather);
+        }
+        if (compliment) {
+          prefix += `${compliment} `;
+        }
+        if (prefix) {
+          aiResponse = `${prefix}${aiResponse}`;
+          console.log("=== Final Combined Response ===");
+          console.log("Full message:", aiResponse);
+          console.log("==============================");
+        }
+      } else {
+        console.log(`AI response: ${aiResponse}`);
+      }
+      
+      // Check if AI response includes special commands
+      const askingAboutDoctors = aiResponse.includes('DOCTOR_SEARCH:');
+      const openChatInterface = aiResponse.includes('OPEN_CHAT_INTERFACE:');
+      
+      // Generate avatar response using HeyGen
+      let avatarResponse;
+      try {
+        // Try creating a direct streaming session
+        const streamingResponse = await fetch("https://api.heygen.com/v1/streaming.new", {
+          method: "POST",
+          headers: {
+            "x-api-key": process.env.HEYGEN_API_KEY || "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg==",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            quality: "high",
+            avatar_name: "anna_public_3_20240108",
+            voice: {
+              voice_id: "1bd001e7e50f421d891986aad5158bc8"
+            }
+          })
+        });
+
+        if (streamingResponse.ok) {
+          const data = await streamingResponse.json();
+          console.log("Direct HeyGen response:", data);
+          avatarResponse = {
+            text: aiResponse,
+            sessionId,
+            sessionData: data.data
+          };
+        } else {
+          console.error("HeyGen direct API error:", await streamingResponse.text());
+          avatarResponse = await heygenService.generateAvatarResponse({
+            text: aiResponse,
+            sessionId,
+            language
+          });
+        }
+      } catch (error) {
+        console.error("HeyGen streaming error:", error);
+        avatarResponse = await heygenService.generateAvatarResponse({
+          text: aiResponse,
+          sessionId,
+          language
+        });
+      }
+      
+      console.log(`Avatar response generated:`, avatarResponse);
+
+      // Save chat messages
+      await storage.createChatMessage({
+        sessionId,
+        message,
+        response: aiResponse,
+        language,
+        avatarResponse: avatarResponse,
+        userId: userId || null
+      });
+
+      res.json({
+        message: aiResponse,
+        avatarResponse,
+        sessionId,
+        success: true,
+        showDoctors: askingAboutDoctors,
+        openChatInterface: openChatInterface
+      });
+    } catch (error) {
+      console.error("Voice chat error:", error);
+      res.status(500).json({ 
+        error: "Failed to process voice chat",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
 
   // Settings endpoints
   app.post("/api/settings", async (req, res) => {
@@ -819,7 +906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Store the chat message
-      await dbStorage.createChatMessage({
+      await storage.createChatMessage({
         sessionId,
         userId: userId || null,
         message,
@@ -847,72 +934,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Text-to-speech endpoint
+  // Text-to-speech endpoint with ElevenLabs and OpenAI
   app.post("/api/text-to-speech", async (req, res) => {
     try {
-      const { text, language = "en", voice = "female" } = req.body;
+      const { text, provider = "elevenlabs", voice, language = "en" } = req.body;
 
       if (!text) {
         return res.status(400).json({ message: "Text is required" });
       }
 
-      // In real implementation, this would use:
-      // - OpenAI's TTS API
-      // - Azure Speech Services
-      // - Google Cloud Text-to-Speech
-      // - ElevenLabs API
-      
-      // Mock TTS response
-      const mockAudioUrl = `https://api.example.com/tts/audio/${Date.now()}.mp3`;
+      console.log(`TTS request: "${text}" with provider: ${provider}`);
 
-      res.json({
-        audioUrl: mockAudioUrl,
-        duration: Math.ceil(text.length / 10), // Rough estimate
-        language,
-        voice
+      const ttsResponse = await textToSpeechService.generateSpeech({
+        text,
+        provider,
+        voice,
+        language
       });
+
+      // Set response headers for audio streaming
+      res.set({
+        'Content-Type': ttsResponse.contentType,
+        'Content-Length': ttsResponse.audio.length,
+        'Cache-Control': 'public, max-age=3600'
+      });
+
+      res.send(ttsResponse.audio);
     } catch (error) {
-      res.status(500).json({ message: "Text-to-speech conversion failed" });
+      console.error("TTS error:", error);
+      res.status(500).json({ 
+        message: "Text-to-speech conversion failed",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
   // Get available voices for TTS
   app.get("/api/voices", async (req, res) => {
     try {
-      const voices = [
+      const voices = await textToSpeechService.getAvailableVoices();
+
+      // Add our custom Turkish voice ID
+      const customVoices = [
         {
-          id: "nurse_sarah",
-          name: "Sarah (Nurse)",
-          language: "en",
+          id: "pWeLcyFEBT5svt9WMYAO",
+          name: "Turkish Medical Assistant",
+          provider: "elevenlabs",
+          language: "tr",
           gender: "female",
-          description: "Warm, caring nurse voice"
-        },
-        {
-          id: "doctor_james",
-          name: "Dr. James",
-          language: "en", 
-          gender: "male",
-          description: "Professional doctor voice"
-        },
-        {
-          id: "assistant_maria",
-          name: "Maria (Assistant)",
-          language: "es",
-          gender: "female",
-          description: "Spanish medical assistant"
-        },
-        {
-          id: "doctor_chen",
-          name: "Dr. Chen",
-          language: "zh",
-          gender: "male",
-          description: "Mandarin specialist voice"
+          description: "Turkish speaking medical assistant voice"
         }
       ];
 
-      res.json(voices);
+      res.json({
+        custom: customVoices,
+        elevenlabs: voices.elevenlabs,
+        openai: voices.openai
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch voices" });
+      console.error("Failed to get voices:", error);
+      res.status(500).json({ message: "Failed to get available voices" });
+    }
+  });
+
+  // ElevenLabs specific TTS endpoint
+  app.post("/api/elevenlabs/tts", async (req, res) => {
+    try {
+      const { text, voiceId = "pWeLcyFEBT5svt9WMYAO" } = req.body;
+
+      if (!text) {
+        return res.status(400).json({ message: "Text is required" });
+      }
+
+      console.log(`ElevenLabs TTS request: "${text}" with voice: ${voiceId}`);
+
+      const response = await elevenLabsService.textToSpeech({
+        text,
+        voiceId,
+        stability: 0.5,
+        similarityBoost: 0.8,
+        style: 0.0,
+        useSpeakerBoost: true
+      });
+
+      res.set({
+        'Content-Type': response.contentType,
+        'Content-Length': response.audio.length,
+        'Cache-Control': 'public, max-age=3600'
+      });
+
+      res.send(response.audio);
+    } catch (error) {
+      console.error("ElevenLabs TTS error:", error);
+      res.status(500).json({ 
+        message: "ElevenLabs TTS failed",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get ElevenLabs voice info
+  app.get("/api/elevenlabs/voice/:voiceId", async (req, res) => {
+    try {
+      const { voiceId } = req.params;
+      const voiceInfo = await elevenLabsService.getVoiceInfo(voiceId);
+      res.json(voiceInfo);
+    } catch (error) {
+      console.error("Failed to get voice info:", error);
+      res.status(500).json({ message: "Failed to get voice info" });
     }
   });
 

@@ -10,7 +10,6 @@ import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
 import InfoOverlay from "./info-overlay";
-
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -59,19 +58,11 @@ function detectLanguageFromText(text: string): string {
 }
 
 export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
-  console.log("🔴 AVATAR CHAT WIDGET - isOpen:", isOpen);
-  
-  // Early return if not open
-  if (!isOpen) {
-    console.log("🔴 AVATAR CHAT WIDGET - NOT OPEN, RETURNING NULL");
-    return null;
-  }
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [doctorsInputText, setDoctorsInputText] = useState("");
   const [recordsInputText, setRecordsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
-
   const [showCalendar, setShowCalendar] = useState(false);
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -405,16 +396,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // IMMEDIATE VIDEO STOP - First priority
-    console.log('🛑 IMMEDIATE VIDEO STOP ON MESSAGE SEND');
-    if ((window as any).immediateStopVideo) {
-      (window as any).immediateStopVideo();
-      console.log('✅ Immediate video stop called');
-    }
-
-    // Direct HeyGen mode - no video player interaction needed
-    console.log('💬 User sending message with direct HeyGen integration');
-
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
 
@@ -440,16 +421,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   const handleDoctorsSendMessage = async (text: string) => {
     if (!text.trim()) return;
-
-    // IMMEDIATE VIDEO STOP - First priority
-    console.log('🛑 IMMEDIATE VIDEO STOP ON DOCTORS MESSAGE SEND');
-    if ((window as any).immediateStopVideo) {
-      (window as any).immediateStopVideo();
-      console.log('✅ Immediate video stop called from doctors view');
-    }
-
-    // Direct HeyGen mode for doctors view - no video player interaction needed
-    console.log('💬 User sending message from doctors view with direct HeyGen integration');
 
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
@@ -828,6 +799,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 handleSendMessage(transcript);
                 setDoctorsInputText('');
               }}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-600 hover:bg-purple-700 transition-colors"
             />
             <button
               onClick={() => {
@@ -847,7 +819,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }
 
   return (
-    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-glow-border" style={{ right: '16px', left: 'auto', zIndex: 1000 }}>
+    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
@@ -883,7 +855,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               ? 'w-24 h-24 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-4 ring-purple-600'
               : isMinimized 
                 ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 hover:scale-110' 
-                : 'inset-0 overflow-hidden z-0'
+                : 'inset-0 overflow-hidden'
           }`}
           style={{
             ...(showDoctorList || showRecordsList || isMinimized ? {
@@ -923,21 +895,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           }}>
           {isOpen && !showDoctorList && !showRecordsList && (
             <>
-              {/* Direct HeyGen Avatar Integration */}
+              {/* Show HeyGen avatar when NOT in specific list views */}
               <HeyGenSDKAvatar 
                 ref={avatarRef}
                 key="single-avatar-instance"
                 apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
                 isVisible={true}
-                onMessage={(text: string) => {
+                onMessage={(text) => {
                   console.log("Avatar message:", text);
                 }}
                 onReady={() => {
-                    console.log("Avatar is ready");
-                    setHasGreeted(true);
-                    // Don't send automatic greeting - wait for user interaction
-                  }}
-                />
+                  console.log("Avatar is ready");
+                  setHasGreeted(true);
+                  // Don't send automatic greeting - wait for user interaction
+                }}
+              />
             </>
           )}
         </div>

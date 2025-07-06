@@ -244,10 +244,7 @@ Changelog:
 - July 05, 2025. Fixed Doctors button functionality - now properly navigates to doctors page with correct state management (setShowDoctorList, setIsMinimized, setShowChatInterface)
 - July 05, 2025. Implemented comprehensive avatar state reset after booking completion - prevents avatar duplication by resetting all states (showBookingForm, showChatInterface, showDoctorList, isMinimized, selectedMenuItem, avatarPosition) when appointment is confirmed
 - July 06, 2025. Replaced Settings menu with Admin menu featuring UserCheck icon - creates empty admin page for doctors to access patient user information and management functions
-- July 06, 2025. Implemented adana01 dynamic video player system to reduce HeyGen credit consumption - backend architecture with VideoPlayerManager, multer file upload, loop video playback with automatic HeyGen switching on user interaction, 3-minute inactivity timeout, and comprehensive API endpoints for video management
-- July 06, 2025. COMPLETE REMOVAL of adana01 dynamic video player system - all video player endpoints and manager code removed from both frontend and backend, system reverted to direct HeyGen integration only as per user decision
-- July 06, 2025. AUDIO RESTORATION COMPLETED - Fixed HeyGen avatar audio functionality by improving video element audio initialization, ensuring proper volume and muted/unmuted states for browser autoplay compliance
-- July 06, 2025. FINAL CLEANUP COMPLETED - Completely removed all adana01 video player system remnants from schema.ts, storage.ts, routes.ts, and index.ts. System now uses pure HeyGen integration with clean codebase and no video player complications
+- July 06, 2025. Integrated ElevenLabs text-to-speech API with Turkish voice support (voice ID: pWeLcyFEBT5svt9WMYAO) and OpenAI TTS backup system - backend now supports both providers with automatic language detection for optimal voice selection
 
 ## User Preferences
 

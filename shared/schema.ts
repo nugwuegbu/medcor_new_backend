@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, varchar, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -77,8 +77,6 @@ export const faceRecognitionLogs = pgTable("face_recognition_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Video table removed - adana01 system discontinued
-
 export const insertDoctorSchema = createInsertSchema(doctors).omit({
   id: true,
 });
@@ -112,5 +110,3 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-
-// Video schema and types removed - adana01 system discontinued
