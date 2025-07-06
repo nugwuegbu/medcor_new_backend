@@ -908,6 +908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Voice chat error:", error);
+      console.error("Error stack:", error.stack);
       res.status(500).json({ 
         error: "Failed to process voice chat",
         details: error instanceof Error ? error.message : "Unknown error"
