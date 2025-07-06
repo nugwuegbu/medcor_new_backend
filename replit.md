@@ -170,6 +170,34 @@ The application uses a relational database with the following core entities:
 - GET /api/auth/user - Get current authenticated user
 - POST /api/auth/logout - Logout user
 
+## HeyGen Credit Optimization Architecture
+
+### New Video-Based Placeholder System
+- **Waiting State**: `waiting_heygen.mp4` - Default avatar video when chat opens
+- **Speaking State**: `speak_heygen.mp4` - Placeholder video while HeyGen prepares  
+- **HeyGen Active**: Real HeyGen avatar after backend confirms readiness
+- **ElevenLabs Fallback**: Turkish voice cloning when HeyGen unavailable
+
+### Credit Optimization Flow
+1. **Chat Opens**: Shows `waiting_heygen.mp4` placeholder
+2. **User Sends Message**: Switches to `speak_heygen.mp4` while processing
+3. **Backend Processing**: HeyGen prepares in background (2s delay)
+4. **Ready State**: Transitions to real HeyGen avatar or ElevenLabs fallback
+5. **Continuous Mode**: HeyGen stays active for subsequent messages
+
+### Backend Services
+- **Avatar Orchestrator**: Manages video states and HeyGen session health
+- **Text-to-Speech Service**: Automatic provider selection (ElevenLabs/OpenAI)
+- **Health Monitoring**: Periodic HeyGen session validation
+- **Session Management**: Background preparation and cleanup
+
+### API Endpoints
+- `/api/avatar/initialize` - Start new avatar session
+- `/api/avatar/message` - Process user message with optimal routing
+- `/api/avatar/status/:sessionId` - Get current avatar state
+- `/api/avatar/session/:sessionId` - Cleanup avatar session
+- `/api/avatar/stats` - Monitor active sessions
+
 ## Changelog
 
 Changelog:

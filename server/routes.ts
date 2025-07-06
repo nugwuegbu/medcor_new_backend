@@ -11,6 +11,7 @@ import { googleMapsAgent } from "./agents/google-maps-agent";
 import { bookingAssistantAgent } from "./agents/booking-assistant-agent";
 import { textToSpeechService } from "./services/text-to-speech";
 import { elevenLabsService } from "./services/elevenlabs";
+import { avatarOrchestrator } from "./services/avatar-orchestrator";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -1457,6 +1458,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to search nearby places",
         details: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Avatar Orchestrator endpoints for credit optimization
+  app.post("/api/avatar/initialize", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID is required" });
+      }
+      
+      const response = await avatarOrchestrator.initializeSession(sessionId);
+      res.json(response);
+    } catch (error) {
+      console.error("Avatar initialization error:", error);
+      res.status(500).json({ error: "Failed to initialize avatar session" });
+    }
+  });
+
+  app.post("/api/avatar/message", async (req, res) => {
+    try {
+      const { sessionId, message } = req.body;
+      
+      if (!sessionId || !message) {
+        return res.status(400).json({ error: "Session ID and message are required" });
+      }
+      
+      const response = await avatarOrchestrator.handleUserMessage(sessionId, message);
+      res.json(response);
+    } catch (error) {
+      console.error("Avatar message handling error:", error);
+      res.status(500).json({ error: "Failed to process avatar message" });
+    }
+  });
+
+  app.get("/api/avatar/status/:sessionId", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const state = await avatarOrchestrator.getSessionState(sessionId);
+      
+      if (!state) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      
+      res.json(state);
+    } catch (error) {
+      console.error("Avatar status error:", error);
+      res.status(500).json({ error: "Failed to get avatar status" });
+    }
+  });
+
+  app.delete("/api/avatar/session/:sessionId", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      await avatarOrchestrator.cleanupSession(sessionId);
+      res.json({ success: true, message: "Session cleaned up" });
+    } catch (error) {
+      console.error("Avatar cleanup error:", error);
+      res.status(500).json({ error: "Failed to cleanup session" });
+    }
+  });
+
+  app.get("/api/avatar/stats", async (req, res) => {
+    try {
+      const stats = {
+        activeSessions: avatarOrchestrator.getActiveSessionsCount(),
+        heygenSessions: avatarOrchestrator.getHeygenSessionsCount(),
+        timestamp: new Date().toISOString()
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Avatar stats error:", error);
+      res.status(500).json({ error: "Failed to get avatar stats" });
     }
   });
 
