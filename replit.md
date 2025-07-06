@@ -170,70 +170,6 @@ The application uses a relational database with the following core entities:
 - GET /api/auth/user - Get current authenticated user
 - POST /api/auth/logout - Logout user
 
-## HeyGen Credit Optimization Architecture
-
-### New Video-Based Placeholder System
-- **Waiting State**: `waiting_heygen.mp4` - Default avatar video when chat opens
-- **Speaking State**: `speak_heygen.mp4` - Placeholder video while HeyGen prepares  
-- **HeyGen Active**: Real HeyGen avatar after backend confirms readiness
-- **ElevenLabs Fallback**: Turkish voice cloning when HeyGen unavailable
-
-### Credit Optimization Flow
-1. **Chat Opens**: Shows `waiting_heygen.mp4` placeholder
-2. **User Sends Message**: Switches to `speak_heygen.mp4` while processing
-3. **Backend Processing**: HeyGen prepares in background (2s delay)
-4. **Ready State**: Transitions to real HeyGen avatar or ElevenLabs fallback
-5. **Continuous Mode**: HeyGen stays active for subsequent messages
-
-### Backend Services
-- **Avatar Orchestrator**: Manages video states, language detection, and HeyGen session health
-- **Text-to-Speech Service**: Intelligent provider selection based on detected language
-- **Voice Configuration**: Language-specific voice mapping (Turkish→ElevenLabs, English→OpenAI)
-- **Multi-Language Support**: Automatic language detection from user input
-- **Health Monitoring**: Periodic HeyGen session validation
-- **Session Management**: Background preparation and cleanup
-
-### Language Detection & Voice Mapping
-- **Turkish Detection**: Recognizes Turkish characters and medical terms
-- **Turkish Voice**: ElevenLabs voice ID `pWeLcyFEBT5svt9WMYAO` for medical assistant
-- **English Voice**: OpenAI TTS with 'nova' voice for professional communication
-- **Auto-Switch**: System adapts to user's language preference automatically
-
-### API Endpoints
-- `/api/avatar/initialize` - Start new avatar session
-- `/api/avatar/message` - Process user message with optimal routing
-- `/api/avatar/status/:sessionId` - Get current avatar state
-- `/api/avatar/session/:sessionId` - Cleanup avatar session
-- `/api/avatar/stats` - Monitor active sessions
-
-## AI Video & HeyGen Health Agent
-
-### Intelligent Connection Management
-- **Network Analysis**: Real-time latency, bandwidth, and location assessment
-- **Service Health Monitoring**: Continuous HeyGen, ElevenLabs, and OpenAI status checking
-- **Optimization Engine**: Automatic configuration based on network conditions
-- **Session Management**: Proactive connection issue prevention and recovery
-
-### Health Agent Features
-- **Geographic Optimization**: Server distance calculation for optimal routing
-- **Connection Quality Assessment**: Excellent/Good/Fair/Poor classification with adaptive responses  
-- **Intelligent Fallback**: Seamless provider switching based on performance metrics
-- **Predictive Analytics**: ML-based connection issue prevention
-- **Background Monitoring**: 30-second health checks with zero user disruption
-
-### Health Agent API Endpoints
-- `/api/health/network/:sessionId` - Analyze network conditions and latency
-- `/api/health/services` - Check HeyGen, ElevenLabs, OpenAI service status
-- `/api/health/optimization/:sessionId` - Get optimized configuration
-- `/api/health/session-metrics` - Report session performance metrics
-- `/api/health/summary` - Complete health overview and statistics
-
-### User Experience Improvements
-- **Zero Connection Errors**: Proactive issue detection and resolution
-- **Optimal Provider Selection**: Automatic best service routing
-- **Seamless Transitions**: Invisible fallback mechanisms
-- **Performance Optimization**: Dynamic quality adjustment based on network
-
 ## Changelog
 
 Changelog:
@@ -308,7 +244,6 @@ Changelog:
 - July 05, 2025. Fixed Doctors button functionality - now properly navigates to doctors page with correct state management (setShowDoctorList, setIsMinimized, setShowChatInterface)
 - July 05, 2025. Implemented comprehensive avatar state reset after booking completion - prevents avatar duplication by resetting all states (showBookingForm, showChatInterface, showDoctorList, isMinimized, selectedMenuItem, avatarPosition) when appointment is confirmed
 - July 06, 2025. Replaced Settings menu with Admin menu featuring UserCheck icon - creates empty admin page for doctors to access patient user information and management functions
-- July 06, 2025. Integrated ElevenLabs text-to-speech API with Turkish voice support (voice ID: pWeLcyFEBT5svt9WMYAO) and OpenAI TTS backup system - backend now supports both providers with automatic language detection for optimal voice selection
 
 ## User Preferences
 

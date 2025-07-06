@@ -9,13 +9,6 @@ import { faceRecognitionAgent } from "./agents/face-recognition-agent";
 import { avatarRecorder } from "./services/avatar-recorder";
 import { googleMapsAgent } from "./agents/google-maps-agent";
 import { bookingAssistantAgent } from "./agents/booking-assistant-agent";
-import { textToSpeechService } from "./services/text-to-speech";
-import { elevenLabsService } from "./services/elevenlabs";
-import { avatarOrchestrator } from "./services/avatar-orchestrator";
-import { aiVideoHeyGenHealthAgent } from "./agents/ai-video-heygen-health-agent";
-import { testProtocol } from "./services/test-protocol";
-import { videoPlayerManager, VideoPlayerMode } from "./services/video-player-manager";
-import { dynamicVideoPlayerManager } from "./services/dynamic-video-player";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -548,155 +541,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Voice chat request: ${message} (session: ${sessionId})`);
 
-      // 🎬 DYNAMIC VIDEO PLAYER: Handle user message
-      const dynamicPlayerState = dynamicVideoPlayerManager.handleUserMessage(sessionId, message, 'elevenlabs');
-      console.log(`🎬 Dynamic Player State: ${dynamicPlayerState.mode}, Video: ${dynamicPlayerState.currentVideo}, Audio: ${dynamicPlayerState.audioProvider}`);
-
-      // 🎬 VIDEO PLAYER MANAGER: Handle user interaction (legacy support)
-      const videoState = videoPlayerManager.handleUserInteraction(sessionId, message);
-      console.log(`🎬 Video Player State: ${videoState.mode}, Video: ${videoState.videoUrl}, Audio: ${videoState.audioProvider}`);
-
-      // 🧪 ADANA TRIGGERS: Check for adana01, adana02, adana03
-      const adanaTriggers = ['adana01', 'adana02', 'adana03'];
-      const triggerFound = adanaTriggers.find(trigger => message.toLowerCase().includes(trigger));
-      
-      if (triggerFound) {
-        console.log(`🎬 ADANA TRIGGER DETECTED: ${triggerFound} in message "${message}"`);
-        
-        let videoMode = 'idle';
-        let videoUrl = '/waiting_heygen.mp4';
-        let audioProvider = 'elevenlabs';
-        let shouldActivateHeyGen = false;
-        
-        if (triggerFound === 'adana01') {
-          videoMode = 'idle';
-          videoUrl = '/waiting_heygen.mp4';
-          audioProvider = null;
-        } else if (triggerFound === 'adana02') {
-          videoMode = 'speaking';
-          videoUrl = '/speak_heygen.mp4';
-          audioProvider = 'elevenlabs';
-        } else if (triggerFound === 'adana03') {
-          videoMode = 'heygen_active';
-          videoUrl = 'none';
-          shouldActivateHeyGen = true;
-          audioProvider = 'heygen';
-        }
-        
-        // Generate appropriate response message
-        let responseMessage = `ADANA${triggerFound.slice(-2)} test activated. `;
-        if (triggerFound === 'adana01') {
-          responseMessage += 'Idle mode - waiting video loop active.';
-        } else if (triggerFound === 'adana02') {
-          responseMessage += 'Speaking mode - synchronized video and ElevenLabs audio.';
-        } else if (triggerFound === 'adana03') {
-          responseMessage += 'Full avatar mode - HeyGen activation.';
-        }
-        
-        // Generate TTS for ADANA02
-        let audioUrl: string | undefined;
-        if (triggerFound === 'adana02') {
-          try {
-            const ttsResponse = await textToSpeechService.generateSpeech(responseMessage, 'tr');
-            audioUrl = `data:audio/mp3;base64,${ttsResponse.audioContent}`;
-            console.log(`🎵 Generated TTS audio for ADANA02: ${audioUrl.length} characters`);
-          } catch (error) {
-            console.error('TTS generation error for ADANA02:', error);
-          }
-        }
-        
-        return res.json({
-          message: responseMessage,
-          videoMode,
-          videoUrl,
-          audioProvider,
-          shouldActivateHeyGen,
-          audioUrl,
-          testMode: false, // This is real ADANA mode, not test mode
-          language
-        });
-      }
-      
-      const triggers = testProtocol.detectTestTrigger(message);
-      if (triggers.length > 0) {
-        console.log(`🧪 TEST TRIGGERS DETECTED: ${triggers.join(', ')} in message "${message}"`);
-        
-        // Use the first trigger for testing
-        const trigger = triggers[0];
-        const testInfo = await testProtocol.executeTestProtocol(sessionId, trigger);
-        const testResponse = await testProtocol.generateTestResponse(testInfo.currentStage);
-        
-        console.log(`🧪 Test Stage: ${testResponse.testInfo.stage}`);
-        console.log(`🎬 Video URL: ${testResponse.videoUrl}`);
-        console.log(`🎵 Audio Provider: ${testResponse.testInfo.audioProvider}`);
-        console.log(`💬 Message: ${testResponse.message}`);
-        
-        // Generate TTS for test message if needed
-        let audioUrl: string | undefined;
-        if (testResponse.testInfo.audioProvider !== 'silent') {
-          try {
-            let ttsResponse;
-            
-            if (testResponse.testInfo.audioProvider === 'elevenlabs') {
-              // Use ElevenLabs for English voice (medical assistant voice)
-              ttsResponse = await textToSpeechService.generateSpeech(
-                testResponse.message, 
-                'en', 
-                'elevenlabs'
-              );
-            } else if (testResponse.testInfo.audioProvider === 'openai') {
-              // Use OpenAI TTS
-              ttsResponse = await textToSpeechService.generateSpeech(
-                testResponse.message, 
-                'en', 
-                'openai'
-              );
-            } else if (testResponse.testInfo.audioProvider === 'heygen') {
-              // HeyGen voice - use avatar's built-in TTS (mark as HeyGen)
-              ttsResponse = await textToSpeechService.generateSpeech(
-                testResponse.message, 
-                'en', 
-                'elevenlabs' // Use ElevenLabs as fallback for HeyGen test
-              );
-            } else {
-              // Fallback to OpenAI
-              ttsResponse = await textToSpeechService.generateSpeech(
-                testResponse.message, 
-                'en', 
-                'openai'
-              );
-            }
-            
-            audioUrl = 'data:audio/mpeg;base64,' + ttsResponse.audio.toString('base64');
-            console.log(`🎵 Generated TTS audio for stage: ${testResponse.testInfo.stage} using ${testResponse.testInfo.audioProvider}`);
-            console.log(`🎵 Audio URL length: ${audioUrl?.length || 0} characters`);
-          } catch (error) {
-            console.error('TTS generation failed for test:', error);
-            console.error('Error details:', error.message);
-          }
-        } else {
-          console.log(`🔇 Silent stage: ${testResponse.testInfo.stage}`);
-        }
-        
-        return res.json({
-          message: testResponse.message,
-          testMode: true,
-          testInfo: {
-            ...testResponse.testInfo,
-            protocolName: testInfo.protocolName,
-            protocolDescription: testInfo.protocolDescription,
-            allTriggers: triggers,
-            totalProtocols: triggers.length
-          },
-          videoMode: testResponse.mode,
-          videoUrl: testResponse.videoUrl,
-          audioUrl,
-          sessionId,
-          success: true,
-          instructions: `Test Protocol Active: ${triggers.join(' + ')} - Watch video transitions and listen for audio changes`
-        });
-      }
-
       // Check chat history to see if this is user's first response
       const previousMessages = await storage.getChatMessages(sessionId);
       const userMessages = previousMessages.filter(m => m.message && m.message.trim() !== '');
@@ -834,19 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionId,
         success: true,
         showDoctors: askingAboutDoctors,
-        openChatInterface: openChatInterface,
-        // Legacy video player (for compatibility)
-        videoMode: videoState.mode,
-        videoUrl: videoState.videoUrl,
-        audioProvider: videoState.audioProvider,
-        shouldActivateHeyGen: videoState.shouldActivateHeyGen,
-        // Dynamic video player state
-        dynamicPlayerMode: dynamicPlayerState.mode,
-        dynamicVideoUrl: dynamicPlayerState.currentVideo,
-        dynamicAudioProvider: dynamicPlayerState.audioProvider,
-        isTyping: dynamicPlayerState.isTyping,
-        isSpeaking: dynamicPlayerState.isSpeaking,
-        interactionCount: dynamicPlayerState.userInteractionCount
+        openChatInterface: openChatInterface
       });
     } catch (error) {
       console.error("Voice chat error:", error);
@@ -876,241 +708,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to save settings" });
-    }
-  });
-
-  // Video Player Manager endpoints
-  app.post("/api/video-player/initialize", async (req, res) => {
-    try {
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: "Session ID is required" });
-      }
-      
-      const playerState = videoPlayerManager.initializeSession(sessionId);
-      
-      res.json({
-        success: true,
-        sessionId,
-        mode: playerState.mode,
-        videoUrl: playerState.currentVideo,
-        audioProvider: playerState.audioProvider,
-        userInteractionCount: playerState.userInteractionCount
-      });
-    } catch (error) {
-      console.error("Video player initialization error:", error);
-      res.status(500).json({ 
-        error: "Failed to initialize video player",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  app.get("/api/video-player/state/:sessionId", async (req, res) => {
-    try {
-      const { sessionId } = req.params;
-      
-      const playerState = videoPlayerManager.getPlayerState(sessionId);
-      
-      if (!playerState) {
-        return res.status(404).json({ error: "Player session not found" });
-      }
-      
-      res.json({
-        sessionId,
-        mode: playerState.mode,
-        videoUrl: playerState.currentVideo,
-        audioProvider: playerState.audioProvider,
-        userInteractionCount: playerState.userInteractionCount,
-        lastInteractionTime: playerState.lastInteractionTime,
-        isPlaying: playerState.isPlaying
-      });
-    } catch (error) {
-      console.error("Video player state error:", error);
-      res.status(500).json({ 
-        error: "Failed to get video player state",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  app.post("/api/video-player/speech-complete", async (req, res) => {
-    try {
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: "Session ID is required" });
-      }
-      
-      const result = videoPlayerManager.handleSpeechComplete(sessionId);
-      
-      res.json({
-        success: true,
-        sessionId,
-        mode: result.mode,
-        videoUrl: result.videoUrl,
-        audioProvider: result.audioProvider
-      });
-    } catch (error) {
-      console.error("Speech complete error:", error);
-      res.status(500).json({ 
-        error: "Failed to handle speech completion",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  app.delete("/api/video-player/session/:sessionId", async (req, res) => {
-    try {
-      const { sessionId } = req.params;
-      
-      videoPlayerManager.cleanupSession(sessionId);
-      
-      res.json({
-        success: true,
-        message: "Session cleaned up successfully",
-        sessionId
-      });
-    } catch (error) {
-      console.error("Session cleanup error:", error);
-      res.status(500).json({ 
-        error: "Failed to cleanup session",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  app.get("/api/video-player/stats", async (req, res) => {
-    try {
-      const stats = videoPlayerManager.getSessionStats();
-      
-      res.json({
-        success: true,
-        stats
-      });
-    } catch (error) {
-      console.error("Video player stats error:", error);
-      res.status(500).json({ 
-        error: "Failed to get video player stats",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  // Test Protocol endpoints
-  app.get('/api/test-protocol/status/:sessionId', async (req, res) => {
-    try {
-      const { sessionId } = req.params;
-      const status = testProtocol.getCurrentStageInfo(sessionId);
-      
-      res.json({
-        sessionId,
-        isTestMode: status.isTestMode,
-        currentStage: status.currentStage,
-        currentStageIndex: status.currentStageIndex,
-        totalStages: status.totalStages,
-        progress: status.progress,
-        protocolName: status.protocolName
-      });
-    } catch (error) {
-      console.error('Test protocol status error:', error);
-      res.status(500).json({ 
-        error: 'Failed to get test protocol status',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // Dynamic Video Player endpoints
-  app.post('/api/dynamic-player/initialize', async (req, res) => {
-    try {
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: 'Session ID is required' });
-      }
-      
-      const state = dynamicVideoPlayerManager.initializeSession(sessionId);
-      res.json({ success: true, state });
-    } catch (error) {
-      console.error('Dynamic player initialization error:', error);
-      res.status(500).json({ error: 'Failed to initialize dynamic player' });
-    }
-  });
-
-  app.post('/api/dynamic-player/typing-start', async (req, res) => {
-    try {
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: 'Session ID is required' });
-      }
-      
-      const state = dynamicVideoPlayerManager.handleUserStartsTyping(sessionId);
-      res.json({ success: true, state });
-    } catch (error) {
-      console.error('Dynamic player typing start error:', error);
-      res.status(500).json({ error: 'Failed to handle typing start' });
-    }
-  });
-
-  app.post('/api/dynamic-player/typing-stop', async (req, res) => {
-    try {
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: 'Session ID is required' });
-      }
-      
-      const state = dynamicVideoPlayerManager.handleUserStopsTyping(sessionId);
-      res.json({ success: true, state });
-    } catch (error) {
-      console.error('Dynamic player typing stop error:', error);
-      res.status(500).json({ error: 'Failed to handle typing stop' });
-    }
-  });
-
-  app.post('/api/dynamic-player/speech-start', async (req, res) => {
-    try {
-      const { sessionId, duration } = req.body;
-      
-      if (!sessionId || !duration) {
-        return res.status(400).json({ error: 'Session ID and duration are required' });
-      }
-      
-      const state = dynamicVideoPlayerManager.handleSpeechStart(sessionId, duration);
-      res.json({ success: true, state });
-    } catch (error) {
-      console.error('Dynamic player speech start error:', error);
-      res.status(500).json({ error: 'Failed to handle speech start' });
-    }
-  });
-
-  app.post('/api/dynamic-player/speech-end', async (req, res) => {
-    try {
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: 'Session ID is required' });
-      }
-      
-      const state = dynamicVideoPlayerManager.handleSpeechEnd(sessionId);
-      res.json({ success: true, state });
-    } catch (error) {
-      console.error('Dynamic player speech end error:', error);
-      res.status(500).json({ error: 'Failed to handle speech end' });
-    }
-  });
-
-  app.get('/api/dynamic-player/status/:sessionId', async (req, res) => {
-    try {
-      const { sessionId } = req.params;
-      const status = dynamicVideoPlayerManager.getRealtimeStatus(sessionId);
-      res.json({ sessionId, ...status });
-    } catch (error) {
-      console.error('Dynamic player status error:', error);
-      res.status(500).json({ error: 'Failed to get dynamic player status' });
     }
   });
 
@@ -1335,114 +932,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Text-to-speech endpoint with ElevenLabs and OpenAI
+  // Text-to-speech endpoint
   app.post("/api/text-to-speech", async (req, res) => {
     try {
-      const { text, provider = "elevenlabs", voice, language = "en" } = req.body;
+      const { text, language = "en", voice = "female" } = req.body;
 
       if (!text) {
         return res.status(400).json({ message: "Text is required" });
       }
 
-      console.log(`TTS request: "${text}" with provider: ${provider}`);
+      // In real implementation, this would use:
+      // - OpenAI's TTS API
+      // - Azure Speech Services
+      // - Google Cloud Text-to-Speech
+      // - ElevenLabs API
+      
+      // Mock TTS response
+      const mockAudioUrl = `https://api.example.com/tts/audio/${Date.now()}.mp3`;
 
-      const ttsResponse = await textToSpeechService.generateSpeech({
-        text,
-        provider,
-        voice,
-        language
+      res.json({
+        audioUrl: mockAudioUrl,
+        duration: Math.ceil(text.length / 10), // Rough estimate
+        language,
+        voice
       });
-
-      // Set response headers for audio streaming
-      res.set({
-        'Content-Type': ttsResponse.contentType,
-        'Content-Length': ttsResponse.audio.length,
-        'Cache-Control': 'public, max-age=3600'
-      });
-
-      res.send(ttsResponse.audio);
     } catch (error) {
-      console.error("TTS error:", error);
-      res.status(500).json({ 
-        message: "Text-to-speech conversion failed",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
+      res.status(500).json({ message: "Text-to-speech conversion failed" });
     }
   });
 
   // Get available voices for TTS
   app.get("/api/voices", async (req, res) => {
     try {
-      const voices = await textToSpeechService.getAvailableVoices();
-
-      // Add our custom Turkish voice ID
-      const customVoices = [
+      const voices = [
         {
-          id: "pWeLcyFEBT5svt9WMYAO",
-          name: "Turkish Medical Assistant",
-          provider: "elevenlabs",
-          language: "tr",
+          id: "nurse_sarah",
+          name: "Sarah (Nurse)",
+          language: "en",
           gender: "female",
-          description: "Turkish speaking medical assistant voice"
+          description: "Warm, caring nurse voice"
+        },
+        {
+          id: "doctor_james",
+          name: "Dr. James",
+          language: "en", 
+          gender: "male",
+          description: "Professional doctor voice"
+        },
+        {
+          id: "assistant_maria",
+          name: "Maria (Assistant)",
+          language: "es",
+          gender: "female",
+          description: "Spanish medical assistant"
+        },
+        {
+          id: "doctor_chen",
+          name: "Dr. Chen",
+          language: "zh",
+          gender: "male",
+          description: "Mandarin specialist voice"
         }
       ];
 
-      res.json({
-        custom: customVoices,
-        elevenlabs: voices.elevenlabs,
-        openai: voices.openai
-      });
+      res.json(voices);
     } catch (error) {
-      console.error("Failed to get voices:", error);
-      res.status(500).json({ message: "Failed to get available voices" });
-    }
-  });
-
-  // ElevenLabs specific TTS endpoint
-  app.post("/api/elevenlabs/tts", async (req, res) => {
-    try {
-      const { text, voiceId = "pWeLcyFEBT5svt9WMYAO" } = req.body;
-
-      if (!text) {
-        return res.status(400).json({ message: "Text is required" });
-      }
-
-      console.log(`ElevenLabs TTS request: "${text}" with voice: ${voiceId}`);
-
-      const response = await elevenLabsService.textToSpeech({
-        text,
-        voiceId,
-        stability: 0.5,
-        similarityBoost: 0.8,
-        style: 0.0,
-        useSpeakerBoost: true
-      });
-
-      res.set({
-        'Content-Type': response.contentType,
-        'Content-Length': response.audio.length,
-        'Cache-Control': 'public, max-age=3600'
-      });
-
-      res.send(response.audio);
-    } catch (error) {
-      console.error("ElevenLabs TTS error:", error);
-      res.status(500).json({ 
-        message: "ElevenLabs TTS failed",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  // Get ElevenLabs voice info
-  app.get("/api/elevenlabs/voice/:voiceId", async (req, res) => {
-    try {
-      const { voiceId } = req.params;
-      const voiceInfo = await elevenLabsService.getVoiceInfo(voiceId);
-      res.json(voiceInfo);
-    } catch (error) {
-      console.error("Failed to get voice info:", error);
-      res.status(500).json({ message: "Failed to get voice info" });
+      res.status(500).json({ message: "Failed to fetch voices" });
     }
   });
 
@@ -1858,219 +1413,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to search nearby places",
         details: error instanceof Error ? error.message : "Unknown error"
       });
-    }
-  });
-
-  // Avatar Orchestrator endpoints for credit optimization
-  app.post("/api/avatar/initialize", async (req, res) => {
-    try {
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: "Session ID is required" });
-      }
-      
-      const response = await avatarOrchestrator.initializeSession(sessionId);
-      res.json(response);
-    } catch (error) {
-      console.error("Avatar initialization error:", error);
-      res.status(500).json({ error: "Failed to initialize avatar session" });
-    }
-  });
-
-  app.post("/api/avatar/message", async (req, res) => {
-    try {
-      const { sessionId, message, aiResponse } = req.body;
-      
-      if (!sessionId || !message || !aiResponse) {
-        return res.status(400).json({ error: "Session ID, message, and AI response are required" });
-      }
-      
-      const response = await avatarOrchestrator.handleUserMessage(sessionId, message, aiResponse);
-      res.json(response);
-    } catch (error) {
-      console.error("Avatar message handling error:", error);
-      res.status(500).json({ error: "Failed to process avatar message" });
-    }
-  });
-
-  app.get("/api/avatar/status/:sessionId", async (req, res) => {
-    try {
-      const { sessionId } = req.params;
-      const state = await avatarOrchestrator.getSessionState(sessionId);
-      
-      if (!state) {
-        return res.status(404).json({ error: "Session not found" });
-      }
-      
-      res.json(state);
-    } catch (error) {
-      console.error("Avatar status error:", error);
-      res.status(500).json({ error: "Failed to get avatar status" });
-    }
-  });
-
-  app.delete("/api/avatar/session/:sessionId", async (req, res) => {
-    try {
-      const { sessionId } = req.params;
-      await avatarOrchestrator.cleanupSession(sessionId);
-      res.json({ success: true, message: "Session cleaned up" });
-    } catch (error) {
-      console.error("Avatar cleanup error:", error);
-      res.status(500).json({ error: "Failed to cleanup session" });
-    }
-  });
-
-  app.get("/api/avatar/stats", async (req, res) => {
-    try {
-      const stats = {
-        activeSessions: avatarOrchestrator.getActiveSessionsCount(),
-        heygenSessions: avatarOrchestrator.getHeygenSessionsCount(),
-        timestamp: new Date().toISOString()
-      };
-      res.json(stats);
-    } catch (error) {
-      console.error("Avatar stats error:", error);
-      res.status(500).json({ error: "Failed to get avatar stats" });
-    }
-  });
-
-  // AI Video & HeyGen Health Agent endpoints
-  app.get("/api/health/network/:sessionId?", async (req, res) => {
-    try {
-      const { sessionId } = req.params;
-      const userIP = req.ip || req.connection.remoteAddress;
-      
-      const networkMetrics = await aiVideoHeyGenHealthAgent.analyzeNetworkConditions(userIP);
-      res.json(networkMetrics);
-    } catch (error) {
-      console.error("Network analysis error:", error);
-      res.status(500).json({ error: "Failed to analyze network conditions" });
-    }
-  });
-
-  app.get("/api/health/services", async (req, res) => {
-    try {
-      const serviceHealth = await aiVideoHeyGenHealthAgent.monitorServiceHealth();
-      res.json(serviceHealth);
-    } catch (error) {
-      console.error("Service health check error:", error);
-      res.status(500).json({ error: "Failed to check service health" });
-    }
-  });
-
-  app.get("/api/health/optimization/:sessionId", async (req, res) => {
-    try {
-      const { sessionId } = req.params;
-      const configuration = await aiVideoHeyGenHealthAgent.getOptimizedConfiguration(sessionId);
-      res.json(configuration);
-    } catch (error) {
-      console.error("Optimization configuration error:", error);
-      res.status(500).json({ error: "Failed to get optimization configuration" });
-    }
-  });
-
-  app.post("/api/health/session-metrics", async (req, res) => {
-    try {
-      const { sessionId, responseTime, errors } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: "Session ID is required" });
-      }
-      
-      aiVideoHeyGenHealthAgent.updateSessionHealth(sessionId, {
-        responseTime: responseTime || 0,
-        errors: errors || []
-      });
-      
-      res.json({ success: true, message: "Session metrics updated" });
-    } catch (error) {
-      console.error("Session metrics update error:", error);
-      res.status(500).json({ error: "Failed to update session metrics" });
-    }
-  });
-
-  app.get("/api/health/summary", async (req, res) => {
-    try {
-      const summary = aiVideoHeyGenHealthAgent.getHealthSummary();
-      res.json(summary);
-    } catch (error) {
-      console.error("Health summary error:", error);
-      res.status(500).json({ error: "Failed to get health summary" });
-    }
-  });
-
-  // Test Protocol endpoints
-  app.post("/api/test/protocol/start", async (req, res) => {
-    try {
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: "Session ID is required" });
-      }
-      
-      const testInfo = await testProtocol.executeTestProtocol(sessionId);
-      const testResponse = await testProtocol.generateTestResponse(testInfo.currentStage);
-      
-      res.json({
-        ...testResponse,
-        testInfo,
-        instructions: testProtocol.getTestInstructions()
-      });
-    } catch (error) {
-      console.error("Test protocol start error:", error);
-      res.status(500).json({ error: "Failed to start test protocol" });
-    }
-  });
-
-  app.post("/api/test/protocol/next", async (req, res) => {
-    try {
-      const stageInfo = await testProtocol.nextStage();
-      
-      if (stageInfo.isComplete) {
-        return res.json({
-          message: "Test protocol completed",
-          isComplete: true,
-          testInfo: stageInfo
-        });
-      }
-      
-      const testResponse = await testProtocol.generateTestResponse(stageInfo.currentStage);
-      
-      res.json({
-        ...testResponse,
-        testInfo: stageInfo,
-        isComplete: false
-      });
-    } catch (error) {
-      console.error("Test protocol next error:", error);
-      res.status(500).json({ error: "Failed to advance test protocol" });
-    }
-  });
-
-  app.get("/api/test/protocol/status", async (req, res) => {
-    try {
-      const isActive = testProtocol.isInTestMode();
-      const instructions = testProtocol.getTestInstructions();
-      
-      res.json({
-        isActive,
-        instructions,
-        currentStage: isActive ? testProtocol.getCurrentStageInfo() : null
-      });
-    } catch (error) {
-      console.error("Test protocol status error:", error);
-      res.status(500).json({ error: "Failed to get test protocol status" });
-    }
-  });
-
-  app.post("/api/test/protocol/reset", async (req, res) => {
-    try {
-      testProtocol.resetProtocol();
-      res.json({ success: true, message: "Test protocol reset" });
-    } catch (error) {
-      console.error("Test protocol reset error:", error);
-      res.status(500).json({ error: "Failed to reset test protocol" });
     }
   });
 

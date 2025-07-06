@@ -23,10 +23,6 @@ interface Message {
   timestamp: Date;
   avatarResponse?: any;
   showDoctors?: boolean;
-  videoMode?: string;
-  videoUrl?: string;
-  audioProvider?: string;
-  shouldActivateHeyGen?: boolean;
 }
 
 interface AvatarChatWidgetProps {
@@ -104,21 +100,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     doctorId: 1,
     selectedDate: null as Date | null
   });
-  
-  // Test mode video placeholder states
-  const [testVideoMode, setTestVideoMode] = useState<string | null>(null);
-  const [testVideoUrl, setTestVideoUrl] = useState<string | null>(null);
-  const [isTestModeActive, setIsTestModeActive] = useState(false);
-  const [currentTestStage, setCurrentTestStage] = useState<number>(0);
-  const [testStageTimer, setTestStageTimer] = useState<NodeJS.Timeout | null>(null);
-  
-  // Video Player Manager states
-  const [videoMode, setVideoMode] = useState<string>('idle');
-  const [videoUrl, setVideoUrl] = useState<string>('/waiting_heygen.mp4');
-  const [audioProvider, setAudioProvider] = useState<string | null>(null);
-  
-  // Basic HeyGen avatar state
-  const [shouldActivateHeyGen, setShouldActivateHeyGen] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -222,24 +203,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           setCameraPermissionRequested(true);
         }
       }, 2000);
-      
-      // Initialize Video Player Manager when chat opens
-      if (sessionId) {
-        fetch('/api/video-player/initialize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId })
-        }).then(response => response.json()).then(data => {
-          if (data.success) {
-            setVideoMode(data.mode);
-            setVideoUrl(data.videoUrl);
-            setAudioProvider(data.audioProvider);
-            console.log(`🎬 Video Player Manager initialized: ${data.mode}`);
-          }
-        }).catch(console.error);
-      }
     }
-  }, [isOpen, cameraPermissionRequested, sessionId]);
+  }, [isOpen, cameraPermissionRequested]);
   
   // Request location and get weather (try browser first, fallback to IP)
   const requestLocationAndWeather = async () => {
@@ -283,11 +248,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     }
   };
 
-  // Basic HeyGen avatar functions
-  const initializeHeyGenAvatar = () => {
-    setShouldActivateHeyGen(true);
-  };
-
   // Voice chat mutation
   const voiceChatMutation = useMutation({
     mutationFn: async (message: string) => {
@@ -318,14 +278,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       return await response.json();
     },
     onSuccess: async (data) => {
-      // Basic HeyGen avatar activation
-      if (data.shouldActivateHeyGen !== undefined) {
-        setShouldActivateHeyGen(data.shouldActivateHeyGen);
-        console.log(`🤖 HeyGen Activation: ${data.shouldActivateHeyGen}`);
-      }
-
-
-      
       // Check if the response contains a nearby search command
       if (data.message.includes("NEARBY_SEARCH:")) {
         console.log("NEARBY_SEARCH detected in response:", data.message);
@@ -432,40 +384,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         setMessages(prev => [...prev, botMessage]);
       }
       
-      // 🔊 ADANA STATE MACHINE: Trigger LightRespond for audio + video sync
-      if (data.audioUrl) {
-        console.log(`🔊 ADANA State Machine: Triggering LightRespond with synchronized playback`);
-        console.log(`🎵 Audio URL length: ${data.audioUrl.length} characters`);
-        transitionToLightRespond();
-        syncPlay('/speak_heygen.mp4', data.audioUrl);
-      }
-      
-      // Fallback: Make HeyGen avatar speak if no audio URL provided
-      if (!data.audioUrl && (window as any).heygenSpeak) {
+      // Make the HeyGen avatar speak the response with language detection
+      if ((window as any).heygenSpeak) {
+        // Detect language from response text
         const detectedLang = detectLanguageFromText(data.message);
         (window as any).heygenSpeak(data.message, detectedLang);
       }
-      
-      // Force focus back to input after response
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 100);
-    },
-    onError: (error) => {
-      console.error('Voice chat mutation error:', error);
-      console.log('🚨 MUTATION ERROR: Input should remain enabled');
-      // Mutation failed, but keep input functional
-      // Don't clear inputText, let user retry
-      
-      // Force focus back to input after error
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          console.log('🔍 Input focus restored after error');
-        }
-      }, 100);
     }
   });
 
@@ -483,6 +407,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setInputText("");
     
     // Track user messages and show auth after 2 messages
     const newCount = userMessageCount + 1;
@@ -491,9 +416,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       setShowAuthOverlay(true);
     }
     
-    // Start mutation first, then clear input
     voiceChatMutation.mutate(text.trim());
-    setInputText("");
   };
 
   const handleDoctorsSendMessage = async (text: string) => {
@@ -510,6 +433,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setDoctorsInputText("");
     
     // Track user messages and show auth after 2 messages
     const newCount = userMessageCount + 1;
@@ -519,7 +443,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     }
     
     voiceChatMutation.mutate(text.trim());
-    setDoctorsInputText("");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -987,49 +910,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   // Don't send automatic greeting - wait for user interaction
                 }}
               />
-              
-              {/* ADANA Dynamic Video Player - Uses dynamicVideoUrl */}
-              {!shouldActivateHeyGen && !isTestModeActive && (
-                <video
-                  ref={videoOverlayRef}
-                  className="absolute inset-0 w-full h-full object-cover z-10"
-                  src={dynamicVideoUrl}
-                  autoPlay
-                  loop={playerState === 'Idle'}
-                  muted
-                  playsInline
-                  onLoadStart={() => console.log(`🎬 ADANA Video loading: ${dynamicVideoUrl}`)}
-                  onCanPlay={() => console.log(`✅ ADANA Video ready: ${playerState}`)}
-                  onError={(e) => console.error(`❌ ADANA Video error:`, e)}
-                  onEnded={() => {
-                    if (playerState === 'LightRespond') {
-                      console.log(`🔇 ADANA02 video ended, checking transitions`);
-                      setIsAvatarSpeaking(false);
-                      
-                      if (questionCount >= 2) {
-                        transitionToFullAvatar();
-                      } else {
-                        transitionToIdle();
-                      }
-                    }
-                  }}
-                />
-              )}
-
-              {/* Test Mode Video Placeholder Overlay */}
-              {isTestModeActive && testVideoUrl && (
-                <video
-                  className="absolute inset-0 w-full h-full object-cover z-10"
-                  src={testVideoUrl}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  onLoadStart={() => console.log(`🎬 Loading test video: ${testVideoUrl}`)}
-                  onCanPlay={() => console.log(`✅ Test video ready: ${testVideoMode}`)}
-                  onError={(e) => console.error(`❌ Test video error:`, e)}
-                />
-              )}
             </>
           )}
         </div>
@@ -2156,32 +2036,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             ref={inputRef}
             type="text"
             value={inputText}
-            onChange={(e) => {
-              setInputText(e.target.value);
-              // ADANA State Machine - User interaction resets inactivity timer
-              if (e.target.value.length > 0 && !isUserTyping) {
-                setIsUserTyping(true);
-                console.log('⌨️ ADANA: User typing detected, resetting inactivity timer');
-              }
-              
-              if (typingTimer) clearTimeout(typingTimer);
-              const newTimer = setTimeout(() => {
-                setIsUserTyping(false);
-                console.log('⏸️ ADANA: User typing stopped');
-              }, 1000);
-              setTypingTimer(newTimer);
-            }}
+            onChange={(e) => setInputText(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Send your message..."
             className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
-            disabled={false}
-            readOnly={false}
+            disabled={voiceChatMutation.isPending}
           />
           
           <Button
             size="sm"
             onClick={() => handleSendMessage(inputText)}
-            disabled={!inputText.trim()}
+            disabled={!inputText.trim() || voiceChatMutation.isPending}
             className="p-2 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
             variant="ghost"
           >
@@ -2192,7 +2057,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             onTranscript={(text) => {
               handleSendMessage(text);
             }}
-            disabled={false}
+            disabled={voiceChatMutation.isPending}
           />
         </div>
         
