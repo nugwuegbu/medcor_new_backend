@@ -9,6 +9,9 @@ import { faceRecognitionAgent } from "./agents/face-recognition-agent";
 import { avatarRecorder } from "./services/avatar-recorder";
 import { googleMapsAgent } from "./agents/google-maps-agent";
 import { bookingAssistantAgent } from "./agents/booking-assistant-agent";
+import { videoPlayerManager } from "./services/video-player-manager";
+import multer from "multer";
+import path from "path";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -19,6 +22,33 @@ import {
   updateUserPhoneNumber,
   isAuthenticated
 } from "./auth/oauth-providers";
+
+// Configure multer for video uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/videos/'); // Store videos in public/videos directory
+  },
+  filename: (req, file, cb) => {
+    const videoId = req.body.videoId || 'video_' + Date.now();
+    const extension = path.extname(file.originalname);
+    cb(null, videoId + extension);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    // Accept video files only
+    if (file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only video files are allowed!'));
+    }
+  },
+  limits: {
+    fileSize: 100 * 1024 * 1024 // 100MB limit
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication
@@ -479,6 +509,193 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Context retrieval error:", error);
       res.status(500).json({ message: "Failed to retrieve booking context" });
+    }
+  });
+
+  // Video Player Management API Endpoints
+  // Upload video for adana01 system
+  app.post("/api/video/upload", upload.single('video'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No video file uploaded" });
+      }
+
+      const videoId = req.body.videoId || 'adana01';
+      const filename = req.file.filename;
+      const url = `/videos/${filename}`;
+      
+      // Simulate getting video duration (in production, use a video processing library)
+      const duration = parseFloat(req.body.duration) || 8; // Default 8 seconds for adana01
+
+      const videoData = {
+        id: videoId,
+        filename: filename,
+        url: url,
+        duration: duration,
+        uploadedAt: new Date()
+      };
+
+      videoPlayerManager.uploadVideo(videoData);
+
+      console.log(`📹 Video uploaded successfully: ${videoId}`);
+      res.json({
+        success: true,
+        message: "Video uploaded successfully",
+        videoData: videoData
+      });
+    } catch (error) {
+      console.error("Video upload error:", error);
+      res.status(500).json({ message: "Failed to upload video" });
+    }
+  });
+
+  // Initialize video player for session
+  app.post("/api/video/player/init", async (req, res) => {
+    try {
+      const { sessionId, videoId = 'adana01' } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({ message: "Session ID is required" });
+      }
+
+      const playerState = videoPlayerManager.initializePlayer(sessionId, videoId);
+      res.json({
+        success: true,
+        playerState: playerState,
+        videoUrl: videoPlayerManager.getLoopVideoUrl(videoId)
+      });
+    } catch (error) {
+      console.error("Player initialization error:", error);
+      res.status(500).json({ message: "Failed to initialize player" });
+    }
+  });
+
+  // Switch to HeyGen mode on user interaction
+  app.post("/api/video/player/switch-heygen", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({ message: "Session ID is required" });
+      }
+
+      const playerState = videoPlayerManager.switchToHeyGen(sessionId);
+      res.json({
+        success: true,
+        playerState: playerState,
+        message: "Switched to HeyGen mode"
+      });
+    } catch (error) {
+      console.error("HeyGen switch error:", error);
+      res.status(500).json({ message: "Failed to switch to HeyGen mode" });
+    }
+  });
+
+  // Switch back to loop mode
+  app.post("/api/video/player/switch-loop", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({ message: "Session ID is required" });
+      }
+
+      const playerState = videoPlayerManager.switchToLoop(sessionId);
+      res.json({
+        success: true,
+        playerState: playerState,
+        videoUrl: videoPlayerManager.getLoopVideoUrl(playerState.currentVideo!)
+      });
+    } catch (error) {
+      console.error("Loop switch error:", error);
+      res.status(500).json({ message: "Failed to switch to loop mode" });
+    }
+  });
+
+  // Get current player state
+  app.get("/api/video/player/state/:sessionId", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const playerState = videoPlayerManager.getPlayerState(sessionId);
+
+      if (!playerState) {
+        return res.status(404).json({ message: "Player session not found" });
+      }
+
+      res.json({
+        success: true,
+        playerState: playerState,
+        videoUrl: playerState.currentVideo ? videoPlayerManager.getLoopVideoUrl(playerState.currentVideo) : null
+      });
+    } catch (error) {
+      console.error("Get player state error:", error);
+      res.status(500).json({ message: "Failed to get player state" });
+    }
+  });
+
+  // Check inactivity and auto-switch to loop
+  app.post("/api/video/player/check-inactivity", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({ message: "Session ID is required" });
+      }
+
+      const shouldSwitch = videoPlayerManager.checkInactivityTimeout(sessionId);
+      
+      if (shouldSwitch) {
+        const playerState = videoPlayerManager.switchToLoop(sessionId);
+        res.json({
+          success: true,
+          switched: true,
+          playerState: playerState,
+          videoUrl: videoPlayerManager.getLoopVideoUrl(playerState.currentVideo!)
+        });
+      } else {
+        res.json({
+          success: true,
+          switched: false,
+          message: "No switch needed"
+        });
+      }
+    } catch (error) {
+      console.error("Inactivity check error:", error);
+      res.status(500).json({ message: "Failed to check inactivity" });
+    }
+  });
+
+  // Update interaction timestamp
+  app.post("/api/video/player/interaction", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({ message: "Session ID is required" });
+      }
+
+      videoPlayerManager.updateInteraction(sessionId);
+      res.json({
+        success: true,
+        message: "Interaction timestamp updated"
+      });
+    } catch (error) {
+      console.error("Update interaction error:", error);
+      res.status(500).json({ message: "Failed to update interaction" });
+    }
+  });
+
+  // Get all uploaded videos
+  app.get("/api/video/list", async (req, res) => {
+    try {
+      const videos = videoPlayerManager.getAllVideos();
+      res.json({
+        success: true,
+        videos: videos
+      });
+    } catch (error) {
+      console.error("Get videos error:", error);
+      res.status(500).json({ message: "Failed to get videos" });
     }
   });
 

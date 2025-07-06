@@ -244,6 +244,7 @@ Changelog:
 - July 05, 2025. Fixed Doctors button functionality - now properly navigates to doctors page with correct state management (setShowDoctorList, setIsMinimized, setShowChatInterface)
 - July 05, 2025. Implemented comprehensive avatar state reset after booking completion - prevents avatar duplication by resetting all states (showBookingForm, showChatInterface, showDoctorList, isMinimized, selectedMenuItem, avatarPosition) when appointment is confirmed
 - July 06, 2025. Replaced Settings menu with Admin menu featuring UserCheck icon - creates empty admin page for doctors to access patient user information and management functions
+- July 06, 2025. Implemented adana01 dynamic video player system to reduce HeyGen credit consumption - backend architecture with VideoPlayerManager, multer file upload, loop video playback with automatic HeyGen switching on user interaction, 3-minute inactivity timeout, and comprehensive API endpoints for video management
 
 ## User Preferences
 
