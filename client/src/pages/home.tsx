@@ -9,11 +9,13 @@ import MedcorChatModal from "@/components/medcor-chat-modal";
 import SystemTest from "@/components/system-test";
 import FaceAnalysisWidget from "@/components/face-analysis-widget";
 import FaceAnalysisTest from "@/components/face-analysis-test";
+import FaceAnalysisSimple from "@/components/face-analysis-simple";
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [showFaceAnalysis, setShowFaceAnalysis] = useState(false);
   const [showFaceTest, setShowFaceTest] = useState(false);
+  const [showFaceSimple, setShowFaceSimple] = useState(false);
 
   // Auto-show modal when users first visit
   useEffect(() => {
@@ -129,7 +131,7 @@ export default function Home() {
                       Start Chat Demo
                     </Button>
                     <Button 
-                      onClick={() => setShowFaceTest(true)}
+                      onClick={() => setShowFaceSimple(true)}
                       variant="outline"
                       className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
                     >
@@ -312,6 +314,12 @@ export default function Home() {
       <FaceAnalysisTest 
         isOpen={showFaceTest} 
         onClose={() => setShowFaceTest(false)} 
+      />
+      
+      {/* Face Analysis Simple */}
+      <FaceAnalysisSimple 
+        isOpen={showFaceSimple} 
+        onClose={() => setShowFaceSimple(false)} 
       />
     </div>
   );
