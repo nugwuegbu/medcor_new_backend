@@ -1121,19 +1121,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         
         {/* Info Overlay hidden when minimized since content is shown in white area */}
         
-        {/* Chat Interface View - Within Chat Container */}
-        {(showChatInterface || showFacePage) && (
+        {/* Chat Interface View - Separate from Face Analysis */}
+        {showChatInterface && !showFacePage && (
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40 rounded-lg overflow-hidden">
             {/* Back Button - Top Left Corner */}
             <button
-              onClick={() => {
-                if (showFacePage) {
-                  setShowFacePage(false);
-                  setSelectedMenuItem(null);
-                } else {
-                  setShowChatInterface(false);
-                }
-              }}
+              onClick={() => setShowChatInterface(false)}
               className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -1179,26 +1172,23 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
                     { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
                     { icon: Face, label: "Face", angle: 300, action: () => { 
-                      console.log('🔴 Face button clicked! Current state:', { showFacePage, showChatInterface, selectedMenuItem });
+                      console.log('🔴 Face button clicked - Setting states synchronously');
                       
+                      // Set Face page state first
                       setShowFacePage(true); 
                       setSelectedMenuItem("face");
                       
-                      console.log('🔴 Face button states set - showFacePage should be true now');
+                      // Keep chat interface open for Face Analysis
+                      setShowChatInterface(true);
                       
-                      // Don't close showChatInterface - keep it open for Face Analysis
-                      // setShowChatInterface(false);  // This was causing the problem!
-                      
-                      // Reset other states
+                      // Reset other conflicting states
                       setShowDoctorList(false);
                       setShowRecordsList(false);
                       setShowAdminPage(false);
                       setShowBookingCalendar(false);
                       setIsMinimized(false);
                       
-                      setTimeout(() => {
-                        console.log('🔴 After timeout - showFacePage:', showFacePage);
-                      }, 100);
+                      console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
@@ -1721,21 +1711,126 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   </div>
                 )}
                 
-                {/* Face Analysis Page View - Show when Face is selected */}
-                {console.log('🟢 Face Analysis check - showFacePage:', showFacePage)}
-                {showFacePage && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
-                    {console.log('🟢 Rendering Face Analysis inline interface')}
-                    <FaceAnalysisWidgetInline
-                      isOpen={showFacePage}
-                      onClose={() => {
-                        console.log('🔵 Closing Face Analysis');
-                        setShowFacePage(false);
-                        setSelectedMenuItem(null);
-                      }}
-                    />
+                {/* Regular Chat Interface Content */}
+                {!showFacePage && (
+                  <div className="h-full flex flex-col">
+                    {/* Menu Section - Centered */}
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="flex flex-col items-center gap-4">
+                        
+                        {/* Circular AI Menu */}
+                        <div className="relative w-48 h-48">
+                          {/* Center Circle with User Account */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                          <button 
+                            onClick={() => setShowAuthOverlay(true)}
+                            className="absolute inset-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform cursor-pointer">
+                            <div className="text-white text-center">
+                              <User className="h-8 w-8 mx-auto mb-1" />
+                              <p className="text-xs font-medium">Account</p>
+                            </div>
+                          </button>
+                        
+                          {/* Menu Items - Circular Layout */}
+                          {[
+                            { icon: Calendar, label: "Book", angle: 0, action: () => { 
+                              setShowChatInterface(false);
+                              setShowBookingCalendar(true); 
+                              setSelectedMenuItem("book");
+                              setSelectedDate(null);
+                              setBookingFormData(prev => ({ ...prev, selectedDate: null }));
+                            } },
+                            { icon: Users, label: "Doctors", angle: 60, action: () => { 
+                              setShowDoctorList(true); 
+                              setSelectedMenuItem("doctors");
+                              setShowChatInterface(false);
+                              setIsMinimized(true);
+                            } },
+                            { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
+                            { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
+                            { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
+                            { icon: Face, label: "Face", angle: 300, action: () => { 
+                              console.log('🔴 Face button clicked - Setting states synchronously');
+                              
+                              // Set Face page state first
+                              setShowFacePage(true); 
+                              setSelectedMenuItem("face");
+                              
+                              // Keep chat interface open for Face Analysis
+                              setShowChatInterface(true);
+                              
+                              // Reset other conflicting states
+                              setShowDoctorList(false);
+                              setShowRecordsList(false);
+                              setShowAdminPage(false);
+                              setShowBookingCalendar(false);
+                              setIsMinimized(false);
+                              
+                              console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
+                            } }
+                          ].map((item, index) => {
+                            const angleRad = (item.angle * Math.PI) / 180;
+                            const x = Math.cos(angleRad) * 75;
+                            const y = Math.sin(angleRad) * 75;
+                            
+                            return (
+                              <button
+                                key={index}
+                                onClick={item.action}
+                                className={`absolute w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-300 transform ${
+                                  selectedMenuItem === item.label.toLowerCase()
+                                    ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-125 shadow-xl"
+                                    : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-125"
+                                }`}
+                                style={{
+                                  left: `calc(50% + ${x}px - 28px)`,
+                                  top: `calc(50% + ${y}px - 28px)`
+                                }}
+                              >
+                                <item.icon className="h-5 w-5" />
+                                <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Face Analysis View - Separate container with higher z-index */}
+        {showFacePage && (
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+            {/* Back Button */}
+            <button
+              onClick={() => {
+                setShowFacePage(false);
+                setSelectedMenuItem(null);
+              }}
+              className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="font-medium text-sm">Back</span>
+            </button>
+            
+            {/* Face Analysis Content */}
+            <div className="h-full flex flex-col justify-center items-center p-6 pt-24">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-purple-700 mb-4">MEDCOR Face Analysis</h2>
+                <p className="text-gray-600 mb-6">Powered by Perfect Corp technology</p>
+                
+                {/* Face Analysis Component */}
+                <FaceAnalysisWidgetInline
+                  isOpen={true}
+                  onClose={() => {
+                    setShowFacePage(false);
+                    setSelectedMenuItem(null);
+                  }}
+                />
               </div>
             </div>
           </div>
