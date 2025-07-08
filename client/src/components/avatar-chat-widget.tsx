@@ -1694,7 +1694,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 )}
                 
                 {/* Face Analysis Page View */}
-                {showFacePage && (
+                {console.log('🟡 Checking showFacePage state:', showFacePage)}
+                {showFacePage ? (
                   <>
                     {console.log('🟢 Rendering FaceAnalysisWidgetInline with showFacePage:', showFacePage)}
                     <FaceAnalysisWidgetInline
@@ -1705,6 +1706,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         setSelectedMenuItem(null);
                       }}
                     />
+                  </>
+                ) : (
+                  <>
+                    {console.log('🔴 showFacePage is false, not rendering FaceAnalysisWidgetInline')}
                   </>
                 )}
               </div>
