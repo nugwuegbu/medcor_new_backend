@@ -527,7 +527,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         </video>
         
         {/* Overlay for better readability */}
-        <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]" style={{ zIndex: 2 }}></div>
+        <div className="absolute inset-0 bg-black/10 backdrop-blur-[0.5px]" style={{ zIndex: 2 }}></div>
         {/* Back Button */}
         <button
           onClick={() => {
@@ -823,17 +823,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       </video>
       
       {/* Overlay for better readability */}
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]" style={{ zIndex: 2 }}></div>
+      <div className="absolute inset-0 bg-black/10 backdrop-blur-[0.5px]" style={{ zIndex: 2 }}></div>
       
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <div className="w-1 h-3 bg-green-500 ml-0.5 animate-pulse" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-1 h-4 bg-green-500 ml-0.5 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-            <div className="w-1 h-2 bg-green-500 ml-0.5 animate-pulse" style={{ animationDelay: '0.3s' }}></div>
-          </div>
+          <MessageSquare className="h-4 w-4 text-gray-600" />
+          <span className="text-gray-700 text-sm">AI Assistant</span>
         </div>
         
         {/* User Camera View in center */}
@@ -970,7 +966,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </video>
             
             {/* Overlay for better readability */}
-            <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" style={{ zIndex: 2 }}></div>
+            <div className="absolute inset-0 bg-black/10 backdrop-blur-[0.5px]" style={{ zIndex: 2 }}></div>
             {/* Back Button - Top Left Corner */}
             <button
               onClick={() => setShowChatInterface(false)}
@@ -2034,7 +2030,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       </div>
 
       {/* Input Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm z-50">
         <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
           <input
             ref={inputRef}
