@@ -2,15 +2,16 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, User as Face } from "lucide-react";
 
-// Perfect Corp YCE SDK types
+// Perfect Corp YMK SDK types
 declare global {
   interface Window {
-    YCE: {
+    YMK: {
       init: (options: any) => void;
       isInitialized: () => boolean;
       captureImage: () => Promise<any>;
       destroy: () => void;
     };
+    ymkAsyncInit: () => void;
   }
 }
 
@@ -46,46 +47,40 @@ export default function FaceAnalysisWidget({ isOpen, onClose, className = "" }: 
 
   const handleStartAnalysis = useCallback(async () => {
     try {
-      console.log('Starting Perfect Corp YCE SDK face analysis...');
+      console.log('Starting Perfect Corp YMK SDK face analysis...');
       setLoading(true);
       setError(null);
       setResult(null);
       
-      // Initialize YCE SDK if available
-      if (window.YCE && !window.YCE.isInitialized()) {
-        console.log('Initializing YCE SDK...');
+      // Initialize YMK SDK if available
+      if (window.YMK && !window.YMK.isInitialized()) {
+        console.log('Initializing YMK SDK...');
         
         const options = {
-          apiKey: import.meta.env.VITE_YCE_API_KEY || import.meta.env.REACT_APP_YCE_API_KEY,
-          accountId: import.meta.env.VITE_YCE_ACCOUNT_ID || import.meta.env.REACT_APP_YCE_ACCOUNT_ID,
-          email: import.meta.env.VITE_YCE_EMAIL || import.meta.env.REACT_APP_YCE_EMAIL,
-          mode: 'ui',
+          apiKey: 'xsQ0rgMLPQmEoow2SLNuqjTaILjhHAVY',
           container: containerRef.current,
+          mode: 'ui',
           onReady: () => {
-            console.log('YCE SDK ready');
+            console.log('YMK SDK ready');
             setCameraActive(true);
           },
           onImageCaptured: (imageData: any) => {
-            console.log('YCE SDK image captured:', imageData);
+            console.log('YMK SDK image captured:', imageData);
             setResult(imageData);
           },
           ui: {
             theme: 'light',
             showInstructions: true,
-          },
-          capture: {
-            faceQuality: true,
-            resolution: { width: 640, height: 480 }
           }
         };
         
-        window.YCE.init(options);
-        console.log('YCE SDK initialized');
-      } else if (window.YCE && window.YCE.isInitialized()) {
-        console.log('YCE SDK already initialized');
+        window.YMK.init(options);
+        console.log('YMK SDK initialized');
+      } else if (window.YMK && window.YMK.isInitialized()) {
+        console.log('YMK SDK already initialized');
         setCameraActive(true);
       } else {
-        console.log('YCE SDK not available, using fallback camera');
+        console.log('YMK SDK not available, using fallback camera');
         
         // Fallback to regular camera
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -110,7 +105,7 @@ export default function FaceAnalysisWidget({ isOpen, onClose, className = "" }: 
   }, []);
 
   const handleTakePhoto = useCallback(async () => {
-    if (!cameraRef.current || !cameraActive) {
+    if (!cameraActive) {
       console.log('Photo capture skipped - camera not active');
       return;
     }
@@ -120,24 +115,28 @@ export default function FaceAnalysisWidget({ isOpen, onClose, className = "" }: 
       setLoading(true);
       setError(null);
       
-      // Use YCE SDK if available
-      if (window.YCE && window.YCE.isInitialized()) {
-        console.log('Using YCE SDK for face analysis');
+      // Use YMK SDK if available
+      if (window.YMK && window.YMK.isInitialized()) {
+        console.log('Using YMK SDK for face analysis');
         
-        const result = await window.YCE.captureImage();
-        console.log('YCE SDK analysis result:', result);
+        const result = await window.YMK.captureImage();
+        console.log('YMK SDK analysis result:', result);
         
         if (result && result.success) {
           setResult(result.data);
         } else {
-          throw new Error('YCE SDK analysis failed');
+          throw new Error('YMK SDK analysis failed');
         }
       } else {
-        console.log('YCE SDK not available, using canvas capture');
+        console.log('YMK SDK not available, using fallback analysis');
         
         // Fallback to canvas capture
         const canvas = document.createElement('canvas');
         const video = cameraRef.current;
+        if (!video) {
+          throw new Error("Camera not available");
+        }
+        
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         
@@ -151,7 +150,7 @@ export default function FaceAnalysisWidget({ isOpen, onClose, className = "" }: 
         
         console.log('Image captured, base64 length:', imageBase64.length);
         
-        // Send to backend for analysis
+        // Send to Perfect Corp backend API for analysis
         const response = await fetch('/api/face-analysis', {
           method: 'POST',
           headers: {
@@ -161,7 +160,7 @@ export default function FaceAnalysisWidget({ isOpen, onClose, className = "" }: 
         });
         
         const data = await response.json();
-        console.log('Face analysis API response:', data);
+        console.log('Perfect Corp API response:', data);
         
         if (data.success) {
           setResult(data.result);
@@ -184,9 +183,9 @@ export default function FaceAnalysisWidget({ isOpen, onClose, className = "" }: 
       stream.getTracks().forEach(track => track.stop());
     }
     
-    // Clean up YCE SDK
-    if (window.YCE && window.YCE.destroy) {
-      window.YCE.destroy();
+    // Clean up YMK SDK
+    if (window.YMK && window.YMK.destroy) {
+      window.YMK.destroy();
     }
     
     setCameraActive(false);
@@ -218,8 +217,8 @@ export default function FaceAnalysisWidget({ isOpen, onClose, className = "" }: 
         {/* Camera Preview */}
         <div className="mb-4">
           <div className="relative w-full h-64 bg-gray-100 rounded-lg overflow-hidden border-2 border-purple-200">
-            {/* YCE SDK Container */}
-            <div ref={containerRef} className="absolute inset-0" />
+            {/* YMK SDK Container */}
+            <div ref={containerRef} id="YMK-module" className="absolute inset-0 z-10" />
             
             {/* Fallback Video */}
             <video
@@ -231,12 +230,22 @@ export default function FaceAnalysisWidget({ isOpen, onClose, className = "" }: 
             />
             
             {!cameraActive && (
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center bg-white z-20">
                 <div className="text-gray-500 text-center">
                   <div className="w-16 h-16 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
                     <Face className="h-8 w-8 text-purple-600" />
                   </div>
-                  <p className="text-sm">Click "Start Camera" to begin</p>
+                  <p className="text-sm font-medium">Perfect Corp Face Analysis</p>
+                  <p className="text-xs text-gray-400 mt-1">Click "Start Camera" to begin analysis</p>
+                </div>
+              </div>
+            )}
+            
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-30">
+                <div className="text-white text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+                  <p className="text-sm">Analyzing...</p>
                 </div>
               </div>
             )}
