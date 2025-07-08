@@ -1155,10 +1155,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
                     { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
                     { icon: Face, label: "Face", angle: 300, action: () => { 
+                      console.log('Face button clicked! Setting showFacePage to true');
                       setShowFacePage(true); 
                       setSelectedMenuItem("face");
                       setShowChatInterface(false);
                       setIsMinimized(true);
+                      console.log('Face button states set:', { showFacePage: true, selectedMenuItem: 'face' });
                     } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;

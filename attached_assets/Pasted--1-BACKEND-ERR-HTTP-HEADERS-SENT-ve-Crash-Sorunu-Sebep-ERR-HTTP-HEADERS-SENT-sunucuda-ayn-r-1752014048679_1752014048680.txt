@@ -1,0 +1,118 @@
+✅ 1. BACKEND: ERR_HTTP_HEADERS_SENT ve Crash Sorunu
+🔍 Sebep:
+ERR_HTTP_HEADERS_SENT, sunucuda aynı response objesi üzerinden birden fazla res.send() veya res.json() veya res.redirect() çağrısı yapıldığında ortaya çıkar.
+
+✅ Çözüm:
+API route’unu gözden geçir:
+
+ts
+Kopyala
+Düzenle
+app.post('/api/analyze', async (req, res) => {
+  try {
+    const result = await callYceApi(req.body);
+    return res.json({ success: true, result });
+  } catch (err) {
+    console.error('ERROR:', err);
+    if (!res.headersSent) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  }
+});
+Dikkat: if (!res.headersSent) kontrolü yoksa sunucu yeniden res göndermeye çalışıp çöker. Özellikle await işleminden sonra hem res.send hem next(err) gibi ikinci bir call varsa bu hata oluşur.
+
+✅ 2. FRONTEND: Modal Render Sorunu (FaceAnalysisCamera görünmüyor)
+🔍 Olası Nedenler:
+showFacePage = true ama modal component DOM’a hiç mount edilmiyor (şartlı render yanlış yerde).
+
+React portal problemi (örn. ReactDOM.createPortal() ile farklı DOM ağacına render edip görünmemesi).
+
+CSS display: none, opacity: 0, z-index: -1 gibi görünmezlik hataları.
+
+SDK yüklenmeden window.YCE.init() çağrılıyor → widget DOM’a yerleşemiyor.
+
+✅ Kontrol ve Çözüm Sırası:
+A. Component Conditional Rendering:
+tsx
+Kopyala
+Düzenle
+{showFacePage && <FaceAnalysisCamera />}
+Bu satırdan önce console.log("rendering camera") koy ve terminalde görünüp görünmediğini kontrol et.
+
+Eğer görünüyorsa, FaceAnalysisCamera component'i DOM’a giriyor demektir. Aksi durumda showFacePage false veya üst bileşen mount olmuyor.
+
+B. React Portals:
+Eğer FaceAnalysisCamera <Modal> içinde ReactDOM.createPortal ile render ediliyorsa, hedef DOM öğesinin gerçekten DOM’da var olduğundan emin ol. document.getElementById('modal-root') gibi hedef, uygulama yüklenmeden önce tanımlı değilse render başarısız olur.
+
+null dönüyorsa, ReactDOM.createPortal da render etmez.
+
+C. CSS Görünmezlik:
+Dev tools ile <FaceAnalysisCamera /> DOM öğesinin:
+
+Görünüp görünmediğini (display, opacity, z-index)
+
+position: fixed/absolute olup görünmeyen bir yerde mi render olduğunu
+
+Başka bir öğenin arkasında mı kaldığını kontrol et.
+
+D. SDK & Ref:
+SDK script yüklendikten sonra mı YCE.init() çağrılıyor?
+
+ref.current null ise, container: ref.current başarısız olur, SDK UI hiçbir yere bağlanamaz.
+
+Doğru kullanım:
+
+tsx
+Kopyala
+Düzenle
+useEffect(() => {
+  if (!window.YCE || !faceRef.current) return;
+  window.YCE.init({ container: faceRef.current, ... });
+}, [showFacePage]); // veya [faceRef.current]
+✅ 3. CHAT WIDGET ENTEGRASYON SORUNU
+🔍 Olası Nedenler:
+Chat widget <iframe> gibi izole DOM içindeyse, Perfect SDK window context’ini doğru bulamaz.
+
+SDK container öğesini sabit DOM beklerken, React'ta ref henüz oluşmamış olabilir.
+
+SPA içinde widget component tekrar mount edilirse, önceki YCE.init() çağrısı SDK’yı bozar.
+
+✅ Çözüm Önerileri:
+A. SDK Script'i Dinamik ve Kontrollü Yükle
+tsx
+Kopyala
+Düzenle
+const loadYceScript = () => {
+  return new Promise((resolve, reject) => {
+    if (window.YCE) return resolve(window.YCE);
+    const s = document.createElement('script');
+    s.src = 'https://plugins-media.perfectcorp.com/smb/sdk.js?apiKey=YOUR_API_KEY';
+    s.onload = () => resolve(window.YCE);
+    s.onerror = reject;
+    document.body.appendChild(s);
+  });
+};
+B. YCE.init() ancak SDK yüklendikten sonra ve ref.current hazırsa:
+tsx
+Kopyala
+Düzenle
+useEffect(() => {
+  if (!showFacePage) return;
+  loadYceScript().then(YCE => {
+    if (ref.current && YCE) {
+      YCE.init({ mode: 'ui', container: ref.current, ... });
+    }
+  });
+}, [showFacePage]);
+C. Chat Widget İçi Scroll, Overflow, Height:
+Eğer chat modal widget’ı içinde açılıyorsa, overflow: hidden, max-height: 0 gibi sınırlayıcı CSS varsa YCE UI görünmez olabilir.
+
+FaceAnalysisCamera modal’i position: fixed kullanıyorsa z-index değerini z-index: 1000 ve üstü yap.
+
+✅ SONUÇ
+Sorun	Çözüm
+ERR_HTTP_HEADERS_SENT	res.headersSent kontrolü ekle. Her route'da sadece 1 tane res.send/res.json kullan.
+Modal görünmüyor	Ref render sırası, React Portal DOM hedefi ve CSS görünürlüğünü kontrol et.
+SDK UI gelmiyor	Script yüklenme sırasını onload ile kontrol et, ref.current null olmamalı.
+Chat widget içi görünmüyor	CSS scroll, overflow, z-index, iframe sınırlarını kontrol et.
+SPA init sorunu	SDK'yı bir kere başlat, unmount edildiğinde destroy et ya da yeniden mount’a izin ver.

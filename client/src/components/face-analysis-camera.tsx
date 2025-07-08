@@ -11,37 +11,38 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [portalElement, setPortalElement] = useState<HTMLElement | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Debug log
-  console.log('FaceAnalysisCamera render:', { isOpen, portalElement });
-
-  // Portal setup
+  console.log('FaceAnalysisCamera render:', { isOpen });
+  
+  // Test API on component mount
   useEffect(() => {
     if (isOpen) {
-      const element = document.createElement('div');
-      element.id = 'face-analysis-camera-portal';
-      element.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 999999;
-        pointer-events: auto;
-      `;
-      document.body.appendChild(element);
-      setPortalElement(element);
-      document.body.style.overflow = 'hidden';
+      console.log('🟢 FaceAnalysisCamera opened! Testing API...');
+      fetch('/api/face-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: 'test_component_mount' })
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log('✅ API test from component SUCCESS:', data);
+      })
+      .catch(err => {
+        console.error('❌ API test failed:', err);
+      });
+    }
+  }, [isOpen]);
 
+  // Remove portal - render directly
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
       return () => {
-        if (document.body.contains(element)) {
-          document.body.removeChild(element);
-        }
         document.body.style.overflow = 'auto';
         stopCamera();
       };
@@ -70,6 +71,12 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
   const startNewCamera = useCallback(async () => {
     try {
       console.log('Starting new camera stream');
+      
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('getUserMedia not supported in this browser');
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           width: 640, 
@@ -78,18 +85,20 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
         } 
       });
       
+      console.log('Camera stream obtained:', stream);
       setCameraStream(stream);
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        await videoRef.current.play();
         setIsRecording(true);
+        console.log('Video playing successfully');
       }
       
       setError(null);
     } catch (err) {
       console.error('Camera error:', err);
-      setError('Camera access denied. Please allow camera permissions.');
+      setError(`Camera access failed: ${err.message}`);
     }
   }, []);
 
@@ -181,10 +190,13 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
     }
   }, [cameraStream, connectToExistingCamera, startNewCamera]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log('❌ FaceAnalysisCamera NOT rendering - isOpen is false');
+    return null;
+  }
   
   // Debug log
-  console.log('FaceAnalysisCamera should render modal:', { isOpen, portalElement });
+  console.log('✅ FaceAnalysisCamera SHOULD render modal now - isOpen is true');
 
   const modalContent = (
     <div 
@@ -198,7 +210,8 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 999999
+        zIndex: 9999999,
+        pointerEvents: 'auto'
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -478,10 +491,6 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
     </div>
   );
 
-  // Render without portal if portalElement is not ready
-  if (!portalElement) {
-    return modalContent;
-  }
-  
-  return createPortal(modalContent, portalElement);
+  // Render directly without portal
+  return modalContent;
 }

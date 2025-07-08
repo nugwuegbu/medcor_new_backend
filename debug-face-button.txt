@@ -1,0 +1,26 @@
+FACE ANALYSIS BUTTON DEBUG PLAN:
+
+1. CURRENT STATE CHECK:
+   - showFacePage state: useState(false) at line 88
+   - FaceAnalysisCamera component: at line 1685-1693
+   - Face button in lightbulb menu: Need to find
+
+2. EXPECTED BEHAVIOR:
+   - User clicks lightbulb → Menu opens
+   - User clicks Face icon → setShowFacePage(true) 
+   - FaceAnalysisCamera modal opens
+   - Camera starts, face analysis works
+
+3. DEBUGGING STEPS:
+   - Find Face button in menu items (around line 1150-1180)
+   - Add console.log to Face button onClick
+   - Test if setShowFacePage(true) is triggered
+   - Test if FaceAnalysisCamera component receives isOpen=true
+   - Test if modal renders correctly
+
+4. ISSUES TO CHECK:
+   - Portal system removed (✓ DONE)
+   - API working (✓ CONFIRMED)
+   - Button onClick handler
+   - State management
+   - Modal rendering

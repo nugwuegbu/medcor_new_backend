@@ -827,12 +827,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Face analysis completed with YCE data:', demoResult);
       
-      res.json({
-        success: true,
-        result: demoResult,
-        message: "Face analysis completed using Perfect Corp YCE SDK",
-        api_status: "YCE SDK active"
-      });
+      // Check if headers already sent
+      if (!res.headersSent) {
+        return res.json({
+          success: true,
+          result: demoResult,
+          message: "Face analysis completed using Perfect Corp YCE SDK",
+          api_status: "YCE SDK active"
+        });
+      }
 
       // TODO: Replace with actual Perfect Corp API integration when valid credentials are provided
       // For now, commented out to avoid authentication errors
@@ -918,10 +921,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Face analysis error:', error);
-      res.status(500).json({ 
-        error: "Failed to analyze face",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
+      if (!res.headersSent) {
+        return res.status(500).json({ 
+          error: "Failed to analyze face",
+          details: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
     }
   });
 
