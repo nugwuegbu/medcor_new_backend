@@ -17,6 +17,9 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Debug log
+  console.log('FaceAnalysisCamera render:', { isOpen, portalElement });
+
   // Portal setup
   useEffect(() => {
     if (isOpen) {
@@ -178,7 +181,10 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
     }
   }, [cameraStream, connectToExistingCamera, startNewCamera]);
 
-  if (!isOpen || !portalElement) return null;
+  if (!isOpen) return null;
+  
+  // Debug log
+  console.log('FaceAnalysisCamera should render modal:', { isOpen, portalElement });
 
   const modalContent = (
     <div 
@@ -472,5 +478,10 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
     </div>
   );
 
+  // Render without portal if portalElement is not ready
+  if (!portalElement) {
+    return modalContent;
+  }
+  
   return createPortal(modalContent, portalElement);
 }
