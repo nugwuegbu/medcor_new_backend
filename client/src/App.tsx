@@ -28,8 +28,11 @@ function Router() {
 }
 
 function App() {
+  console.log('App component rendering...');
+  
   // Request location permission immediately on app load
   useEffect(() => {
+    console.log('App useEffect running...');
     // Request geolocation permission
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
