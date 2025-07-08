@@ -91,35 +91,12 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
         }
       } else {
         setIsRecording(false);
-        
-        // Return to idle video on error
-        const idleVid = document.getElementById('idleVideo') as HTMLVideoElement;
-        const talkVid = document.getElementById('talkVideo') as HTMLVideoElement;
-        
-        if (idleVid && talkVid) {
-          talkVid.pause();
-          talkVid.style.visibility = 'hidden';
-          idleVid.style.visibility = 'visible';
-          idleVid.play();
-        }
       }
     };
 
     // Handle end
     recognition.onend = () => {
       console.log("Recognition ended");
-      
-      // Return to idle video when user stops speaking
-      const idleVid = document.getElementById('idleVideo') as HTMLVideoElement;
-      const talkVid = document.getElementById('talkVideo') as HTMLVideoElement;
-      
-      if (idleVid && talkVid) {
-        talkVid.pause();
-        talkVid.style.visibility = 'hidden';
-        idleVid.style.visibility = 'visible';
-        idleVid.play();
-      }
-      
       // Restart if still recording (browser might auto-stop after silence)
       if (isRecording) {
         console.log("Restarting recognition to continue listening");
@@ -134,17 +111,6 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
     // Handle start
     recognition.onstart = () => {
       console.log("Recognition started");
-      
-      // Show talking video when user starts speaking
-      const idleVid = document.getElementById('idleVideo') as HTMLVideoElement;
-      const talkVid = document.getElementById('talkVideo') as HTMLVideoElement;
-      
-      if (idleVid && talkVid) {
-        idleVid.style.visibility = 'hidden';
-        talkVid.style.visibility = 'visible';
-        talkVid.currentTime = 0;
-        talkVid.play();
-      }
     };
 
     recognitionRef.current = recognition;

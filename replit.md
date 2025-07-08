@@ -247,10 +247,6 @@ Changelog:
 - July 06, 2025. Integrated ElevenLabs text-to-speech API with Turkish voice support (voice ID: pWeLcyFEBT5svt9WMYAO) and OpenAI TTS backup system - backend now supports both providers with automatic language detection for optimal voice selection
 - July 08, 2025. Created standalone chat widget system for external integration - built complete widget package without HeyGen avatar dependency, includes JavaScript widget, HTML demo, and API endpoints for easy integration into any website. Main application with HeyGen avatar remains unchanged and fully functional at root URL (/)
 - July 08, 2025. Created downloadable frontend package in export-package/ directory containing all UX components, styles, hooks, and utilities without HeyGen dependency. Added /api/download-frontend-package endpoint for ZIP download and /api/frontend-package demo page showing package contents and integration guide
-- July 08, 2025. Completely removed HeyGen avatar system and replaced with custom video background (medcor_chatbot_preloader.mp4) across all chat interfaces while preserving original chat UX design and functionality
-- July 08, 2025. Updated chat interface header to show animated pulse/heartbeat icon instead of "AI Assistant" text, restored chat widget to original bottom-right position
-- July 08, 2025. Removed video background completely at user request - chat widget now uses original clean white background with gradient overlays for chat interface
-- July 08, 2025. Implemented dual-video avatar system with idle loop (medcor_chatbot_preloader.mp4) and talking loop (medcor_chatbot_elevenlabs.mp4) - videos switch based on user speech recognition events and AI TTS playback for seamless conversational experience
 
 ## User Preferences
 

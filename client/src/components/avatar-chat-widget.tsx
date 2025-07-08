@@ -2,11 +2,16 @@ import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
+import HeyGenAvatar from "./heygen-avatar";
+import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
+import HeyGenSDKAvatar, { HeyGenSDKAvatarRef } from "./heygen-sdk-avatar";
 import ChatDoctorList from "./chat-doctor-list";
 import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
 import InfoOverlay from "./info-overlay";
+import { AvatarManager } from "../services/avatar-manager";
+import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
 import doctorEmilyPhoto from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751701299986.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
@@ -97,37 +102,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   });
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  // Avatar ref removed - no longer needed after HeyGen removal
+  const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const capturePhotoRef = useRef<(() => string | null) | null>(null);
   const doctorHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSpeakTimeRef = useRef<number>(0);
   const avatarContainerRef = useRef<HTMLDivElement>(null);
-
-  // Avatar video control functions
-  const showIdleVideo = () => {
-    const idleVid = document.getElementById('idleVideo') as HTMLVideoElement;
-    const talkVid = document.getElementById('talkVideo') as HTMLVideoElement;
-    
-    if (idleVid && talkVid) {
-      talkVid.pause();
-      talkVid.style.visibility = 'hidden';
-      idleVid.style.visibility = 'visible';
-      idleVid.play();
-    }
-  };
-
-  const showTalkVideo = () => {
-    const idleVid = document.getElementById('idleVideo') as HTMLVideoElement;
-    const talkVid = document.getElementById('talkVideo') as HTMLVideoElement;
-    
-    if (idleVid && talkVid) {
-      idleVid.style.visibility = 'hidden';
-      talkVid.style.visibility = 'visible';
-      talkVid.currentTime = 0;
-      talkVid.play();
-    }
-  };
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -298,9 +278,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       return await response.json();
     },
     onSuccess: async (data) => {
-      // Show talking video when AI starts responding
-      showTalkVideo();
-      
       // Check if the response contains a nearby search command
       if (data.message.includes("NEARBY_SEARCH:")) {
         console.log("NEARBY_SEARCH detected in response:", data.message);
@@ -407,45 +384,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         setMessages(prev => [...prev, botMessage]);
       }
       
-      // Use ElevenLabs TTS for speech synthesis
-      if (data.message) {
-        try {
-          const ttsResponse = await fetch("/api/tts", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              text: data.message,
-              language: detectLanguageFromText(data.message)
-            })
-          });
-          
-          if (ttsResponse.ok) {
-            const audioBlob = await ttsResponse.blob();
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audio = new Audio(audioUrl);
-            
-            // Show talking video when audio starts
-            audio.onplay = () => {
-              showTalkVideo();
-            };
-            
-            // Return to idle video when audio ends
-            audio.onended = () => {
-              showIdleVideo();
-            };
-            
-            await audio.play();
-          }
-        } catch (error) {
-          console.error("TTS error:", error);
-          // Return to idle video if TTS fails
-          showIdleVideo();
-        }
-      } else {
-        // No message to speak, return to idle
-        showIdleVideo();
+      // Make the HeyGen avatar speak the response with language detection
+      if ((window as any).heygenSpeak) {
+        // Detect language from response text
+        const detectedLang = detectLanguageFromText(data.message);
+        (window as any).heygenSpeak(data.message, detectedLang);
       }
     }
   });
@@ -453,7 +396,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // Initialize chat interface on first user interaction
+    // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
 
     const userMessage: Message = {
@@ -479,7 +422,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleDoctorsSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // Initialize chat interface on first user interaction
+    // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
 
     const userMessage: Message = {
@@ -537,13 +480,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       const timeSinceLastSpeak = now - lastSpeakTimeRef.current;
       
       // Only speak if at least 3 seconds have passed since last speech
-      if (hoveredDoctorId === doctorId && !isSpeaking && timeSinceLastSpeak > 3000) {
+      if (avatarRef.current && hoveredDoctorId === doctorId && !isSpeaking && timeSinceLastSpeak > 3000) {
         setIsSpeaking(true);
         lastSpeakTimeRef.current = now;
         
         const message = `This is ${doctorName}. ${description}`;
-        // Use ElevenLabs TTS for speech synthesis
-        // TODO: Implement ElevenLabs TTS call here
+        avatarRef.current.speak({
+          text: message,
+          taskType: TaskType.TALK,
+          taskMode: TaskMode.SYNC
+        });
         
         // Reset speaking state after speech duration
         setTimeout(() => {
@@ -569,8 +515,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     setHoveredDoctorId(null);
     setIsSpeaking(false);
     
-    // Avatar speech replaced with ElevenLabs TTS
-    // TODO: Implement ElevenLabs TTS call here
+    // Stop avatar from speaking by interrupting with empty text
+    if (avatarRef.current) {
+      avatarRef.current.speak({
+        text: " ",
+        taskType: TaskType.TALK,
+        taskMode: TaskMode.SYNC
+      });
+    }
     */
   }, []);
 
@@ -579,39 +531,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   // If doctor list is being shown during booking, show contained within chat widget
   if (showDoctorList && !showChatInterface) {
     return (
-      <div className="chat-widget-container w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50" style={{ position: 'fixed', right: '16px', bottom: '16px', left: 'auto' }}>
-
-        {/* Avatar Video Container */}
-        <div className="absolute inset-0 z-0" style={{ pointerEvents: 'none' }}>
-          <video
-            id="idleVideo"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ visibility: 'visible' }}
-            onLoadStart={() => console.log('Idle video load started')}
-            onLoadedData={() => console.log('Idle video loaded successfully')}
-            onError={(e) => console.error('Idle video failed to load:', e)}
-            src="/medcor_chatbot_preloader.mp4"
-          />
-          <video
-            id="talkVideo"
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ visibility: 'hidden' }}
-            onLoadStart={() => console.log('Talk video load started')}
-            onLoadedData={() => console.log('Talk video loaded successfully')}
-            onError={(e) => console.error('Talk video failed to load:', e)}
-            src="/medcor_chatbot_elevenlabs.mp4"
-          />
-        </div>
-
+      <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
         {/* Back Button */}
         <button
           onClick={() => {
@@ -628,7 +548,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <span className="font-medium text-sm">Back</span>
         </button>
         
-        {/* Simple Avatar Circle for doctor list - placeholder */}
+        {/* Simple Avatar Circle for doctor list - no HeyGen instance */}
         <div 
           className="absolute w-16 h-16 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-2 ring-purple-600 bg-purple-600 flex items-center justify-center"
           style={{ right: '16px', top: '16px' }}
@@ -673,8 +593,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     };
                     setMessages(prev => [...prev, assistantMessage]);
                     
-                    // Avatar speech replaced with ElevenLabs TTS
-                    // TODO: Implement ElevenLabs TTS call here
+                    // Make avatar speak the message
+                    if (avatarRef.current) {
+                      avatarRef.current.speak(assistantStep.message);
+                    }
                   } catch (error) {
                     console.error('Failed to process doctor selection with assistant:', error);
                   }
@@ -732,8 +654,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     };
                     setMessages(prev => [...prev, assistantMessage]);
                     
-                    // Avatar speech replaced with ElevenLabs TTS
-                    // TODO: Implement ElevenLabs TTS call here
+                    // Make avatar speak the message
+                    if (avatarRef.current) {
+                      avatarRef.current.speak(assistantStep.message);
+                    }
                   } catch (error) {
                     console.error('Failed to process doctor 2 selection:', error);
                   }
@@ -791,8 +715,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     };
                     setMessages(prev => [...prev, assistantMessage]);
                     
-                    // Avatar speech replaced with ElevenLabs TTS
-                    // TODO: Implement ElevenLabs TTS call here
+                    // Make avatar speak the message
+                    if (avatarRef.current) {
+                      avatarRef.current.speak(assistantStep.message);
+                    }
                   } catch (error) {
                     console.error('Failed to process doctor 3 selection:', error);
                   }
@@ -893,39 +819,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }
 
   return (
-    <div className="chat-widget-container w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ position: 'fixed', right: '16px', bottom: '16px', left: 'auto' }}>
-
-      {/* Avatar Video Container */}
-      <div className="absolute inset-0 z-0" style={{ pointerEvents: 'none' }}>
-        <video
-          id="idleVideo"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ visibility: 'visible' }}
-          onLoadStart={() => console.log('Idle video load started')}
-          onLoadedData={() => console.log('Idle video loaded successfully')}
-          onError={(e) => console.error('Idle video failed to load:', e)}
-          src="/medcor_chatbot_preloader.mp4"
-        />
-        <video
-          id="talkVideo"
-          muted
-          loop
-          playsInline
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ visibility: 'hidden' }}
-          onLoadStart={() => console.log('Talk video load started')}
-          onLoadedData={() => console.log('Talk video loaded successfully')}
-          onError={(e) => console.error('Talk video failed to load:', e)}
-          src="/medcor_chatbot_elevenlabs.mp4"
-        />
-      </div>
-      
+    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
@@ -1001,16 +895,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           }}>
           {isOpen && !showDoctorList && !showRecordsList && (
             <>
-              {/* Medical Assistant Avatar Placeholder */}
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mb-4 mx-auto animate-pulse">
-                    <MessageSquare className="h-10 w-10 text-white" />
-                  </div>
-                  <p className="text-gray-600 text-sm">Medical Assistant</p>
-                  <p className="text-gray-500 text-xs mt-1">Ready to help</p>
-                </div>
-              </div>
+              {/* Show HeyGen avatar when NOT in specific list views */}
+              <HeyGenSDKAvatar 
+                ref={avatarRef}
+                key="single-avatar-instance"
+                apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+                isVisible={true}
+                onMessage={(text) => {
+                  console.log("Avatar message:", text);
+                }}
+                onReady={() => {
+                  console.log("Avatar is ready");
+                  setHasGreeted(true);
+                  // Don't send automatic greeting - wait for user interaction
+                }}
+              />
             </>
           )}
         </div>
@@ -1054,38 +953,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         {/* Chat Interface View - Within Chat Container */}
         {showChatInterface && (
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40 rounded-lg overflow-hidden">
-
-            {/* Avatar Video Container for Chat Interface */}
-            <div className="absolute inset-0 z-0" style={{ pointerEvents: 'none' }}>
-              <video
-                id="idleVideo"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="auto"
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ visibility: 'visible' }}
-                onLoadStart={() => console.log('Idle video load started')}
-                onLoadedData={() => console.log('Idle video loaded successfully')}
-                onError={(e) => console.error('Idle video failed to load:', e)}
-                src="/medcor_chatbot_preloader.mp4"
-              />
-              <video
-                id="talkVideo"
-                muted
-                loop
-                playsInline
-                preload="auto"
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ visibility: 'hidden' }}
-                onLoadStart={() => console.log('Talk video load started')}
-                onLoadedData={() => console.log('Talk video loaded successfully')}
-                onError={(e) => console.error('Talk video failed to load:', e)}
-                src="/medcor_chatbot_elevenlabs.mp4"
-              />
-            </div>
-
             {/* Back Button - Top Left Corner */}
             <button
               onClick={() => setShowChatInterface(false)}
@@ -1096,7 +963,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </button>
             
             {/* Chat Interface Content */}
-            <div className="h-full flex flex-col relative" style={{ zIndex: 10 }}>
+            <div className="h-full flex flex-col">
               {/* Menu Section - Centered */}
               <div className="flex-1 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
@@ -1300,8 +1167,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 };
                                 setMessages(prev => [...prev, assistantMessage]);
                                 
-                                // Avatar speech replaced with ElevenLabs TTS
-                                // TODO: Implement ElevenLabs TTS call here
+                                // Make avatar speak the message
+                                if (avatarRef.current) {
+                                  avatarRef.current.speak(assistantStep.message);
+                                }
                               } catch (error) {
                                 console.error('Failed to process doctor selection with assistant:', error);
                               }
@@ -1359,8 +1228,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 };
                                 setMessages(prev => [...prev, assistantMessage]);
                                 
-                                // Avatar speech replaced with ElevenLabs TTS
-                                // TODO: Implement ElevenLabs TTS call here
+                                // Make avatar speak the message
+                                if (avatarRef.current) {
+                                  avatarRef.current.speak(assistantStep.message);
+                                }
                               } catch (error) {
                                 console.error('Failed to process doctor 2 selection:', error);
                               }
@@ -1418,8 +1289,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 };
                                 setMessages(prev => [...prev, assistantMessage]);
                                 
-                                // Avatar speech replaced with ElevenLabs TTS
-                                // TODO: Implement ElevenLabs TTS call here
+                                // Make avatar speak the message
+                                if (avatarRef.current) {
+                                  avatarRef.current.speak(assistantStep.message);
+                                }
                               } catch (error) {
                                 console.error('Failed to process doctor 3 selection:', error);
                               }
@@ -1759,8 +1632,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         };
                         setMessages(prev => [...prev, assistantMessage]);
                         
-                        // Avatar speech replaced with ElevenLabs TTS
-                        // TODO: Implement ElevenLabs TTS call here
+                        // Make avatar speak the message
+                        if (avatarRef.current) {
+                          avatarRef.current.speak(assistantStep.message);
+                        }
                         
                         // Navigate to doctor selection after initialization
                         setShowBookingCalendar(false);
@@ -1913,8 +1788,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       };
                       setMessages(prev => [...prev, assistantMessage]);
                       
-                      // Avatar speech replaced with ElevenLabs TTS
-                      // TODO: Implement ElevenLabs TTS call here
+                      // Make avatar speak the confirmation
+                      if (avatarRef.current) {
+                        avatarRef.current.speak(assistantStep.message);
+                      }
                       
                       // Reset form and UI - Complete reset to main chat
                       setBookingFormData({
@@ -1994,8 +1871,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           };
                           setMessages(prev => [...prev, assistantMessage]);
                           
-                          // Avatar speech replaced with ElevenLabs TTS
-                          // TODO: Implement ElevenLabs TTS call here
+                          // Make avatar speak the message
+                          if (avatarRef.current) {
+                            avatarRef.current.speak(assistantStep.message);
+                          }
                         } catch (error) {
                           console.error('Failed to process form input:', error);
                           handleSendMessage(userInput);
@@ -2038,8 +1917,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           };
                           setMessages(prev => [...prev, assistantMessage]);
                           
-                          // Avatar speech replaced with ElevenLabs TTS
-                          // TODO: Implement ElevenLabs TTS call here
+                          // Make avatar speak the message
+                          if (avatarRef.current) {
+                            avatarRef.current.speak(assistantStep.message);
+                          }
                         } catch (error) {
                           console.error('Failed to process voice input:', error);
                           handleSendMessage(transcript);
@@ -2149,7 +2030,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       </div>
 
       {/* Input Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm z-50">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm">
         <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
           <input
             ref={inputRef}
