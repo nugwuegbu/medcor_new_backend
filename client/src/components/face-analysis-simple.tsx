@@ -54,6 +54,7 @@ export default function FaceAnalysisSimple({ isOpen, onClose }: FaceAnalysisSimp
         justifyContent: 'center',
         zIndex: 999999
       }}
+      onClick={(e) => e.stopPropagation()}
     >
       <div 
         style={{
