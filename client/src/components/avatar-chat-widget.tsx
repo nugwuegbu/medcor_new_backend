@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Home, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, User as Face, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -1000,7 +1000,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
                     { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
-                    { icon: Home, label: "Home", angle: 300, action: () => setSelectedMenuItem("home") }
+                    { icon: Face, label: "Face", angle: 300, action: () => setSelectedMenuItem("face") }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
                     const x = Math.cos(angleRad) * 75;
