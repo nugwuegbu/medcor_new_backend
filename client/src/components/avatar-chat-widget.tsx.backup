@@ -97,7 +97,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   });
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  // Avatar ref removed - no longer needed after HeyGen removal
+  const avatarRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const capturePhotoRef = useRef<(() => string | null) | null>(null);
   const doctorHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -379,15 +379,19 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         setMessages(prev => [...prev, botMessage]);
       }
       
-      // Use ElevenLabs TTS for speech synthesis
-      // TODO: Implement ElevenLabs TTS call here
+      // Make the HeyGen avatar speak the response with language detection
+      if ((window as any).heygenSpeak) {
+        // Detect language from response text
+        const detectedLang = detectLanguageFromText(data.message);
+        (window as any).heygenSpeak(data.message, detectedLang);
+      }
     }
   });
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // Initialize chat interface on first user interaction
+    // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
 
     const userMessage: Message = {
@@ -413,7 +417,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleDoctorsSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // Initialize chat interface on first user interaction
+    // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
 
     const userMessage: Message = {
@@ -476,7 +480,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         lastSpeakTimeRef.current = now;
         
         const message = `This is ${doctorName}. ${description}`;
-        // Use ElevenLabs TTS for speech synthesis
+        // Use ElevenLabs TTS instead of HeyGen avatar
         // TODO: Implement ElevenLabs TTS call here
         
         // Reset speaking state after speech duration
@@ -503,8 +507,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     setHoveredDoctorId(null);
     setIsSpeaking(false);
     
-    // Avatar speech replaced with ElevenLabs TTS
-    // TODO: Implement ElevenLabs TTS call here
+    // Stop avatar from speaking by interrupting with empty text
+    if (avatarRef.current) {
+      avatarRef.current.speak({
+        text: " ",
+        taskType: TaskType.TALK,
+        taskMode: TaskMode.SYNC
+      });
+    }
     */
   }, []);
 
@@ -530,7 +540,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <span className="font-medium text-sm">Back</span>
         </button>
         
-        {/* Simple Avatar Circle for doctor list - placeholder */}
+        {/* Simple Avatar Circle for doctor list - no HeyGen instance */}
         <div 
           className="absolute w-16 h-16 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-2 ring-purple-600 bg-purple-600 flex items-center justify-center"
           style={{ right: '16px', top: '16px' }}
@@ -575,8 +585,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     };
                     setMessages(prev => [...prev, assistantMessage]);
                     
-                    // Avatar speech replaced with ElevenLabs TTS
-                    // TODO: Implement ElevenLabs TTS call here
+                    // Make avatar speak the message
+                    if (avatarRef.current) {
+                      avatarRef.current.speak(assistantStep.message);
+                    }
                   } catch (error) {
                     console.error('Failed to process doctor selection with assistant:', error);
                   }
@@ -634,8 +646,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     };
                     setMessages(prev => [...prev, assistantMessage]);
                     
-                    // Avatar speech replaced with ElevenLabs TTS
-                    // TODO: Implement ElevenLabs TTS call here
+                    // Make avatar speak the message
+                    if (avatarRef.current) {
+                      avatarRef.current.speak(assistantStep.message);
+                    }
                   } catch (error) {
                     console.error('Failed to process doctor 2 selection:', error);
                   }
@@ -693,8 +707,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     };
                     setMessages(prev => [...prev, assistantMessage]);
                     
-                    // Avatar speech replaced with ElevenLabs TTS
-                    // TODO: Implement ElevenLabs TTS call here
+                    // Make avatar speak the message
+                    if (avatarRef.current) {
+                      avatarRef.current.speak(assistantStep.message);
+                    }
                   } catch (error) {
                     console.error('Failed to process doctor 3 selection:', error);
                   }
@@ -1138,8 +1154,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 };
                                 setMessages(prev => [...prev, assistantMessage]);
                                 
-                                // Avatar speech replaced with ElevenLabs TTS
-                                // TODO: Implement ElevenLabs TTS call here
+                                // Make avatar speak the message
+                                if (avatarRef.current) {
+                                  avatarRef.current.speak(assistantStep.message);
+                                }
                               } catch (error) {
                                 console.error('Failed to process doctor selection with assistant:', error);
                               }
@@ -1197,8 +1215,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 };
                                 setMessages(prev => [...prev, assistantMessage]);
                                 
-                                // Avatar speech replaced with ElevenLabs TTS
-                                // TODO: Implement ElevenLabs TTS call here
+                                // Make avatar speak the message
+                                if (avatarRef.current) {
+                                  avatarRef.current.speak(assistantStep.message);
+                                }
                               } catch (error) {
                                 console.error('Failed to process doctor 2 selection:', error);
                               }
@@ -1256,8 +1276,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 };
                                 setMessages(prev => [...prev, assistantMessage]);
                                 
-                                // Avatar speech replaced with ElevenLabs TTS
-                                // TODO: Implement ElevenLabs TTS call here
+                                // Make avatar speak the message
+                                if (avatarRef.current) {
+                                  avatarRef.current.speak(assistantStep.message);
+                                }
                               } catch (error) {
                                 console.error('Failed to process doctor 3 selection:', error);
                               }
@@ -1597,8 +1619,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         };
                         setMessages(prev => [...prev, assistantMessage]);
                         
-                        // Avatar speech replaced with ElevenLabs TTS
-                        // TODO: Implement ElevenLabs TTS call here
+                        // Make avatar speak the message
+                        if (avatarRef.current) {
+                          avatarRef.current.speak(assistantStep.message);
+                        }
                         
                         // Navigate to doctor selection after initialization
                         setShowBookingCalendar(false);
@@ -1751,8 +1775,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       };
                       setMessages(prev => [...prev, assistantMessage]);
                       
-                      // Avatar speech replaced with ElevenLabs TTS
-                      // TODO: Implement ElevenLabs TTS call here
+                      // Make avatar speak the confirmation
+                      if (avatarRef.current) {
+                        avatarRef.current.speak(assistantStep.message);
+                      }
                       
                       // Reset form and UI - Complete reset to main chat
                       setBookingFormData({
@@ -1832,8 +1858,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           };
                           setMessages(prev => [...prev, assistantMessage]);
                           
-                          // Avatar speech replaced with ElevenLabs TTS
-                          // TODO: Implement ElevenLabs TTS call here
+                          // Make avatar speak the message
+                          if (avatarRef.current) {
+                            avatarRef.current.speak(assistantStep.message);
+                          }
                         } catch (error) {
                           console.error('Failed to process form input:', error);
                           handleSendMessage(userInput);
@@ -1876,8 +1904,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           };
                           setMessages(prev => [...prev, assistantMessage]);
                           
-                          // Avatar speech replaced with ElevenLabs TTS
-                          // TODO: Implement ElevenLabs TTS call here
+                          // Make avatar speak the message
+                          if (avatarRef.current) {
+                            avatarRef.current.speak(assistantStep.message);
+                          }
                         } catch (error) {
                           console.error('Failed to process voice input:', error);
                           handleSendMessage(transcript);
