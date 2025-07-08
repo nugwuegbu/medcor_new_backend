@@ -523,7 +523,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           className="absolute inset-0 w-full h-full object-cover"
           style={{ zIndex: 1 }}
         >
-          <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
+          <source src="/medcor_chatbot_preloader_new.mp4" type="video/mp4" />
         </video>
         
         {/* Overlay for better readability */}
@@ -819,7 +819,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         className="absolute inset-0 w-full h-full object-cover"
         style={{ zIndex: 1 }}
       >
-        <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
+        <source src="/medcor_chatbot_preloader_new.mp4" type="video/mp4" />
       </video>
       
       {/* Overlay for better readability */}
@@ -962,7 +962,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               className="absolute inset-0 w-full h-full object-cover"
               style={{ zIndex: 1 }}
             >
-              <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
+              <source src="/medcor_chatbot_preloader_new.mp4" type="video/mp4" />
             </video>
             
             {/* Overlay for better readability */}
