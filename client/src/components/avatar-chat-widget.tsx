@@ -592,9 +592,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             preload="auto"
             className="absolute inset-0 w-full h-full object-cover"
             style={{ visibility: 'visible' }}
-          >
-            <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
-          </video>
+            onLoadStart={() => console.log('Idle video load started')}
+            onLoadedData={() => console.log('Idle video loaded successfully')}
+            onError={(e) => console.error('Idle video failed to load:', e)}
+            src="/medcor_chatbot_preloader.mp4"
+          />
           <video
             id="talkVideo"
             muted
@@ -603,9 +605,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             preload="auto"
             className="absolute inset-0 w-full h-full object-cover"
             style={{ visibility: 'hidden' }}
-          >
-            <source src="/medcor_chatbot_elevenlabs.mp4" type="video/mp4" />
-          </video>
+            onLoadStart={() => console.log('Talk video load started')}
+            onLoadedData={() => console.log('Talk video loaded successfully')}
+            onError={(e) => console.error('Talk video failed to load:', e)}
+            src="/medcor_chatbot_elevenlabs.mp4"
+          />
         </div>
 
         {/* Back Button */}
@@ -902,9 +906,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           preload="auto"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ visibility: 'visible' }}
-        >
-          <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
-        </video>
+          onLoadStart={() => console.log('Idle video load started')}
+          onLoadedData={() => console.log('Idle video loaded successfully')}
+          onError={(e) => console.error('Idle video failed to load:', e)}
+          src="/medcor_chatbot_preloader.mp4"
+        />
         <video
           id="talkVideo"
           muted
@@ -913,9 +919,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           preload="auto"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ visibility: 'hidden' }}
-        >
-          <source src="/medcor_chatbot_elevenlabs.mp4" type="video/mp4" />
-        </video>
+          onLoadStart={() => console.log('Talk video load started')}
+          onLoadedData={() => console.log('Talk video loaded successfully')}
+          onError={(e) => console.error('Talk video failed to load:', e)}
+          src="/medcor_chatbot_elevenlabs.mp4"
+        />
       </div>
       
       {/* Header */}
@@ -1058,9 +1066,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 preload="auto"
                 className="absolute inset-0 w-full h-full object-cover"
                 style={{ visibility: 'visible' }}
-              >
-                <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
-              </video>
+                onLoadStart={() => console.log('Idle video load started')}
+                onLoadedData={() => console.log('Idle video loaded successfully')}
+                onError={(e) => console.error('Idle video failed to load:', e)}
+                src="/medcor_chatbot_preloader.mp4"
+              />
               <video
                 id="talkVideo"
                 muted
@@ -1069,9 +1079,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 preload="auto"
                 className="absolute inset-0 w-full h-full object-cover"
                 style={{ visibility: 'hidden' }}
-              >
-                <source src="/medcor_chatbot_elevenlabs.mp4" type="video/mp4" />
-              </video>
+                onLoadStart={() => console.log('Talk video load started')}
+                onLoadedData={() => console.log('Talk video loaded successfully')}
+                onError={(e) => console.error('Talk video failed to load:', e)}
+                src="/medcor_chatbot_elevenlabs.mp4"
+              />
             </div>
 
             {/* Back Button - Top Left Corner */}
