@@ -16,6 +16,18 @@ import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-
 import doctorEmilyPhoto from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751701299986.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
 
+// Perfect Corp YCE SDK types
+declare global {
+  interface Window {
+    YCE: {
+      init: (options: any) => void;
+      isInitialized: () => boolean;
+      captureImage: () => Promise<any>;
+      destroy: () => void;
+    };
+  }
+}
+
 interface Message {
   id: string;
   text: string;
@@ -467,57 +479,132 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   // Face analysis handlers
   const handleStartFaceAnalysis = useCallback(async () => {
     try {
+      console.log('Starting Perfect Corp YCE SDK face analysis...');
+      setFaceAnalysisLoading(true);
       setFaceAnalysisError(null);
       setFaceAnalysisResult(null);
       
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (faceAnalysisCameraRef.current) {
-        faceAnalysisCameraRef.current.srcObject = stream;
+      // Initialize YCE SDK if not already initialized
+      if (window.YCE && !window.YCE.isInitialized()) {
+        console.log('Initializing YCE SDK...');
+        
+        const options = {
+          apiKey: import.meta.env.VITE_YCE_API_KEY || import.meta.env.REACT_APP_YCE_API_KEY,
+          accountId: import.meta.env.VITE_YCE_ACCOUNT_ID || import.meta.env.REACT_APP_YCE_ACCOUNT_ID,
+          email: import.meta.env.VITE_YCE_EMAIL || import.meta.env.REACT_APP_YCE_EMAIL,
+          mode: 'ui',
+          container: faceAnalysisCameraRef.current,
+          onReady: () => {
+            console.log('YCE SDK ready');
+            setFaceAnalysisCameraActive(true);
+          },
+          onImageCaptured: (imageData: any) => {
+            console.log('YCE SDK image captured:', imageData);
+            setFaceAnalysisResult(imageData);
+          },
+          ui: {
+            theme: 'light',
+            showInstructions: true,
+          },
+          capture: {
+            faceQuality: true,
+            resolution: { width: 640, height: 480 }
+          }
+        };
+        
+        window.YCE.init(options);
+        console.log('YCE SDK initialized with options:', options);
+      } else if (window.YCE && window.YCE.isInitialized()) {
+        console.log('YCE SDK already initialized');
         setFaceAnalysisCameraActive(true);
+      } else {
+        console.log('YCE SDK not available, using fallback camera');
+        
+        // Fallback to regular camera
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            width: 640, 
+            height: 480,
+            facingMode: 'user'
+          } 
+        });
+        
+        if (faceAnalysisCameraRef.current) {
+          faceAnalysisCameraRef.current.srcObject = stream;
+          setFaceAnalysisCameraActive(true);
+        }
       }
     } catch (error) {
+      console.error('Face analysis initialization error:', error);
       setFaceAnalysisError("Camera access denied or not available");
+    } finally {
+      setFaceAnalysisLoading(false);
     }
   }, []);
 
   const handleTakeFacePhoto = useCallback(async () => {
-    if (!faceAnalysisCameraRef.current || !faceAnalysisCameraActive) return;
+    if (!faceAnalysisCameraRef.current || !faceAnalysisCameraActive) {
+      console.log('Face photo capture skipped - camera not active');
+      return;
+    }
     
     try {
+      console.log('Starting Perfect Corp YCE SDK face analysis...');
       setFaceAnalysisLoading(true);
       setFaceAnalysisError(null);
       
-      // Create canvas to capture photo
-      const canvas = document.createElement('canvas');
-      const video = faceAnalysisCameraRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        throw new Error("Could not get canvas context");
-      }
-      
-      ctx.drawImage(video, 0, 0);
-      const imageBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-      
-      // Send to backend for analysis
-      const response = await fetch('/api/face-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ imageBase64 })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setFaceAnalysisResult(data.result);
+      // Use Perfect Corp YCE SDK
+      if (window.YCE && window.YCE.isInitialized()) {
+        console.log('Using YCE SDK for face analysis');
+        
+        // Capture image using YCE SDK
+        const result = await window.YCE.captureImage();
+        console.log('YCE SDK analysis result:', result);
+        
+        if (result && result.success) {
+          setFaceAnalysisResult(result.data);
+        } else {
+          throw new Error('YCE SDK analysis failed');
+        }
       } else {
-        setFaceAnalysisError(data.error || 'Analysis failed');
+        console.log('YCE SDK not available, using canvas capture');
+        
+        // Fallback to canvas capture
+        const canvas = document.createElement('canvas');
+        const video = faceAnalysisCameraRef.current;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          throw new Error("Could not get canvas context");
+        }
+        
+        ctx.drawImage(video, 0, 0);
+        const imageBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+        
+        console.log('Image captured, base64 length:', imageBase64.length);
+        
+        // Send to backend for analysis with YCE API
+        const response = await fetch('/api/face-analysis', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ imageBase64 })
+        });
+        
+        const data = await response.json();
+        console.log('Perfect Corp API response:', data);
+        
+        if (data.success) {
+          setFaceAnalysisResult(data.result);
+        } else {
+          setFaceAnalysisError(data.error || 'Analysis failed');
+        }
       }
     } catch (error) {
+      console.error('Face analysis error:', error);
       setFaceAnalysisError(error instanceof Error ? error.message : 'Analysis failed');
     } finally {
       setFaceAnalysisLoading(false);
@@ -1595,7 +1682,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 
                 {/* Face Page View */}
                 {showFacePage && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
                     {/* Back Button */}
                     <button
                       onClick={() => {

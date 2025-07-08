@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageCircle, Users, Calendar, Shield, Clock, Phone, Camera } from "lucide-react";
+import { MessageCircle, Users, Calendar, Shield, Clock, Phone, Camera, User as Face } from "lucide-react";
 import { Link } from "wouter";
 import FaqSection from "@/components/faq-section";
 import FloatingChatButton from "@/components/floating-chat-button";
 import MedcorChatModal from "@/components/medcor-chat-modal";
 import SystemTest from "@/components/system-test";
+import FaceAnalysisWidget from "@/components/face-analysis-widget";
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
+  const [showFaceAnalysis, setShowFaceAnalysis] = useState(false);
 
   // Auto-show modal when users first visit
   useEffect(() => {
@@ -117,12 +119,22 @@ export default function Home() {
                   <p className="text-gray-600 mb-4">
                     Click the chat button to experience instant patient recognition and personalized care.
                   </p>
-                  <Button 
-                    onClick={() => setShowModal(true)}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                  >
-                    Start Demo
-                  </Button>
+                  <div className="space-y-3">
+                    <Button 
+                      onClick={() => setShowModal(true)}
+                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    >
+                      Start Chat Demo
+                    </Button>
+                    <Button 
+                      onClick={() => setShowFaceAnalysis(true)}
+                      variant="outline"
+                      className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
+                    >
+                      <Face className="h-4 w-4 mr-2" />
+                      Face Analysis
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -286,6 +298,12 @@ export default function Home() {
       <MedcorChatModal 
         isOpen={showModal} 
         onClose={() => setShowModal(false)} 
+      />
+
+      {/* Face Analysis Widget */}
+      <FaceAnalysisWidget 
+        isOpen={showFaceAnalysis} 
+        onClose={() => setShowFaceAnalysis(false)} 
       />
     </div>
   );
