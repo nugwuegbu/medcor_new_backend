@@ -1160,13 +1160,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
                     { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
                     { icon: Face, label: "Face", angle: 300, action: () => { 
-                      console.log('Face button clicked! Setting showFacePage to true');
+                      console.log('🔴 Face button clicked! Setting showFacePage to true');
                       setShowFacePage(true); 
                       setSelectedMenuItem("face");
-                      // Keep chat interface open for Face Analysis
-                      setShowChatInterface(true);
+                      // Reset other states
+                      setShowChatInterface(false);
+                      setShowDoctorList(false);
+                      setShowRecordsList(false);
+                      setShowAdminPage(false);
+                      setShowBookingCalendar(false);
                       setIsMinimized(false);
-                      console.log('Face button states set:', { showFacePage: true, selectedMenuItem: 'face', isMinimized: false });
+                      console.log('🔴 Face button states set:', { showFacePage: true, selectedMenuItem: 'face' });
                     } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
@@ -1691,13 +1695,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 
                 {/* Face Analysis Page View */}
                 {showFacePage && (
-                  <FaceAnalysisWidgetInline
-                    isOpen={showFacePage}
-                    onClose={() => {
-                      setShowFacePage(false);
-                      setSelectedMenuItem(null);
-                    }}
-                  />
+                  <>
+                    {console.log('🟢 Rendering FaceAnalysisWidgetInline with showFacePage:', showFacePage)}
+                    <FaceAnalysisWidgetInline
+                      isOpen={showFacePage}
+                      onClose={() => {
+                        console.log('🔵 Closing Face Analysis');
+                        setShowFacePage(false);
+                        setSelectedMenuItem(null);
+                      }}
+                    />
+                  </>
                 )}
               </div>
             </div>
