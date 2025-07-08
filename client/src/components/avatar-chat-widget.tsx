@@ -513,7 +513,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   // If doctor list is being shown during booking, show contained within chat widget
   if (showDoctorList && !showChatInterface) {
     return (
-      <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 relative">
+      <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 relative" style={{ right: '16px', left: 'auto' }}>
         {/* Video Background */}
         <video
           autoPlay
@@ -809,7 +809,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }
 
   return (
-    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border relative">
+    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border relative" style={{ right: '16px', left: 'auto' }}>
       {/* Video Background */}
       <video
         autoPlay
