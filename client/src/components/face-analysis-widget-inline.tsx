@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, User as Face, Camera, Loader2, CheckCircle, Eye, ChevronLeft } from "lucide-react";
+import { useState, useRef } from 'react';
+import { ChevronLeft, Camera, Loader2, User as Face } from "lucide-react";
 
 interface FaceAnalysisWidgetInlineProps {
   isOpen: boolean;
@@ -10,45 +10,51 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  // Camera functions
-  const startCamera = useCallback(async () => {
+  const startCamera = async () => {
     try {
-      // Stop any existing camera streams first
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
+      // Stop any existing stream first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
       
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 320, height: 240, facingMode: 'user' }
       });
-      setCameraStream(stream);
-      setIsRecording(true);
+      
+      streamRef.current = stream;
+      setCameraActive(true);
+      setError(null);
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        await videoRef.current.play().catch(() => {
+          // Ignore play errors during HMR
+        });
       }
     } catch (err) {
-      console.error('Camera access denied:', err);
+      console.error('Camera error:', err);
       setError('Kamera erişimi reddedildi. Lütfen kamera izinlerini kontrol edin.');
     }
-  }, [cameraStream]);
+  };
 
-  const stopCamera = useCallback(() => {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
-      setCameraStream(null);
-      setIsRecording(false);
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
-  }, [cameraStream]);
+    setCameraActive(false);
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
 
-  const analyzeImage = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+  const analyzeImage = async () => {
+    if (!videoRef.current || !canvasRef.current || !cameraActive) return;
 
     setLoading(true);
     setError(null);
@@ -60,18 +66,13 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       
       if (!context) return;
 
-      // Set canvas size to match video
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      
-      // Draw video frame to canvas
       context.drawImage(video, 0, 0);
       
-      // Convert to base64
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
       const base64Data = imageData.split(',')[1];
       
-      // Send to backend for analysis
       const response = await fetch('/api/face-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,40 +83,23 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       
       if (data.success) {
         setResult(data.result);
-        stopCamera(); // Stop camera after analysis
+        stopCamera();
       } else {
-        setError(data.error || 'Analysis failed');
+        setError(data.error || 'Analiz başarısız');
       }
     } catch (err) {
       console.error('Analysis error:', err);
-      setError('Analysis failed. Please try again.');
+      setError('Analiz sırasında hata oluştu. Tekrar deneyin.');
     } finally {
       setLoading(false);
     }
-  }, [stopCamera]);
+  };
 
-  const resetAnalysis = useCallback(() => {
+  const resetAnalysis = () => {
     setResult(null);
     setError(null);
-    setTimeout(() => {
-      startCamera(); // Restart camera with delay
-    }, 300);
-  }, [startCamera]);
-
-  // Start camera when component opens
-  useEffect(() => {
-    if (isOpen && !result) {
-      // Add small delay to avoid camera conflicts
-      setTimeout(() => {
-        startCamera();
-      }, 500);
-    }
-    return () => {
-      if (cameraStream) {
-        stopCamera();
-      }
-    };
-  }, [isOpen, result, startCamera, stopCamera, cameraStream]);
+    startCamera();
+  };
 
   if (!isOpen) return null;
 
@@ -145,11 +129,11 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
               />
               <canvas ref={canvasRef} className="hidden" />
               
-              {!isRecording && (
+              {!cameraActive && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50">
                   <div className="text-center text-white">
                     <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Camera not active</p>
+                    <p className="text-sm">Kamera hazır değil</p>
                   </div>
                 </div>
               )}
@@ -168,15 +152,25 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
               </div>
             )}
 
-            {/* Analyze Button */}
-            <button
-              onClick={analyzeImage}
-              disabled={loading || !isRecording}
-              className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
-            >
-              {loading ? <Loader2 size={20} className="animate-spin" /> : <Face size={20} />}
-              {loading ? 'Analyzing...' : 'Analyze My Face'}
-            </button>
+            {/* Start/Analyze Buttons */}
+            {!cameraActive ? (
+              <button
+                onClick={startCamera}
+                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-all"
+              >
+                <Camera size={20} />
+                Kamerayı Başlat
+              </button>
+            ) : (
+              <button
+                onClick={analyzeImage}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
+              >
+                {loading ? <Loader2 size={20} className="animate-spin" /> : <Face size={20} />}
+                {loading ? 'Analiz Ediliyor...' : 'Yüzümü Analiz Et'}
+              </button>
+            )}
           </div>
         ) : (
           /* Results Display */
