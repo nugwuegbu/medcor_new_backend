@@ -73,6 +73,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showRecordsList, setShowRecordsList] = useState(false);
   const [showAdminPage, setShowAdminPage] = useState(false);
   const [showFacePage, setShowFacePage] = useState(false);
+  const [faceAnalysisCameraActive, setFaceAnalysisCameraActive] = useState(false);
+  const [faceAnalysisLoading, setFaceAnalysisLoading] = useState(false);
+  const [faceAnalysisResult, setFaceAnalysisResult] = useState<any>(null);
+  const [faceAnalysisError, setFaceAnalysisError] = useState<string | null>(null);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraPermissionRequested, setCameraPermissionRequested] = useState(false);
@@ -109,6 +113,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const doctorHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSpeakTimeRef = useRef<number>(0);
   const avatarContainerRef = useRef<HTMLDivElement>(null);
+  const faceAnalysisCameraRef = useRef<HTMLVideoElement>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -458,6 +463,66 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     console.log("Camera permission requested");
     setCameraEnabled(true);
   }, []);
+
+  // Face analysis handlers
+  const handleStartFaceAnalysis = useCallback(async () => {
+    try {
+      setFaceAnalysisError(null);
+      setFaceAnalysisResult(null);
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (faceAnalysisCameraRef.current) {
+        faceAnalysisCameraRef.current.srcObject = stream;
+        setFaceAnalysisCameraActive(true);
+      }
+    } catch (error) {
+      setFaceAnalysisError("Camera access denied or not available");
+    }
+  }, []);
+
+  const handleTakeFacePhoto = useCallback(async () => {
+    if (!faceAnalysisCameraRef.current || !faceAnalysisCameraActive) return;
+    
+    try {
+      setFaceAnalysisLoading(true);
+      setFaceAnalysisError(null);
+      
+      // Create canvas to capture photo
+      const canvas = document.createElement('canvas');
+      const video = faceAnalysisCameraRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
+      
+      ctx.drawImage(video, 0, 0);
+      const imageBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+      
+      // Send to backend for analysis
+      const response = await fetch('/api/face-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageBase64 })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setFaceAnalysisResult(data.result);
+      } else {
+        setFaceAnalysisError(data.error || 'Analysis failed');
+      }
+    } catch (error) {
+      setFaceAnalysisError(error instanceof Error ? error.message : 'Analysis failed');
+    } finally {
+      setFaceAnalysisLoading(false);
+    }
+  }, [faceAnalysisCameraActive]);
 
   // Handle doctor card hover - DISABLED to prevent repetitive speaking
   const handleDoctorHover = useCallback((doctorId: number, doctorName: string, description: string) => {
@@ -1542,10 +1607,92 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <span className="font-medium text-sm">Back</span>
                     </button>
                     
-                    {/* Empty Face Page */}
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        {/* Empty face page - face recognition and authentication features will be here */}
+                    {/* Face Analysis Interface - Contained within chat widget */}
+                    <div className="h-full flex flex-col items-center justify-center p-4">
+                      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+                        <h2 className="text-lg font-bold text-gray-800 mb-4 text-center">Face Analysis</h2>
+                        
+                        {/* Camera Preview - Smaller to fit widget */}
+                        <div className="mb-4">
+                          <div className="relative w-48 h-48 mx-auto bg-gray-100 rounded-full overflow-hidden border-2 border-purple-200">
+                            <video
+                              ref={faceAnalysisCameraRef}
+                              className="w-full h-full object-cover"
+                              autoPlay
+                              muted
+                              playsInline
+                            />
+                            {!faceAnalysisCameraActive && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-gray-500 text-center">
+                                  <div className="w-12 h-12 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <Face className="w-6 h-6 text-purple-600" />
+                                  </div>
+                                  <p className="text-xs">Camera Preview</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Control Buttons - Smaller to fit widget */}
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={handleStartFaceAnalysis}
+                            disabled={faceAnalysisLoading}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-full transition-colors disabled:opacity-50 text-sm"
+                          >
+                            {faceAnalysisLoading ? 'Analyzing...' : 'Start Camera'}
+                          </button>
+                          
+                          <button
+                            onClick={handleTakeFacePhoto}
+                            disabled={!faceAnalysisCameraActive || faceAnalysisLoading}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-full transition-colors disabled:opacity-50 text-sm"
+                          >
+                            Analyze Face
+                          </button>
+                        </div>
+
+                        {/* Analysis Results - Compact */}
+                        {faceAnalysisResult && (
+                          <div className="mt-4 p-3 bg-purple-50 rounded-lg">
+                            <h3 className="font-semibold text-purple-800 mb-2 text-sm">Results:</h3>
+                            <div className="space-y-1 text-xs">
+                              {faceAnalysisResult.age && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Age:</span>
+                                  <span className="font-medium">{faceAnalysisResult.age} years</span>
+                                </div>
+                              )}
+                              {faceAnalysisResult.gender && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Gender:</span>
+                                  <span className="font-medium">{faceAnalysisResult.gender}</span>
+                                </div>
+                              )}
+                              {faceAnalysisResult.emotion && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Emotion:</span>
+                                  <span className="font-medium">{faceAnalysisResult.emotion}</span>
+                                </div>
+                              )}
+                              {faceAnalysisResult.beauty_score && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Beauty Score:</span>
+                                  <span className="font-medium">{faceAnalysisResult.beauty_score}/100</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Error Display - Compact */}
+                        {faceAnalysisError && (
+                          <div className="mt-3 p-2 bg-red-50 text-red-600 rounded-lg text-xs">
+                            Error: {faceAnalysisError}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1836,6 +1983,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setShowDoctorList(false);
                       setShowBookingCalendar(false);
                       setShowFacePage(false);
+                      setFaceAnalysisCameraActive(false);
+                      setFaceAnalysisResult(null);
+                      setFaceAnalysisError(null);
                       setIsMinimized(false);
                       setSelectedMenuItem('');
                       setSelectedDate(null);

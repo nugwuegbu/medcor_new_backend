@@ -21,6 +21,7 @@ import {
   updateUserPhoneNumber,
   isAuthenticated
 } from "./auth/oauth-providers";
+import crypto from "crypto";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication
@@ -686,6 +687,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Voice chat error:", error);
       res.status(500).json({ 
         error: "Failed to process voice chat",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Perfect Corp API integration
+  const PERFECT_CORP_API_KEY = "xsQ0rgMLPQmEoow2SLNuqjTaILjhHAVY";
+  const PERFECT_CORP_SECRET = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCbzyl/n9bUjKuq32nKs+5cy/RrJODl1suIzfSkGSuXFOI4plVgk/UPGBZ9Fa9NGbNES01d7Nm9Tu7+jcme3Kyvxktq5SyFVAWDpveh7q2WXsw0RMCWpwok1Y5O6T0kM8Qj6nhOoU9rwaIPHdZuZvz6Wm13BuAIePvFqbuWDhfTFwIDAQAB";
+  const PERFECT_CORP_API_URL = "https://yce-api-01.perfectcorp.com";
+  
+  let perfectCorpAccessToken: string | null = null;
+  let tokenExpiresAt: number = 0;
+
+  // Perfect Corp authentication
+  async function authenticatePerfectCorp(): Promise<string> {
+    if (perfectCorpAccessToken && Date.now() < tokenExpiresAt) {
+      return perfectCorpAccessToken;
+    }
+
+    try {
+      const timestamp = Date.now();
+      const dataToEncrypt = `client_id=${PERFECT_CORP_API_KEY}&timestamp=${timestamp}`;
+      
+      // Format the public key for encryption
+      const publicKeyFormatted = `-----BEGIN PUBLIC KEY-----\n${PERFECT_CORP_SECRET.match(/.{1,64}/g)?.join('\n')}\n-----END PUBLIC KEY-----`;
+      
+      // Use Node.js crypto for RSA encryption
+      const idToken = crypto.publicEncrypt(
+        {
+          key: publicKeyFormatted,
+          padding: crypto.constants.RSA_PKCS1_PADDING,
+        },
+        Buffer.from(dataToEncrypt)
+      ).toString('base64');
+      
+      if (!idToken) {
+        throw new Error("Failed to encrypt authentication data");
+      }
+
+      const response = await fetch(`${PERFECT_CORP_API_URL}/auth/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          grant_type: 'client_credentials',
+          client_id: PERFECT_CORP_API_KEY,
+          id_token: idToken
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Authentication failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      perfectCorpAccessToken = data.access_token;
+      tokenExpiresAt = Date.now() + (data.expires_in * 1000) - 60000; // 1 minute buffer
+      
+      return perfectCorpAccessToken;
+    } catch (error) {
+      console.error('Perfect Corp authentication error:', error);
+      throw error;
+    }
+  }
+
+  // Face analysis endpoint
+  app.post("/api/face-analysis", async (req, res) => {
+    try {
+      const { imageBase64 } = req.body;
+      
+      if (!imageBase64) {
+        return res.status(400).json({ error: "Image data is required" });
+      }
+
+      // Get access token
+      const accessToken = await authenticatePerfectCorp();
+
+      // Create file upload
+      const fileResponse = await fetch(`${PERFECT_CORP_API_URL}/file/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          file: imageBase64,
+          file_name: `face_analysis_${Date.now()}.jpg`
+        })
+      });
+
+      if (!fileResponse.ok) {
+        throw new Error(`File upload failed: ${fileResponse.status}`);
+      }
+
+      const fileData = await fileResponse.json();
+      const fileId = fileData.file_id;
+
+      // Run face analysis
+      const analysisResponse = await fetch(`${PERFECT_CORP_API_URL}/face/analysis`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          file_id: fileId,
+          features: ['age', 'gender', 'emotion', 'beauty_score', 'face_shape', 'skin_tone']
+        })
+      });
+
+      if (!analysisResponse.ok) {
+        throw new Error(`Face analysis failed: ${analysisResponse.status}`);
+      }
+
+      const analysisData = await analysisResponse.json();
+      
+      // Check task status
+      const taskId = analysisData.task_id;
+      let taskStatus = 'processing';
+      let result = null;
+
+      while (taskStatus === 'processing') {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        
+        const statusResponse = await fetch(`${PERFECT_CORP_API_URL}/task/status/${taskId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          }
+        });
+
+        if (!statusResponse.ok) {
+          throw new Error(`Status check failed: ${statusResponse.status}`);
+        }
+
+        const statusData = await statusResponse.json();
+        taskStatus = statusData.status;
+        result = statusData.result;
+      }
+
+      if (taskStatus === 'completed') {
+        res.json({ success: true, result });
+      } else {
+        res.status(500).json({ error: "Face analysis failed", status: taskStatus });
+      }
+
+    } catch (error) {
+      console.error('Face analysis error:', error);
+      res.status(500).json({ 
+        error: "Failed to analyze face",
         details: error instanceof Error ? error.message : "Unknown error"
       });
     }
