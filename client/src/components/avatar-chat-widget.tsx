@@ -10,6 +10,7 @@ import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
 import InfoOverlay from "./info-overlay";
+import FaceAnalysisCamera from "./face-analysis-camera";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -1680,110 +1681,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   </div>
                 )}
                 
-                {/* Face Page View */}
-                {showFacePage && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
-                    {/* Back Button */}
-                    <button
-                      onClick={() => {
-                        setShowFacePage(false);
-                      }}
-                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="font-medium text-sm">Back</span>
-                    </button>
-                    
-                    {/* Face Analysis Interface - Contained within chat widget */}
-                    <div className="h-full flex flex-col items-center justify-center p-4">
-                      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-                        <h2 className="text-lg font-bold text-gray-800 mb-4 text-center">Face Analysis</h2>
-                        
-                        {/* Camera Preview - Smaller to fit widget */}
-                        <div className="mb-4">
-                          <div className="relative w-48 h-48 mx-auto bg-gray-100 rounded-full overflow-hidden border-2 border-purple-200">
-                            <video
-                              ref={faceAnalysisCameraRef}
-                              className="w-full h-full object-cover"
-                              autoPlay
-                              muted
-                              playsInline
-                            />
-                            {!faceAnalysisCameraActive && (
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="text-gray-500 text-center">
-                                  <div className="w-12 h-12 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <Face className="w-6 h-6 text-purple-600" />
-                                  </div>
-                                  <p className="text-xs">Camera Preview</p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Control Buttons - Smaller to fit widget */}
-                        <div className="flex flex-col gap-2">
-                          <button
-                            onClick={handleStartFaceAnalysis}
-                            disabled={faceAnalysisLoading}
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-full transition-colors disabled:opacity-50 text-sm"
-                          >
-                            {faceAnalysisLoading ? 'Analyzing...' : 'Start Camera'}
-                          </button>
-                          
-                          <button
-                            onClick={handleTakeFacePhoto}
-                            disabled={!faceAnalysisCameraActive || faceAnalysisLoading}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-full transition-colors disabled:opacity-50 text-sm"
-                          >
-                            Analyze Face
-                          </button>
-                        </div>
-
-                        {/* Analysis Results - Compact */}
-                        {faceAnalysisResult && (
-                          <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                            <h3 className="font-semibold text-purple-800 mb-2 text-sm">Results:</h3>
-                            <div className="space-y-1 text-xs">
-                              {faceAnalysisResult.age && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Age:</span>
-                                  <span className="font-medium">{faceAnalysisResult.age} years</span>
-                                </div>
-                              )}
-                              {faceAnalysisResult.gender && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Gender:</span>
-                                  <span className="font-medium">{faceAnalysisResult.gender}</span>
-                                </div>
-                              )}
-                              {faceAnalysisResult.emotion && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Emotion:</span>
-                                  <span className="font-medium">{faceAnalysisResult.emotion}</span>
-                                </div>
-                              )}
-                              {faceAnalysisResult.beauty_score && (
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Beauty Score:</span>
-                                  <span className="font-medium">{faceAnalysisResult.beauty_score}/100</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Error Display - Compact */}
-                        {faceAnalysisError && (
-                          <div className="mt-3 p-2 bg-red-50 text-red-600 rounded-lg text-xs">
-                            Error: {faceAnalysisError}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* Face Analysis Camera Modal */}
+                <FaceAnalysisCamera
+                  isOpen={showFacePage}
+                  onClose={() => {
+                    setShowFacePage(false);
+                    setSelectedMenuItem(null);
+                    setShowChatInterface(true);
+                    setIsMinimized(false);
+                  }}
+                />
               </div>
             </div>
           </div>

@@ -1,0 +1,130 @@
+Perfect Corp YCE SDK’yi React Uygulamasına Entegre Etme: Sorunlar ve Çözümler
+YCE SDK ve Entegrasyon Yaklaşımı
+Perfect Corp’un YouCam Editor (YCE) SDK’si, web’de AI/AR tabanlı görsel efektler ve analizler sunan bir kütüphanedir. İki modda çalışabilir: UI Mode (yerleşik kamera arayüzü ve yüz kalite göstergeleri ile) ve Headless Mode (görsel arayüz olmadan API üzerinden)
+yce.perfectcorp.com
+. Sizin senaryonuzda UI Mode kullanılarak, React uygulamanızda kamera görüntüsünü ve analiz widget’ını gömmek hedefleniyor. Entegrasyon için, SDK’yı HTML sayfasına bir <script> etiketi ile yüklediniz. Örneğin:
+html
+Kopyala
+<script>
+  (function(d, k) {
+    var s = d.createElement('script');
+    s.type = 'text/javascript';
+    s.async = true;
+    s.src = 'https://plugins-media.perfectcorp.com/smb/sdk.js?apiKey=' + k;
+    var x = d.getElementsByTagName('script')[0];
+    x.parentNode.insertBefore(s, x);
+  })(document, 'YOUR_API_KEY_HERE');
+</script>
+Bu kod, Perfect Corp SDK’sını asenkron olarak yükler. React bileşeniniz içinde de bir konteyner (ör. div elementi) referansı (faceAnalysisCameraRef) tanımlayıp, bileşen yüklendiğinde SDK’yı başlatmaya çalışıyorsunuz:
+jsx
+Kopyala
+<div ref={faceAnalysisCameraRef} className="camera-widget"></div>
+
+// Bileşen mount olduktan sonra:
+window.YCE.init({
+  mode: 'ui',
+  container: faceAnalysisCameraRef.current,
+  ui: { theme: 'light', showInstructions: true },
+  capture: { faceQuality: true, resolution: { width: 640, height: 480 } }
+});
+Bu yapı teoride SDK’nın kendi UI widget’ını React uygulamanızdaki belirtilen div içinde oluşturmasını sağlamalı. Ancak, pratikte widget görünmüyor ve tarayıcı konsolunda çeşitli hatalar alıyorsunuz. Aşağıda bu sorunların olası nedenlerini ve çözümlerini ele alıyoruz.
+Karşılaşılan Hatalar ve Olası Nedenleri
+1. window.YCE is undefined hatası: Bu, global YCE nesnesinin mevcut olmadığını gösterir. Yani SDK script’i yüklenip çalışmadan YCE.init() çağrılıyor olabilir. React uygulaması çalışmaya başladığında, <script> etiketi asenkron yüklendiğinden henüz tamamlanmamışsa window.YCE tanımlı olmaz. Bu timing sorunu, asenkron script yüklemesi ve React bileşen yaşam döngüsü etkileşiminden kaynaklanabilir. 2. YCE.isInitialized is not a function hatası: Bu hata, window.YCE nesnesine ulaşılsa bile beklenen fonksiyonların bulunmadığını gösterir. Muhtemelen SDK tam yüklenmeden veya doğru şekilde initialize edilmeden YCE.isInitialized() gibi bir fonksiyon çağrılıyor. Eğer window.YCE henüz bir obje değilse veya SDK’nin API’si tam kurulmadıysa, bu tür çağrılar tanımsız olur. YCE objesi mevcut değilken özelliklerine erişmeye çalışmak bu hatayı doğurur. 3. CORS politikası hataları: Konsolda “Access to script at ‘...perfectcorp.com/smb/sdk.js...’ from origin ‘your-domain’ has been blocked by CORS policy” benzeri mesajlar görülebilir. Bu, Perfect Corp’un SDK’sının veya API isteklerinin alan adınız için izin vermediğini gösterir. Perfect Corp API anahtarları genellikle alan adı kısıtlaması ile çalışabilir – yani API anahtarınız sadece kayıtlı belirli domain’lerden kullanılabilir. Eğer lokal geliştirme sunucunuzun domaini (ör. localhost) veya uygulamanızın domaini Perfect Corp tarafında whitelist edilmediyse, istekler tarayıcı tarafından engellenir. Bu, SDK yüklenirken veya çalışırken ihtiyaç duyulan kaynaklar için CORS (Cross-Origin Resource Sharing) engeline yol açar
+developer.tomtom.com
+. 4. CSP (Content Security Policy) ihlalleri: Uygulamanızda içerik güvenlik politikası (CSP) tanımlıysa, harici bir kaynaktan (Perfect Corp sunucularından) script yüklemeye çalışmak CSP tarafından engellenebilir. Örneğin, CSP script-src kuralınız sadece kendi domain’inizi ('self') izin veriyorsa, Perfect Corp’un plugins-media.perfectcorp.com adresinden gelen SDK script’i engellenir
+developer.mozilla.org
+developer.mozilla.org
+. Bu durumda konsolda CSP ihlali uyarıları görülür ve script hiç yüklenmez, dolayısıyla window.YCE oluşmaz. **5. SPA yaşam döngüsü ve dinamik içerik: React bir tek sayfa uygulama (SPA) olduğu için bileşenler mount/unmount oldukça SDK’nın durumu etkilenebilir. Eğer kullanıcı farklı sayfalara geçip tekrar bu kamerayı içeren sayfaya geliyorsa, window.YCE globali zaten yüklü olabilir veya önceki instance kalmış olabilir. Dynamic component mounting ile her seferinde YCE.init() çağırmak, SDK’nın ikinci kez başlatılamamasına veya beklenmedik davranışlara yol açabilir. Örneğin, SDK tek sefer çalışmak üzere tasarlandıysa, birden fazla kez init edilmesine karşı hata verebilir. Bu nedenle React’ta bileşen her mount olduğunda init etmek yerine, önceden başlatılmış SDK’yı yeniden kullanmak veya temizlemek gerekebilir. Sorduğunuz “Java, React gibi ortamlarda farklı bir şey mi yapmak gerek, front-end veya back-end’de araştır” ifadesi, belki de bu farkın anlaşılmasına yöneliktir: YCE SDK tek seferlik global script mantığında çalışırken, React bileşenleri dinamik olarak yüklendiğinden ekstra önlem gerekebilir. **6. HTTPS ve tarayıcı izinleri: YCE SDK, kamera erişimi (getUserMedia) kullanır. Tarayıcılar güvenlik nedeniyle kamera/mikrofon erişimini sadece HTTPS üzerinde veya localhost gibi güvenli sayılan ortamlarda izin verir
+developer.mozilla.org
+. Eğer uygulamanızı örneğin bir IP adresi üzerinden HTTP ile test ettiyseniz, kamera açılmaz ve SDK arayüzü de bunu göstermez. Bu da “widget gelmiyor” izlenimi yaratabilir. Dolayısıyla, ortamınızın güvenli olduğundan emin olun (lokalde geliştiriyorsanız https://localhost kullanımı veya geçerli bir sertifika ile). Aksi halde tarayıcı kamerayı bloklar ve SDK’nın UI’si çalışıyor olsa bile görüntü alamaz.
+Çözüm Önerileri
+Sorunları gidermek için aşağıdaki adımları uygulayabilirsiniz:
+1. SDK Script Yüklemesini Doğru Zamanlamak
+Asenkron yüklü script nedeniyle window.YCE hemen hazır olmayabilir. Çözüm: SDK script’inin yüklendiğinden emin olduktan sonra YCE.init() çağrısı yapmak. Bunu sağlamanın birkaç yolu var:
+Script’i senkron veya alt kısımda yükleyin: Eğer mümkünse, <script src="...sdk.js" defer> şeklinde HTML’in en altında kullanıp, script yüklemesini sayfa sonuna almak ve defer ile yürütmeyi HTML parse bittikten sonraya bırakmak işe yarayabilir. Böylece React bileşeni yüklendiğinde script de hazır olabilir. Ancak bu yöntem tam garanti vermeyebilir, çünkü React uygulaması da paralel çalışıyor olabilir.
+Script onload callback kullanın: React içinde, bileşen yüklendiğinde programatik olarak script’i ekleyip, onload event’inde init çağırmak en net yöntemdir. Örneğin, React komponentinizin useEffect ya da componentDidMount içinde:
+jsx
+Kopyala
+useEffect(() => {
+  const script = document.createElement('script');
+  script.src = `https://plugins-media.perfectcorp.com/smb/sdk.js?apiKey=${YOUR_API_KEY}`;
+  script.async = true;
+  script.onload = () => {
+    // SDK yüklendi, şimdi başlatabiliriz
+    if (window.YCE) {
+      window.YCE.init(options);
+    }
+  };
+  document.body.appendChild(script);
+}, []);
+Bu yaklaşım, script yüklendiğinde kesin olarak window.YCE nesnesinin tanımlı olmasını garanti eder ve hemen ardından init işlemini yapar. Bu yöntem StackOverflow üzerinde de tavsiye edilmektedir
+stackoverflow.com
+stackoverflow.com
+. Bu sayede window.YCE is undefined hatasını önleyebilirsiniz.
+Mevcut yaklaşımda bekleme: Eğer script’i HTML’de yüklemeye devam edecekseniz, React kodunuzda window.YCE objesini polling ile beklemek de bir çözüm olabilir. Örneğin kısa aralıklarla kontrol edip hazır olunca init çağırmak:
+jsx
+Kopyala
+useEffect(() => {
+  const interval = setInterval(() => {
+    if (window.YCE) {
+      window.YCE.init(options);
+      clearInterval(interval);
+    }
+  }, 100);
+  return () => clearInterval(interval);
+}, []);
+Bu yöntem de çalışır ancak onload callback kadar temiz bir çözüm değildir. Yine de, YCE yüklenme süresi belirsiz olduğundan bir bekleme mekanizması şart.
+2. React Ref ve Bileşen Yaşam Döngüsünü Yönetme
+container: faceAnalysisCameraRef.current parametresi, SDK’nın arayüzünü yerleştireceği DOM öğesini gösterir. Bu ref’in doğru zamanda dolu olması gerekiyor. Çözüm: YCE.init() çağrısını, React bileşeniniz mount olduktan sonra ve ref atandıktan sonra yapmak. Functional component kullanıyorsanız, useEffect(() => {...}, []) React’ın DOM’u güncellemesini tamamladığında çalışacağı için uygun yerdir. Class component ise componentDidMount içinde yapmanız gerekir. Ayrıca, React strict mode altında (React 18’de varsayılan createRoot kullanımı ile strict mode etkin olabilir), bileşenler development ortamında iki kere mount/destroy olabiliyor. Bu da SDK’nın bir kez init olduktan sonra ikinci kez init çağrılmasına yol açabilir. Bunu engellemek için React Strict Mode devredeyken kodunuzun idempotent olmasına dikkat edin (örneğin, init çağrısı yapmadan önce window.YCE.isInitialized gibi bir kontrol yapmak mantıklı görünebilir). Ancak siz bu fonksiyonu çağırırken hata almıştınız; bunun sebebi ilk mount’da YCE yokken çağrılmaya çalışılması olabilir. Doğru kullanım: if (window.YCE && window.YCE.isInitialized && !window.YCE.isInitialized()) { … } şeklinde kontrol yapmaktır – böylece window.YCE tanımlı olmadan fonksiyon çağrısı yapılmaz. Ek olarak, bileşen unmount aşamasında temizlik yapmayı düşünün. YCE SDK dokümantasyonunda bir destroy/detach metodu olabilir. Eğer yoksa bile, bileşen kaldırılırken kamerayı durdurmak ve bellek sızıntısını önlemek için global obje hala bellekte kalacağından ikinci kez o sayfaya gelindiğinde init çağrısını atlayabilirsiniz. Aksi halde her seferinde yeni bir kamera akışı açılmaya çalışabilir.
+3. Alan Adı Kısıtlamalarını (CORS) Giderme
+Perfect Corp’un sağladığı API anahtarları muhtemelen belirli domain’lerle kısıtlıdır. Geliştirici portalında API anahtarınızı oluştururken domain whitelist girişi yapmanız gerekebilir. Eğer böyle bir ayar yaptıysanız, kendi domaininizi (veya localhost kullanım durumunda http://localhost) izin verilen listesine ekleyin. Aksi takdirde SDK içindeki ağ istekleri CORS engeline takılır. Bu tür domain tabanlı kısıtlamalar, API anahtarının kötüye kullanımını engellemek için yaygın bir yöntemdir ve CORS header’ları üzerinden tarayıcıya hangi origin’lerin izinli olduğunu bildirir
+developer.tomtom.com
+. Örneğin, TomTom’un API servisleri için hazırladığı genel bir kılavuzda, alan adı beyaz listeleme özelliğinin CORS header mekanizmasına dayandığı belirtilmiştir
+developer.tomtom.com
+. Perfect Corp için de API anahtarınızı aldığınız Perfect Console benzeri bir panel varsa, orada domain ekleme adımlarını uygulayın. Bu işlemi yaptıktan sonra tarayıcı konsolundaki CORS hatalarının kaybolduğunu göreceksiniz.
+4. İçerik Güvenlik Politikası (CSP) Ayarları
+Uygulamanızda CSP varsa, Perfect Corp’un domaininden gelen script ve diğer kaynaklara izin vermeniz gerekir. Özellikle script-src kuralınıza https://plugins-media.perfectcorp.com adresini eklemelisiniz. Aksi halde tarayıcı bu kaynaktan gelen JavaScript’i çalıştırmayı reddeder. CSP, sitenize yüklenebilecek kaynakları kontrol ederek XSS gibi saldırılara karşı koruma sağlar
+developer.mozilla.org
+. Kendi güvenliğiniz için CSP kullanıyorsanız, harici SDK’ları dahil etmek için bu whitelist işlemi zorunludur. Ayrıca, eğer SDK başka alt kaynaklar yüklüyorsa (örneğin WebAssembly, font veya video vs.), onları da ilgili CSP direktiflerinde izinli kılmak gerekebilir. Hataları detaylı inceleyerek hangi direktifin engellediğini saptayıp img-src, connect-src vb. eklemeler yapabilirsiniz. Örneğin, kamera akışı WebRTC kullanıyorsa belki media-src ile blob: izinleri vs. de gündeme gelebilir.
+5. Güvenli Bağlantı ve Kamera Erişimi
+Eğer uygulamanızı yerelde test ederken bile HTTPS üzerinden çalıştırma imkânınız varsa (ör. npm run dev için bir HTTPS sunucu ayarı veya .localhost sertifikası ile), bunu tercih edin. Aksi halde, en azından Chrome gibi tarayıcılar http://localhost adresini güvenli saydığından yerelde çalışabilir. Ancak siteyi bir IP adresinden veya http protokolüyle açmak kamera izni almanızı engeller
+developer.mozilla.org
+. Sonuç olarak, SDK’nın UI’ı gelse bile kamera görüntüsü olmayacağı için widget boş görünebilir. Bu durumu engellemek için:
+Üretim ortamında mutlaka HTTPS kullanın.
+Yerel geliştirmede ya localhost kullanın ya da tarayıcıyı flag ile (ör. Chrome’da --unsafely-treat-insecure-origin-as-secure) geçici çözümlerle kandırmayın – bunlar güvenli değildir. En temizi, lokal domain’i hosts dosyasına ekleyip kendop-signed sertifika kullanmaktır. Ancak localhost çoğu zaman yeterlidir.
+6. SPA’da Tekrarlı Yüklemeleri Yönetme
+Uygulamanız tek sayfa olduğundan, kullanıcı arayüzünde kamerayı barındıran komponent birden fazla kez yüklenip kaldırılabilir. Bu durumda SDK’yı ikinci kez başlatmaya gerek kalmayabilir – hatta bu hatalara yol açabilir. YCE.init() muhtemelen aynı sayfada bir kez çağrılmalı. Eğer kullanıcı sayfadan ayrıldığında kamerayı kapatmak istiyorsanız, YCE tarafında bir API yoksa bile en kötü window.YCE = null; gibi bir temizlik yapmayı düşünebilirsiniz (yalnız bu, altında çalışan stream’leri durdurmaz, sadece referansı kaldırır). Daha iyisi, Perfect Corp dökümantasyonunu kontrol ederek bir destroy fonksiyonu olup olmadığına bakmaktır. YCE SDK’sının isInitialized() gibi bir kontrol metodu olduğuna göre, belki de idempotent tasarlanmıştır – yani tekrar init çağrılırsa mevcut instance’ı döndürebilir ya da önceki durumu yok sayıp yeniden kurar. Bu belirsiz noktayı deneme-yanılma ile veya Perfect Corp destek biriminden öğrenebilirsiniz. Şüpheye düşerseniz, komponentinizi kalıcı yapıp (unmount etmemek) sadece görünürlüğünü kontrol etmek de bir çözüm olabilir. Örneğin, React Router kullanıyorsanız bileşeni her seferinde yeni oluşturmaktansa, aynı bileşeni saklayıp show/hide yapmak, SDK’nın kesintiye uğramadan çalışmasını sağlayabilir.
+Alternatif Yaklaşım: Arka Uç API ile Analiz
+Eğer yukarıdaki çözümlere rağmen SDK widget’ını çalıştırmak mümkün olmuyorsa veya daha esnek bir kontrol istiyorsanız, Perfect Corp’un sunduğu AI bulut API servislerini kullanabilirsiniz. Bu yöntemde, tarayıcıdan doğrudan kamera akışını SDK ile işlemezsiniz. Onun yerine:
+Kamerayı kendiniz getUserMedia ile alıp bir <video> ve <canvas> içinde gösterirsiniz.
+Belirli aralıklarla veya kullanıcı tetiklediğinde bir fotoğraf karesi (snapshot) alıp arka uç API’sine gönderirsiniz.
+Perfect Corp’un RESTful AI API uç noktaları, gönderdiğiniz görüntü üzerinde yüz analizi, cilt analizi, fotoğraf iyileştirme vb. işlemleri yapıp sonuç döndürür.
+Dönen sonucu uygulamanızda gösterirsiniz (örneğin analiz metrikleri veya işlenmiş görüntü).
+Perfect Corp, YouCam ürün ailesi için çeşitli bulut API’leri sunmaktadır. Dokümantasyona göre bu API’ler REST standardındadır ve web sitenize veya mobil uygulamanıza kolayca entegre edilebilir
+app-cdn-01.perfectcorp.com
+. Örneğin “AI Face Analyzer” ya da “AI Skin Analysis” gibi uç noktaları olabilir. Bu yaklaşım, UI tarafında tam kontrol sağlar ve kendi arayüzünüzü tasarlayabilirsiniz; ancak gerçek zamanlılık konusunda dikkatli olmalısınız (her kareyi sunucuya gönderemezsiniz, genelde fotoğraf bazlı analiz yapılır). Ayrıca, bulut API kullanımı, SDK’ya kıyasla farklı bir ücretlendirme veya kota sistemine tabi olabilir; bu da dikkate alınmalı. Alternatif yaklaşımda, front-end ile Perfect Corp arasına bir backend proxy koymak güvenlik açısından faydalıdır. API anahtarınız ve gizli anahtarınız (varsa) sunucuda saklanır, istemci yalnızca istek yapar, sunucu Perfect Corp API’sini çağırır. Bu sayede API anahtarınız gizli kalır ve CORS sorunu da sunucu tarafında halledilir.
+Sonuç ve Özet
+Özetle, Perfect Corp YCE SDK’sını React içinde çalıştırırken en önemli nokta, yükleme sırasını ve ortam kısıtlarını yönetmektir. Aşağıdaki adımları uyguladığınızda sorununuzun çözülmesi beklenir:
+SDK script’ini yükler yüklemez değil, yüklendiğini onload ile doğruladıktan sonra window.YCE.init() çağırın
+stackoverflow.com
+stackoverflow.com
+.
+React tarafında, container <div> öğesinin mevcut olduğundan emin olmak için init çağrısını useEffect/componentDidMount içine koyun.
+API anahtarınızın kullanıldığı domain’in Perfect Corp tarafından izinli olduğundan emin olun (gerekirse geliştirici konsolunda domain whitelisting yapın)
+developer.tomtom.com
+.
+CSP kullanıyorsanız, Perfect Corp kaynaklarına izin verin (özellikle script-src, connect-src gibi direktiflerde).
+Uygulamayı HTTPS üzerinden çalıştırın veya en azından localhost gibi güvenli bir ortamda test edin; aksi halde kamera erişimi engellenecektir
+developer.mozilla.org
+.
+Tek sayfa uygulama davranışlarını göz önünde bulundurarak, SDK’yı bir kez başlatıp mümkünse yaşam döngüsü boyunca kullanın; yeniden başlatmak gerekiyorsa da uygun kontrolleri ekleyin.
+Bu adımlarla, defalarca denediğiniz halde görünmeyen YCE chat/camera widget’ının başarıyla yüklenmesi ve çalışması gerekmektedir. Unutmayın ki, üçüncü parti SDK’larla çalışırken tarayıcı konsolundaki hata mesajları en büyük yardımcınızdır – her birini dikkatle analiz edip yukarıdaki başlıklarda karşılık gelen çözümü uygulayabilirsiniz. Eğer yine de sorun devam ederse, Perfect Corp dokümantasyonunda özel kütüphane fonksiyonlarına (örn. YCE.reset() gibi) dair bilgiler aramak veya doğrudan desteklerine başvurmak da iyi bir fikir olacaktır. Kaynaklar:
+Stack Overflow – “How do I use external script that I add to React JS?” – Harici bir script’in React bileşeni içinde yüklenmesi ve onload ile kullanılması
+stackoverflow.com
+stackoverflow.com
+TomTom Developers – “API Keys Best Practices” – API anahtarları için alan adı kısıtlamasının CORS başlıkları ile nasıl uygulandığını açıklayan kılavuz
+developer.tomtom.com
+MDN Web Docs – “Navigator.getUserMedia()” – Tarayıcıların getUserMedia (kamera erişimi) özelliğini yalnızca HTTPS gibi güvenli ortamlarda sağladığına dair not
+developer.mozilla.org
+Perfect Corp – “Perfect AI API (Introduction)” – Perfect Corp’un RESTful AI API’lerinin varlığı ve entegrasyon kolaylığı hakkında doküman
+app-cdn-01.perfectcorp.com

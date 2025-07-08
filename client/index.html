@@ -7,17 +7,7 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Perfect Corp YMK SDK -->
-    <script>
-      (function (d,k) {
-        var s = d.createElement('script');
-        s.type = 'text/javascript';
-        s.async = true;
-        s.src = 'https://plugins-media.perfectcorp.com/smb/sdk.js?apiKey=' + k;
-        var x = d.getElementsByTagName('script')[0];
-        x.parentNode.insertBefore(s, x);
-      })(document, 'xsQ0rgMLPQmEoow2SLNuqjTaILjhHAVY');
-    </script>
+    <!-- Perfect Corp YCE SDK - Removed async loading to prevent timing issues -->
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>

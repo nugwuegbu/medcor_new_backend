@@ -11,6 +11,7 @@ import FaceAnalysisWidget from "@/components/face-analysis-widget";
 import FaceAnalysisTest from "@/components/face-analysis-test";
 import FaceAnalysisSimple from "@/components/face-analysis-simple";
 import FaceAnalysisHtml from "@/components/face-analysis-html";
+import FaceAnalysisFixed from "@/components/face-analysis-fixed";
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
@@ -18,6 +19,7 @@ export default function Home() {
   const [showFaceTest, setShowFaceTest] = useState(false);
   const [showFaceSimple, setShowFaceSimple] = useState(false);
   const [showFaceHtml, setShowFaceHtml] = useState(false);
+  const [showFaceFixed, setShowFaceFixed] = useState(false);
 
   // Auto-show modal when users first visit
   useEffect(() => {
@@ -133,7 +135,7 @@ export default function Home() {
                       Start Chat Demo
                     </Button>
                     <Button 
-                      onClick={() => setShowFaceHtml(true)}
+                      onClick={() => setShowFaceFixed(true)}
                       variant="outline"
                       className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
                     >
@@ -328,6 +330,12 @@ export default function Home() {
       <FaceAnalysisHtml 
         isOpen={showFaceHtml} 
         onClose={() => setShowFaceHtml(false)} 
+      />
+      
+      {/* Face Analysis Fixed */}
+      <FaceAnalysisFixed 
+        isOpen={showFaceFixed} 
+        onClose={() => setShowFaceFixed(false)} 
       />
     </div>
   );
