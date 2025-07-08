@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, User as Face } from "lucide-react";
 
 interface FaceAnalysisSimpleProps {
@@ -10,6 +11,34 @@ export default function FaceAnalysisSimple({ isOpen, onClose }: FaceAnalysisSimp
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [portalElement, setPortalElement] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Create portal element
+      const element = document.createElement('div');
+      element.id = 'face-analysis-portal';
+      element.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999999;
+        pointer-events: auto;
+      `;
+      document.body.appendChild(element);
+      setPortalElement(element);
+
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
+
+      return () => {
+        document.body.removeChild(element);
+        document.body.style.overflow = 'auto';
+      };
+    }
+  }, [isOpen]);
 
   const handleTest = async () => {
     setLoading(true);
@@ -38,9 +67,9 @@ export default function FaceAnalysisSimple({ isOpen, onClose }: FaceAnalysisSimp
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !portalElement) return null;
 
-  return (
+  const modalContent = (
     <div 
       style={{
         position: 'fixed',
@@ -54,7 +83,11 @@ export default function FaceAnalysisSimple({ isOpen, onClose }: FaceAnalysisSimp
         justifyContent: 'center',
         zIndex: 999999
       }}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       <div 
         style={{
@@ -170,4 +203,6 @@ export default function FaceAnalysisSimple({ isOpen, onClose }: FaceAnalysisSimp
       </div>
     </div>
   );
+
+  return createPortal(modalContent, portalElement);
 }
