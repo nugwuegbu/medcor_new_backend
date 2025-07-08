@@ -10,7 +10,7 @@ import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
 import InfoOverlay from "./info-overlay";
-import FaceAnalysisCamera from "./face-analysis-camera";
+import FaceAnalysisWidgetInline from "./face-analysis-widget-inline";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -974,22 +974,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   return (
     <>
-      {/* Face Analysis Camera Modal - Outside widget container */}
-      {showFacePage && (
-        <>
-          {console.log('🟢 FaceAnalysisCamera rendering OUTSIDE widget')}
-          <FaceAnalysisCamera
-            isOpen={true}
-            onClose={() => {
-              console.log('🔵 Closing FaceAnalysisCamera');
-              setShowFacePage(false);
-              setSelectedMenuItem(null);
-              setShowChatInterface(true);
-              setIsMinimized(false);
-            }}
-          />
-        </>
-      )}
+      {/* Face Analysis now rendered inline within widget */}
       
     <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
       {/* Header */}
@@ -1702,7 +1687,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   </div>
                 )}
                 
-                {/* Face Analysis Camera Modal - Removed from here */}
+                {/* Face Analysis Page View */}
+                {showFacePage && (
+                  <FaceAnalysisWidgetInline
+                    isOpen={showFacePage}
+                    onClose={() => {
+                      setShowFacePage(false);
+                      setSelectedMenuItem(null);
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>
