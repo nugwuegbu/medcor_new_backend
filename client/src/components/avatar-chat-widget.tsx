@@ -513,28 +513,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   // If doctor list is being shown during booking, show contained within chat widget
   if (showDoctorList && !showChatInterface) {
     return (
-      <div className="chat-widget-container w-[380px] h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50" style={{ position: 'fixed', right: '16px', bottom: '16px', left: 'auto' }}>
-        {/* Video Background */}
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ zIndex: 1 }}
-          onLoadStart={() => console.log('Video load started')}
-          onLoadedData={() => console.log('Video loaded successfully')}
-          onError={(e) => {
-            console.error('Video failed to load:', e);
-            console.log('Trying fallback video...');
-            e.target.src = '/medcor_chatbot_preloader.mp4';
-          }}
-          src="/medcor_chatbot_preloader.mp4"
-        >
-        </video>
-        
-        {/* Overlay for better readability */}
-        <div className="absolute inset-0 bg-black/10 backdrop-blur-[0.5px]" style={{ zIndex: 2 }}></div>
+      <div className="chat-widget-container w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50" style={{ position: 'fixed', right: '16px', bottom: '16px', left: 'auto' }}>
+
         {/* Back Button */}
         <button
           onClick={() => {
@@ -816,28 +796,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }
 
   return (
-    <div className="chat-widget-container w-[380px] h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ position: 'fixed', right: '16px', bottom: '16px', left: 'auto' }}>
-      {/* Video Background */}
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ zIndex: 1 }}
-        onLoadStart={() => console.log('Video load started')}
-        onLoadedData={() => console.log('Video loaded successfully')}
-        onError={(e) => {
-          console.error('Video failed to load:', e);
-          console.log('Trying fallback video...');
-          e.target.src = '/medcor_chatbot_preloader.mp4';
-        }}
-        src="/medcor_chatbot_preloader.mp4"
-      >
-      </video>
-      
-      {/* Overlay for better readability */}
-      <div className="absolute inset-0 bg-black/10 backdrop-blur-[0.5px]" style={{ zIndex: 2 }}></div>
+    <div className="chat-widget-container w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ position: 'fixed', right: '16px', bottom: '16px', left: 'auto' }}>
+
       
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
@@ -966,28 +926,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         
         {/* Chat Interface View - Within Chat Container */}
         {showChatInterface && (
-          <div className="absolute inset-0 z-40 rounded-lg overflow-hidden">
-            {/* Video Background for Chat Interface */}
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ zIndex: 1 }}
-              onLoadStart={() => console.log('Video load started')}
-              onLoadedData={() => console.log('Video loaded successfully')}
-              onError={(e) => {
-                console.error('Video failed to load:', e);
-                console.log('Trying fallback video...');
-                e.target.src = '/medcor_chatbot_preloader.mp4';
-              }}
-              src="/medcor_chatbot_preloader.mp4"
-            >
-            </video>
-            
-            {/* Overlay for better readability */}
-            <div className="absolute inset-0 bg-black/10 backdrop-blur-[0.5px]" style={{ zIndex: 2 }}></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40 rounded-lg overflow-hidden">
+
             {/* Back Button - Top Left Corner */}
             <button
               onClick={() => setShowChatInterface(false)}
