@@ -72,6 +72,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showDoctorList, setShowDoctorList] = useState(false);
   const [showRecordsList, setShowRecordsList] = useState(false);
   const [showAdminPage, setShowAdminPage] = useState(false);
+  const [showFacePage, setShowFacePage] = useState(false);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraPermissionRequested, setCameraPermissionRequested] = useState(false);
@@ -1000,7 +1001,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
                     { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
-                    { icon: Face, label: "Face", angle: 300, action: () => setSelectedMenuItem("face") }
+                    { icon: Face, label: "Face", angle: 300, action: () => { 
+                      setShowFacePage(true); 
+                      setSelectedMenuItem("face");
+                      setShowChatInterface(false);
+                      setIsMinimized(true);
+                    } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
                     const x = Math.cos(angleRad) * 75;
@@ -1521,6 +1527,29 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     </div>
                   </div>
                 )}
+                
+                {/* Face Page View */}
+                {showFacePage && (
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => {
+                        setShowFacePage(false);
+                      }}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Empty Face Page */}
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        {/* Empty face page - face recognition and authentication features will be here */}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1806,6 +1835,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setShowChatInterface(true);
                       setShowDoctorList(false);
                       setShowBookingCalendar(false);
+                      setShowFacePage(false);
                       setIsMinimized(false);
                       setSelectedMenuItem('');
                       setSelectedDate(null);
