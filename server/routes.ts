@@ -1575,6 +1575,363 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Frontend Package Download Endpoint
+  app.get("/api/download-frontend-package", async (req, res) => {
+    try {
+      const archiver = await import('archiver');
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      const packagePath = path.join(process.cwd(), 'export-package');
+      
+      // Set response headers for download
+      res.set({
+        'Content-Type': 'application/zip',
+        'Content-Disposition': 'attachment; filename="medcor-frontend-package.zip"',
+        'Cache-Control': 'no-cache'
+      });
+      
+      // Create zip archive
+      const archive = archiver.default('zip', { zlib: { level: 9 } });
+      
+      archive.on('error', (err) => {
+        console.error('Archive error:', err);
+        res.status(500).send('Archive creation failed');
+      });
+      
+      // Pipe archive to response
+      archive.pipe(res);
+      
+      // Add all files from export-package directory
+      archive.directory(packagePath, false);
+      
+      // Finalize the archive
+      await archive.finalize();
+      
+    } catch (error) {
+      console.error("Package download error:", error);
+      res.status(500).json({ error: "Failed to create package download" });
+    }
+  });
+
+  // Individual file download endpoints
+  app.get("/api/download-frontend-package/:filename(*)", async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      const filename = req.params.filename;
+      const filePath = path.join(process.cwd(), 'export-package', filename);
+      
+      // Security check - ensure file is within export-package directory
+      const normalizedPath = path.normalize(filePath);
+      const packageDir = path.join(process.cwd(), 'export-package');
+      
+      if (!normalizedPath.startsWith(packageDir)) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      // Check if file exists
+      if (!await fs.promises.access(filePath).then(() => true).catch(() => false)) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      // Get file stats
+      const stats = await fs.promises.stat(filePath);
+      
+      if (stats.isDirectory()) {
+        return res.status(400).json({ error: "Cannot download directory" });
+      }
+      
+      // Set appropriate content type
+      const ext = path.extname(filename).toLowerCase();
+      const contentTypes = {
+        '.js': 'application/javascript',
+        '.jsx': 'application/javascript',
+        '.ts': 'application/typescript',
+        '.tsx': 'application/typescript',
+        '.css': 'text/css',
+        '.json': 'application/json',
+        '.md': 'text/markdown',
+        '.txt': 'text/plain'
+      };
+      
+      res.set({
+        'Content-Type': contentTypes[ext] || 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${path.basename(filename)}"`,
+        'Content-Length': stats.size
+      });
+      
+      // Stream file
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+      
+    } catch (error) {
+      console.error("File download error:", error);
+      res.status(500).json({ error: "Failed to download file" });
+    }
+  });
+
+  // Frontend Package Demo and Download Page
+  app.get("/api/frontend-package", (req, res) => {
+    const packagePageHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medcor Frontend Package - Download</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .title {
+            font-size: 2.5rem;
+            color: #2d3748;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            color: #718096;
+            font-size: 1.2rem;
+        }
+        .download-section {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid #e2e8f0;
+        }
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin: 10px;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .package-contents {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .content-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .content-title {
+            font-size: 1.2rem;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .file-list {
+            list-style: none;
+        }
+        .file-list li {
+            padding: 5px 0;
+            color: #4a5568;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .file-list li:last-child {
+            border-bottom: none;
+        }
+        .file-link {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .file-link:hover {
+            text-decoration: underline;
+        }
+        .integration-guide {
+            background: #edf2f7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .feature {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #48bb78;
+        }
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Medcor Frontend Package</h1>
+            <p class="subtitle">Complete UX Components without HeyGen Avatar Dependency</p>
+        </div>
+
+        <div class="download-section">
+            <h2>Download Complete Package</h2>
+            <p>Get all components, styles, hooks, and utilities in one ZIP file:</p>
+            <a href="/api/download-frontend-package" class="download-btn">
+                Download Full Package (ZIP)
+            </a>
+            <div class="features">
+                <div class="feature">All React Components</div>
+                <div class="feature">Medical Theme Styles</div>
+                <div class="feature">Custom Hooks</div>
+                <div class="feature">API Utilities</div>
+                <div class="feature">Responsive Design</div>
+                <div class="feature">Dark Mode Support</div>
+            </div>
+        </div>
+
+        <div class="package-contents">
+            <div class="content-card">
+                <h3 class="content-title">React Components</h3>
+                <ul class="file-list">
+                    <li><a href="/api/download-frontend-package/components/ChatInterface.jsx" class="file-link">ChatInterface.jsx</a></li>
+                    <li><a href="/api/download-frontend-package/components/DoctorCard.jsx" class="file-link">DoctorCard.jsx</a></li>
+                    <li><a href="/api/download-frontend-package/components/VoiceInputButton.jsx" class="file-link">VoiceInputButton.jsx</a></li>
+                    <li><a href="/api/download-frontend-package/components/AppointmentForm.jsx" class="file-link">AppointmentForm.jsx</a></li>
+                    <li><a href="/api/download-frontend-package/components/Calendar.jsx" class="file-link">Calendar.jsx</a></li>
+                </ul>
+            </div>
+
+            <div class="content-card">
+                <h3 class="content-title">Custom Hooks</h3>
+                <ul class="file-list">
+                    <li><a href="/api/download-frontend-package/hooks/useChat.js" class="file-link">useChat.js</a></li>
+                    <li><a href="/api/download-frontend-package/hooks/useVoiceInput.js" class="file-link">useVoiceInput.js</a></li>
+                </ul>
+            </div>
+
+            <div class="content-card">
+                <h3 class="content-title">Styles & Config</h3>
+                <ul class="file-list">
+                    <li><a href="/api/download-frontend-package/styles/globals.css" class="file-link">globals.css</a></li>
+                    <li><a href="/api/download-frontend-package/tailwind.config.js" class="file-link">tailwind.config.js</a></li>
+                </ul>
+            </div>
+
+            <div class="content-card">
+                <h3 class="content-title">Utilities & API</h3>
+                <ul class="file-list">
+                    <li><a href="/api/download-frontend-package/utils/api.js" class="file-link">api.js</a></li>
+                    <li><a href="/api/download-frontend-package/package.json" class="file-link">package.json</a></li>
+                    <li><a href="/api/download-frontend-package/README.md" class="file-link">README.md</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="integration-guide">
+            <h2>Quick Integration Guide</h2>
+            
+            <h3>1. Installation</h3>
+            <div class="code-block">
+# Extract the package to your project
+unzip medcor-frontend-package.zip
+
+# Install dependencies
+npm install
+            </div>
+
+            <h3>2. Usage Example</h3>
+            <div class="code-block">
+import { ChatInterface } from './components/ChatInterface';
+import { DoctorCard } from './components/DoctorCard';
+import { useChat } from './hooks/useChat';
+
+function App() {
+  const { sendMessage, messages, isLoading } = useChat();
+
+  return (
+    &lt;div&gt;
+      &lt;ChatInterface 
+        messages={messages}
+        onSendMessage={sendMessage}
+        isLoading={isLoading}
+      /&gt;
+    &lt;/div&gt;
+  );
+}
+            </div>
+
+            <h3>3. Required Dependencies</h3>
+            <div class="features">
+                <span class="badge">react ^18.0.0</span>
+                <span class="badge">@radix-ui/*</span>
+                <span class="badge">tailwindcss</span>
+                <span class="badge">framer-motion</span>
+                <span class="badge">lucide-react</span>
+            </div>
+
+            <h3>4. API Configuration</h3>
+            <div class="code-block">
+// Update API base URL in utils/api.js
+const API_BASE_URL = 'https://your-backend-url.com';
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; color: #718096;">
+            <p>Medcor AI Healthcare Platform • Frontend Package v1.0.0</p>
+            <p>No HeyGen dependency • Ready for any Replit project</p>
+        </div>
+    </div>
+</body>
+</html>`;
+    res.send(packagePageHtml);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

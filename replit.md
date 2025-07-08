@@ -246,6 +246,7 @@ Changelog:
 - July 06, 2025. Replaced Settings menu with Admin menu featuring UserCheck icon - creates empty admin page for doctors to access patient user information and management functions
 - July 06, 2025. Integrated ElevenLabs text-to-speech API with Turkish voice support (voice ID: pWeLcyFEBT5svt9WMYAO) and OpenAI TTS backup system - backend now supports both providers with automatic language detection for optimal voice selection
 - July 08, 2025. Created standalone chat widget system for external integration - built complete widget package without HeyGen avatar dependency, includes JavaScript widget, HTML demo, and API endpoints for easy integration into any website. Main application with HeyGen avatar remains unchanged and fully functional at root URL (/)
+- July 08, 2025. Created downloadable frontend package in export-package/ directory containing all UX components, styles, hooks, and utilities without HeyGen dependency. Added /api/download-frontend-package endpoint for ZIP download and /api/frontend-package demo page showing package contents and integration guide
 
 ## User Preferences
 
