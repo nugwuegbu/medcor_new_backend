@@ -1159,8 +1159,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setShowFacePage(true); 
                       setSelectedMenuItem("face");
                       setShowChatInterface(false);
-                      setIsMinimized(true);
-                      console.log('Face button states set:', { showFacePage: true, selectedMenuItem: 'face' });
+                      // DO NOT minimize widget for Face Analysis
+                      setIsMinimized(false);
+                      console.log('Face button states set:', { showFacePage: true, selectedMenuItem: 'face', isMinimized: false });
                     } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
@@ -1684,15 +1685,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 )}
                 
                 {/* Face Analysis Camera Modal */}
-                <FaceAnalysisCamera
-                  isOpen={showFacePage}
-                  onClose={() => {
-                    setShowFacePage(false);
-                    setSelectedMenuItem(null);
-                    setShowChatInterface(true);
-                    setIsMinimized(false);
-                  }}
-                />
+                {showFacePage && (
+                  <>
+                    {console.log('🔴 RENDERING FaceAnalysisCamera - showFacePage is TRUE')}
+                    <FaceAnalysisCamera
+                      isOpen={true}
+                      onClose={() => {
+                        console.log('🔵 Closing FaceAnalysisCamera');
+                        setShowFacePage(false);
+                        setSelectedMenuItem(null);
+                        setShowChatInterface(true);
+                        setIsMinimized(false);
+                      }}
+                    />
+                  </>
+                )}
               </div>
             </div>
           </div>
