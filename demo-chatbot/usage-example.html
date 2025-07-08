@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medcor Chat Widget Integration Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+        .integration-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        .method-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: left;
+        }
+        .method-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #fbbf24;
+        }
+        .code-block {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            white-space: pre-wrap;
+        }
+        .demo-section {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        .note {
+            background: rgba(251, 191, 36, 0.2);
+            border-left: 4px solid #fbbf24;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Medcor AI Chat Widget</h1>
+        <p class="subtitle">Kolayca entegre edilebilen, HeyGen avatar olmadan çalışan tıbbi asistan chatbot</p>
+
+        <div class="demo-section">
+            <h2 style="color: #fbbf24; margin-bottom: 1rem;">🚀 Canlı Demo</h2>
+            <p>Sayfanın sağ alt köşesinde chat widget'ını görebilirsiniz. Tıklayarak test edebilirsiniz!</p>
+            <div class="note">
+                <strong>Özellikler:</strong>
+                <ul style="margin: 0.5rem 0 0 1rem;">
+                    <li>Türkçe ve İngilizce destek</li>
+                    <li>Ses tanıma (mikrofon)</li>
+                    <li>Tıbbi sorular için akıllı yanıtlar</li>
+                    <li>Randevu alma yönlendirmesi</li>
+                    <li>Doktor bilgileri</li>
+                    <li>Çalışma saatleri ve konum bilgisi</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="integration-methods">
+            <div class="method-card">
+                <div class="method-title">📝 Script Tag ile Entegrasyon</div>
+                <p>En kolay entegrasyon yöntemi. Sadece bu script'i sayfanıza ekleyin:</p>
+                <div class="code-block">&lt;script src="https://your-replit-url.replit.app/api/chat-widget.js"&gt;&lt;/script&gt;</div>
+                <p>Widget otomatik olarak sayfanızın sağ alt köşesinde görünecektir.</p>
+            </div>
+
+            <div class="method-card">
+                <div class="method-title">⚛️ React Component Olarak</div>
+                <p>React projelerinizde component olarak kullanabilirsiniz:</p>
+                <div class="code-block">import { MedcorChatWidget } from './medcor-chat-widget';
+
+function App() {
+  return (
+    &lt;div&gt;
+      {/* Your app content */}
+      &lt;MedcorChatWidget /&gt;
+    &lt;/div&gt;
+  );
+}</div>
+            </div>
+
+            <div class="method-card">
+                <div class="method-title">🔧 Manuel Başlatma</div>
+                <p>Programatik olarak kontrol etmek isteyenler için:</p>
+                <div class="code-block">// Widget'ı manuel olarak başlat
+const chatWidget = new MedcorChatWidget({
+  apiUrl: 'https://your-api.com',
+  language: 'tr',
+  position: 'bottom-right'
+});
+
+// Widget'ı aç/kapat
+chatWidget.open();
+chatWidget.close();</div>
+            </div>
+
+            <div class="method-card">
+                <div class="method-title">🎨 Özelleştirme Seçenekleri</div>
+                <p>Widget'ı kendi ihtiyaçlarınıza göre özelleştirebilirsiniz:</p>
+                <div class="code-block">const widget = new MedcorChatWidget({
+  apiUrl: 'https://api.medcor.com',
+  language: 'tr', // 'tr' veya 'en'
+  position: 'bottom-right',
+  theme: 'purple',
+  autoOpen: false,
+  welcomeMessage: 'Özel karşılama mesajı'
+});</div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2 style="color: #fbbf24; margin-bottom: 1rem;">📋 Kullanım Senaryoları</h2>
+            <div style="text-align: left;">
+                <h3>🏥 Sağlık Siteleri</h3>
+                <ul>
+                    <li>Randevu alma desteği</li>
+                    <li>Doktor bilgileri</li>
+                    <li>Çalışma saatleri</li>
+                    <li>Konum ve ulaşım bilgileri</li>
+                </ul>
+
+                <h3>💼 Klinik Websiteleri</h3>
+                <ul>
+                    <li>7/24 hasta desteği</li>
+                    <li>İlk tıbbi danışmanlık</li>
+                    <li>Acil durum yönlendirmesi</li>
+                    <li>İletişim bilgileri</li>
+                </ul>
+
+                <h3>🌐 Genel Web Siteleri</h3>
+                <ul>
+                    <li>Müşteri desteği</li>
+                    <li>Sık sorulan sorular</li>
+                    <li>Ürün/hizmet bilgileri</li>
+                    <li>İletişim desteği</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2 style="color: #fbbf24; margin-bottom: 1rem;">🔗 API Endpoints</h2>
+            <div style="text-align: left;">
+                <h3>Widget Dosyaları</h3>
+                <div class="code-block">GET /api/chat-widget.js     - Standalone widget script
+GET /api/chat-widget.html   - Full page demo
+GET /api/chat-widget.css    - Stylesheet only</div>
+
+                <h3>Chat API</h3>
+                <div class="code-block">POST /api/chat/send         - Mesaj gönder
+GET  /api/chat/history      - Sohbet geçmişi
+POST /api/chat/voice        - Ses mesajı</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat widget için script -->
+    <script src="widget.js"></script>
+</body>
+</html>

@@ -1460,6 +1460,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chat Widget API Endpoints - untuk entegrasyon
+  app.get("/api/chat-widget.js", async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      const widgetPath = path.join(process.cwd(), 'demo-chatbot', 'widget.js');
+      const widgetScript = await fs.promises.readFile(widgetPath, 'utf8');
+      
+      res.set({
+        'Content-Type': 'application/javascript',
+        'Cache-Control': 'public, max-age=3600'
+      });
+      
+      res.send(widgetScript);
+    } catch (error) {
+      console.error("Widget script error:", error);
+      res.status(500).json({ error: "Failed to load widget script" });
+    }
+  });
+
+  app.get("/api/chat-widget.html", async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      const widgetPath = path.join(process.cwd(), 'demo-chatbot', 'index.html');
+      const widgetHtml = await fs.promises.readFile(widgetPath, 'utf8');
+      
+      res.set({
+        'Content-Type': 'text/html',
+        'Cache-Control': 'public, max-age=3600'
+      });
+      
+      res.send(widgetHtml);
+    } catch (error) {
+      console.error("Widget HTML error:", error);
+      res.status(500).json({ error: "Failed to load widget HTML" });
+    }
+  });
+
+  app.get("/api/chat-widget-demo", async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      const demoPath = path.join(process.cwd(), 'demo-chatbot', 'usage-example.html');
+      const demoHtml = await fs.promises.readFile(demoPath, 'utf8');
+      
+      res.set({
+        'Content-Type': 'text/html',
+        'Cache-Control': 'public, max-age=3600'
+      });
+      
+      res.send(demoHtml);
+    } catch (error) {
+      console.error("Demo HTML error:", error);
+      res.status(500).json({ error: "Failed to load demo HTML" });
+    }
+  });
+
+  // Chat API for widget integration
+  app.post("/api/chat-widget/send", async (req, res) => {
+    try {
+      const { message, sessionId = 'widget_session', language = 'tr' } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      // Generate response using existing chat logic
+      const response = await generateChatResponse(message, {
+        sessionId,
+        language,
+        includeWeather: false,
+        includeCompliment: false
+      });
+
+      res.json({
+        success: true,
+        response: response.text,
+        sessionId
+      });
+    } catch (error) {
+      console.error("Widget chat error:", error);
+      res.status(500).json({ 
+        success: false,
+        error: "Failed to process message" 
+      });
+    }
+  });
+
+  // Widget configuration endpoint
+  app.get("/api/chat-widget/config", (req, res) => {
+    res.json({
+      widget: {
+        version: "1.0.0",
+        features: {
+          voiceInput: true,
+          multilingual: true,
+          medicalAssistance: true,
+          appointmentBooking: true
+        },
+        languages: ["tr", "en"],
+        defaultLanguage: "tr",
+        theme: "medical"
+      },
+      endpoints: {
+        chat: "/api/chat-widget/send",
+        voices: "/api/voices",
+        tts: "/api/tts"
+      }
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
