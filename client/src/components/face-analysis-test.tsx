@@ -31,8 +31,26 @@ export default function FaceAnalysisTest({ isOpen, onClose }: FaceAnalysisTestPr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+    <div 
+      className="fixed inset-0 flex items-center justify-center" 
+      style={{ 
+        zIndex: 99999, 
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
+      }}
+    >
+      <div 
+        className="rounded-xl shadow-2xl p-6 w-full max-w-md mx-4" 
+        style={{ 
+          backgroundColor: 'white', 
+          zIndex: 100000,
+          color: 'black'
+        }}
+      >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <Face className="h-5 w-5" />
