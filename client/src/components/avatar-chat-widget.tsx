@@ -1110,11 +1110,18 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         {/* Info Overlay hidden when minimized since content is shown in white area */}
         
         {/* Chat Interface View - Within Chat Container */}
-        {showChatInterface && (
+        {(showChatInterface || showFacePage) && (
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40 rounded-lg overflow-hidden">
             {/* Back Button - Top Left Corner */}
             <button
-              onClick={() => setShowChatInterface(false)}
+              onClick={() => {
+                if (showFacePage) {
+                  setShowFacePage(false);
+                  setSelectedMenuItem(null);
+                } else {
+                  setShowChatInterface(false);
+                }
+              }}
               className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -1693,11 +1700,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   </div>
                 )}
                 
-                {/* Face Analysis Page View */}
-                {console.log('🟡 Checking showFacePage state:', showFacePage)}
-                {showFacePage ? (
-                  <>
-                    {console.log('🟢 Rendering FaceAnalysisWidgetInline with showFacePage:', showFacePage)}
+                {/* Face Analysis Page View - Show when Face is selected */}
+                {showFacePage && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+                    {console.log('🟢 Rendering Face Analysis inline interface')}
                     <FaceAnalysisWidgetInline
                       isOpen={showFacePage}
                       onClose={() => {
@@ -1706,11 +1712,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         setSelectedMenuItem(null);
                       }}
                     />
-                  </>
-                ) : (
-                  <>
-                    {console.log('🔴 showFacePage is false, not rendering FaceAnalysisWidgetInline')}
-                  </>
+                  </div>
                 )}
               </div>
             </div>
