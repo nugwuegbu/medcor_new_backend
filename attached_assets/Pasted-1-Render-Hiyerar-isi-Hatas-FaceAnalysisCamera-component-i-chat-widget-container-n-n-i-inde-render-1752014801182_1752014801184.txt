@@ -1,0 +1,89 @@
+1. Render Hiyerarşisi Hatası
+FaceAnalysisCamera component’i chat widget container’ının içinde render ediliyor.
+
+Ancak bu widget isMinimized = true olduğunda 96x96px’e küçülüyor → modal görünemiyor.
+
+2. State Çakışması
+Face ikonuna tıklandığında 4 state aynı anda değişiyor:
+
+ts
+Kopyala
+Düzenle
+setShowFacePage(true);        // ✅ Modal aç
+setSelectedMenuItem("face");  // ✅ Menü güncelle
+setShowChatInterface(false);  // ✗ Chat kapanıyor
+setIsMinimized(true);         // ✗ Widget küçülüyor!
+Sonuç: Modal render ediliyor ama görünmüyor, çünkü parent küçülüyor/kapanıyor.
+
+✅ DOĞRU VE KALICI ÇÖZÜM
+A. FaceAnalysisCamera'yı DOM'da üst seviyeye taşı:
+avatar-chat-widget.tsx component’i içinde değil, global DOM seviyesinde render et:
+
+tsx
+Kopyala
+Düzenle
+{/* App.tsx veya Layout seviyesinde */}
+{showFacePage && <FaceAnalysisCamera />}
+Veya:
+
+tsx
+Kopyala
+Düzenle
+<ReactPortal targetId="portal-root">
+  {showFacePage && <FaceAnalysisCamera />}
+</ReactPortal>
+💡 Not: portal-root DOM’da #root dışında bir div olmalı ve body içinde olmalı.
+
+B. Face butonuna tıklanınca isMinimized ve showChatInterface güncellenmemeli:
+ts
+Kopyala
+Düzenle
+// Eski:
+onClick={() => {
+  setShowFacePage(true);
+  setSelectedMenuItem("face");
+  setShowChatInterface(false);
+  setIsMinimized(true);
+}}
+
+// Doğru:
+onClick={() => {
+  setShowFacePage(true);
+  setSelectedMenuItem("face");
+  // Chat açık kalsın:
+  setShowChatInterface(true);
+  setIsMinimized(false);
+}}
+C. Z-index / CSS / Overflow kontrolü:
+FaceAnalysisCamera modal’inde şu CSS kritik:
+
+css
+Kopyala
+Düzenle
+position: fixed;
+z-index: 9999999;
+top: 0;
+left: 0;
+width: 100vw;
+height: 100vh;
+Ve body, html gibi parent’lerde:
+
+css
+Kopyala
+Düzenle
+overflow: visible;
+✅ BONUS: Render Debug Yardımcısı (Geçici)
+Aşağıdaki gibi bir useEffect debug log’u ekleyebilirsin:
+
+ts
+Kopyala
+Düzenle
+useEffect(() => {
+  console.log('📸 FaceAnalysisCamera rendered');
+  console.log('DOM node:', ref.current);
+}, []);
+🔒 SONUÇ
+Durum	Aksiyon
+Modal görünmüyor	Chat widget içinde sıkışıyor
+Sebep	isMinimized=true → container küçülüyor
+Çözüm	FaceAnalysisCamera'yı global DOM’a taşı + isMinimized’i false yap

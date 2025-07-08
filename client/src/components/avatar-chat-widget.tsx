@@ -973,6 +973,24 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }
 
   return (
+    <>
+      {/* Face Analysis Camera Modal - Outside widget container */}
+      {showFacePage && (
+        <>
+          {console.log('🟢 FaceAnalysisCamera rendering OUTSIDE widget')}
+          <FaceAnalysisCamera
+            isOpen={true}
+            onClose={() => {
+              console.log('🔵 Closing FaceAnalysisCamera');
+              setShowFacePage(false);
+              setSelectedMenuItem(null);
+              setShowChatInterface(true);
+              setIsMinimized(false);
+            }}
+          />
+        </>
+      )}
+      
     <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
@@ -1158,8 +1176,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log('Face button clicked! Setting showFacePage to true');
                       setShowFacePage(true); 
                       setSelectedMenuItem("face");
-                      setShowChatInterface(false);
-                      // DO NOT minimize widget for Face Analysis
+                      // Keep chat interface open for Face Analysis
+                      setShowChatInterface(true);
                       setIsMinimized(false);
                       console.log('Face button states set:', { showFacePage: true, selectedMenuItem: 'face', isMinimized: false });
                     } }
@@ -1684,22 +1702,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   </div>
                 )}
                 
-                {/* Face Analysis Camera Modal */}
-                {showFacePage && (
-                  <>
-                    {console.log('🔴 RENDERING FaceAnalysisCamera - showFacePage is TRUE')}
-                    <FaceAnalysisCamera
-                      isOpen={true}
-                      onClose={() => {
-                        console.log('🔵 Closing FaceAnalysisCamera');
-                        setShowFacePage(false);
-                        setSelectedMenuItem(null);
-                        setShowChatInterface(true);
-                        setIsMinimized(false);
-                      }}
-                    />
-                  </>
-                )}
+                {/* Face Analysis Camera Modal - Removed from here */}
               </div>
             </div>
           </div>
@@ -2299,5 +2302,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         </div>
       )}
     </div>
+    </>
   );
 }

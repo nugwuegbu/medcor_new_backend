@@ -12,6 +12,7 @@ import FaceAnalysisTest from "@/components/face-analysis-test";
 import FaceAnalysisSimple from "@/components/face-analysis-simple";
 import FaceAnalysisHtml from "@/components/face-analysis-html";
 import FaceAnalysisFixed from "@/components/face-analysis-fixed";
+import FaceAnalysisCamera from "@/components/face-analysis-camera";
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
@@ -20,6 +21,7 @@ export default function Home() {
   const [showFaceSimple, setShowFaceSimple] = useState(false);
   const [showFaceHtml, setShowFaceHtml] = useState(false);
   const [showFaceFixed, setShowFaceFixed] = useState(false);
+  const [showGlobalFaceAnalysis, setShowGlobalFaceAnalysis] = useState(false);
 
   // Auto-show modal when users first visit
   useEffect(() => {
