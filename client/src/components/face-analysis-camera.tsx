@@ -384,7 +384,7 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
               textAlign: 'center',
               padding: '20px 20px 0'
             }}>
-              Perfect Corp AI Analysis Results
+              MEDCOR AI Analysis Results
             </h3>
             
             {/* Basic Demographics */}
