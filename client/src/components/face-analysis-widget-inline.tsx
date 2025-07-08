@@ -18,8 +18,13 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
   // Camera functions
   const startCamera = useCallback(async () => {
     try {
+      // Stop any existing camera streams first
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 320, height: 240 }
+        video: { width: 320, height: 240, facingMode: 'user' }
       });
       setCameraStream(stream);
       setIsRecording(true);
@@ -30,9 +35,9 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       }
     } catch (err) {
       console.error('Camera access denied:', err);
-      setError('Camera permission denied');
+      setError('Kamera erişimi reddedildi. Lütfen kamera izinlerini kontrol edin.');
     }
-  }, []);
+  }, [cameraStream]);
 
   const stopCamera = useCallback(() => {
     if (cameraStream) {
@@ -92,13 +97,18 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
   const resetAnalysis = useCallback(() => {
     setResult(null);
     setError(null);
-    startCamera(); // Restart camera
+    setTimeout(() => {
+      startCamera(); // Restart camera with delay
+    }, 300);
   }, [startCamera]);
 
   // Start camera when component opens
   useEffect(() => {
     if (isOpen && !result) {
-      startCamera();
+      // Add small delay to avoid camera conflicts
+      setTimeout(() => {
+        startCamera();
+      }, 500);
     }
     return () => {
       if (cameraStream) {
@@ -149,6 +159,12 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
                 <p className="text-red-600 text-sm">{error}</p>
+                <button 
+                  onClick={startCamera}
+                  className="mt-2 text-blue-600 hover:underline text-sm"
+                >
+                  Kamerayı Tekrar Başlat
+                </button>
               </div>
             )}
 

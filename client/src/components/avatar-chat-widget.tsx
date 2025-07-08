@@ -984,14 +984,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <span className="text-gray-700 text-sm">AI Assistant</span>
         </div>
         
-        {/* User Camera View in center */}
-        <div className="absolute left-1/2 transform -translate-x-1/2">
-          <UserCameraView 
-            isEnabled={cameraEnabled}
-            onPermissionRequest={handleCameraPermissionRequest}
-            capturePhotoRef={capturePhotoRef}
-          />
-        </div>
+        {/* User Camera View in center - Hide when Face Analysis is open */}
+        {!showFacePage && (
+          <div className="absolute left-1/2 transform -translate-x-1/2">
+            <UserCameraView 
+              isEnabled={cameraEnabled}
+              onPermissionRequest={handleCameraPermissionRequest}
+              capturePhotoRef={capturePhotoRef}
+            />
+          </div>
+        )}
         
         <div className="flex items-center gap-3">
           <span className="text-purple-600 font-bold text-lg">medcor</span>
