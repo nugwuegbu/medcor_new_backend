@@ -370,106 +370,237 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
         {/* Results Display */}
         {result && (
           <div style={{ 
-            padding: '24px', 
-            backgroundColor: '#f0fdf4', 
-            border: '2px solid #bbf7d0',
+            backgroundColor: '#ffffff', 
             borderRadius: '16px',
-            marginBottom: '20px'
+            marginBottom: '20px',
+            maxHeight: '500px',
+            overflowY: 'auto'
           }}>
             <h3 style={{ 
               fontWeight: '700', 
-              color: '#059669', 
-              marginBottom: '20px',
-              fontSize: '20px',
-              textAlign: 'center'
+              color: '#7c3aed', 
+              marginBottom: '24px',
+              fontSize: '24px',
+              textAlign: 'center',
+              padding: '20px 20px 0'
             }}>
-              Perfect Corp Analysis Results
+              Perfect Corp AI Analysis Results
             </h3>
             
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '1fr 1fr', 
-              gap: '16px',
-              fontSize: '15px'
-            }}>
+            {/* Basic Demographics */}
+            <div style={{ padding: '0 20px 20px' }}>
+              <h4 style={{ color: '#374151', fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
+                Basic Information
+              </h4>
               <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                padding: '12px 16px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                border: '1px solid #bbf7d0'
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '12px',
+                fontSize: '14px'
               }}>
-                <span style={{ color: '#374151', fontWeight: '500' }}>Age:</span>
-                <span style={{ fontWeight: '700', color: '#059669' }}>{result.age} years</span>
-              </div>
-              
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                padding: '12px 16px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                border: '1px solid #bbf7d0'
-              }}>
-                <span style={{ color: '#374151', fontWeight: '500' }}>Gender:</span>
-                <span style={{ fontWeight: '700', color: '#059669' }}>{result.gender}</span>
-              </div>
-              
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                padding: '12px 16px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                border: '1px solid #bbf7d0'
-              }}>
-                <span style={{ color: '#374151', fontWeight: '500' }}>Emotion:</span>
-                <span style={{ fontWeight: '700', color: '#059669' }}>{result.emotion}</span>
-              </div>
-              
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                padding: '12px 16px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                border: '1px solid #bbf7d0'
-              }}>
-                <span style={{ color: '#374151', fontWeight: '500' }}>Beauty Score:</span>
-                <span style={{ fontWeight: '700', color: '#059669' }}>{result.beauty_score}/100</span>
-              </div>
-              
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                padding: '12px 16px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                border: '1px solid #bbf7d0'
-              }}>
-                <span style={{ color: '#374151', fontWeight: '500' }}>Face Shape:</span>
-                <span style={{ fontWeight: '700', color: '#059669' }}>{result.face_shape}</span>
-              </div>
-              
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                padding: '12px 16px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                border: '1px solid #bbf7d0'
-              }}>
-                <span style={{ color: '#374151', fontWeight: '500' }}>Skin Tone:</span>
-                <span style={{ fontWeight: '700', color: '#059669' }}>{result.skin_tone}</span>
+                <div style={{ 
+                  padding: '10px 14px',
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  justifyContent: 'space-between'
+                }}>
+                  <span style={{ color: '#6b7280' }}>Age:</span>
+                  <span style={{ fontWeight: '600', color: '#374151' }}>{result.age} years</span>
+                </div>
+                <div style={{ 
+                  padding: '10px 14px',
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  justifyContent: 'space-between'
+                }}>
+                  <span style={{ color: '#6b7280' }}>Gender:</span>
+                  <span style={{ fontWeight: '600', color: '#374151' }}>{result.gender}</span>
+                </div>
+                <div style={{ 
+                  padding: '10px 14px',
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  justifyContent: 'space-between'
+                }}>
+                  <span style={{ color: '#6b7280' }}>Emotion:</span>
+                  <span style={{ fontWeight: '600', color: '#374151' }}>{result.emotion}</span>
+                </div>
+                <div style={{ 
+                  padding: '10px 14px',
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  justifyContent: 'space-between'
+                }}>
+                  <span style={{ color: '#6b7280' }}>Beauty Score:</span>
+                  <span style={{ fontWeight: '600', color: '#7c3aed' }}>{result.beauty_score}/100</span>
+                </div>
               </div>
             </div>
+
+            {/* Facial Features */}
+            {result.features && (
+              <div style={{ padding: '0 20px 20px', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
+                <h4 style={{ color: '#374151', fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
+                  Facial Features Analysis
+                </h4>
+                <div style={{ fontSize: '14px', space: '8px' }}>
+                  {result.features.eyes && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <span style={{ color: '#6b7280' }}>Eyes: </span>
+                      <span style={{ color: '#374151' }}>
+                        {result.features.eyes.shape || result.features.eyes} shape, 
+                        {result.features.eyes.size && ` ${result.features.eyes.size} size`}
+                        {result.features.eyes.dark_circles !== 'None' && `, ${result.features.eyes.dark_circles} dark circles`}
+                      </span>
+                    </div>
+                  )}
+                  {result.features.lips && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <span style={{ color: '#6b7280' }}>Lips: </span>
+                      <span style={{ color: '#374151' }}>
+                        {result.features.lips.shape || result.features.lips} shape
+                        {result.features.lips.fullness && `, ${result.features.lips.fullness} fullness`}
+                      </span>
+                    </div>
+                  )}
+                  <div style={{ marginBottom: '8px' }}>
+                    <span style={{ color: '#6b7280' }}>Face Shape: </span>
+                    <span style={{ color: '#374151' }}>{result.face_shape}</span>
+                  </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <span style={{ color: '#6b7280' }}>Skin Tone: </span>
+                    <span style={{ color: '#374151' }}>{result.skin_tone}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Skin Analysis */}
+            {result.skin_analysis && (
+              <div style={{ padding: '0 20px 20px', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
+                <h4 style={{ color: '#374151', fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
+                  Skin Analysis (15 Conditions)
+                </h4>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: '1fr 1fr', 
+                  gap: '8px',
+                  fontSize: '13px'
+                }}>
+                  {result.skin_analysis.texture && (
+                    <div style={{ 
+                      padding: '8px 12px',
+                      backgroundColor: '#f3f4f6',
+                      borderRadius: '6px'
+                    }}>
+                      <div style={{ color: '#6b7280', fontSize: '12px' }}>Texture</div>
+                      <div style={{ fontWeight: '600', color: '#374151' }}>
+                        {result.skin_analysis.texture.description} ({result.skin_analysis.texture.score}/100)
+                      </div>
+                    </div>
+                  )}
+                  {result.skin_analysis.hydration && (
+                    <div style={{ 
+                      padding: '8px 12px',
+                      backgroundColor: '#f3f4f6',
+                      borderRadius: '6px'
+                    }}>
+                      <div style={{ color: '#6b7280', fontSize: '12px' }}>Hydration</div>
+                      <div style={{ fontWeight: '600', color: '#374151' }}>
+                        {result.skin_analysis.hydration.level} ({result.skin_analysis.hydration.score}/100)
+                      </div>
+                    </div>
+                  )}
+                  {result.skin_analysis.pores && (
+                    <div style={{ 
+                      padding: '8px 12px',
+                      backgroundColor: '#f3f4f6',
+                      borderRadius: '6px'
+                    }}>
+                      <div style={{ color: '#6b7280', fontSize: '12px' }}>Pores</div>
+                      <div style={{ fontWeight: '600', color: '#374151' }}>
+                        {result.skin_analysis.pores.visibility} ({result.skin_analysis.pores.score}/100)
+                      </div>
+                    </div>
+                  )}
+                  {result.skin_analysis.oiliness && (
+                    <div style={{ 
+                      padding: '8px 12px',
+                      backgroundColor: '#f3f4f6',
+                      borderRadius: '6px'
+                    }}>
+                      <div style={{ color: '#6b7280', fontSize: '12px' }}>Skin Type</div>
+                      <div style={{ fontWeight: '600', color: '#374151' }}>
+                        {result.skin_analysis.oiliness.overall}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Makeup Recommendations */}
+            {result.makeup_recommendations && (
+              <div style={{ padding: '0 20px 20px', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
+                <h4 style={{ color: '#374151', fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
+                  Makeup Recommendations
+                </h4>
+                <div style={{ fontSize: '14px', space: '12px' }}>
+                  {result.makeup_recommendations.foundation && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <div style={{ color: '#6b7280', fontSize: '13px', marginBottom: '4px' }}>Foundation</div>
+                      <div style={{ 
+                        padding: '8px 12px',
+                        backgroundColor: '#fef3c7',
+                        borderRadius: '6px',
+                        fontSize: '13px'
+                      }}>
+                        Shade: {result.makeup_recommendations.foundation.shade}, 
+                        Undertone: {result.makeup_recommendations.foundation.undertone}
+                      </div>
+                    </div>
+                  )}
+                  {result.makeup_recommendations.lipstick && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <div style={{ color: '#6b7280', fontSize: '13px', marginBottom: '4px' }}>Lipstick</div>
+                      <div style={{ 
+                        padding: '8px 12px',
+                        backgroundColor: '#fce7f3',
+                        borderRadius: '6px',
+                        fontSize: '13px'
+                      }}>
+                        Colors: {result.makeup_recommendations.lipstick.colors.join(', ')}, 
+                        Finish: {result.makeup_recommendations.lipstick.finish}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Skincare Recommendations */}
+            {result.recommendations && (
+              <div style={{ padding: '0 20px 20px', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
+                <h4 style={{ color: '#374151', fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
+                  Personalized Skincare Routine
+                </h4>
+                <ul style={{ fontSize: '13px', color: '#374151', paddingLeft: '20px', margin: 0 }}>
+                  {result.recommendations.skincare_routine.map((item: string, index: number) => (
+                    <li key={index} style={{ marginBottom: '6px' }}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <div style={{ padding: '20px', textAlign: 'center', borderTop: '1px solid #e5e7eb' }}>
               <button
                 onClick={resetAnalysis}
                 style={{
-                  padding: '12px 24px',
+                  padding: '12px 32px',
                   backgroundColor: '#7c3aed',
                   color: 'white',
                   border: 'none',
