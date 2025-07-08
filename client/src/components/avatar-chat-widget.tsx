@@ -682,6 +682,18 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   if (!isOpen) return null;
   
+  // Debug - Log current states
+  console.log('🟡 Widget render - Current states:', {
+    showChatInterface,
+    showDoctorList,
+    showRecordsList,
+    showAdminPage,
+    showBookingCalendar,
+    showFacePage,
+    isMinimized,
+    selectedMenuItem
+  });
+  
   // If doctor list is being shown during booking, show contained within chat widget
   if (showDoctorList && !showChatInterface) {
     return (
@@ -1167,17 +1179,26 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
                     { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
                     { icon: Face, label: "Face", angle: 300, action: () => { 
-                      console.log('🔴 Face button clicked! Setting showFacePage to true');
+                      console.log('🔴 Face button clicked! Current state:', { showFacePage, showChatInterface, selectedMenuItem });
+                      
                       setShowFacePage(true); 
                       setSelectedMenuItem("face");
+                      
+                      console.log('🔴 Face button states set - showFacePage should be true now');
+                      
+                      // Don't close showChatInterface - keep it open for Face Analysis
+                      // setShowChatInterface(false);  // This was causing the problem!
+                      
                       // Reset other states
-                      setShowChatInterface(false);
                       setShowDoctorList(false);
                       setShowRecordsList(false);
                       setShowAdminPage(false);
                       setShowBookingCalendar(false);
                       setIsMinimized(false);
-                      console.log('🔴 Face button states set:', { showFacePage: true, selectedMenuItem: 'face' });
+                      
+                      setTimeout(() => {
+                        console.log('🔴 After timeout - showFacePage:', showFacePage);
+                      }, 100);
                     } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
@@ -1701,6 +1722,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 )}
                 
                 {/* Face Analysis Page View - Show when Face is selected */}
+                {console.log('🟢 Face Analysis check - showFacePage:', showFacePage)}
                 {showFacePage && (
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
                     {console.log('🟢 Rendering Face Analysis inline interface')}
