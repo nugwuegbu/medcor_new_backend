@@ -513,7 +513,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   // If doctor list is being shown during booking, show contained within chat widget
   if (showDoctorList && !showChatInterface) {
     return (
-      <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
+      <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 relative">
+        {/* Video Background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ zIndex: 1 }}
+        >
+          <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
+        </video>
+        
+        {/* Overlay for better readability */}
+        <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]" style={{ zIndex: 2 }}></div>
         {/* Back Button */}
         <button
           onClick={() => {
@@ -795,12 +809,31 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }
 
   return (
-    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ right: '16px', left: 'auto' }}>
+    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border relative" style={{ right: '16px', left: 'auto' }}>
+      {/* Video Background */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ zIndex: 1 }}
+      >
+        <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
+      </video>
+      
+      {/* Overlay for better readability */}
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]" style={{ zIndex: 2 }}></div>
+      
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-gray-600" />
-          <span className="text-gray-700 text-sm">AI Assistant</span>
+          <div className="flex items-center justify-center">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="w-1 h-3 bg-green-500 ml-0.5 animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-1 h-4 bg-green-500 ml-0.5 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-1 h-2 bg-green-500 ml-0.5 animate-pulse" style={{ animationDelay: '0.3s' }}></div>
+          </div>
         </div>
         
         {/* User Camera View in center */}
@@ -923,7 +956,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         
         {/* Chat Interface View - Within Chat Container */}
         {showChatInterface && (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40 rounded-lg overflow-hidden">
+          <div className="absolute inset-0 z-40 rounded-lg overflow-hidden">
+            {/* Video Background for Chat Interface */}
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ zIndex: 1 }}
+            >
+              <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
+            </video>
+            
+            {/* Overlay for better readability */}
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" style={{ zIndex: 2 }}></div>
             {/* Back Button - Top Left Corner */}
             <button
               onClick={() => setShowChatInterface(false)}
@@ -934,7 +981,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </button>
             
             {/* Chat Interface Content */}
-            <div className="h-full flex flex-col">
+            <div className="h-full flex flex-col relative" style={{ zIndex: 10 }}>
               {/* Menu Section - Centered */}
               <div className="flex-1 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
