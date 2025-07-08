@@ -104,6 +104,31 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const lastSpeakTimeRef = useRef<number>(0);
   const avatarContainerRef = useRef<HTMLDivElement>(null);
 
+  // Avatar video control functions
+  const showIdleVideo = () => {
+    const idleVid = document.getElementById('idleVideo') as HTMLVideoElement;
+    const talkVid = document.getElementById('talkVideo') as HTMLVideoElement;
+    
+    if (idleVid && talkVid) {
+      talkVid.pause();
+      talkVid.style.visibility = 'hidden';
+      idleVid.style.visibility = 'visible';
+      idleVid.play();
+    }
+  };
+
+  const showTalkVideo = () => {
+    const idleVid = document.getElementById('idleVideo') as HTMLVideoElement;
+    const talkVid = document.getElementById('talkVideo') as HTMLVideoElement;
+    
+    if (idleVid && talkVid) {
+      idleVid.style.visibility = 'hidden';
+      talkVid.style.visibility = 'visible';
+      talkVid.currentTime = 0;
+      talkVid.play();
+    }
+  };
+
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -273,6 +298,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       return await response.json();
     },
     onSuccess: async (data) => {
+      // Show talking video when AI starts responding
+      showTalkVideo();
+      
       // Check if the response contains a nearby search command
       if (data.message.includes("NEARBY_SEARCH:")) {
         console.log("NEARBY_SEARCH detected in response:", data.message);
@@ -380,7 +408,45 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
       }
       
       // Use ElevenLabs TTS for speech synthesis
-      // TODO: Implement ElevenLabs TTS call here
+      if (data.message) {
+        try {
+          const ttsResponse = await fetch("/api/tts", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              text: data.message,
+              language: detectLanguageFromText(data.message)
+            })
+          });
+          
+          if (ttsResponse.ok) {
+            const audioBlob = await ttsResponse.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            
+            // Show talking video when audio starts
+            audio.onplay = () => {
+              showTalkVideo();
+            };
+            
+            // Return to idle video when audio ends
+            audio.onended = () => {
+              showIdleVideo();
+            };
+            
+            await audio.play();
+          }
+        } catch (error) {
+          console.error("TTS error:", error);
+          // Return to idle video if TTS fails
+          showIdleVideo();
+        }
+      } else {
+        // No message to speak, return to idle
+        showIdleVideo();
+      }
     }
   });
 
@@ -514,6 +580,33 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   if (showDoctorList && !showChatInterface) {
     return (
       <div className="chat-widget-container w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50" style={{ position: 'fixed', right: '16px', bottom: '16px', left: 'auto' }}>
+
+        {/* Avatar Video Container */}
+        <div className="absolute inset-0 z-0" style={{ pointerEvents: 'none' }}>
+          <video
+            id="idleVideo"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ visibility: 'visible' }}
+          >
+            <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
+          </video>
+          <video
+            id="talkVideo"
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ visibility: 'hidden' }}
+          >
+            <source src="/medcor_chatbot_elevenlabs.mp4" type="video/mp4" />
+          </video>
+        </div>
 
         {/* Back Button */}
         <button
@@ -798,6 +891,32 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   return (
     <div className="chat-widget-container w-[380px] h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border" style={{ position: 'fixed', right: '16px', bottom: '16px', left: 'auto' }}>
 
+      {/* Avatar Video Container */}
+      <div className="absolute inset-0 z-0" style={{ pointerEvents: 'none' }}>
+        <video
+          id="idleVideo"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ visibility: 'visible' }}
+        >
+          <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
+        </video>
+        <video
+          id="talkVideo"
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ visibility: 'hidden' }}
+        >
+          <source src="/medcor_chatbot_elevenlabs.mp4" type="video/mp4" />
+        </video>
+      </div>
       
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
@@ -927,6 +1046,33 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         {/* Chat Interface View - Within Chat Container */}
         {showChatInterface && (
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40 rounded-lg overflow-hidden">
+
+            {/* Avatar Video Container for Chat Interface */}
+            <div className="absolute inset-0 z-0" style={{ pointerEvents: 'none' }}>
+              <video
+                id="idleVideo"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ visibility: 'visible' }}
+              >
+                <source src="/medcor_chatbot_preloader.mp4" type="video/mp4" />
+              </video>
+              <video
+                id="talkVideo"
+                muted
+                loop
+                playsInline
+                preload="auto"
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ visibility: 'hidden' }}
+              >
+                <source src="/medcor_chatbot_elevenlabs.mp4" type="video/mp4" />
+              </video>
+            </div>
 
             {/* Back Button - Top Left Corner */}
             <button

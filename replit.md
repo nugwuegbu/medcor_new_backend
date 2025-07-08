@@ -250,6 +250,7 @@ Changelog:
 - July 08, 2025. Completely removed HeyGen avatar system and replaced with custom video background (medcor_chatbot_preloader.mp4) across all chat interfaces while preserving original chat UX design and functionality
 - July 08, 2025. Updated chat interface header to show animated pulse/heartbeat icon instead of "AI Assistant" text, restored chat widget to original bottom-right position
 - July 08, 2025. Removed video background completely at user request - chat widget now uses original clean white background with gradient overlays for chat interface
+- July 08, 2025. Implemented dual-video avatar system with idle loop (medcor_chatbot_preloader.mp4) and talking loop (medcor_chatbot_elevenlabs.mp4) - videos switch based on user speech recognition events and AI TTS playback for seamless conversational experience
 
 ## User Preferences
 
