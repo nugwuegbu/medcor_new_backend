@@ -809,7 +809,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }
 
   return (
-    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border relative" style={{ right: '16px', left: 'auto' }}>
+    <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border relative">
       {/* Video Background */}
       <video
         autoPlay
