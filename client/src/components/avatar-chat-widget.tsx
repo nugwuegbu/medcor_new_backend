@@ -1748,34 +1748,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   </div>
                 )}
 
-                {/* Hair Page View */}
-                {showHairPage && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
-                    {/* Back Button */}
-                    <button
-                      onClick={() => {
-                        setShowHairPage(false);
-                        setSelectedMenuItem("");
-                        setIsMinimized(false);
-                      }}
-                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="font-medium text-sm">Back</span>
-                    </button>
-                    
-                    {/* Hair Analysis Page - Blank for now */}
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        <Scissors className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                        <h2 className="text-lg font-semibold text-gray-600 mb-2">Hair Analysis</h2>
-                        <p className="text-sm text-gray-500">
-                          Hair analysis feature coming soon...
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+
                 
                 {/* Regular Chat Interface Content */}
                 {!showFacePage && (
@@ -1837,8 +1810,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             { icon: Scissors, label: "Hair", angle: 306, action: () => { 
                               setShowHairPage(true); 
                               setSelectedMenuItem("hair"); 
-                              setIsMinimized(true); 
+                              setIsMinimized(false); 
                               setShowChatInterface(false);
+                              
+                              // Reset other conflicting states
+                              setShowDoctorList(false);
+                              setShowRecordsList(false);
+                              setShowAdminPage(false);
+                              setShowBookingCalendar(false);
                             } }
                           ].map((item, index) => {
                             const angleRad = (item.angle * Math.PI) / 180;
@@ -1903,6 +1882,40 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     setSelectedMenuItem(null);
                   }}
                 />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hair Analysis View - Separate container with higher z-index */}
+        {showHairPage && (
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+            {/* Back Button */}
+            <button
+              onClick={() => {
+                setShowHairPage(false);
+                setSelectedMenuItem(null);
+              }}
+              className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="font-medium text-sm">Back</span>
+            </button>
+            
+            {/* Hair Analysis Content */}
+            <div className="h-full flex flex-col justify-center items-center p-6 pt-24">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-purple-700 mb-4">MEDCOR Hair Analysis</h2>
+                <p className="text-gray-600 mb-6">Powered by Perfect Corp technology</p>
+                
+                {/* Hair Analysis Page - Blank for now */}
+                <div className="text-center text-gray-500">
+                  <Scissors className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                  <h2 className="text-lg font-semibold text-gray-600 mb-2">Hair Analysis</h2>
+                  <p className="text-sm text-gray-500">
+                    Hair analysis feature coming soon...
+                  </p>
+                </div>
               </div>
             </div>
           </div>
