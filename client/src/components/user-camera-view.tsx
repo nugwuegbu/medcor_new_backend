@@ -54,6 +54,31 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, 
     }
   }, [hasPermission, capturePhotoRef]);
 
+  // Periodic camera trigger check
+  useEffect(() => {
+    const checkTriggerStatus = async () => {
+      try {
+        const { isCameraForcedOff } = await import('../utils/camera-manager');
+        if (isCameraForcedOff && streamRef.current) {
+          console.log("🎥 DEBUG: Periodic check - camera forced off, stopping stream");
+          stopCamera();
+          setCameraError(true);
+        } else if (!isCameraForcedOff && cameraError && isEnabled) {
+          console.log("🎥 DEBUG: Periodic check - camera enabled, restarting");
+          setCameraError(false);
+          if (hasPermission) {
+            startCamera();
+          }
+        }
+      } catch (err) {
+        console.error("🎥 DEBUG: Periodic trigger check failed:", err);
+      }
+    };
+
+    const interval = setInterval(checkTriggerStatus, 1000);
+    return () => clearInterval(interval);
+  }, [isEnabled, hasPermission, cameraError]);
+
   useEffect(() => {
     console.log("🎥 DEBUG: Camera useEffect triggered");
     console.log("🎥 DEBUG: isEnabled:", isEnabled);
@@ -61,27 +86,44 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, 
     console.log("🎥 DEBUG: hasPermission:", hasPermission);
     console.log("🎥 DEBUG: videoStreamRef.current:", videoStreamRef?.current);
     
-    // If stream is already ready, use it
-    if (streamReady && videoStreamRef?.current && videoRef.current) {
-      console.log("🎥 DEBUG: Using existing stream from videoStreamRef");
-      videoRef.current.srcObject = videoStreamRef.current;
-      streamRef.current = videoStreamRef.current;
-      setHasPermission(true);
-      setCameraError(false);
-      return;
-    }
+    // Check camera trigger status first
+    const checkAndStart = async () => {
+      try {
+        const { isCameraForcedOff } = await import('../utils/camera-manager');
+        if (isCameraForcedOff) {
+          console.log("🎥 DEBUG: Camera forced off by trigger - stopping all streams");
+          stopCamera();
+          setCameraError(true);
+          return;
+        }
+      } catch (err) {
+        console.error("🎥 DEBUG: Failed to check camera trigger status:", err);
+      }
+      
+      // If stream is already ready, use it
+      if (streamReady && videoStreamRef?.current && videoRef.current) {
+        console.log("🎥 DEBUG: Using existing stream from videoStreamRef");
+        videoRef.current.srcObject = videoStreamRef.current;
+        streamRef.current = videoStreamRef.current;
+        setHasPermission(true);
+        setCameraError(false);
+        return;
+      }
+      
+      if (isEnabled && hasPermission && !manuallyTurnedOff) {
+        console.log("🎥 DEBUG: Camera conditions met - starting camera");
+        startCamera();
+      } else if (isEnabled && !hasPermission && !manuallyTurnedOff) {
+        console.log("🎥 DEBUG: Camera enabled but no permission yet - requesting");
+        setHasPermission(true);
+        onPermissionRequest?.();
+      } else {
+        console.log("🎥 DEBUG: Stopping camera");
+        stopCamera();
+      }
+    };
     
-    if (isEnabled && hasPermission && !manuallyTurnedOff) {
-      console.log("🎥 DEBUG: Camera conditions met - starting camera");
-      startCamera();
-    } else if (isEnabled && !hasPermission && !manuallyTurnedOff) {
-      console.log("🎥 DEBUG: Camera enabled but no permission yet - requesting");
-      setHasPermission(true);
-      onPermissionRequest?.();
-    } else {
-      console.log("🎥 DEBUG: Stopping camera");
-      stopCamera();
-    }
+    checkAndStart();
 
     return () => {
       console.log("🎥 DEBUG: Camera cleanup");
@@ -97,6 +139,18 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, 
     console.log("🎥 DEBUG: hasPermission:", hasPermission);
     console.log("🎥 DEBUG: isEnabled:", isEnabled);
     console.log("🎥 DEBUG: manuallyTurnedOff:", manuallyTurnedOff);
+    
+    // Check if camera is forced off by trigger
+    try {
+      const { isCameraForcedOff } = await import('../utils/camera-manager');
+      if (isCameraForcedOff) {
+        console.log("🎥 DEBUG: Camera forced off by trigger - stopping");
+        setCameraError(true);
+        return;
+      }
+    } catch (err) {
+      console.error("🎥 DEBUG: Failed to check camera trigger status:", err);
+    }
     
     try {
       console.log("🎥 DEBUG: Requesting camera permission...");

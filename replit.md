@@ -247,6 +247,9 @@ Changelog:
 - July 06, 2025. Integrated ElevenLabs text-to-speech API with Turkish voice support (voice ID: pWeLcyFEBT5svt9WMYAO) and OpenAI TTS backup system - backend now supports both providers with automatic language detection for optimal voice selection
 - July 08, 2025. Created standalone chat widget system for external integration - built complete widget package without HeyGen avatar dependency, includes JavaScript widget, HTML demo, and API endpoints for easy integration into any website. Main application with HeyGen avatar remains unchanged and fully functional at root URL (/)
 - July 08, 2025. Created downloadable frontend package in export-package/ directory containing all UX components, styles, hooks, and utilities without HeyGen dependency. Added /api/download-frontend-package endpoint for ZIP download and /api/frontend-package demo page showing package contents and integration guide
+- July 09, 2025. Implemented centralized camera management system with single camera-manager.ts module to prevent dual stream conflicts between main UI and Hair analysis
+- July 09, 2025. Fixed React Hooks error "Rendered more hooks than during the previous render" by consolidating multiple useEffect hooks into single stable useEffect in hair-analysis-widget.tsx
+- July 09, 2025. Added camera trigger control system with "kadirli" (camera off) and "kozan" (camera on) keywords - works via both chat input and voice input to resolve camera conflicts during Hair analysis
 
 ## User Preferences
 
