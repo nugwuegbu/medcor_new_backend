@@ -1756,7 +1756,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                             { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
                             { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
-                            { icon: Face, label: "Face", angle: 300, action: () => { 
+                            { icon: Smile, label: "Face", angle: 300, action: () => { 
                               console.log('🔴 Face button clicked - Setting states synchronously');
                               
                               // Set Face page state first
