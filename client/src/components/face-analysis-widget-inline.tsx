@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { ChevronLeft, Camera, Loader2, User as Face } from "lucide-react";
+import { ChevronLeft, Camera, Loader2, User as Face, FileText } from "lucide-react";
+import FaceAnalysisReportForm from "./face-analysis-report-form";
 
 interface FaceAnalysisWidgetInlineProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -99,6 +101,36 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
     setResult(null);
     setError(null);
     startCamera();
+  };
+
+  const handleReportSubmit = async (formData: {
+    patientName: string;
+    patientEmail: string;
+    patientPhone: string;
+    patientJob: string;
+  }) => {
+    try {
+      const response = await fetch('/api/face-analysis-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          analysisResult: result,
+        }),
+      });
+
+      if (response.ok) {
+        setShowReportForm(false);
+        alert('PDF report has been generated and sent to your email!');
+      } else {
+        alert('Error generating report. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      alert('Error generating report. Please try again.');
+    }
   };
 
   if (!isOpen) return null;
@@ -257,17 +289,35 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
                 </div>
               )}
 
-              {/* Analyze Again Button */}
-              <button
-                onClick={resetAnalysis}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all text-sm"
-              >
-                Analyze Again
-              </button>
+              {/* Action Buttons */}
+              <div className="space-y-2">
+                <button
+                  onClick={resetAnalysis}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all text-sm"
+                >
+                  Analyze Again
+                </button>
+                
+                <button
+                  onClick={() => setShowReportForm(true)}
+                  className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-all text-sm"
+                >
+                  <FileText size={16} />
+                  Send me full report free
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
+      
+      {/* Report Form Modal */}
+      <FaceAnalysisReportForm
+        isOpen={showReportForm}
+        onClose={() => setShowReportForm(false)}
+        analysisResult={result}
+        onSubmit={handleReportSubmit}
+      />
     </div>
   );
 }

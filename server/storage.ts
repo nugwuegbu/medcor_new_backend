@@ -1,4 +1,4 @@
-import { doctors, appointments, chatMessages, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser } from "@shared/schema";
+import { doctors, appointments, chatMessages, faceAnalysisReports, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser, type FaceAnalysisReport, type InsertFaceAnalysisReport } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -20,6 +20,8 @@ export interface IStorage {
   
   getChatMessages(sessionId: string): Promise<ChatMessage[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  
+  createFaceAnalysisReport(report: InsertFaceAnalysisReport): Promise<FaceAnalysisReport>;
 }
 
 export class MemStorage implements IStorage {
@@ -27,20 +29,24 @@ export class MemStorage implements IStorage {
   private doctors: Map<number, Doctor>;
   private appointments: Map<number, Appointment>;
   private chatMessages: Map<number, ChatMessage>;
+  private faceAnalysisReports: Map<number, FaceAnalysisReport>;
   private currentUserId: number;
   private currentDoctorId: number;
   private currentAppointmentId: number;
   private currentChatMessageId: number;
+  private currentFaceAnalysisReportId: number;
 
   constructor() {
     this.users = new Map();
     this.doctors = new Map();
     this.appointments = new Map();
     this.chatMessages = new Map();
+    this.faceAnalysisReports = new Map();
     this.currentUserId = 1;
     this.currentDoctorId = 1;
     this.currentAppointmentId = 1;
     this.currentChatMessageId = 1;
+    this.currentFaceAnalysisReportId = 1;
     
     this.seedDoctors();
   }
@@ -261,6 +267,18 @@ export class MemStorage implements IStorage {
     };
     this.chatMessages.set(id, message);
     return message;
+  }
+
+  async createFaceAnalysisReport(insertReport: InsertFaceAnalysisReport): Promise<FaceAnalysisReport> {
+    const id = this.currentFaceAnalysisReportId++;
+    const report: FaceAnalysisReport = { 
+      ...insertReport, 
+      id, 
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.faceAnalysisReports.set(id, report);
+    return report;
   }
 }
 

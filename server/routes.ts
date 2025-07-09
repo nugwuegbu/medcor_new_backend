@@ -1,7 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertAppointmentSchema, insertChatMessageSchema } from "@shared/schema";
+import { insertAppointmentSchema, insertChatMessageSchema, insertFaceAnalysisReportSchema } from "@shared/schema";
+import jsPDF from 'jspdf';
+import path from 'path';
 import { generateChatResponse } from "./services/openai";
 import { heygenService } from "./services/heygen";
 // Streaming service temporarily disabled due to module issues
@@ -128,6 +130,191 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ message: "Logged out successfully" });
     });
+  });
+
+  // Face Analysis Report Generation
+  app.post("/api/face-analysis-report", async (req, res) => {
+    try {
+      const { patientName, patientEmail, patientPhone, patientJob, analysisResult } = req.body;
+      
+      if (!patientName || !patientEmail || !patientPhone || !patientJob || !analysisResult) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      // Generate PDF report
+      const pdf = new jsPDF();
+      
+      // Add MEDCOR logo to top-left corner
+      pdf.setFontSize(16);
+      pdf.setTextColor(128, 0, 128); // Purple color
+      pdf.text('MEDCOR', 10, 20);
+      
+      // Add title
+      pdf.setFontSize(20);
+      pdf.setTextColor(128, 0, 128); // Purple color
+      pdf.text('MEDCOR AI Face Analysis Report', 60, 20);
+      
+      // Add patient information
+      pdf.setFontSize(12);
+      pdf.setTextColor(0, 0, 0); // Black color
+      pdf.text(`Patient Name: ${patientName}`, 20, 40);
+      pdf.text(`Email: ${patientEmail}`, 20, 50);
+      pdf.text(`Phone: ${patientPhone}`, 20, 60);
+      pdf.text(`Job: ${patientJob}`, 20, 70);
+      
+      // Add analysis results
+      pdf.setFontSize(14);
+      pdf.setTextColor(128, 0, 128); // Purple color
+      pdf.text('Analysis Results:', 20, 90);
+      
+      pdf.setFontSize(12);
+      pdf.setTextColor(0, 0, 0); // Black color
+      let yPosition = 100;
+      
+      // Basic Information
+      pdf.text(`Age: ${analysisResult.age} years`, 20, yPosition);
+      yPosition += 10;
+      pdf.text(`Gender: ${analysisResult.gender}`, 20, yPosition);
+      yPosition += 10;
+      pdf.text(`Emotion: ${analysisResult.emotion}`, 20, yPosition);
+      yPosition += 10;
+      pdf.text(`Beauty Score: ${analysisResult.beauty_score}/100`, 20, yPosition);
+      yPosition += 20;
+      
+      // Skin Analysis
+      if (analysisResult.skin_analysis) {
+        pdf.setFontSize(14);
+        pdf.setTextColor(128, 0, 128);
+        pdf.text('Skin Analysis:', 20, yPosition);
+        yPosition += 10;
+        
+        pdf.setFontSize(12);
+        pdf.setTextColor(0, 0, 0);
+        if (analysisResult.skin_analysis.texture) {
+          pdf.text(`Texture: ${analysisResult.skin_analysis.texture.description} (${analysisResult.skin_analysis.texture.score}/100)`, 20, yPosition);
+          yPosition += 10;
+        }
+        if (analysisResult.skin_analysis.hydration) {
+          pdf.text(`Hydration: ${analysisResult.skin_analysis.hydration.level} (${analysisResult.skin_analysis.hydration.score}/100)`, 20, yPosition);
+          yPosition += 10;
+        }
+        if (analysisResult.skin_analysis.oiliness) {
+          pdf.text(`Skin Type: ${analysisResult.skin_analysis.oiliness.overall}`, 20, yPosition);
+          yPosition += 10;
+        }
+        yPosition += 10;
+      }
+      
+      // Makeup Recommendations
+      if (analysisResult.makeup_recommendations) {
+        pdf.setFontSize(14);
+        pdf.setTextColor(128, 0, 128);
+        pdf.text('Makeup Recommendations:', 20, yPosition);
+        yPosition += 10;
+        
+        pdf.setFontSize(12);
+        pdf.setTextColor(0, 0, 0);
+        if (analysisResult.makeup_recommendations.foundation) {
+          pdf.text(`Foundation: ${analysisResult.makeup_recommendations.foundation.shade}`, 20, yPosition);
+          yPosition += 10;
+        }
+        if (analysisResult.makeup_recommendations.lipstick) {
+          pdf.text(`Lipstick: ${analysisResult.makeup_recommendations.lipstick.colors?.join(', ')}`, 20, yPosition);
+          yPosition += 10;
+        }
+        yPosition += 10;
+      }
+      
+      // Skincare Routine
+      if (analysisResult.recommendations?.skincare_routine) {
+        pdf.setFontSize(14);
+        pdf.setTextColor(128, 0, 128);
+        pdf.text('Skincare Routine:', 20, yPosition);
+        yPosition += 10;
+        
+        pdf.setFontSize(12);
+        pdf.setTextColor(0, 0, 0);
+        analysisResult.recommendations.skincare_routine.forEach((item: string, index: number) => {
+          pdf.text(`${index + 1}. ${item}`, 20, yPosition);
+          yPosition += 10;
+        });
+      }
+      
+      // Add footer
+      pdf.setFontSize(10);
+      pdf.setTextColor(128, 0, 128);
+      pdf.text('Generated by MEDCOR AI - www.medcor.ai', 20, 280);
+      pdf.text(`Report Date: ${new Date().toLocaleDateString()}`, 20, 290);
+      
+      // Get PDF as base64
+      const pdfBase64 = pdf.output('datauristring').split(',')[1];
+      
+      // Store in database
+      const reportData = {
+        patientName,
+        patientEmail,
+        patientPhone,
+        patientJob,
+        analysisResult,
+        pdfPath: `reports/${patientName}_${Date.now()}.pdf`
+      };
+      
+      await storage.createFaceAnalysisReport(reportData);
+      
+      // Send email with PDF attachment
+      if (process.env.SENDGRID_API_KEY) {
+        try {
+          const sgMail = require('@sendgrid/mail');
+          sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+          
+          const msg = {
+            to: patientEmail,
+            from: 'noreply@medcor.ai',
+            subject: 'Your MEDCOR AI Face Analysis Report',
+            html: `
+              <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2 style="color: #8000ff;">MEDCOR AI Face Analysis Report</h2>
+                <p>Dear ${patientName},</p>
+                <p>Thank you for using MEDCOR AI face analysis service. Please find your detailed analysis report attached as a PDF.</p>
+                <p>Your analysis includes:</p>
+                <ul>
+                  <li>Basic demographic information</li>
+                  <li>Skin analysis and recommendations</li>
+                  <li>Makeup recommendations</li>
+                  <li>Personalized skincare routine</li>
+                </ul>
+                <p>If you have any questions about your report, please don't hesitate to contact us.</p>
+                <br>
+                <p>Best regards,<br>
+                MEDCOR AI Team<br>
+                <a href="https://www.medcor.ai" style="color: #8000ff;">www.medcor.ai</a></p>
+              </div>
+            `,
+            attachments: [
+              {
+                content: pdfBase64,
+                filename: `${patientName}_face_analysis_report.pdf`,
+                type: 'application/pdf',
+                disposition: 'attachment'
+              }
+            ]
+          };
+          
+          await sgMail.send(msg);
+          console.log('Email sent successfully to:', patientEmail);
+        } catch (emailError) {
+          console.error('Email sending failed:', emailError);
+        }
+      }
+      
+      res.json({ 
+        message: "PDF report generated and emailed successfully",
+        success: true 
+      });
+    } catch (error) {
+      console.error("Face analysis report error:", error);
+      res.status(500).json({ message: "Failed to generate face analysis report" });
+    }
   });
 
   // Get all doctors

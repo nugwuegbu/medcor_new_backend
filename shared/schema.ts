@@ -77,6 +77,18 @@ export const faceRecognitionLogs = pgTable("face_recognition_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const faceAnalysisReports = pgTable("face_analysis_reports", {
+  id: serial("id").primaryKey(),
+  patientName: text("patient_name").notNull(),
+  patientEmail: text("patient_email").notNull(),
+  patientPhone: text("patient_phone").notNull(),
+  patientJob: text("patient_job").notNull(),
+  analysisResult: json("analysis_result").notNull(),
+  pdfPath: text("pdf_path"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export const insertDoctorSchema = createInsertSchema(doctors).omit({
   id: true,
 });
@@ -102,6 +114,12 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true
 });
 
+export const insertFaceAnalysisReportSchema = createInsertSchema(faceAnalysisReports).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
 export type Doctor = typeof doctors.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
@@ -110,3 +128,5 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type FaceAnalysisReport = typeof faceAnalysisReports.$inferSelect;
+export type InsertFaceAnalysisReport = z.infer<typeof insertFaceAnalysisReportSchema>;
