@@ -249,8 +249,7 @@ Changelog:
 - July 08, 2025. Created downloadable frontend package in export-package/ directory containing all UX components, styles, hooks, and utilities without HeyGen dependency. Added /api/download-frontend-package endpoint for ZIP download and /api/frontend-package demo page showing package contents and integration guide
 - July 09, 2025. Implemented centralized camera management system with single camera-manager.ts module to prevent dual stream conflicts between main UI and Hair analysis
 - July 09, 2025. Fixed React Hooks error "Rendered more hooks than during the previous render" by consolidating multiple useEffect hooks into single stable useEffect in hair-analysis-widget.tsx
-- July 09, 2025. Added camera trigger control system with "kadirli" (camera off) and "kozan" (camera on) keywords - works via both chat input and voice input to resolve camera conflicts during Hair analysis
-- July 09, 2025. Implemented page-based camera system like Chrome tabs - main camera (UserCameraView) is never affected by triggers, only Hair Analysis page responds to "kadirli/kozan" commands. Each page operates independently with its own camera control.
+- July 09, 2025. Removed kadirli/kozan trigger system per user request - Hair analysis now uses direct camera access without backend trigger controls
 
 ## User Preferences
 

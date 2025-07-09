@@ -16,9 +16,8 @@ declare let window: Window;
 
 interface HairAnalysisWidgetProps {
   onClose: () => void;
-  videoStream?: MediaStream | null;
+  videoStream: MediaStream; // REQUIRED - must be passed from parent
   capturePhotoRef?: React.MutableRefObject<(() => string | null) | null>;
-  streamReady?: boolean;
 }
 
 interface HairAnalysisResult {
@@ -29,7 +28,7 @@ interface HairAnalysisResult {
   confidence: number;
 }
 
-export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoRef, streamReady }: HairAnalysisWidgetProps) {
+export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoRef }: HairAnalysisWidgetProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<HairAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,109 +37,65 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Direct camera stream access - no props needed
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  
-  // Use global session ID from localStorage to maintain consistency across components
-  const [sessionId] = useState(() => {
-    const stored = localStorage.getItem('hairCameraSessionId');
-    if (stored) return stored;
-    const newId = Math.random().toString(36).substring(2, 15);
-    localStorage.setItem('hairCameraSessionId', newId);
-    return newId;
-  });
-  
-  // Single consolidated useEffect
+  // Use shared video stream - no independent camera initialization
   useEffect(() => {
     let isMounted = true;
     
-    const initializeCamera = async () => {
+    const setupSharedStream = async () => {
       try {
-        // Use consistent session ID
+        console.log("🎬 HAIR DEBUG: Using shared video stream:", videoStream);
         
-        // Initialize Hair camera in backend
-        const initResponse = await fetch('/api/hair-camera/init', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ sessionId })
-        });
-        
-        if (!initResponse.ok) {
-          throw new Error('Failed to initialize hair camera');
+        if (!videoStream) {
+          throw new Error("No video stream provided");
         }
         
-        const initData = await initResponse.json();
-        console.log("📄 HAIR DEBUG: Backend camera initialized:", initData);
-        
-        // Check if Hair Analysis camera is available
-        const statusResponse = await fetch(`/api/hair-camera/status/${sessionId}`);
-        const statusData = await statusResponse.json();
-        
-        if (!statusData.isAvailable) {
-          console.log("🎬 HAIR DEBUG: Hair Analysis camera not available");
-          if (isMounted) {
-            setError("Hair Analysis camera disabled. Use 'kozan' to enable.");
-          }
-          return;
-        }
-        
-        // Get camera stream from frontend
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        
-        if (isMounted && stream) {
-          setCameraStream(stream);
-          console.log("🎬 HAIR DEBUG: Camera stream ready:", stream);
-          
-          // Setup video element
-          const videoEl = videoRef.current;
-          if (videoEl) {
-            videoEl.srcObject = stream;
-            videoEl.play().then(() => {
-              if (isMounted) {
-                setIsYCEInitialized(true);
-                console.log("🎬 HAIR DEBUG: Video playing successfully");
-              }
-            }).catch(err => {
-              console.error("🎬 HAIR ERROR: Video play failed:", err);
-              if (isMounted) {
-                setError("Failed to play video stream");
-              }
-            });
-          }
+        // Setup video element with shared stream
+        const videoEl = videoRef.current;
+        if (videoEl && isMounted) {
+          videoEl.srcObject = videoStream;
+          videoEl.play().then(() => {
+            if (isMounted) {
+              setIsYCEInitialized(true);
+              console.log("🎬 HAIR DEBUG: Shared video stream playing successfully");
+            }
+          }).catch(err => {
+            console.error("🎬 HAIR ERROR: Shared video play failed:", err);
+            if (isMounted) {
+              setError("Failed to play shared video stream");
+            }
+          });
         }
       } catch (err) {
-        console.error("🎬 HAIR DEBUG: Error initializing camera:", err);
+        console.error("🎬 HAIR DEBUG: Error setting up shared stream:", err);
         if (isMounted) {
-          setError("Hair Analysis camera not available");
+          setError("Hair Analysis camera not available - shared stream error");
         }
       }
     };
     
-    initializeCamera();
+    setupSharedStream();
     
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [videoStream]);
   
-  if (!cameraStream) {
-    console.log("🚨 SELENIUM DEBUG: cameraStream is null - showing initializing");
+  if (!videoStream) {
+    console.log("🚨 HAIR DEBUG: No videoStream prop - showing error");
     return (
       <div className="flex flex-col h-full bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Initializing camera...</p>
-            <p className="text-red-500 text-xs mt-2">DEBUG: cameraStream is null</p>
+            <div className="text-red-500 text-lg mb-4">⚠️</div>
+            <p className="text-gray-600">Hair Analysis requires camera access</p>
+            <p className="text-red-500 text-xs mt-2">ERROR: No shared video stream available</p>
           </div>
         </div>
       </div>
     );
   }
   
-  console.log("🚨 SELENIUM DEBUG: cameraStream available, proceeding with widget");
+  console.log("🚨 HAIR DEBUG: Shared videoStream available, proceeding with widget");
 
   const analyzeHair = async () => {
     setIsAnalyzing(true);

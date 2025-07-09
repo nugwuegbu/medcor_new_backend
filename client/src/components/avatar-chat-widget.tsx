@@ -95,13 +95,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [doctorsInputText, setDoctorsInputText] = useState("");
   const [recordsInputText, setRecordsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
-  const [globalSessionId] = useState(() => {
-    const stored = localStorage.getItem('hairCameraSessionId');
-    if (stored) return stored;
-    const newId = Math.random().toString(36).substring(2, 15);
-    localStorage.setItem('hairCameraSessionId', newId);
-    return newId;
-  });
+
   const [showCalendar, setShowCalendar] = useState(false);
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -444,75 +438,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // Check for Hair camera trigger words
-    const message = text.trim().toLowerCase();
-    if (message === 'kadirli') {
-      try {
-        console.log("🔴 TRIGGER DEBUG: kadirli command detected, sessionId:", globalSessionId);
-        const response = await fetch('/api/hair-camera/disable', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ sessionId: globalSessionId })
-        });
-        
-        const result = await response.json();
-        console.log("🔴 TRIGGER DEBUG: Backend response:", result);
-        
-        const userMessage: Message = {
-          id: `user_${Date.now()}`,
-          text: text.trim(),
-          sender: "user", 
-          timestamp: new Date()
-        };
-        const botMessage: Message = {
-          id: `bot_${Date.now()}`,
-          text: `Hair analysis kamerası kapatıldı. (Session: ${globalSessionId.substring(0, 8)}...)`,
-          sender: "bot", 
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-        setInputText("");
-        return;
-      } catch (err) {
-        console.error("Failed to disable hair camera:", err);
-      }
-    }
-    
-    if (message === 'kozan') {
-      try {
-        console.log("🟢 TRIGGER DEBUG: kozan command detected, sessionId:", globalSessionId);
-        const response = await fetch('/api/hair-camera/enable', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ sessionId: globalSessionId })
-        });
-        
-        const result = await response.json();
-        console.log("🟢 TRIGGER DEBUG: Backend response:", result);
-        
-        const userMessage: Message = {
-          id: `user_${Date.now()}`,
-          text: text.trim(),
-          sender: "user", 
-          timestamp: new Date()
-        };
-        const botMessage: Message = {
-          id: `bot_${Date.now()}`,
-          text: `Hair analysis kamerası açıldı. (Session: ${globalSessionId.substring(0, 8)}...)`,
-          sender: "bot", 
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMessage, botMessage]);
-        setInputText("");
-        return;
-      } catch (err) {
-        console.error("Failed to enable hair camera:", err);
-      }
-    }
+
 
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
@@ -1310,24 +1236,29 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
-                      console.log("🚨 Hair button clicked, sessionId:", globalSessionId);
+                      console.log("🚨 Hair button clicked - ensuring shared stream");
                       
                       let stream: MediaStream;
                       try {
                         stream = await ensureCameraReady();
+                        console.log("🚨 Shared stream ready:", stream);
+                        
+                        // Update videoStreamRef for Hair widget
+                        if (videoStreamRef.current !== stream) {
+                          videoStreamRef.current = stream;
+                        }
                       } catch (err) {
                         console.error("🚨 ensureCameraReady hatası:", err);
                         return;
                       }
 
-                      console.log("🚨 Stream hazır, devam ediyorum:", stream);
-                      console.log("🚨 localStorage session check:", localStorage.getItem('hairCameraSessionId'));
+                      console.log("🚨 Stream hazır, Hair widget'a geçiliyor:", stream);
                       
-                      // Update states after camera is ready - NO setCameraEnabled conflicts
+                      // Update states after camera is ready
                       setShowHairPage(true); 
                       setSelectedMenuItem("hair"); 
                       setIsMinimized(true); 
-                      console.log("🚨 Hair page aktif, UI state güncellendi, session:", globalSessionId);
+                      console.log("🚨 Hair page aktif, shared stream:", videoStreamRef.current);
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
@@ -2056,12 +1987,20 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             
             {/* Hair Analysis Content */}
             <div className="flex-1 pt-16">
-              <HairAnalysisWidget 
-                onClose={onClose}
-                videoStream={videoStreamRef.current}
-                capturePhotoRef={capturePhotoRef}
-                streamReady={streamReady}
-              />
+              {videoStreamRef.current ? (
+                <HairAnalysisWidget 
+                  onClose={onClose}
+                  videoStream={videoStreamRef.current}
+                  capturePhotoRef={capturePhotoRef}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Preparing camera for hair analysis...</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Chat Input at Bottom */}
