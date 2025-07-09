@@ -76,7 +76,10 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
         setError("Failed to play video stream");
       });
     } else if (!videoStream) {
-      console.log("🎬 HAIR DEBUG: No video stream available");
+      console.warn("🎬 HAIR DEBUG: videoStream is null - component waiting for stream");
+      setIsYCEInitialized(false);
+    } else if (!videoRef.current) {
+      console.warn("🎬 HAIR DEBUG: videoRef.current is null - video element not ready");
       setIsYCEInitialized(false);
     }
 

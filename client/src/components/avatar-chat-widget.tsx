@@ -494,27 +494,28 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   };
 
   // Memoized camera permission handler to prevent re-renders
-  // Centralized camera management utility
-  const ensureCameraReady = useCallback(async () => {
+  // Centralized camera management utility - FIXED VERSION
+  const ensureCameraReady = useCallback(async (): Promise<MediaStream> => {
     console.log("🚨 SELENIUM DEBUG: ensureCameraReady called");
     console.log("🚨 SELENIUM DEBUG: Current videoStreamRef.current:", videoStreamRef.current);
     
-    if (!videoStreamRef.current) {
-      try {
-        console.log("🚨 SELENIUM DEBUG: Starting camera stream");
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        console.log("🚨 SELENIUM DEBUG: Camera stream obtained:", stream);
-        videoStreamRef.current = stream;
-        setStreamReady(true);
-        console.log("🚨 SELENIUM DEBUG: Camera stream ready and streamReady set to true");
-        return stream;
-      } catch (err) {
-        console.error("🚨 SELENIUM DEBUG: Camera access failed:", err);
-        throw err;
-      }
+    if (videoStreamRef.current) {
+      console.log("🚨 SELENIUM DEBUG: Returning existing stream:", videoStreamRef.current);
+      return videoStreamRef.current;
     }
-    console.log("🚨 SELENIUM DEBUG: Returning existing stream:", videoStreamRef.current);
-    return videoStreamRef.current;
+    
+    try {
+      console.log("🚨 SELENIUM DEBUG: Starting camera stream");
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      console.log("🚨 SELENIUM DEBUG: Camera stream obtained:", stream);
+      videoStreamRef.current = stream;
+      setStreamReady(true);
+      console.log("🚨 SELENIUM DEBUG: Camera stream ready and streamReady set to true");
+      return stream;
+    } catch (err) {
+      console.error("🚨 SELENIUM DEBUG: Camera access failed:", err);
+      throw err;
+    }
   }, []);
 
   const handleCameraPermissionRequest = useCallback(() => {
@@ -1254,12 +1255,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log("🚨 SELENIUM DEBUG: Current videoStreamRef:", videoStreamRef.current);
                       
                       try {
-                        // Use centralized camera utility
+                        // Use centralized camera utility - FIXED VERSION
                         const stream = await ensureCameraReady();
                         console.log("🚨 SELENIUM DEBUG: ensureCameraReady returned:", stream);
                         console.log("🚨 SELENIUM DEBUG: videoStreamRef after ensure:", videoStreamRef.current);
                         
-                        // Update states after camera is ready
+                        if (!stream) {
+                          console.error("🚨 SELENIUM DEBUG: Stream is null, aborting");
+                          return;
+                        }
+                        
+                        // Update states after camera is ready - NO setCameraEnabled conflicts
                         setShowHairPage(true); 
                         setSelectedMenuItem("hair"); 
                         setIsMinimized(true); 
@@ -1860,12 +1866,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               console.log("🚨 SELENIUM DEBUG: Current videoStreamRef:", videoStreamRef.current);
                               
                               try {
-                                // Use centralized camera utility
+                                // Use centralized camera utility - FIXED VERSION
                                 const stream = await ensureCameraReady();
                                 console.log("🚨 SELENIUM DEBUG: ensureCameraReady returned:", stream);
                                 console.log("🚨 SELENIUM DEBUG: videoStreamRef after ensure:", videoStreamRef.current);
                                 
-                                // Update states after camera is ready
+                                if (!stream) {
+                                  console.error("🚨 SELENIUM DEBUG: Stream is null, aborting (second)");
+                                  return;
+                                }
+                                
+                                // Update states after camera is ready - NO setCameraEnabled conflicts
                                 setShowHairPage(true); 
                                 setSelectedMenuItem("hair"); 
                                 setIsMinimized(false); 
