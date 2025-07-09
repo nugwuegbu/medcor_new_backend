@@ -1206,7 +1206,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         onClick={item.action}
                         className={`absolute w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-300 transform ${
                           selectedMenuItem === item.label.toLowerCase()
-                            ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-125 shadow-xl"
+                            ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-125 shadow-xl hover:scale-135"
                             : isSpecialIcon 
                               ? "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-130 hover:animate-bounce"
                               : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-130"
