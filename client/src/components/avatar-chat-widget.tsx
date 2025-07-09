@@ -1243,10 +1243,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         stream = await ensureCameraReady();
                         console.log("🚨 Shared stream ready:", stream);
                         
-                        // Update videoStreamRef for Hair widget
-                        if (videoStreamRef.current !== stream) {
-                          videoStreamRef.current = stream;
-                        }
+                        // Force update videoStreamRef for Hair widget
+                        videoStreamRef.current = stream;
+                        
+                        // Force trigger stream ready state
+                        setStreamReady(true);
+                        console.log("🚨 Stream force updated:", videoStreamRef.current);
                       } catch (err) {
                         console.error("🚨 ensureCameraReady hatası:", err);
                         return;
@@ -1254,11 +1256,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
                       console.log("🚨 Stream hazır, Hair widget'a geçiliyor:", stream);
                       
-                      // Update states after camera is ready
-                      setShowHairPage(true); 
-                      setSelectedMenuItem("hair"); 
-                      setIsMinimized(true); 
-                      console.log("🚨 Hair page aktif, shared stream:", videoStreamRef.current);
+                      // Small delay to ensure videoStreamRef is updated
+                      setTimeout(() => {
+                        // Update states after camera is ready
+                        setShowHairPage(true); 
+                        setSelectedMenuItem("hair"); 
+                        setIsMinimized(true); 
+                        console.log("🚨 Hair page aktif, shared stream:", videoStreamRef.current);
+                      }, 100);
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }

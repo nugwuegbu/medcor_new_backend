@@ -37,13 +37,18 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Debug log for props
+  console.log("🎬 HAIR WIDGET DEBUG: Props received:", { videoStream, hasVideoStream: !!videoStream });
+
   // Use shared video stream - no independent camera initialization
   useEffect(() => {
     let isMounted = true;
     
     const setupSharedStream = async () => {
       try {
-        console.log("🎬 HAIR DEBUG: Using shared video stream:", videoStream);
+        console.log("🎬 HAIR DEBUG: useEffect triggered with videoStream:", videoStream);
+        console.log("🎬 HAIR DEBUG: videoStream type:", typeof videoStream);
+        console.log("🎬 HAIR DEBUG: videoStream tracks:", videoStream?.getTracks?.());
         
         if (!videoStream) {
           throw new Error("No video stream provided");
@@ -52,6 +57,7 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
         // Setup video element with shared stream
         const videoEl = videoRef.current;
         if (videoEl && isMounted) {
+          console.log("🎬 HAIR DEBUG: Setting video element srcObject");
           videoEl.srcObject = videoStream;
           videoEl.play().then(() => {
             if (isMounted) {
