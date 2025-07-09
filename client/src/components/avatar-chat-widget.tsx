@@ -95,6 +95,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [doctorsInputText, setDoctorsInputText] = useState("");
   const [recordsInputText, setRecordsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
+  const [globalSessionId] = useState(() => {
+    const stored = localStorage.getItem('hairCameraSessionId');
+    if (stored) return stored;
+    const newId = Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('hairCameraSessionId', newId);
+    return newId;
+  });
   const [showCalendar, setShowCalendar] = useState(false);
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -441,14 +448,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     const message = text.trim().toLowerCase();
     if (message === 'kadirli') {
       try {
-        const sessionId = Math.random().toString(36).substring(2, 15);
+        console.log("🔴 TRIGGER DEBUG: kadirli command detected, sessionId:", globalSessionId);
         const response = await fetch('/api/hair-camera/disable', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ sessionId })
+          body: JSON.stringify({ sessionId: globalSessionId })
         });
+        
+        const result = await response.json();
+        console.log("🔴 TRIGGER DEBUG: Backend response:", result);
         
         const userMessage: Message = {
           id: `user_${Date.now()}`,
@@ -458,7 +468,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         };
         const botMessage: Message = {
           id: `bot_${Date.now()}`,
-          text: "Hair analysis kamerası kapatıldı.",
+          text: `Hair analysis kamerası kapatıldı. (Session: ${globalSessionId.substring(0, 8)}...)`,
           sender: "bot", 
           timestamp: new Date()
         };
@@ -472,14 +482,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     
     if (message === 'kozan') {
       try {
-        const sessionId = Math.random().toString(36).substring(2, 15);
+        console.log("🟢 TRIGGER DEBUG: kozan command detected, sessionId:", globalSessionId);
         const response = await fetch('/api/hair-camera/enable', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ sessionId })
+          body: JSON.stringify({ sessionId: globalSessionId })
         });
+        
+        const result = await response.json();
+        console.log("🟢 TRIGGER DEBUG: Backend response:", result);
         
         const userMessage: Message = {
           id: `user_${Date.now()}`,
@@ -489,7 +502,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         };
         const botMessage: Message = {
           id: `bot_${Date.now()}`,
-          text: "Hair analysis kamerası açıldı.",
+          text: `Hair analysis kamerası açıldı. (Session: ${globalSessionId.substring(0, 8)}...)`,
           sender: "bot", 
           timestamp: new Date()
         };
@@ -1297,7 +1310,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
-                      console.log("🚨 Hair button clicked");
+                      console.log("🚨 Hair button clicked, sessionId:", globalSessionId);
                       
                       let stream: MediaStream;
                       try {
@@ -1308,12 +1321,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       }
 
                       console.log("🚨 Stream hazır, devam ediyorum:", stream);
+                      console.log("🚨 localStorage session check:", localStorage.getItem('hairCameraSessionId'));
                       
                       // Update states after camera is ready - NO setCameraEnabled conflicts
                       setShowHairPage(true); 
                       setSelectedMenuItem("hair"); 
                       setIsMinimized(true); 
-                      console.log("🚨 Hair page aktif, UI state güncellendi");
+                      console.log("🚨 Hair page aktif, UI state güncellendi, session:", globalSessionId);
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }

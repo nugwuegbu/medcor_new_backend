@@ -41,14 +41,22 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   // Direct camera stream access - no props needed
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   
+  // Use global session ID from localStorage to maintain consistency across components
+  const [sessionId] = useState(() => {
+    const stored = localStorage.getItem('hairCameraSessionId');
+    if (stored) return stored;
+    const newId = Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('hairCameraSessionId', newId);
+    return newId;
+  });
+  
   // Single consolidated useEffect
   useEffect(() => {
     let isMounted = true;
     
     const initializeCamera = async () => {
       try {
-        // Generate session ID
-        const sessionId = Math.random().toString(36).substring(2, 15);
+        // Use consistent session ID
         
         // Initialize Hair camera in backend
         const initResponse = await fetch('/api/hair-camera/init', {
