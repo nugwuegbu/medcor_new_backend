@@ -11,6 +11,7 @@ import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
 import InfoOverlay from "./info-overlay";
 import FaceAnalysisWidgetInline from "./face-analysis-widget-inline";
+import HairAnalysisWidget from "./hair-analysis-widget";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -1927,20 +1928,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </button>
             
             {/* Hair Analysis Content */}
-            <div className="flex-1 flex flex-col justify-center items-center p-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-purple-700 mb-4">MEDCOR Hair Analysis</h2>
-                <p className="text-gray-600 mb-6">Powered by Perfect Corp technology</p>
-                
-                {/* Hair Analysis Page - Blank for now */}
-                <div className="text-center text-gray-500">
-                  <Scissors className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                  <h2 className="text-lg font-semibold text-gray-600 mb-2">Hair Analysis</h2>
-                  <p className="text-sm text-gray-500">
-                    Hair analysis feature coming soon...
-                  </p>
-                </div>
-              </div>
+            <div className="flex-1 pt-16">
+              <HairAnalysisWidget onClose={onClose} />
             </div>
 
             {/* Chat Input at Bottom */}
