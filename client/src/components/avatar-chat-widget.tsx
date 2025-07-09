@@ -1140,12 +1140,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 <div className="flex flex-col items-center gap-4">
                   
                   {/* Circular AI Menu - Expanded */}
-                  <div className="relative w-64 h-64">
+                  <div className="relative w-80 h-80">
                     {/* Center Circle with User Account - Larger */}
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
                     <button 
                       onClick={() => setShowAuthOverlay(true)}
-                      className="absolute inset-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform cursor-pointer">
+                      className="absolute inset-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform cursor-pointer">
                       <div className="text-white text-center">
                         <User className="h-8 w-8 mx-auto mb-1" />
                         <p className="text-xs font-medium">Account</p>
@@ -1195,8 +1195,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
-                    const x = Math.cos(angleRad) * 95; // Increased from 75 to 95 for more spacing
-                    const y = Math.sin(angleRad) * 95; // Increased from 75 to 95 for more spacing
+                    const x = Math.cos(angleRad) * 130; // Increased to 130 for proper circle edge positioning
+                    const y = Math.sin(angleRad) * 130; // Increased to 130 for proper circle edge positioning
                     
                     return (
                       <button
