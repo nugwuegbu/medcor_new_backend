@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, User as Face, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, User as Face, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Palette, Heart } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -1139,20 +1139,20 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               <div className="flex-1 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                   
-                  {/* Circular AI Menu */}
-                  <div className="relative w-48 h-48">
-                    {/* Center Circle with User Account */}
+                  {/* Circular AI Menu - Expanded */}
+                  <div className="relative w-64 h-64">
+                    {/* Center Circle with User Account - Larger */}
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
                     <button 
                       onClick={() => setShowAuthOverlay(true)}
-                      className="absolute inset-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform cursor-pointer">
+                      className="absolute inset-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform cursor-pointer">
                       <div className="text-white text-center">
                         <User className="h-8 w-8 mx-auto mb-1" />
                         <p className="text-xs font-medium">Account</p>
                       </div>
                     </button>
                   
-                  {/* Menu Items - Circular Layout */}
+                  {/* Menu Items - Circular Layout with More Space - 9 Icons */}
                   {[
                     { icon: Calendar, label: "Book", angle: 0, action: () => { 
                       setShowChatInterface(false);
@@ -1162,16 +1162,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setSelectedDate(null);
                       setBookingFormData(prev => ({ ...prev, selectedDate: null }));
                     } },
-                    { icon: Users, label: "Doctors", angle: 60, action: () => { 
+                    { icon: Users, label: "Doctors", angle: 40, action: () => { 
                       setShowDoctorList(true); 
                       setSelectedMenuItem("doctors");
                       setShowChatInterface(false);
                       setIsMinimized(true);
                     } },
-                    { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
-                    { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
-                    { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
-                    { icon: Face, label: "Face", angle: 300, action: () => { 
+                    { icon: FileText, label: "Records", angle: 80, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
+                    { icon: Phone, label: "Call", angle: 120, action: () => setSelectedMenuItem("call") },
+                    { icon: UserCheck, label: "Admin", angle: 160, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
+                    { icon: Face, label: "Face", angle: 200, action: () => { 
                       console.log('🔴 Face button clicked - Setting states synchronously');
                       
                       // Set Face page state first
@@ -1189,27 +1189,30 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setIsMinimized(false);
                       
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
-                    } }
+                    } },
+                    { icon: Scissors, label: "Hair", angle: 240, action: () => setSelectedMenuItem("hair") },
+                    { icon: Palette, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
+                    { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
-                    const x = Math.cos(angleRad) * 75;
-                    const y = Math.sin(angleRad) * 75;
+                    const x = Math.cos(angleRad) * 95; // Increased from 75 to 95 for more spacing
+                    const y = Math.sin(angleRad) * 95; // Increased from 75 to 95 for more spacing
                     
                     return (
                       <button
                         key={index}
                         onClick={item.action}
-                        className={`absolute w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-300 transform ${
+                        className={`absolute w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-300 transform ${
                           selectedMenuItem === item.label.toLowerCase()
                             ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-125 shadow-xl"
-                            : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-125"
+                            : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-130"
                         }`}
                         style={{
-                          left: `calc(50% + ${x}px - 28px)`,
-                          top: `calc(50% + ${y}px - 28px)`
+                          left: `calc(50% + ${x}px - 32px)`, // Adjusted for new button size
+                          top: `calc(50% + ${y}px - 32px)`   // Adjusted for new button size
                         }}
                       >
-                        <item.icon className="h-5 w-5" />
+                        <item.icon className="h-6 w-6" />
                         <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
                       </button>
                     );
