@@ -502,8 +502,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         videoStreamRef.current = stream;
         setStreamReady(true);
-        setCameraEnabled(true);
-        setCameraPermissionRequested(true);
         console.log("🎥 DEBUG: Camera stream ready:", stream);
         return stream;
       } catch (err) {
@@ -1038,14 +1036,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <span className="text-gray-700 text-sm">AI Assistant</span>
         </div>
         
-        {/* User Camera View in center - Hide when Face Analysis is open */}
-        {!showFacePage && (
+        {/* User Camera View in center - Hide when Face Analysis or Hair Analysis is open */}
+        {!showFacePage && !showHairPage && (
           <div className="absolute left-1/2 transform -translate-x-1/2">
             <UserCameraView 
               isEnabled={cameraEnabled}
               onPermissionRequest={handleCameraPermissionRequest}
               capturePhotoRef={capturePhotoRef}
               videoStreamRef={videoStreamRef}
+              streamReady={streamReady}
             />
           </div>
         )}
