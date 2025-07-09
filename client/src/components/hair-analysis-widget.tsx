@@ -36,90 +36,90 @@ export default function HairAnalysisWidget({ onClose }: HairAnalysisWidgetProps)
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const initYCE = async () => {
+    const initCamera = async () => {
       try {
-        // Load YCE SDK if not already loaded
-        if (!window.YCE) {
-          const script = document.createElement('script');
-          script.src = 'https://sdk.perfectcorp.com/youcam/js/youcam-SDK.js';
-          script.onload = () => {
-            if (window.YCE) {
-              window.YCE.init({
-                accountId: process.env.REACT_APP_YCE_ACCOUNT_ID || 'xsQ0rgMLPQmEoow2SLNuqjTaILjhHAVY',
-                apiKey: process.env.REACT_APP_YCE_API_KEY || 'xsQ0rgMLPQmEoow2SLNuqjTaILjhHAVY',
-                email: process.env.REACT_APP_YCE_EMAIL || 'support@medcor.ai',
-                container: containerRef.current,
-                mode: 'camera',
-                features: ['hairAnalysis'],
-                onReady: () => {
-                  setIsYCEInitialized(true);
-                },
-                onError: (error: any) => {
-                  console.error('YCE initialization error:', error);
-                  setError('Failed to initialize hair analysis. Please try again.');
-                }
-              });
-            }
-          };
-          document.head.appendChild(script);
-        } else if (window.YCE.isInitialized()) {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
           setIsYCEInitialized(true);
         }
       } catch (error) {
-        console.error('Error initializing YCE:', error);
-        setError('Failed to load hair analysis tools. Please refresh and try again.');
+        console.error('Camera access error:', error);
+        setError('Failed to access camera. Please allow camera permission and try again.');
       }
     };
 
-    initYCE();
+    initCamera();
 
     return () => {
-      if (window.YCE && window.YCE.destroy) {
-        window.YCE.destroy();
+      if (videoRef.current && videoRef.current.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach(track => track.stop());
       }
     };
   }, []);
 
   const analyzeHair = async () => {
-    if (!window.YCE || !window.YCE.isInitialized()) {
-      setError('Hair analysis tools not ready. Please wait and try again.');
-      return;
-    }
-
     setIsAnalyzing(true);
     setError(null);
 
     try {
-      const result = await window.YCE.captureImage();
+      // Capture image from camera
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
       
-      if (result && result.hairAnalysis) {
+      if (!canvas || !video) {
+        throw new Error('Camera not available');
+      }
+
+      const context = canvas.getContext('2d');
+      if (!context) {
+        throw new Error('Canvas context not available');
+      }
+
+      // Set canvas size to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Draw current video frame to canvas
+      context.drawImage(video, 0, 0);
+      
+      // Convert to base64
+      const imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+      
+      // Send to backend API
+      const response = await fetch('/api/hair-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageBase64: imageBase64.split(',')[1], // Remove data:image/jpeg;base64, prefix
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.result) {
         const analysis: HairAnalysisResult = {
-          hairType: result.hairAnalysis.hairType || 'Normal',
-          hairCondition: result.hairAnalysis.condition || 'Healthy',
-          scalpHealth: result.hairAnalysis.scalpHealth || 'Good',
-          recommendations: result.hairAnalysis.recommendations || [
+          hairType: `${result.result.hair_type?.curl_pattern || 'Normal'} - ${result.result.hair_type?.texture || 'Medium'} texture`,
+          hairCondition: `${result.result.hair_condition?.damage_level || 'Healthy'} (Health Score: ${result.result.hair_condition?.health_score || 85}%)`,
+          scalpHealth: result.result.scalp_analysis?.condition || 'Good',
+          recommendations: result.result.hair_care_routine || [
             'Use moisturizing shampoo and conditioner',
             'Avoid excessive heat styling',
             'Regular scalp massage to improve circulation'
           ],
-          confidence: result.hairAnalysis.confidence || 0.85
+          confidence: result.result.confidence || 0.85
         };
         setAnalysisResult(analysis);
       } else {
-        // Fallback analysis for demo purposes
-        const demoAnalysis: HairAnalysisResult = {
-          hairType: 'Normal to Dry',
-          hairCondition: 'Slightly Damaged',
-          scalpHealth: 'Healthy',
-          recommendations: [
-            'Use deep conditioning treatments weekly',
-            'Reduce heat styling frequency',
-            'Consider protein treatments for strength',
-            'Use heat protectant products'
-          ],
-          confidence: 0.87
-        };
-        setAnalysisResult(demoAnalysis);
+        throw new Error('Analysis failed');
       }
     } catch (error) {
       console.error('Hair analysis error:', error);
@@ -169,7 +169,7 @@ export default function HairAnalysisWidget({ onClose }: HairAnalysisWidgetProps)
       <div className="flex-1 overflow-hidden">
         {!analysisResult ? (
           <div className="h-full flex flex-col">
-            {/* Camera/YCE Container */}
+            {/* Camera Container */}
             <div className="flex-1 relative bg-black/5 border-2 border-dashed border-purple-300 m-4 rounded-lg overflow-hidden">
               <div 
                 ref={containerRef}
@@ -178,13 +178,26 @@ export default function HairAnalysisWidget({ onClose }: HairAnalysisWidgetProps)
                 {!isYCEInitialized ? (
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Initializing hair analysis...</p>
+                    <p className="text-gray-600">Initializing camera...</p>
                   </div>
                 ) : (
-                  <div className="text-center">
-                    <Camera className="h-16 w-16 text-purple-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-2">Position your head in the camera frame</p>
-                    <p className="text-sm text-gray-500">Ensure good lighting for accurate analysis</p>
+                  <div className="relative w-full h-full">
+                    <video
+                      ref={videoRef}
+                      className="w-full h-full object-cover rounded-lg"
+                      autoPlay
+                      playsInline
+                      muted
+                    />
+                    <canvas
+                      ref={canvasRef}
+                      className="hidden"
+                    />
+                    <div className="absolute bottom-4 left-4 right-4 text-center">
+                      <p className="text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                        Position your head in the camera frame
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>

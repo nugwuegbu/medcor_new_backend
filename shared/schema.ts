@@ -89,6 +89,21 @@ export const faceAnalysisReports = pgTable("face_analysis_reports", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+export const hairAnalysisReports = pgTable("hair_analysis_reports", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  userId: integer("user_id"), // Link to user if logged in
+  hairType: text("hair_type").notNull(),
+  hairCondition: text("hair_condition").notNull(),
+  scalpHealth: text("scalp_health").notNull(),
+  recommendations: json("recommendations").notNull(),
+  confidence: integer("confidence").notNull(), // 0-100
+  analysisResult: json("analysis_result").notNull(), // Full YCE response
+  imageHash: text("image_hash"), // For privacy - store hash not image
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export const insertDoctorSchema = createInsertSchema(doctors).omit({
   id: true,
 });
@@ -120,6 +135,12 @@ export const insertFaceAnalysisReportSchema = createInsertSchema(faceAnalysisRep
   updatedAt: true
 });
 
+export const insertHairAnalysisReportSchema = createInsertSchema(hairAnalysisReports).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
 export type Doctor = typeof doctors.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
@@ -130,3 +151,5 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type FaceAnalysisReport = typeof faceAnalysisReports.$inferSelect;
 export type InsertFaceAnalysisReport = z.infer<typeof insertFaceAnalysisReportSchema>;
+export type HairAnalysisReport = typeof hairAnalysisReports.$inferSelect;
+export type InsertHairAnalysisReport = z.infer<typeof insertHairAnalysisReportSchema>;

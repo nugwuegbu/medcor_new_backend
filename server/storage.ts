@@ -1,4 +1,4 @@
-import { doctors, appointments, chatMessages, faceAnalysisReports, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser, type FaceAnalysisReport, type InsertFaceAnalysisReport } from "@shared/schema";
+import { doctors, appointments, chatMessages, faceAnalysisReports, hairAnalysisReports, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser, type FaceAnalysisReport, type InsertFaceAnalysisReport, type HairAnalysisReport, type InsertHairAnalysisReport } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -22,6 +22,8 @@ export interface IStorage {
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   
   createFaceAnalysisReport(report: InsertFaceAnalysisReport): Promise<FaceAnalysisReport>;
+  createHairAnalysisReport(report: InsertHairAnalysisReport): Promise<HairAnalysisReport>;
+  getHairAnalysisReports(sessionId: string): Promise<HairAnalysisReport[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -30,11 +32,13 @@ export class MemStorage implements IStorage {
   private appointments: Map<number, Appointment>;
   private chatMessages: Map<number, ChatMessage>;
   private faceAnalysisReports: Map<number, FaceAnalysisReport>;
+  private hairAnalysisReports: Map<number, HairAnalysisReport>;
   private currentUserId: number;
   private currentDoctorId: number;
   private currentAppointmentId: number;
   private currentChatMessageId: number;
   private currentFaceAnalysisReportId: number;
+  private currentHairAnalysisReportId: number;
 
   constructor() {
     this.users = new Map();
@@ -42,11 +46,13 @@ export class MemStorage implements IStorage {
     this.appointments = new Map();
     this.chatMessages = new Map();
     this.faceAnalysisReports = new Map();
+    this.hairAnalysisReports = new Map();
     this.currentUserId = 1;
     this.currentDoctorId = 1;
     this.currentAppointmentId = 1;
     this.currentChatMessageId = 1;
     this.currentFaceAnalysisReportId = 1;
+    this.currentHairAnalysisReportId = 1;
     
     this.seedDoctors();
   }
@@ -280,6 +286,26 @@ export class MemStorage implements IStorage {
     };
     this.faceAnalysisReports.set(id, report);
     return report;
+  }
+
+  async createHairAnalysisReport(insertReport: InsertHairAnalysisReport): Promise<HairAnalysisReport> {
+    const id = this.currentHairAnalysisReportId++;
+    const report: HairAnalysisReport = { 
+      ...insertReport, 
+      id, 
+      userId: insertReport.userId || null,
+      imageHash: insertReport.imageHash || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.hairAnalysisReports.set(id, report);
+    return report;
+  }
+
+  async getHairAnalysisReports(sessionId: string): Promise<HairAnalysisReport[]> {
+    return Array.from(this.hairAnalysisReports.values()).filter(
+      (report) => report.sessionId === sessionId
+    );
   }
 }
 

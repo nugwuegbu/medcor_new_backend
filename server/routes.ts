@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertAppointmentSchema, insertChatMessageSchema, insertFaceAnalysisReportSchema } from "@shared/schema";
+import { insertAppointmentSchema, insertChatMessageSchema, insertFaceAnalysisReportSchema, insertHairAnalysisReportSchema } from "@shared/schema";
 import jsPDF from 'jspdf';
 import path from 'path';
 import { generateChatResponse } from "./services/openai";
