@@ -494,6 +494,26 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   };
 
   // Memoized camera permission handler to prevent re-renders
+  // Centralized camera management utility
+  const ensureCameraReady = useCallback(async () => {
+    if (!videoStreamRef.current) {
+      try {
+        console.log("🎥 DEBUG: Starting camera stream");
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoStreamRef.current = stream;
+        setStreamReady(true);
+        setCameraEnabled(true);
+        setCameraPermissionRequested(true);
+        console.log("🎥 DEBUG: Camera stream ready:", stream);
+        return stream;
+      } catch (err) {
+        console.error("🎥 ERROR: Camera access failed:", err);
+        throw err;
+      }
+    }
+    return videoStreamRef.current;
+  }, []);
+
   const handleCameraPermissionRequest = useCallback(() => {
     console.log("Camera permission requested");
     setCameraEnabled(true);
@@ -1226,28 +1246,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
-                      console.log("🎬 Hair button clicked - Starting camera first");
+                      console.log("🎬 Hair button clicked - Using centralized camera");
                       
-                      // Start camera BEFORE updating state
-                      if (!videoStreamRef.current) {
-                        try {
-                          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                          videoStreamRef.current = stream;
-                          setStreamReady(true);
-                          console.log("🎬 Camera stream ready:", stream);
-                        } catch (error) {
-                          console.error("🎬 Camera access failed:", error);
-                          return; // Exit if camera fails
-                        }
+                      try {
+                        // Use centralized camera utility
+                        await ensureCameraReady();
+                        
+                        // Update states after camera is ready
+                        setShowHairPage(true); 
+                        setSelectedMenuItem("hair"); 
+                        setIsMinimized(true); 
+                        console.log("🎬 Hair analysis page activated with camera ready");
+                      } catch (error) {
+                        console.error("🎬 Camera access failed:", error);
+                        return; // Exit if camera fails
                       }
-                      
-                      // Now update states
-                      setShowHairPage(true); 
-                      setSelectedMenuItem("hair"); 
-                      setIsMinimized(true); 
-                      setCameraEnabled(true);
-                      setCameraPermissionRequested(true);
-                      console.log("🎬 Hair analysis page activated with camera ready");
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
@@ -1836,29 +1849,22 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                             } },
                             { icon: Scissors, label: "Hair", angle: 306, action: async () => { 
-                              console.log("🎬 Hair button clicked - Starting camera first");
+                              console.log("🎬 Hair button clicked - Using centralized camera");
                               
-                              // Start camera BEFORE updating state
-                              if (!videoStreamRef.current) {
-                                try {
-                                  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                                  videoStreamRef.current = stream;
-                                  setStreamReady(true);
-                                  console.log("🎬 Camera stream ready:", stream);
-                                } catch (error) {
-                                  console.error("🎬 Camera access failed:", error);
-                                  return; // Exit if camera fails
-                                }
+                              try {
+                                // Use centralized camera utility
+                                await ensureCameraReady();
+                                
+                                // Update states after camera is ready
+                                setShowHairPage(true); 
+                                setSelectedMenuItem("hair"); 
+                                setIsMinimized(false); 
+                                setShowChatInterface(false);
+                                console.log("🎬 Hair analysis page activated with camera ready");
+                              } catch (error) {
+                                console.error("🎬 Camera access failed:", error);
+                                return; // Exit if camera fails
                               }
-                              
-                              // Now update states
-                              setShowHairPage(true); 
-                              setSelectedMenuItem("hair"); 
-                              setIsMinimized(false); 
-                              setShowChatInterface(false);
-                              setCameraEnabled(true);
-                              setCameraPermissionRequested(true);
-                              console.log("🎬 Hair analysis page activated with camera ready");
                               
                               // Reset other conflicting states
                               setShowDoctorList(false);

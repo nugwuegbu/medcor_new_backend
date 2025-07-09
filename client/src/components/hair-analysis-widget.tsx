@@ -38,14 +38,27 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Check if camera is ready based on ChatGPT's recommendation
+  if (!videoStream) {
+    return (
+      <div className="flex flex-col h-full bg-gradient-to-br from-purple-50 to-blue-50">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Initializing camera...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     console.log("🎬 HAIR DEBUG: Hair analysis widget useEffect triggered");
     console.log("🎬 HAIR DEBUG: videoStream:", videoStream);
-    console.log("🎬 HAIR DEBUG: streamReady:", streamReady);
     console.log("🎬 HAIR DEBUG: videoRef.current:", videoRef.current);
     
-    if (streamReady && videoStream && videoRef.current) {
-      console.log("🎬 HAIR DEBUG: Using shared video stream - stream ready");
+    if (videoRef.current && videoStream) {
+      console.log("🎬 HAIR DEBUG: Setting up video stream");
       videoRef.current.srcObject = videoStream;
       videoRef.current.play().then(() => {
         setIsYCEInitialized(true);
@@ -54,20 +67,16 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
         console.error("🎬 HAIR ERROR: Video play failed:", error);
         setError("Failed to play video stream");
       });
-    } else if (!streamReady || !videoStream) {
-      console.log("🎬 HAIR DEBUG: Stream not ready yet, showing initializing message");
+    } else if (!videoStream) {
+      console.log("🎬 HAIR DEBUG: No video stream available");
       setIsYCEInitialized(false);
     }
 
     return () => {
       console.log("🎬 HAIR DEBUG: Hair analysis cleanup");
       // Don't stop the stream if it's shared - let the main component handle it
-      if (!videoStream && videoRef.current && videoRef.current.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach(track => track.stop());
-      }
     };
-  }, [videoStream, streamReady]);
+  }, [videoStream]);
 
   const analyzeHair = async () => {
     setIsAnalyzing(true);
