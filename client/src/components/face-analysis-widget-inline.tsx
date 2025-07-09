@@ -40,7 +40,7 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       }
     } catch (err) {
       console.error('Camera error:', err);
-      setError('Kamera erişimi reddedildi. Lütfen kamera izinlerini kontrol edin.');
+      setError('Camera access denied. Please check your camera permissions.');
     }
   };
 
@@ -87,11 +87,11 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
         setResult(data.result);
         stopCamera();
       } else {
-        setError(data.error || 'Analiz başarısız');
+        setError(data.error || 'Analysis failed');
       }
     } catch (err) {
       console.error('Analysis error:', err);
-      setError('Analiz sırasında hata oluştu. Tekrar deneyin.');
+      setError('An error occurred during analysis. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -165,7 +165,7 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50">
                   <div className="text-center text-white">
                     <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Kamera hazır değil</p>
+                    <p className="text-sm">Camera not ready</p>
                   </div>
                 </div>
               )}
@@ -179,7 +179,7 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
                   onClick={startCamera}
                   className="mt-2 text-blue-600 hover:underline text-sm"
                 >
-                  Kamerayı Tekrar Başlat
+                  Restart Camera
                 </button>
               </div>
             )}
@@ -191,7 +191,7 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
                 className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-all"
               >
                 <Camera size={20} />
-                Kamerayı Başlat
+                Start Camera
               </button>
             ) : (
               <button
@@ -200,7 +200,7 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
                 className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
               >
                 {loading ? <Loader2 size={20} className="animate-spin" /> : <Face size={20} />}
-                {loading ? 'Analiz Ediliyor...' : 'Yüzümü Analiz Et'}
+                {loading ? 'Analyzing...' : 'Analyze My Face'}
               </button>
             )}
           </div>
