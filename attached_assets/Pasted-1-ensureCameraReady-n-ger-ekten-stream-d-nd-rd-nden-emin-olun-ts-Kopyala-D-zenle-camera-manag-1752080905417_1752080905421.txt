@@ -1,0 +1,105 @@
+1. ensureCameraReady’ın gerçekten stream döndürdüğünden emin olun
+ts
+Kopyala
+Düzenle
+// camera-manager.ts
+export const videoStreamRef = { current: null as MediaStream | null };
+
+export async function ensureCameraReady(): Promise<MediaStream> {
+  if (videoStreamRef.current) {
+    console.log("🔵 Kamera zaten hazır:", videoStreamRef.current);
+    return videoStreamRef.current;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    videoStreamRef.current = stream;
+    console.log("🟢 Yeni stream alındı:", stream);
+    return stream;
+  } catch (err) {
+    console.error("🔴 Kamera erişimi başarısız:", err);
+    throw err;
+  }
+}
+Log’larınızı burada da kontrol edin: “🟢 Yeni stream alındı” mesajını görüyor musunuz?
+
+Eğer sadece “🔴 Kamera erişimi başarısız” çıkıyorsa, tarayıcı izinlerini tekrar gözden geçirin.
+
+2. Hair butonundaki akışı tek merkezden başlatın ve state tetiklemelerini ayırın
+Buton click handler’ınız şöyle olmalı:
+
+ts
+Kopyala
+Düzenle
+const onHairClick = async () => {
+  console.log("🚨 Hair button clicked");
+  
+  let stream: MediaStream;
+  try {
+    stream = await ensureCameraReady();
+  } catch (err) {
+    // İzin reddedildiyse veya başka bir hata varsa:
+    console.error("🚨 ensureCameraReady hatası:", err);
+    return;
+  }
+
+  console.log("🚨 Stream hazır, devam ediyorum:", stream);
+  
+  // Artık UI state’lerini güncelleyin:
+  setShowHairPage(true);
+  setSelectedMenuItem("hair");
+  setIsMinimized(true);
+  // (setCameraEnabled veya başka bir state’e artık gerek kalmayabilir)
+  console.log("🚨 Hair page aktif, UI state güncellendi");
+};
+Dikkat: setCameraEnabled(true) ve ensureCameraReady() ikisini birden kullanmak çakışmaya sebep olur. Ya biriyle çalışın, ya da hepsini ensureCameraReady içinde halledin.
+
+3. HairAnalysisWidget içinde doğru dependency kullanın
+ts
+Kopyala
+Düzenle
+// HairAnalysisWidget.tsx
+useEffect(() => {
+  const videoEl = videoRef.current;
+  const stream = videoStreamRef.current;
+  
+  if (!videoEl) {
+    console.warn("🎬 HAIR DEBUG: videoRef.current null");
+    return;
+  }
+  if (!stream) {
+    console.warn("🎬 HAIR DEBUG: stream null – bekliyorum");
+    return;
+  }
+
+  videoEl.srcObject = stream;
+  videoEl.play().catch(err => console.error("🎬 HAIR ERROR: play() hatası:", err));
+  console.log("🎬 HAIR DEBUG: Video oynatılıyor");
+}, [videoStreamRef.current /* veya sağlıklı çalışıyorsa boş array ile sadece mount */]);
+Eğer videoStreamRef.current doğrudan dependency olmazsa React onu izleyemez.
+
+Hatta isterseniz, widget’ı sadece stream hazır olduğunda render etmek de en garantili çözüm:
+
+tsx
+Kopyala
+Düzenle
+if (!videoStreamRef.current) {
+  return <div>Initializing camera...</div>;
+}
+return <video ref={videoRef} autoPlay />;
+4. Adım adım debug önerisi
+Tarayıcı izinleri: ensureCameraReady içinde getUserMedia’nin catch bloğuna giriyor musunuz?
+
+Log sırası:
+
+“🚨 Hair button clicked”
+
+“🔵 Kamera zaten hazır” veya “🟢 Yeni stream alındı”
+
+“🚨 Stream hazır, devam ediyorum”
+
+“🚨 Hair page aktif, UI state güncellendi”
+Eğer arada bir eksikse, o adımda sorun var demektir.
+
+Widget mount: HairAnalysisWidget’in console.log çıktılarının sırasına bakın. Stream hazır olduğunda useEffect’in tetiklendiğini görüyor musunuz?
+
+Permission Denied vs NotFoundError: Tarayıcı console’da DOMException tipi tam olarak nedir? (NotAllowedError, NotFoundError, vs.)

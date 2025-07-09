@@ -496,26 +496,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   // Memoized camera permission handler to prevent re-renders
   // Centralized camera management utility - FIXED VERSION
   const ensureCameraReady = useCallback(async (): Promise<MediaStream> => {
-    console.log("🚨 SELENIUM DEBUG: ensureCameraReady called");
-    console.log("🚨 SELENIUM DEBUG: Current videoStreamRef.current:", videoStreamRef.current);
-    
-    if (videoStreamRef.current) {
-      console.log("🚨 SELENIUM DEBUG: Returning existing stream:", videoStreamRef.current);
-      return videoStreamRef.current;
-    }
-    
-    try {
-      console.log("🚨 SELENIUM DEBUG: Starting camera stream");
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      console.log("🚨 SELENIUM DEBUG: Camera stream obtained:", stream);
-      videoStreamRef.current = stream;
-      setStreamReady(true);
-      console.log("🚨 SELENIUM DEBUG: Camera stream ready and streamReady set to true");
-      return stream;
-    } catch (err) {
-      console.error("🚨 SELENIUM DEBUG: Camera access failed:", err);
-      throw err;
-    }
+    const { ensureCameraReady: cameraManager } = await import('../utils/camera-manager');
+    return cameraManager();
   }, []);
 
   const handleCameraPermissionRequest = useCallback(() => {
@@ -1251,29 +1233,23 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
-                      console.log("🚨 SELENIUM DEBUG: Hair button clicked");
-                      console.log("🚨 SELENIUM DEBUG: Current videoStreamRef:", videoStreamRef.current);
+                      console.log("🚨 Hair button clicked");
                       
+                      let stream: MediaStream;
                       try {
-                        // Use centralized camera utility - FIXED VERSION
-                        const stream = await ensureCameraReady();
-                        console.log("🚨 SELENIUM DEBUG: ensureCameraReady returned:", stream);
-                        console.log("🚨 SELENIUM DEBUG: videoStreamRef after ensure:", videoStreamRef.current);
-                        
-                        if (!stream) {
-                          console.error("🚨 SELENIUM DEBUG: Stream is null, aborting");
-                          return;
-                        }
-                        
-                        // Update states after camera is ready - NO setCameraEnabled conflicts
-                        setShowHairPage(true); 
-                        setSelectedMenuItem("hair"); 
-                        setIsMinimized(true); 
-                        console.log("🚨 SELENIUM DEBUG: Hair analysis page activated");
-                      } catch (error) {
-                        console.error("🚨 SELENIUM DEBUG: Camera access failed:", error);
-                        return; // Exit if camera fails
+                        stream = await ensureCameraReady();
+                      } catch (err) {
+                        console.error("🚨 ensureCameraReady hatası:", err);
+                        return;
                       }
+
+                      console.log("🚨 Stream hazır, devam ediyorum:", stream);
+                      
+                      // Update states after camera is ready - NO setCameraEnabled conflicts
+                      setShowHairPage(true); 
+                      setSelectedMenuItem("hair"); 
+                      setIsMinimized(true); 
+                      console.log("🚨 Hair page aktif, UI state güncellendi");
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
@@ -1862,36 +1838,24 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                             } },
                             { icon: Scissors, label: "Hair", angle: 306, action: async () => { 
-                              console.log("🚨 SELENIUM DEBUG: Hair button clicked (second)");
-                              console.log("🚨 SELENIUM DEBUG: Current videoStreamRef:", videoStreamRef.current);
+                              console.log("🚨 Hair button clicked (second)");
                               
+                              let stream: MediaStream;
                               try {
-                                // Use centralized camera utility - FIXED VERSION
-                                const stream = await ensureCameraReady();
-                                console.log("🚨 SELENIUM DEBUG: ensureCameraReady returned:", stream);
-                                console.log("🚨 SELENIUM DEBUG: videoStreamRef after ensure:", videoStreamRef.current);
-                                
-                                if (!stream) {
-                                  console.error("🚨 SELENIUM DEBUG: Stream is null, aborting (second)");
-                                  return;
-                                }
-                                
-                                // Update states after camera is ready - NO setCameraEnabled conflicts
-                                setShowHairPage(true); 
-                                setSelectedMenuItem("hair"); 
-                                setIsMinimized(false); 
-                                setShowChatInterface(false);
-                                console.log("🚨 SELENIUM DEBUG: Hair analysis page activated (second)");
-                              } catch (error) {
-                                console.error("🚨 SELENIUM DEBUG: Camera access failed (second):", error);
-                                return; // Exit if camera fails
+                                stream = await ensureCameraReady();
+                              } catch (err) {
+                                console.error("🚨 ensureCameraReady hatası (second):", err);
+                                return;
                               }
+
+                              console.log("🚨 Stream hazır, devam ediyorum (second):", stream);
                               
-                              // Reset other conflicting states
-                              setShowDoctorList(false);
-                              setShowRecordsList(false);
-                              setShowAdminPage(false);
-                              setShowBookingCalendar(false);
+                              // Update states after camera is ready - NO setCameraEnabled conflicts
+                              setShowHairPage(true); 
+                              setSelectedMenuItem("hair"); 
+                              setIsMinimized(false); 
+                              setShowChatInterface(false);
+                              console.log("🚨 Hair page aktif, UI state güncellendi (second)");
                             } }
                           ].map((item, index) => {
                             const angleRad = (item.angle * Math.PI) / 180;

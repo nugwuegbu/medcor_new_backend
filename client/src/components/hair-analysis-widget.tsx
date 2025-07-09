@@ -38,56 +38,75 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // SELENIUM DEBUG: Check if camera is ready
-  console.log("🚨 SELENIUM DEBUG: HairAnalysisWidget render check");
-  console.log("🚨 SELENIUM DEBUG: videoStream prop:", videoStream);
-  console.log("🚨 SELENIUM DEBUG: streamReady prop:", streamReady);
+  // Direct camera stream access - no props needed
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   
-  if (!videoStream) {
-    console.log("🚨 SELENIUM DEBUG: videoStream is null - showing initializing");
+  useEffect(() => {
+    const checkCameraStream = async () => {
+      try {
+        const { getCameraStream } = await import('../utils/camera-manager');
+        const stream = getCameraStream();
+        setCameraStream(stream);
+        console.log("🎬 HAIR DEBUG: Camera stream from manager:", stream);
+      } catch (err) {
+        console.error("🎬 HAIR DEBUG: Error getting camera stream:", err);
+      }
+    };
+    
+    checkCameraStream();
+    // Check again after a short delay in case stream is being initialized
+    const timer = setTimeout(checkCameraStream, 100);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  if (!cameraStream) {
+    console.log("🚨 SELENIUM DEBUG: cameraStream is null - showing initializing");
     return (
       <div className="flex flex-col h-full bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Initializing camera...</p>
-            <p className="text-red-500 text-xs mt-2">DEBUG: videoStream is null</p>
+            <p className="text-red-500 text-xs mt-2">DEBUG: cameraStream is null</p>
           </div>
         </div>
       </div>
     );
   }
   
-  console.log("🚨 SELENIUM DEBUG: videoStream available, proceeding with widget");
+  console.log("🚨 SELENIUM DEBUG: cameraStream available, proceeding with widget");
 
   useEffect(() => {
-    console.log("🎬 HAIR DEBUG: Hair analysis widget useEffect triggered");
-    console.log("🎬 HAIR DEBUG: videoStream:", videoStream);
-    console.log("🎬 HAIR DEBUG: videoRef.current:", videoRef.current);
+    const videoEl = videoRef.current;
+    const stream = cameraStream;
     
-    if (videoRef.current && videoStream) {
-      console.log("🎬 HAIR DEBUG: Setting up video stream");
-      videoRef.current.srcObject = videoStream;
-      videoRef.current.play().then(() => {
-        setIsYCEInitialized(true);
-        console.log("🎬 HAIR DEBUG: Video playing successfully");
-      }).catch((error) => {
-        console.error("🎬 HAIR ERROR: Video play failed:", error);
-        setError("Failed to play video stream");
-      });
-    } else if (!videoStream) {
-      console.warn("🎬 HAIR DEBUG: videoStream is null - component waiting for stream");
-      setIsYCEInitialized(false);
-    } else if (!videoRef.current) {
-      console.warn("🎬 HAIR DEBUG: videoRef.current is null - video element not ready");
-      setIsYCEInitialized(false);
+    console.log("🎬 HAIR DEBUG: Hair analysis widget useEffect triggered");
+    console.log("🎬 HAIR DEBUG: videoEl:", videoEl);
+    console.log("🎬 HAIR DEBUG: stream:", stream);
+    
+    if (!videoEl) {
+      console.warn("🎬 HAIR DEBUG: videoRef.current null");
+      return;
     }
+    if (!stream) {
+      console.warn("🎬 HAIR DEBUG: stream null – bekliyorum");
+      return;
+    }
+
+    videoEl.srcObject = stream;
+    videoEl.play().then(() => {
+      setIsYCEInitialized(true);
+      console.log("🎬 HAIR DEBUG: Video oynatılıyor");
+    }).catch(err => {
+      console.error("🎬 HAIR ERROR: play() hatası:", err);
+      setError("Failed to play video stream");
+    });
 
     return () => {
       console.log("🎬 HAIR DEBUG: Hair analysis cleanup");
       // Don't stop the stream if it's shared - let the main component handle it
     };
-  }, [videoStream]);
+  }, [cameraStream]);
 
   const analyzeHair = async () => {
     setIsAnalyzing(true);
