@@ -47,22 +47,43 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
     
     const initializeCamera = async () => {
       try {
-        // Check if Hair Analysis camera is disabled
-        const { isHairAnalysisCameraOff, ensureHairAnalysisCameraReady } = await import('../utils/camera-manager');
+        // Generate session ID
+        const sessionId = Math.random().toString(36).substring(2, 15);
         
-        if (isHairAnalysisCameraOff) {
-          console.log("🎬 HAIR DEBUG: Hair Analysis camera disabled by trigger");
+        // Initialize Hair camera in backend
+        const initResponse = await fetch('/api/hair-camera/init', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId })
+        });
+        
+        if (!initResponse.ok) {
+          throw new Error('Failed to initialize hair camera');
+        }
+        
+        const initData = await initResponse.json();
+        console.log("📄 HAIR DEBUG: Backend camera initialized:", initData);
+        
+        // Check if Hair Analysis camera is available
+        const statusResponse = await fetch(`/api/hair-camera/status/${sessionId}`);
+        const statusData = await statusResponse.json();
+        
+        if (!statusData.isAvailable) {
+          console.log("🎬 HAIR DEBUG: Hair Analysis camera not available");
           if (isMounted) {
             setError("Hair Analysis camera disabled. Use 'kozan' to enable.");
           }
           return;
         }
         
-        const stream = await ensureHairAnalysisCameraReady();
+        // Get camera stream from frontend
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         
         if (isMounted && stream) {
           setCameraStream(stream);
-          console.log("🎬 HAIR DEBUG: Camera stream from manager:", stream);
+          console.log("🎬 HAIR DEBUG: Camera stream ready:", stream);
           
           // Setup video element
           const videoEl = videoRef.current;

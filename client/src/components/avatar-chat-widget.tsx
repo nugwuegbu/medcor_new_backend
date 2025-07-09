@@ -437,46 +437,68 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // Check for camera trigger words
+    // Check for Hair camera trigger words
     const message = text.trim().toLowerCase();
     if (message === 'kadirli') {
-      const { triggerCameraOff } = await import('../utils/camera-manager');
-      triggerCameraOff();
-      const userMessage: Message = {
-        id: `user_${Date.now()}`,
-        text: text.trim(),
-        sender: "user", 
-        timestamp: new Date()
-      };
-      const botMessage: Message = {
-        id: `bot_${Date.now()}`,
-        text: "Kamera kapatıldı.",
-        sender: "bot", 
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, userMessage, botMessage]);
-      setInputText("");
-      return;
+      try {
+        const sessionId = Math.random().toString(36).substring(2, 15);
+        const response = await fetch('/api/hair-camera/disable', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId })
+        });
+        
+        const userMessage: Message = {
+          id: `user_${Date.now()}`,
+          text: text.trim(),
+          sender: "user", 
+          timestamp: new Date()
+        };
+        const botMessage: Message = {
+          id: `bot_${Date.now()}`,
+          text: "Hair analysis kamerası kapatıldı.",
+          sender: "bot", 
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage, botMessage]);
+        setInputText("");
+        return;
+      } catch (err) {
+        console.error("Failed to disable hair camera:", err);
+      }
     }
     
     if (message === 'kozan') {
-      const { triggerCameraOn } = await import('../utils/camera-manager');
-      triggerCameraOn();
-      const userMessage: Message = {
-        id: `user_${Date.now()}`,
-        text: text.trim(),
-        sender: "user", 
-        timestamp: new Date()
-      };
-      const botMessage: Message = {
-        id: `bot_${Date.now()}`,
-        text: "Kamera açıldı.",
-        sender: "bot", 
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, userMessage, botMessage]);
-      setInputText("");
-      return;
+      try {
+        const sessionId = Math.random().toString(36).substring(2, 15);
+        const response = await fetch('/api/hair-camera/enable', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId })
+        });
+        
+        const userMessage: Message = {
+          id: `user_${Date.now()}`,
+          text: text.trim(),
+          sender: "user", 
+          timestamp: new Date()
+        };
+        const botMessage: Message = {
+          id: `bot_${Date.now()}`,
+          text: "Hair analysis kamerası açıldı.",
+          sender: "bot", 
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage, botMessage]);
+        setInputText("");
+        return;
+      } catch (err) {
+        console.error("Failed to enable hair camera:", err);
+      }
     }
 
     // Activate HeyGen avatar on first user interaction
