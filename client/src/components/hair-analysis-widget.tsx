@@ -52,6 +52,7 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
         console.log("🎬 HAIR DEBUG: Video playing successfully");
       }).catch((error) => {
         console.error("🎬 HAIR ERROR: Video play failed:", error);
+        setError("Failed to play video stream");
       });
     } else if (!streamReady || !videoStream) {
       console.log("🎬 HAIR DEBUG: Stream not ready yet, showing initializing message");
@@ -203,7 +204,9 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
                 {!isYCEInitialized ? (
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Initializing camera...</p>
+                    <p className="text-gray-600">
+                      {error ? error : "Initializing camera..."}
+                    </p>
                   </div>
                 ) : (
                   <div className="relative w-full h-full">
