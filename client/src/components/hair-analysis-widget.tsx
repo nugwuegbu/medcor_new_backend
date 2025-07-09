@@ -38,22 +38,31 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log("🎬 HAIR DEBUG: Hair analysis widget useEffect triggered");
+    console.log("🎬 HAIR DEBUG: videoStream:", videoStream);
+    console.log("🎬 HAIR DEBUG: videoRef.current:", videoRef.current);
+    console.log("🎬 HAIR DEBUG: capturePhotoRef:", capturePhotoRef);
+    
     if (videoStream && videoRef.current) {
+      console.log("🎬 HAIR DEBUG: Using shared video stream");
       videoRef.current.srcObject = videoStream;
       videoRef.current.play();
       setIsYCEInitialized(true);
     } else {
+      console.log("🎬 HAIR DEBUG: No shared stream, creating fallback camera");
       // Fallback to creating new camera stream if not provided
       const initCamera = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          console.log("🎬 HAIR DEBUG: Fallback camera stream created:", stream);
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
             videoRef.current.play();
             setIsYCEInitialized(true);
+            console.log("🎬 HAIR DEBUG: Fallback camera initialized");
           }
         } catch (error) {
-          console.error('Camera access error:', error);
+          console.error('🎬 HAIR ERROR: Camera access error:', error);
           setError('Failed to access camera. Please allow camera permission and try again.');
         }
       };
@@ -62,6 +71,7 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
     }
 
     return () => {
+      console.log("🎬 HAIR DEBUG: Hair analysis cleanup");
       // Don't stop the stream if it's shared - let the main component handle it
       if (!videoStream && videoRef.current && videoRef.current.srcObject) {
         const tracks = (videoRef.current.srcObject as MediaStream).getTracks();

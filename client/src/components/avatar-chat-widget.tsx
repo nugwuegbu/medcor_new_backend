@@ -1217,12 +1217,23 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setShowBookingCalendar(false);
                       setIsMinimized(false);
                       
+                      // Enable camera for face analysis
+                      setCameraEnabled(true);
+                      setCameraPermissionRequested(true);
+                      console.log('🔴 Camera enabled for face analysis');
+                      
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: () => { 
+                      console.log("🎬 Hair button clicked - Activating camera");
                       setShowHairPage(true); 
                       setSelectedMenuItem("hair"); 
                       setIsMinimized(true); 
+                      
+                      // Enable camera for hair analysis
+                      setCameraEnabled(true);
+                      setCameraPermissionRequested(true);
+                      console.log("🎬 Camera enabled for hair analysis");
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
@@ -1811,10 +1822,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                             } },
                             { icon: Scissors, label: "Hair", angle: 306, action: () => { 
+                              console.log("🎬 Hair button clicked - Activating camera");
                               setShowHairPage(true); 
                               setSelectedMenuItem("hair"); 
                               setIsMinimized(false); 
                               setShowChatInterface(false);
+                              
+                              // Enable camera for hair analysis
+                              setCameraEnabled(true);
+                              setCameraPermissionRequested(true);
+                              console.log("🎬 Camera enabled for hair analysis");
                               
                               // Reset other conflicting states
                               setShowDoctorList(false);

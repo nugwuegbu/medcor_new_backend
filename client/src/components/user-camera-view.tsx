@@ -54,30 +54,46 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, 
   }, [hasPermission, capturePhotoRef]);
 
   useEffect(() => {
+    console.log("🎥 DEBUG: Camera useEffect triggered");
+    console.log("🎥 DEBUG: isEnabled:", isEnabled);
+    console.log("🎥 DEBUG: hasPermission:", hasPermission);
+    console.log("🎥 DEBUG: manuallyTurnedOff:", manuallyTurnedOff);
+    
     if (isEnabled && hasPermission && !manuallyTurnedOff) {
-      console.log("Camera conditions met - starting camera");
+      console.log("🎥 DEBUG: Camera conditions met - starting camera");
       startCamera();
     } else if (isEnabled && !hasPermission && !manuallyTurnedOff) {
-      console.log("Camera enabled but no permission yet - requesting");
+      console.log("🎥 DEBUG: Camera enabled but no permission yet - requesting");
       setHasPermission(true);
       onPermissionRequest?.();
     } else {
+      console.log("🎥 DEBUG: Stopping camera");
       stopCamera();
     }
 
     return () => {
+      console.log("🎥 DEBUG: Camera cleanup");
       stopCamera();
     };
   }, [isEnabled, hasPermission, manuallyTurnedOff, onPermissionRequest]);
 
   const startCamera = async () => {
+    console.log("🎥 DEBUG: Starting camera...");
+    console.log("🎥 DEBUG: hasPermission:", hasPermission);
+    console.log("🎥 DEBUG: isEnabled:", isEnabled);
+    console.log("🎥 DEBUG: manuallyTurnedOff:", manuallyTurnedOff);
+    
     try {
+      console.log("🎥 DEBUG: Requesting camera permission...");
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           width: { ideal: 640 },
           height: { ideal: 480 }
         } 
       });
+      
+      console.log("🎥 DEBUG: Camera stream obtained:", stream);
+      console.log("🎥 DEBUG: videoRef.current:", videoRef.current);
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -86,14 +102,18 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, 
         // Also expose stream via ref for other components
         if (videoStreamRef) {
           videoStreamRef.current = stream;
+          console.log("🎥 DEBUG: Video stream shared via ref");
         }
+        
+        console.log("🎥 DEBUG: Video element setup complete");
       }
       setCameraError(false);
       
-      // Remove auto-greeting - will be triggered manually to avoid repetition
-      console.log("Camera started successfully");
+      console.log("🎥 DEBUG: Camera started successfully");
     } catch (error) {
-      console.error("Camera access error:", error);
+      console.error("🎥 ERROR: Camera access error:", error);
+      console.error("🎥 ERROR: Error name:", error.name);
+      console.error("🎥 ERROR: Error message:", error.message);
       setCameraError(true);
       setHasPermission(false);
     }
