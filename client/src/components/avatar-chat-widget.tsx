@@ -1806,16 +1806,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               setSelectedDate(null);
                               setBookingFormData(prev => ({ ...prev, selectedDate: null }));
                             } },
-                            { icon: Users, label: "Doctors", angle: 60, action: () => { 
+                            { icon: Users, label: "Doctors", angle: 51, action: () => { 
                               setShowDoctorList(true); 
                               setSelectedMenuItem("doctors");
                               setShowChatInterface(false);
                               setIsMinimized(true);
                             } },
-                            { icon: FileText, label: "Records", angle: 120, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
-                            { icon: Phone, label: "Call", angle: 180, action: () => setSelectedMenuItem("call") },
-                            { icon: UserCheck, label: "Admin", angle: 240, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
-                            { icon: Smile, label: "Face", angle: 300, action: () => { 
+                            { icon: FileText, label: "Records", angle: 102, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
+                            { icon: Phone, label: "Call", angle: 153, action: () => setSelectedMenuItem("call") },
+                            { icon: UserCheck, label: "Admin", angle: 204, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
+                            { icon: Smile, label: "Face", angle: 255, action: () => { 
                               console.log('🔴 Face button clicked - Setting states synchronously');
                               
                               // Set Face page state first
@@ -1833,6 +1833,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               setIsMinimized(false);
                               
                               console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
+                            } },
+                            { icon: Scissors, label: "Hair", angle: 306, action: () => { 
+                              setShowHairPage(true); 
+                              setSelectedMenuItem("hair"); 
+                              setIsMinimized(true); 
+                              setShowChatInterface(false);
                             } }
                           ].map((item, index) => {
                             const angleRad = (item.angle * Math.PI) / 180;
