@@ -437,6 +437,48 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
+    // Check for camera trigger words
+    const message = text.trim().toLowerCase();
+    if (message === 'kadirli') {
+      const { triggerCameraOff } = await import('../utils/camera-manager');
+      triggerCameraOff();
+      const userMessage: Message = {
+        id: `user_${Date.now()}`,
+        text: text.trim(),
+        sender: "user", 
+        timestamp: new Date()
+      };
+      const botMessage: Message = {
+        id: `bot_${Date.now()}`,
+        text: "Kamera kapatıldı.",
+        sender: "bot", 
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+      setInputText("");
+      return;
+    }
+    
+    if (message === 'kozan') {
+      const { triggerCameraOn } = await import('../utils/camera-manager');
+      triggerCameraOn();
+      const userMessage: Message = {
+        id: `user_${Date.now()}`,
+        text: text.trim(),
+        sender: "user", 
+        timestamp: new Date()
+      };
+      const botMessage: Message = {
+        id: `bot_${Date.now()}`,
+        text: "Kamera açıldı.",
+        sender: "bot", 
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, userMessage, botMessage]);
+      setInputText("");
+      return;
+    }
+
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
 

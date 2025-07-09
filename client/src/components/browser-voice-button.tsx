@@ -56,6 +56,7 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
       // If we have a final result, send it
       if (finalTranscript) {
         console.log("Final transcript:", finalTranscript);
+        // onTranscript will handle trigger word detection
         onTranscript(finalTranscript);
         // Don't stop recording - let user click button again to stop
       }
