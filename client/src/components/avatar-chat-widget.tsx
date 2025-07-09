@@ -1887,9 +1887,29 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           </div>
         )}
 
-        {/* Hair Analysis View - Separate container with higher z-index */}
+        {/* Hair Analysis View - Full chat widget structure */}
         {showHairPage && (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+          <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
+            {/* Header */}
+            <div className="p-4 border-b border-gray-200 bg-white/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <MessageSquare className="h-5 w-5 text-purple-600" />
+                <span className="font-medium text-gray-800">AI Assistant</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">M</span>
+                </div>
+                <span className="text-purple-600 font-semibold">medcor</span>
+                <button
+                  onClick={onClose}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
             {/* Back Button */}
             <button
               onClick={() => {
@@ -1903,7 +1923,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </button>
             
             {/* Hair Analysis Content */}
-            <div className="h-full flex flex-col justify-center items-center p-6 pt-24">
+            <div className="flex-1 flex flex-col justify-center items-center p-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-purple-700 mb-4">MEDCOR Hair Analysis</h2>
                 <p className="text-gray-600 mb-6">Powered by Perfect Corp technology</p>
@@ -1915,6 +1935,46 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   <p className="text-sm text-gray-500">
                     Hair analysis feature coming soon...
                   </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Chat Input at Bottom */}
+            <div className="p-4 border-t border-gray-200 bg-white/80">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  className="w-full px-4 py-3 pr-24 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && inputText.trim()) {
+                      handleSendMessage(inputText);
+                      setInputText('');
+                    }
+                  }}
+                />
+                
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+                  <BrowserVoiceButton
+                    onTranscript={(transcript) => {
+                      setInputText(transcript);
+                      handleSendMessage(transcript);
+                      setInputText('');
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (inputText.trim()) {
+                        handleSendMessage(inputText);
+                        setInputText('');
+                      }
+                    }}
+                    className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all hover:scale-110 shadow-md"
+                  >
+                    <Send size={20} />
+                  </button>
                 </div>
               </div>
             </div>
