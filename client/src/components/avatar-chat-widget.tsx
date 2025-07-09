@@ -496,19 +496,24 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   // Memoized camera permission handler to prevent re-renders
   // Centralized camera management utility
   const ensureCameraReady = useCallback(async () => {
+    console.log("🚨 SELENIUM DEBUG: ensureCameraReady called");
+    console.log("🚨 SELENIUM DEBUG: Current videoStreamRef.current:", videoStreamRef.current);
+    
     if (!videoStreamRef.current) {
       try {
-        console.log("🎥 DEBUG: Starting camera stream");
+        console.log("🚨 SELENIUM DEBUG: Starting camera stream");
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        console.log("🚨 SELENIUM DEBUG: Camera stream obtained:", stream);
         videoStreamRef.current = stream;
         setStreamReady(true);
-        console.log("🎥 DEBUG: Camera stream ready:", stream);
+        console.log("🚨 SELENIUM DEBUG: Camera stream ready and streamReady set to true");
         return stream;
       } catch (err) {
-        console.error("🎥 ERROR: Camera access failed:", err);
+        console.error("🚨 SELENIUM DEBUG: Camera access failed:", err);
         throw err;
       }
     }
+    console.log("🚨 SELENIUM DEBUG: Returning existing stream:", videoStreamRef.current);
     return videoStreamRef.current;
   }, []);
 
@@ -1245,19 +1250,22 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
-                      console.log("🎬 Hair button clicked - Using centralized camera");
+                      console.log("🚨 SELENIUM DEBUG: Hair button clicked");
+                      console.log("🚨 SELENIUM DEBUG: Current videoStreamRef:", videoStreamRef.current);
                       
                       try {
                         // Use centralized camera utility
-                        await ensureCameraReady();
+                        const stream = await ensureCameraReady();
+                        console.log("🚨 SELENIUM DEBUG: ensureCameraReady returned:", stream);
+                        console.log("🚨 SELENIUM DEBUG: videoStreamRef after ensure:", videoStreamRef.current);
                         
                         // Update states after camera is ready
                         setShowHairPage(true); 
                         setSelectedMenuItem("hair"); 
                         setIsMinimized(true); 
-                        console.log("🎬 Hair analysis page activated with camera ready");
+                        console.log("🚨 SELENIUM DEBUG: Hair analysis page activated");
                       } catch (error) {
-                        console.error("🎬 Camera access failed:", error);
+                        console.error("🚨 SELENIUM DEBUG: Camera access failed:", error);
                         return; // Exit if camera fails
                       }
                     } },
@@ -1848,20 +1856,23 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                             } },
                             { icon: Scissors, label: "Hair", angle: 306, action: async () => { 
-                              console.log("🎬 Hair button clicked - Using centralized camera");
+                              console.log("🚨 SELENIUM DEBUG: Hair button clicked (second)");
+                              console.log("🚨 SELENIUM DEBUG: Current videoStreamRef:", videoStreamRef.current);
                               
                               try {
                                 // Use centralized camera utility
-                                await ensureCameraReady();
+                                const stream = await ensureCameraReady();
+                                console.log("🚨 SELENIUM DEBUG: ensureCameraReady returned:", stream);
+                                console.log("🚨 SELENIUM DEBUG: videoStreamRef after ensure:", videoStreamRef.current);
                                 
                                 // Update states after camera is ready
                                 setShowHairPage(true); 
                                 setSelectedMenuItem("hair"); 
                                 setIsMinimized(false); 
                                 setShowChatInterface(false);
-                                console.log("🎬 Hair analysis page activated with camera ready");
+                                console.log("🚨 SELENIUM DEBUG: Hair analysis page activated (second)");
                               } catch (error) {
-                                console.error("🎬 Camera access failed:", error);
+                                console.error("🚨 SELENIUM DEBUG: Camera access failed (second):", error);
                                 return; // Exit if camera fails
                               }
                               

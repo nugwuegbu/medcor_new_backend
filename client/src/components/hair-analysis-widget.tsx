@@ -38,19 +38,27 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Check if camera is ready based on ChatGPT's recommendation
+  // SELENIUM DEBUG: Check if camera is ready
+  console.log("🚨 SELENIUM DEBUG: HairAnalysisWidget render check");
+  console.log("🚨 SELENIUM DEBUG: videoStream prop:", videoStream);
+  console.log("🚨 SELENIUM DEBUG: streamReady prop:", streamReady);
+  
   if (!videoStream) {
+    console.log("🚨 SELENIUM DEBUG: videoStream is null - showing initializing");
     return (
       <div className="flex flex-col h-full bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Initializing camera...</p>
+            <p className="text-red-500 text-xs mt-2">DEBUG: videoStream is null</p>
           </div>
         </div>
       </div>
     );
   }
+  
+  console.log("🚨 SELENIUM DEBUG: videoStream available, proceeding with widget");
 
   useEffect(() => {
     console.log("🎬 HAIR DEBUG: Hair analysis widget useEffect triggered");
