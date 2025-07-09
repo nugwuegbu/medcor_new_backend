@@ -1880,24 +1880,44 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                             } },
                             { icon: Scissors, label: "Hair", angle: 306, action: async () => { 
-                              console.log("🚨 Hair button clicked (second)");
+                              console.log("🚨 Hair button clicked");
+                              
+                              // Check if camera is forced off first
+                              try {
+                                const { isCameraForcedOff } = await import('../utils/camera-manager');
+                                if (isCameraForcedOff) {
+                                  console.log("🚨 Camera is forced off - cannot start hair analysis");
+                                  
+                                  // Add a temporary message to show user
+                                  const tempMessage: Message = {
+                                    id: `temp_${Date.now()}`,
+                                    text: "Kamera kapalı. Hair analysis için önce 'kozan' yazarak kamerayı açın.",
+                                    sender: "bot",
+                                    timestamp: new Date()
+                                  };
+                                  setMessages(prev => [...prev, tempMessage]);
+                                  return;
+                                }
+                              } catch (err) {
+                                console.error("🚨 Error checking camera trigger status:", err);
+                              }
                               
                               let stream: MediaStream;
                               try {
                                 stream = await ensureCameraReady();
                               } catch (err) {
-                                console.error("🚨 ensureCameraReady hatası (second):", err);
+                                console.error("🚨 ensureCameraReady hatası:", err);
                                 return;
                               }
 
-                              console.log("🚨 Stream hazır, devam ediyorum (second):", stream);
+                              console.log("🚨 Stream hazır, devam ediyorum:", stream);
                               
-                              // Update states after camera is ready - NO setCameraEnabled conflicts
+                              // Update states after camera is ready
                               setShowHairPage(true); 
                               setSelectedMenuItem("hair"); 
                               setIsMinimized(false); 
                               setShowChatInterface(false);
-                              console.log("🚨 Hair page aktif, UI state güncellendi (second)");
+                              console.log("🚨 Hair page aktif, UI state güncellendi");
                             } }
                           ].map((item, index) => {
                             const angleRad = (item.angle * Math.PI) / 180;
