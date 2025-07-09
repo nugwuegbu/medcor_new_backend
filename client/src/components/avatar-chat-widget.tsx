@@ -1198,6 +1198,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     const x = Math.cos(angleRad) * 130; // Increased to 130 for proper circle edge positioning
                     const y = Math.sin(angleRad) * 130; // Increased to 130 for proper circle edge positioning
                     
+                    const isSpecialIcon = ["hair", "skin", "doctors"].includes(item.label.toLowerCase());
+                    
                     return (
                       <button
                         key={index}
@@ -1205,14 +1207,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         className={`absolute w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-300 transform ${
                           selectedMenuItem === item.label.toLowerCase()
                             ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-125 shadow-xl"
-                            : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-130"
+                            : isSpecialIcon 
+                              ? "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-130 hover:animate-bounce"
+                              : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-130"
                         }`}
                         style={{
                           left: `calc(50% + ${x}px - 32px)`, // Adjusted for new button size
                           top: `calc(50% + ${y}px - 32px)`   // Adjusted for new button size
                         }}
                       >
-                        <item.icon className="h-6 w-6" />
+                        <item.icon className={`h-6 w-6 ${isSpecialIcon ? "transition-transform duration-300 hover:scale-110" : ""}`} />
                         <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
                       </button>
                     );
