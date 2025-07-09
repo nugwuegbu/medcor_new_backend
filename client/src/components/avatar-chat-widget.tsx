@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, User as Face, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Palette, Heart } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Palette, Heart } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -1171,7 +1171,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     { icon: FileText, label: "Records", angle: 80, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                     { icon: Phone, label: "Call", angle: 120, action: () => setSelectedMenuItem("call") },
                     { icon: UserCheck, label: "Admin", angle: 160, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
-                    { icon: Face, label: "Face", angle: 200, action: () => { 
+                    { icon: Smile, label: "Face", angle: 200, action: () => { 
                       console.log('🔴 Face button clicked - Setting states synchronously');
                       
                       // Set Face page state first
