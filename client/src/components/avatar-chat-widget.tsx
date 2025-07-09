@@ -1890,23 +1890,27 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         {/* Hair Analysis View - Full chat widget structure */}
         {showHairPage && (
           <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
-            {/* Header */}
-            <div className="p-4 border-b border-gray-200 bg-white/80 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="h-5 w-5 text-purple-600" />
-                <span className="font-medium text-gray-800">AI Assistant</span>
+            {/* Header - Same as original */}
+            <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-gray-600" />
+                <span className="text-gray-700 text-sm">AI Assistant</span>
               </div>
+              
+              {/* User Camera View in center */}
+              <div className="absolute left-1/2 transform -translate-x-1/2">
+                <UserCameraView 
+                  isEnabled={cameraEnabled}
+                  onPermissionRequest={handleCameraPermissionRequest}
+                  capturePhotoRef={capturePhotoRef}
+                />
+              </div>
+              
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">M</span>
-                </div>
-                <span className="text-purple-600 font-semibold">medcor</span>
-                <button
-                  onClick={onClose}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
-                >
+                <span className="text-purple-600 font-bold text-lg">medcor</span>
+                <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
                   <X className="h-5 w-5" />
-                </button>
+                </Button>
               </div>
             </div>
 
