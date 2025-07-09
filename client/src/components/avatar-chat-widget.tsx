@@ -104,6 +104,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showRecordsList, setShowRecordsList] = useState(false);
   const [showAdminPage, setShowAdminPage] = useState(false);
   const [showFacePage, setShowFacePage] = useState(false);
+  const [showHairPage, setShowHairPage] = useState(false);
   const [faceAnalysisCameraActive, setFaceAnalysisCameraActive] = useState(false);
   const [faceAnalysisLoading, setFaceAnalysisLoading] = useState(false);
   const [faceAnalysisResult, setFaceAnalysisResult] = useState<any>(null);
@@ -193,7 +194,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }, [isDragging, dragOffset.x, dragOffset.y]);
 
   const handleAvatarMouseDown = (e: React.MouseEvent) => {
-    if (!showDoctorList && !showRecordsList && !isMinimized) return; // Only allow dragging in circular mode
+    if (!showDoctorList && !showRecordsList && !showHairPage && !isMinimized) return; // Only allow dragging in circular mode
     
     const rect = avatarContainerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -1040,14 +1041,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         <div 
           ref={avatarContainerRef}
           className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
-            showDoctorList || showRecordsList
+            showDoctorList || showRecordsList || showHairPage
               ? 'w-24 h-24 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-4 ring-purple-600'
               : isMinimized 
                 ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 hover:scale-110' 
                 : 'inset-0 overflow-hidden'
           }`}
           style={{
-            ...(showDoctorList || showRecordsList || isMinimized ? {
+            ...(showDoctorList || showRecordsList || showHairPage || isMinimized ? {
               cursor: isDragging ? 'grabbing' : 'grab',
               left: avatarPosition.x !== null ? `${avatarPosition.x}px` : 'auto',
               top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '75px',
@@ -1080,9 +1081,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               setSelectedMenuItem("");
               // Reset avatar position when going back from records list
               setAvatarPosition({ x: null, y: null });
+            } else if (showHairPage) {
+              setShowHairPage(false);
+              setShowChatInterface(true);
+              setIsMinimized(false);
+              setSelectedMenuItem("");
+              // Reset avatar position when going back from hair page
+              setAvatarPosition({ x: null, y: null });
             }
           }}>
-          {isOpen && !showDoctorList && !showRecordsList && (
+          {isOpen && !showDoctorList && !showRecordsList && !showHairPage && (
             <>
               {/* Show HeyGen avatar when NOT in specific list views */}
               <HeyGenSDKAvatar 
@@ -1208,7 +1216,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
-                    { icon: Scissors, label: "Hair", angle: 240, action: () => setSelectedMenuItem("hair") },
+                    { icon: Scissors, label: "Hair", angle: 240, action: () => { 
+                      setShowHairPage(true); 
+                      setSelectedMenuItem("hair"); 
+                      setIsMinimized(true); 
+                    } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
                   ].map((item, index) => {
@@ -1731,6 +1743,35 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     <div className="h-full flex items-center justify-center">
                       <div className="text-center text-gray-500">
                         {/* Empty admin page - doctors can view user information here */}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Hair Page View */}
+                {showHairPage && (
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => {
+                        setShowHairPage(false);
+                        setSelectedMenuItem("");
+                        setIsMinimized(false);
+                      }}
+                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Hair Analysis Page - Blank for now */}
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <Scissors className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                        <h2 className="text-lg font-semibold text-gray-600 mb-2">Hair Analysis</h2>
+                        <p className="text-sm text-gray-500">
+                          Hair analysis feature coming soon...
+                        </p>
                       </div>
                     </div>
                   </div>
