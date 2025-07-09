@@ -16,6 +16,8 @@ declare let window: Window;
 
 interface HairAnalysisWidgetProps {
   onClose: () => void;
+  videoStream?: MediaStream | null;
+  capturePhotoRef?: React.MutableRefObject<(() => string | null) | null>;
 }
 
 interface HairAnalysisResult {
@@ -26,7 +28,7 @@ interface HairAnalysisResult {
   confidence: number;
 }
 
-export default function HairAnalysisWidget({ onClose }: HairAnalysisWidgetProps) {
+export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoRef }: HairAnalysisWidgetProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<HairAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,57 +38,78 @@ export default function HairAnalysisWidget({ onClose }: HairAnalysisWidgetProps)
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const initCamera = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          setIsYCEInitialized(true);
+    if (videoStream && videoRef.current) {
+      videoRef.current.srcObject = videoStream;
+      videoRef.current.play();
+      setIsYCEInitialized(true);
+    } else {
+      // Fallback to creating new camera stream if not provided
+      const initCamera = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play();
+            setIsYCEInitialized(true);
+          }
+        } catch (error) {
+          console.error('Camera access error:', error);
+          setError('Failed to access camera. Please allow camera permission and try again.');
         }
-      } catch (error) {
-        console.error('Camera access error:', error);
-        setError('Failed to access camera. Please allow camera permission and try again.');
-      }
-    };
+      };
 
-    initCamera();
+      initCamera();
+    }
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
+      // Don't stop the stream if it's shared - let the main component handle it
+      if (!videoStream && videoRef.current && videoRef.current.srcObject) {
         const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
         tracks.forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [videoStream]);
 
   const analyzeHair = async () => {
     setIsAnalyzing(true);
     setError(null);
 
     try {
-      // Capture image from camera
-      const canvas = canvasRef.current;
-      const video = videoRef.current;
-      
-      if (!canvas || !video) {
-        throw new Error('Camera not available');
-      }
+      let imageBase64: string;
 
-      const context = canvas.getContext('2d');
-      if (!context) {
-        throw new Error('Canvas context not available');
-      }
+      // Use the shared camera capture function if available
+      if (capturePhotoRef && capturePhotoRef.current) {
+        const capturedImage = capturePhotoRef.current();
+        if (capturedImage) {
+          imageBase64 = capturedImage;
+        } else {
+          throw new Error('Failed to capture image from shared camera');
+        }
+      } else {
+        // Fallback to local camera capture
+        const canvas = canvasRef.current;
+        const video = videoRef.current;
+        
+        if (!canvas || !video) {
+          throw new Error('Camera not available');
+        }
 
-      // Set canvas size to match video
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      // Draw current video frame to canvas
-      context.drawImage(video, 0, 0);
-      
-      // Convert to base64
-      const imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+        const context = canvas.getContext('2d');
+        if (!context) {
+          throw new Error('Canvas context not available');
+        }
+
+        // Set canvas size to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // Draw current video frame to canvas
+        context.drawImage(video, 0, 0);
+        
+        // Convert to base64
+        const fullImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+        imageBase64 = fullImageBase64.split(',')[1]; // Remove data:image/jpeg;base64, prefix
+      }
       
       // Send to backend API
       const response = await fetch('/api/hair-analysis', {
@@ -95,7 +118,7 @@ export default function HairAnalysisWidget({ onClose }: HairAnalysisWidgetProps)
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          imageBase64: imageBase64.split(',')[1], // Remove data:image/jpeg;base64, prefix
+          imageBase64: imageBase64,
         }),
       });
 

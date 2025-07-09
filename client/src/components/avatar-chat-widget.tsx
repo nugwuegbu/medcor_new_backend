@@ -143,6 +143,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const capturePhotoRef = useRef<(() => string | null) | null>(null);
+  const videoStreamRef = useRef<MediaStream | null>(null);
   const doctorHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSpeakTimeRef = useRef<number>(0);
   const avatarContainerRef = useRef<HTMLDivElement>(null);
@@ -1023,6 +1024,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               isEnabled={cameraEnabled}
               onPermissionRequest={handleCameraPermissionRequest}
               capturePhotoRef={capturePhotoRef}
+              videoStreamRef={videoStreamRef}
             />
           </div>
         )}
@@ -1904,6 +1906,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   isEnabled={cameraEnabled}
                   onPermissionRequest={handleCameraPermissionRequest}
                   capturePhotoRef={capturePhotoRef}
+                  videoStreamRef={videoStreamRef}
                 />
               </div>
               
@@ -1929,7 +1932,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             
             {/* Hair Analysis Content */}
             <div className="flex-1 pt-16">
-              <HairAnalysisWidget onClose={onClose} />
+              <HairAnalysisWidget 
+                onClose={onClose}
+                videoStream={videoStreamRef.current}
+                capturePhotoRef={capturePhotoRef}
+              />
             </div>
 
             {/* Chat Input at Bottom */}

@@ -6,9 +6,10 @@ interface UserCameraViewProps {
   isEnabled: boolean;
   onPermissionRequest?: () => void;
   capturePhotoRef?: React.MutableRefObject<(() => string | null) | null>;
+  videoStreamRef?: React.MutableRefObject<MediaStream | null>;
 }
 
-const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef }: UserCameraViewProps) => {
+const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, videoStreamRef }: UserCameraViewProps) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [cameraError, setCameraError] = useState(false);
@@ -81,6 +82,11 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef }
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
+        
+        // Also expose stream via ref for other components
+        if (videoStreamRef) {
+          videoStreamRef.current = stream;
+        }
       }
       setCameraError(false);
       
