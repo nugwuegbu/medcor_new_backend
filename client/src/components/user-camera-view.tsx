@@ -7,9 +7,10 @@ interface UserCameraViewProps {
   onPermissionRequest?: () => void;
   capturePhotoRef?: React.MutableRefObject<(() => string | null) | null>;
   videoStreamRef?: React.MutableRefObject<MediaStream | null>;
+  streamReady?: boolean;
 }
 
-const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, videoStreamRef }: UserCameraViewProps) => {
+const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, videoStreamRef, streamReady }: UserCameraViewProps) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [cameraError, setCameraError] = useState(false);
@@ -56,8 +57,19 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, 
   useEffect(() => {
     console.log("🎥 DEBUG: Camera useEffect triggered");
     console.log("🎥 DEBUG: isEnabled:", isEnabled);
+    console.log("🎥 DEBUG: streamReady:", streamReady);
     console.log("🎥 DEBUG: hasPermission:", hasPermission);
-    console.log("🎥 DEBUG: manuallyTurnedOff:", manuallyTurnedOff);
+    console.log("🎥 DEBUG: videoStreamRef.current:", videoStreamRef?.current);
+    
+    // If stream is already ready, use it
+    if (streamReady && videoStreamRef?.current && videoRef.current) {
+      console.log("🎥 DEBUG: Using existing stream from videoStreamRef");
+      videoRef.current.srcObject = videoStreamRef.current;
+      streamRef.current = videoStreamRef.current;
+      setHasPermission(true);
+      setCameraError(false);
+      return;
+    }
     
     if (isEnabled && hasPermission && !manuallyTurnedOff) {
       console.log("🎥 DEBUG: Camera conditions met - starting camera");
@@ -73,9 +85,12 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, 
 
     return () => {
       console.log("🎥 DEBUG: Camera cleanup");
-      stopCamera();
+      // Don't stop shared stream
+      if (!streamReady) {
+        stopCamera();
+      }
     };
-  }, [isEnabled, hasPermission, manuallyTurnedOff, onPermissionRequest]);
+  }, [isEnabled, hasPermission, manuallyTurnedOff, streamReady, videoStreamRef, onPermissionRequest]);
 
   const startCamera = async () => {
     console.log("🎥 DEBUG: Starting camera...");

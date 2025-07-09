@@ -113,6 +113,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraPermissionRequested, setCameraPermissionRequested] = useState(false);
+  const [streamReady, setStreamReady] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
   const [locationWeather, setLocationWeather] = useState<string>("");
   const [showInfoOverlay, setShowInfoOverlay] = useState(false);
@@ -1224,16 +1225,29 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
-                    { icon: Scissors, label: "Hair", angle: 240, action: () => { 
-                      console.log("🎬 Hair button clicked - Activating camera");
+                    { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
+                      console.log("🎬 Hair button clicked - Starting camera first");
+                      
+                      // Start camera BEFORE updating state
+                      if (!videoStreamRef.current) {
+                        try {
+                          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                          videoStreamRef.current = stream;
+                          setStreamReady(true);
+                          console.log("🎬 Camera stream ready:", stream);
+                        } catch (error) {
+                          console.error("🎬 Camera access failed:", error);
+                          return; // Exit if camera fails
+                        }
+                      }
+                      
+                      // Now update states
                       setShowHairPage(true); 
                       setSelectedMenuItem("hair"); 
                       setIsMinimized(true); 
-                      
-                      // Enable camera for hair analysis
                       setCameraEnabled(true);
                       setCameraPermissionRequested(true);
-                      console.log("🎬 Camera enabled for hair analysis");
+                      console.log("🎬 Hair analysis page activated with camera ready");
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
@@ -1821,17 +1835,30 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               
                               console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                             } },
-                            { icon: Scissors, label: "Hair", angle: 306, action: () => { 
-                              console.log("🎬 Hair button clicked - Activating camera");
+                            { icon: Scissors, label: "Hair", angle: 306, action: async () => { 
+                              console.log("🎬 Hair button clicked - Starting camera first");
+                              
+                              // Start camera BEFORE updating state
+                              if (!videoStreamRef.current) {
+                                try {
+                                  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                                  videoStreamRef.current = stream;
+                                  setStreamReady(true);
+                                  console.log("🎬 Camera stream ready:", stream);
+                                } catch (error) {
+                                  console.error("🎬 Camera access failed:", error);
+                                  return; // Exit if camera fails
+                                }
+                              }
+                              
+                              // Now update states
                               setShowHairPage(true); 
                               setSelectedMenuItem("hair"); 
                               setIsMinimized(false); 
                               setShowChatInterface(false);
-                              
-                              // Enable camera for hair analysis
                               setCameraEnabled(true);
                               setCameraPermissionRequested(true);
-                              console.log("🎬 Camera enabled for hair analysis");
+                              console.log("🎬 Hair analysis page activated with camera ready");
                               
                               // Reset other conflicting states
                               setShowDoctorList(false);
@@ -1924,6 +1951,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   onPermissionRequest={handleCameraPermissionRequest}
                   capturePhotoRef={capturePhotoRef}
                   videoStreamRef={videoStreamRef}
+                  streamReady={streamReady}
                 />
               </div>
               
@@ -1953,6 +1981,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 onClose={onClose}
                 videoStream={videoStreamRef.current}
                 capturePhotoRef={capturePhotoRef}
+                streamReady={streamReady}
               />
             </div>
 

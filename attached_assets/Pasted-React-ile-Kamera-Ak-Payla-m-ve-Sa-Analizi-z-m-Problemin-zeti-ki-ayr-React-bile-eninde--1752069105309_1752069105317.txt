@@ -1,0 +1,124 @@
+React ile Kamera Akışı Paylaşımı ve Saç Analizi Çözümü
+Problemin Özeti: İki ayrı React bileşeninde (üstte UserCameraView, altta HairAnalysisWidget) tek bir kamera akışını paylaşmaya çalışıyorsunuz. Üst bileşen kamera izni alıp akışı başlatıyor (kırmızı alan çalışıyor), ancak alt bileşen aynı akışı kullanamadığı için “Initializing camera...” mesajında takılıyor (yeşil alan çalışmıyor). Ayrıca Perfect Corp API’si canlı video akışı desteklemediği için, analiz yapmak üzere video akışından bir görüntü yakalayıp (base64/JPEG) API’ye göndermek gerekiyor. Aşağıda bu sorunların nedenlerini ve çözüm adımlarını detaylıca ele alıyoruz. Uygulamanın ekran görüntüsü: Üstte kırmızı çerçeveli kamera bileşeni kullanıcıyı gösteriyor, altta yeşil çerçeveli Hair Analysis bileşeni “Initializing camera...” mesajıyla bekliyor. Alt bileşen kamera akışını alamadığı için görüntü gösteremiyor.
+Sorunun Analizi: Asenkron State ve Stream Paylaşımı
+State’in Asenkron Güncellenmesi: setCameraEnabled(true) çağrısı, React’te state değişikliğini anında gerçekleştirmez; bu değişiklik bir sonraki render döngüsünde gerçekleşir
+react.dev
+. Yani butona tıklandığı an cameraEnabled değeri hemen true olmaz, bileşenler o an eski (false) değeri görmeye devam eder. Bu yüzden HairAnalysisWidget bileşeni açılırken cameraEnabled false kalıp kamerayı başlatmıyor.
+videoStreamRef’in Boş Olması: Kamera izni ilk verildiğinde navigator.mediaDevices.getUserMedia() ile bir MediaStream elde ediliyor. Ancak yukarıdaki zamanlama sorunu nedeniyle, üst bileşen henüz akışı başlatmadan alt bileşen kullanmaya çalışıyor. Sonuçta videoStreamRef.current null kalıyor ve alt bileşendeki video elemanı bir akış alamıyor. Kullanıcı arayüzünde bunun belirtisi olarak “Initializing camera...” mesajı sürekli görünüyor.
+Tek Akışı İki Video Bileşeninde Gösterme: Aynı MediaStream nesnesini birden fazla <video> elementine eşzamanlı atamak mümkündür; standartlara göre tek bir MediaStream aynı anda birden çok çıkışa bağlanabilir
+w3.org
+. Bu yüzden mimari olarak tek bir kamera akışı iki bileşende de kullanılabilir. Sorun, akış nesnesinin zamanında hazır olmamasından kaynaklanıyor.
+Perfect Corp API Beklentisi: Perfect Corp’un saç analizi API’si canlı video almıyor, bunun yerine yüklü bir fotoğraf üzerinde çalışıyor. Nitekim Perfect Corp’un sanal saç deneme (Virtual Hairstyle) gibi API’leri de kullanıcı görüntüsünü yükleyerek sonuç üretiyor
+mystartupworld.com
+. Dolayısıyla, “Analyze” butonuna basıldığında o anki video karesinden bir resim yakalayıp (ör. JPEG/base64) API’ye göndermek gerekiyor. Şu an için alt bileşende akış olmadığından doğal olarak bu adım da uygulanamıyor.
+Çözüm: React State Yönetimi ve Stream Paylaşımı
+Sorunu çözmek için React state akışı ve MediaStream paylaşımı konularında bazı düzeltmeler yapmalıyız:
+Kamera Başlatma Zamanlaması: Hair Analysis butonuna tıklandığında kamerayı hemen başlatmak için, cameraEnabled state’ini true yapmanın yanı sıra, kamera akışını önceden başlatıp referansa atamalıyız. Bunu iki yoldan yapabilirsiniz:
+Yöntem A: Butonun onClick olayında kamerayı açın. Örneğin:
+tsx
+Kopyala
+Düzenle
+async function onHairAnalysisClick() {
+  if (!videoStreamRef.current) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      videoStreamRef.current = stream;
+    } catch(err) {
+      console.error("Kamera açılamadı:", err);
+      return;
+    }
+  }
+  setCameraEnabled(true);
+}
+Bu şekilde, state değişikliğini tetiklemeden önce kameradan MediaStream alınır ve videoStreamRef.current doldurulur. Artık render edildiğinde üst bileşen de alt bileşen de hazır bir akışı referanstan alabilir.
+Yöntem B: Kamera başlatmayı bir useEffect ile yakalayın. Örneğin, UserCameraView içinde veya üst kapsayıcı bileşende:
+tsx
+Kopyala
+Düzenle
+useEffect(() => {
+  if (cameraEnabled && videoStreamRef.current == null) {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        videoStreamRef.current = stream;
+        setStreamReady(true); // akış hazır olduğunu belirten ayrı bir state
+      })
+      .catch(err => { ... });
+  }
+}, [cameraEnabled]);
+Bu yaklaşımda cameraEnabled true olduğunda asenkron olarak kamera açılıyor. Önemli: setStreamReady(true) gibi ikinci bir state kullanarak akışın hazır olduğunu işaretlemek, alt bileşenin bekleme durumunu yönetmek için faydalı olur. Böylece cameraEnabled tetiklendiğinde hemen alt bileşen yüklenir, ancak streamReady gelene kadar “Initializing…” gösterebilir. State değişimi asenkron olduğu için, bu ek işaret alt bileşenin ne zaman görüntü gösterebileceğini anlamasını kolaylaştırır.
+Bileşenler Arası MediaStream Paylaşımı:** Tek bir MediaStream nesnesini iki videoda kullanmak için, her iki bileşenin de aynı stream referansını kullanması yeterli. Üst bileşen kamerayı başlatıp videoStreamRef.current’ı atadıktan sonra, alt HairAnalysisWidget bileşeni bu ref üzerinden akışı alabilir. Örneğin alt bileşende:
+tsx
+Kopyala
+Düzenle
+useEffect(() => {
+  if (videoElementRef.current && videoStreamRef.current) {
+    videoElementRef.current.srcObject = videoStreamRef.current;
+  }
+}, [streamReady]); // veya cameraEnabled
+Bu kod, akış hazır olduğunda alt bileşenin <video> elementine kaynağı atar. Tek akışı çoklu elemente atamak Web API tarafından desteklenir; W3C standardına göre bir MediaStream aynı anda birden fazla çıkışa bağlanabilir
+w3.org
+. Yani kullanıcıdan alınan tek kamera akışı, hem üstteki küçük önizleme videosuna hem de alttaki analiz videosuna eşzamanlı olarak verilebilir. Bu sayede iki video da canlı görüntüyü gösterecektir.
+cameraEnabled State Senkronizasyonu: React dokümantasyonunun belirttiği gibi, setState çağrısından hemen sonra state’in yeni değerini okuyamazsınız (bir önceki değeri döndürür)
+react.dev
+. Bunu göz önüne alarak, kamera açma ve bileşen gösterme sıralamasını doğru kurmak gerekiyor. Eğer Yöntem A’daki gibi kamerayı açıp sonra state’i güncellerseniz, state güncellendiğinde zaten videoStreamRef.current dolu olacaktır. Yöntem B’de ise ek streamReady state’i ile alt bileşenin doğru zamanda güncellenmesini sağladık. Özetle, alt bileşenin kamera akışını kullanabilmesi için ya:
+State değişikliğinden sonra gelen bir sonraki render’ı bekleyecek şekilde kodunuzu organize edin (örn. useEffect ile),
+Ya da state’i güncellemeden önce gerekli hazırlığı (akış alımını) tamamlayın.
+Aksi halde alt bileşene false değeri veya boş ref gitmeye devam eder. Mevcut hata, tam da bu senkronizasyon eksikliğinden kaynaklanıyordu.
+Bileşenlerin İletişimi ve Prop Geçişi: videoStreamRef zaten ortak bir üst kapsamdaysa (örneğin avatar-chat-widget.tsx içinde) ve her iki bileşene prop veya context ile geçiliyorsa, yukarıdaki adımlarla bu referansı güncellemiş olacağız. Ek olarak, isterseniz cameraEnabled yerine tek bir “camera started” flag kullanıp, alt bileşeni bu flag ile koşullu render edebilirsiniz. Örneğin:
+tsx
+Kopyala
+Düzenle
+{cameraStarted && <HairAnalysisWidget streamRef={videoStreamRef} ... />}
+Bu şekilde, kamera tam başlamadan alt widget’ı hiç yüklememek de bir çözümdür. Ancak mevcut mimarinizde alt bileşen her halükarda oradaysa, onun içinde videoStreamRef.current değişimini izleyecek bir mekanizma kurmalısınız (yukarıdaki useEffect örneği gibi).
+Perfect Corp API için Görüntü Yakalama ve Entegrasyon
+Artık her iki bileşen de canlı kamerayı gösterdiğine göre, saç analizi için gereken adım, kullanıcının anlık görüntüsünü yakalayıp Perfect Corp API’sine göndermektir. Çünkü Perfect Corp API’si bir video akışını doğrudan işleyemiyor – bunun yerine tek bir görüntü yüklenmesini bekliyor
+mystartupworld.com
+. Bunu aşağıdaki şekilde gerçekleştirebilirsiniz:
+Video Karelerinden Fotoğraf Yakalama: HTML5 canvas ile video akışından kolayca fotoğraf elde edilebilir. Gizli bir <canvas> elementi oluşturup, kullanıcının tıkladığı anda canvas üzerine video görüntüsünü çizin ve sonrasında canvas’ten bir data URL (base64 kodlu görüntü) alın. Örneğin:
+js
+Kopyala
+Düzenle
+const canvas = document.createElement('canvas');
+const videoEl = videoElementRef.current;
+canvas.width = videoEl.videoWidth;
+canvas.height = videoEl.videoHeight;
+const ctx = canvas.getContext('2d');
+ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+const imageDataURL = canvas.toDataURL('image/jpeg'); // veya 'image/png'
+Bu kod, video elementinin mevcut karesini canvas’e çizip JPEG formatında base64 string alacaktır. MDN’deki getUserMedia ile fotoğraf çekme örneğinde de görüldüğü gibi, drawImage(video, 0, 0, width, height) sonrası canvas.toDataURL() çağrısı bize görüntüyü verir
+developer.mozilla.org
+. Elde edilen imageDataURL, "data:image/jpeg;base64,..." şeklinde bir string olacaktır.
+API’ye Gönderme: Perfect Corp API’nin dokümantasyonuna göre muhtemelen bu görüntüyü bir REST çağrısıyla göndermeniz gerekiyor. API sizden ya doğrudan base64 stringini isteyecek veya multipart form-data ile dosya yüklemenizi bekleyecektir. İstenilen biçime göre:
+Base64 gerekiyorsa, imageDataURL içindeki prefix’i kaldırmanız gerekebilir (sadece base64 içeriği gönderilecek şekilde).
+Alternatif olarak, canvas’ten canvas.toBlob() ile bir Blob alıp, bunu File nesnesine çevirip fetch/axios ile gönderebilirsiniz.
+Örneğin, fetch kullanarak JSON içinde base64 gönderimi:
+js
+Kopyala
+Düzenle
+const base64Data = imageDataURL.split(',')[1]; // prefix'i at
+fetch('https://api.perfectcorp.com/hair-analyze', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer <KEY>' },
+  body: JSON.stringify({ image: base64Data })
+}).then(res => res.json())
+  .then(result => {
+    // API sonucunu işleyin (ör. saç tipi, analiz verileri)
+  });
+Yukarıdaki URL ve parametreler örnek olarak verilmiştir; gerçek API endpoint ve isteği Perfect Corp’un sağladığı belgelerde belirtilen biçimde düzenleyin.
+Sonuçların Kullanımı: API’den gelen yanıt muhtemelen kullanıcının saç tipini/sorunlarını veya önerileri içeren bir JSON olacaktır. Bu sonucu alıp kullanıcıya gösterebilirsiniz. Örneğin, “Medium Curls” gibi bir saç tipi sonucu geldiyse arayüzde bunu metin veya görsel olarak belirtin. Eğer Perfect Corp bir görsel geri döndürüyorsa (örneğin işaretlenmiş saç bölgeleri veya benzetilmiş bir görüntü), onu da ekranda gösterebilirsiniz.
+Tekrar Analiz ve Kamera Kapatma: Analiz bittikten sonra kullanıcı yeniden deney yapmak isterse, kamera akışını açık tutabilir veya kapatıp yeniden açabilirsiniz. Genellikle performans ve izin açısından, kullanıcı bu ekrandayken akışı açık tutmak daha iyidir. İşi bittikten sonra (sayfadan çıktığında) akışı durdurmayı unutmayın. Akışı durdurmak için:
+js
+Kopyala
+Düzenle
+videoStreamRef.current.getTracks().forEach(track => track.stop());
+çağrısıyla kamerayı serbest bırakabilirsiniz. Bu, cihazın kamerasını kapatır ve bir sonraki kullanımda tekrar izin istenmesini engeller (aynı oturum içinde izin zaten verildiği için genelde tarayıcı hatırlayacaktır).
+Özet ve Sonuç
+Bu çözümle, uygulamanızda tek bir kamera izni ile alınan MediaStream’i iki farklı React bileşeni arasında paylaşabileceksiniz. Önemli noktalar, React state’inin asenkron doğasını göz önünde bulundurarak kamera başlatma zamanlamasını doğru yönetmek ve MediaStream nesnesini uygun şekilde referanslar aracılığıyla her iki bileşene de iletmek oldu. Ayrıca Perfect Corp saç analizi entegrasyonu için canlı video yerine tek kare yakalama yaklaşımını benimsedik. Sonuç olarak:
+Kullanıcı Hair Analysis butonuna bastığında üstteki kamera bileşeni çalışacak ve aynı MediaStream alt bileşendeki video elemanına da atanacaktır. İki bileşen de eşzamanlı olarak kamerayı gösterir hale gelecek.
+Analyze (Analiz) butonu tıklandığında, o anki videodan bir kare yakalanıp Perfect Corp API’sine gönderilecek. API’nin döndürdüğü analiz sonuçları kullanıcıya sunulacaktır.
+Asenkron state güncellemeleri, ek bir streamReady flag’i veya doğru yapılandırılmış useEffect hook’ları ile yönetildiğinden, “Initializing camera...” ekranı yalnızca gerektiği süre (akış hazırlanana dek) görünecek, sonrasında otomatik olarak canlı görüntüye geçecektir.
+Bu adımları uygulayarak hata veren akış paylaşımı sorununu giderip, gerçek zamanlı kamera önizlemesi ile entegre saç analizi deneyimini sorunsuz hale getirebilirsiniz. Artık hem üstteki kamera bileşeni hem de alt analiz bileşeni uyum içinde çalışacak, kullanıcıdan tek seferlik kamera izni alındıktan sonra akış her yerde kullanılacak ve analiz için gerekli görüntü başarıyla işlenecektir. Başarılar!
+react.dev
+w3.org
+developer.mozilla.org
+mystartupworld.com

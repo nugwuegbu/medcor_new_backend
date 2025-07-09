@@ -18,6 +18,7 @@ interface HairAnalysisWidgetProps {
   onClose: () => void;
   videoStream?: MediaStream | null;
   capturePhotoRef?: React.MutableRefObject<(() => string | null) | null>;
+  streamReady?: boolean;
 }
 
 interface HairAnalysisResult {
@@ -28,7 +29,7 @@ interface HairAnalysisResult {
   confidence: number;
 }
 
-export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoRef }: HairAnalysisWidgetProps) {
+export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoRef, streamReady }: HairAnalysisWidgetProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<HairAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,34 +41,21 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   useEffect(() => {
     console.log("🎬 HAIR DEBUG: Hair analysis widget useEffect triggered");
     console.log("🎬 HAIR DEBUG: videoStream:", videoStream);
+    console.log("🎬 HAIR DEBUG: streamReady:", streamReady);
     console.log("🎬 HAIR DEBUG: videoRef.current:", videoRef.current);
-    console.log("🎬 HAIR DEBUG: capturePhotoRef:", capturePhotoRef);
     
-    if (videoStream && videoRef.current) {
-      console.log("🎬 HAIR DEBUG: Using shared video stream");
+    if (streamReady && videoStream && videoRef.current) {
+      console.log("🎬 HAIR DEBUG: Using shared video stream - stream ready");
       videoRef.current.srcObject = videoStream;
-      videoRef.current.play();
-      setIsYCEInitialized(true);
-    } else {
-      console.log("🎬 HAIR DEBUG: No shared stream, creating fallback camera");
-      // Fallback to creating new camera stream if not provided
-      const initCamera = async () => {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          console.log("🎬 HAIR DEBUG: Fallback camera stream created:", stream);
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.play();
-            setIsYCEInitialized(true);
-            console.log("🎬 HAIR DEBUG: Fallback camera initialized");
-          }
-        } catch (error) {
-          console.error('🎬 HAIR ERROR: Camera access error:', error);
-          setError('Failed to access camera. Please allow camera permission and try again.');
-        }
-      };
-
-      initCamera();
+      videoRef.current.play().then(() => {
+        setIsYCEInitialized(true);
+        console.log("🎬 HAIR DEBUG: Video playing successfully");
+      }).catch((error) => {
+        console.error("🎬 HAIR ERROR: Video play failed:", error);
+      });
+    } else if (!streamReady || !videoStream) {
+      console.log("🎬 HAIR DEBUG: Stream not ready yet, showing initializing message");
+      setIsYCEInitialized(false);
     }
 
     return () => {
@@ -78,7 +66,7 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
         tracks.forEach(track => track.stop());
       }
     };
-  }, [videoStream]);
+  }, [videoStream, streamReady]);
 
   const analyzeHair = async () => {
     setIsAnalyzing(true);
@@ -89,36 +77,40 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
 
       // Use the shared camera capture function if available
       if (capturePhotoRef && capturePhotoRef.current) {
+        console.log("🎬 HAIR DEBUG: Using shared camera capture function");
         const capturedImage = capturePhotoRef.current();
         if (capturedImage) {
           imageBase64 = capturedImage;
+          console.log("🎬 HAIR DEBUG: Image captured from shared camera");
         } else {
           throw new Error('Failed to capture image from shared camera');
         }
       } else {
-        // Fallback to local camera capture
-        const canvas = canvasRef.current;
+        // Fallback to local camera capture using HTML5 Canvas
+        console.log("🎬 HAIR DEBUG: Using fallback canvas capture");
         const video = videoRef.current;
         
-        if (!canvas || !video) {
-          throw new Error('Camera not available');
+        if (!video || !video.videoWidth || !video.videoHeight) {
+          throw new Error('Video not ready for capture');
         }
 
+        // Create hidden canvas for capture
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
         const context = canvas.getContext('2d');
         if (!context) {
           throw new Error('Canvas context not available');
         }
 
-        // Set canvas size to match video
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
         // Draw current video frame to canvas
-        context.drawImage(video, 0, 0);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         // Convert to base64
         const fullImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
         imageBase64 = fullImageBase64.split(',')[1]; // Remove data:image/jpeg;base64, prefix
+        console.log("🎬 HAIR DEBUG: Image captured via canvas");
       }
       
       // Send to backend API
