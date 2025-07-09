@@ -40,38 +40,51 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
 
   // Direct camera stream access - no props needed
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [hasMounted, setHasMounted] = useState(false);
   
-  // Mount effect - runs only once
+  // Single consolidated useEffect
   useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  // Camera stream check effect - only after mount
-  useEffect(() => {
-    if (!hasMounted) return;
-    
     let isMounted = true;
     
-    const checkCameraStream = async () => {
+    const initializeCamera = async () => {
       try {
         const { getCameraStream } = await import('../utils/camera-manager');
         const stream = getCameraStream();
-        if (isMounted) {
+        
+        if (isMounted && stream) {
           setCameraStream(stream);
           console.log("🎬 HAIR DEBUG: Camera stream from manager:", stream);
+          
+          // Setup video element
+          const videoEl = videoRef.current;
+          if (videoEl) {
+            videoEl.srcObject = stream;
+            videoEl.play().then(() => {
+              if (isMounted) {
+                setIsYCEInitialized(true);
+                console.log("🎬 HAIR DEBUG: Video playing successfully");
+              }
+            }).catch(err => {
+              console.error("🎬 HAIR ERROR: Video play failed:", err);
+              if (isMounted) {
+                setError("Failed to play video stream");
+              }
+            });
+          }
         }
       } catch (err) {
-        console.error("🎬 HAIR DEBUG: Error getting camera stream:", err);
+        console.error("🎬 HAIR DEBUG: Error initializing camera:", err);
+        if (isMounted) {
+          setError("Failed to initialize camera");
+        }
       }
     };
     
-    checkCameraStream();
+    initializeCamera();
     
     return () => {
       isMounted = false;
     };
-  }, [hasMounted]);
+  }, []);
   
   if (!cameraStream) {
     console.log("🚨 SELENIUM DEBUG: cameraStream is null - showing initializing");
@@ -89,36 +102,6 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   }
   
   console.log("🚨 SELENIUM DEBUG: cameraStream available, proceeding with widget");
-
-  // Video setup effect - stable dependencies
-  useEffect(() => {
-    if (!cameraStream || !hasMounted) return;
-    
-    const videoEl = videoRef.current;
-    
-    console.log("🎬 HAIR DEBUG: Hair analysis widget useEffect triggered");
-    console.log("🎬 HAIR DEBUG: videoEl:", videoEl);
-    console.log("🎬 HAIR DEBUG: stream:", cameraStream);
-    
-    if (!videoEl) {
-      console.warn("🎬 HAIR DEBUG: videoRef.current null");
-      return;
-    }
-
-    videoEl.srcObject = cameraStream;
-    videoEl.play().then(() => {
-      setIsYCEInitialized(true);
-      console.log("🎬 HAIR DEBUG: Video oynatılıyor");
-    }).catch(err => {
-      console.error("🎬 HAIR ERROR: play() hatası:", err);
-      setError("Failed to play video stream");
-    });
-
-    return () => {
-      console.log("🎬 HAIR DEBUG: Hair analysis cleanup");
-      // Don't stop the stream if it's shared - let the main component handle it
-    };
-  }, [cameraStream, hasMounted]);
 
   const analyzeHair = async () => {
     setIsAnalyzing(true);
