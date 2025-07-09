@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Heart } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -70,21 +70,7 @@ function detectLanguageFromText(text: string): string {
   return 'en';
 }
 
-// Custom Lips Icon Component
-const LipsIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 18c4 0 8-2 8-6 0-2-2-4-8-4s-8 2-8 4c0 4 4 6 8 6z" />
-    <path d="M12 14c2 0 4-1 4-2s-2-2-4-2-4 1-4 2 2 2 4 2z" />
-  </svg>
-);
+
 
 export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -1207,7 +1193,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: () => setSelectedMenuItem("hair") },
-                    { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
+                    { icon: Circle, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
