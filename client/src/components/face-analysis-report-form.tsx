@@ -48,14 +48,14 @@ export default function FaceAnalysisReportForm({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="patientName">Ad Soyad</Label>
+            <Label htmlFor="patientName">Full Name</Label>
             <Input
               id="patientName"
               type="text"
               value={formData.patientName}
               onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
               required
-              placeholder="Adınız ve soyadınız"
+              placeholder="Your full name"
             />
           </div>
 
@@ -72,35 +72,35 @@ export default function FaceAnalysisReportForm({
           </div>
 
           <div>
-            <Label htmlFor="patientPhone">Telefon</Label>
+            <Label htmlFor="patientPhone">Phone</Label>
             <Input
               id="patientPhone"
               type="tel"
               value={formData.patientPhone}
               onChange={(e) => setFormData({ ...formData, patientPhone: e.target.value })}
               required
-              placeholder="+90 XXX XXX XX XX"
+              placeholder="+1 XXX XXX XXXX"
             />
           </div>
 
           <div>
-            <Label htmlFor="patientJob">İş/Meslek</Label>
+            <Label htmlFor="patientJob">Job/Profession</Label>
             <Input
               id="patientJob"
               type="text"
               value={formData.patientJob}
               onChange={(e) => setFormData({ ...formData, patientJob: e.target.value })}
               required
-              placeholder="Mesleğiniz"
+              placeholder="Your profession"
             />
           </div>
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              İptal
+              Cancel
             </Button>
             <Button type="submit" className="flex-1 bg-purple-600 hover:bg-purple-700">
-              PDF Report Gönder
+              Send PDF Report
             </Button>
           </div>
         </form>
