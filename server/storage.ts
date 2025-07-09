@@ -274,6 +274,7 @@ export class MemStorage implements IStorage {
     const report: FaceAnalysisReport = { 
       ...insertReport, 
       id, 
+      pdfPath: insertReport.pdfPath || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
