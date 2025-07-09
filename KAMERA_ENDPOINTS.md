@@ -43,6 +43,28 @@ useEffect(() => {
 1. **Hair Analysis API**: `POST /api/hair-analysis`
 2. **Perfect Corp Integration**: `server/routes.ts` (line 200+)
 
+### Perfect Corp YCE SDK - Hair Analysis API Dokümantasyonu:
+1. **Ana Dokümantasyon**: https://yce.perfectcorp.com/document/index.html
+2. **AI API Dokümantasyonu**: https://app-cdn-01.perfectcorp.com/console/common/doc/ai-api/index.html
+3. **Hair Type Analysis**: https://www.perfectcorp.com/business/products/hair-type-analysis
+4. **AI APIs**: https://yce.perfectcorp.com/ai-api
+5. **SDK Dokümantasyonu**: https://www.perfectcorp.com/business/services/sdk
+
+### Perfect Corp API Detayları:
+- **Base URL**: `https://yce-api-01.perfectcorp.com/s2s/v1.1/`
+- **Authentication**: Bearer token
+- **API Key**: `xsQ0rgMLPQmEoow2SLNuqjTaILjhHAVY`
+- **Hair Analysis Endpoint**: `/task/style/hair-style`
+- **Support Email**: YouCamOnlineEditor_API@perfectcorp.com
+
+### Hair Analysis Features:
+- Hair Type Analysis (10 curl patterns)
+- Hair Texture Analysis
+- Hair Length Analysis
+- Hair Color Try-On
+- Hairstyles Try-On
+- AI Frizzy Hair Analyzer (4 frizz levels)
+
 ### Key State Variables:
 ```typescript
 // Ana chat widget'da:
