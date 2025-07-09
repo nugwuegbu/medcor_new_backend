@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Crown, Palette, Heart } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Sparkles, Palette, Heart } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -1190,7 +1190,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
-                    { icon: Crown, label: "Hair", angle: 240, action: () => setSelectedMenuItem("hair") },
+                    { icon: Sparkles, label: "Hair", angle: 240, action: () => setSelectedMenuItem("hair") },
                     { icon: Palette, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
                   ].map((item, index) => {
@@ -1216,7 +1216,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                           top: `calc(50% + ${y}px - 32px)`   // Adjusted for new button size
                         }}
                       >
-                        <item.icon className={`h-6 w-6 ${isSpecialIcon ? "transition-transform duration-300 hover:scale-110" : ""}`} />
+                        <item.icon className={`h-7 w-7 ${isSpecialIcon ? "transition-transform duration-300 hover:scale-110" : ""}`} />
                         <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
                       </button>
                     );
@@ -1794,7 +1794,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                   top: `calc(50% + ${y}px - 28px)`
                                 }}
                               >
-                                <item.icon className="h-5 w-5" />
+                                <item.icon className="h-7 w-7" />
                                 <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
                               </button>
                             );
