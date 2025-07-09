@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Palette, Heart } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Crown, Palette, Heart } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -1190,7 +1190,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
-                    { icon: Scissors, label: "Hair", angle: 240, action: () => setSelectedMenuItem("hair") },
+                    { icon: Crown, label: "Hair", angle: 240, action: () => setSelectedMenuItem("hair") },
                     { icon: Palette, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
                   ].map((item, index) => {
