@@ -1135,8 +1135,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             
             {/* Chat Interface Content */}
             <div className="h-full flex flex-col">
-              {/* Menu Section - Centered */}
-              <div className="flex-1 flex items-center justify-center">
+              {/* Menu Section - Centered with Top Margin */}
+              <div className="flex-1 flex items-center justify-center pt-16">
                 <div className="flex flex-col items-center gap-4">
                   
                   {/* Circular AI Menu - Expanded */}
