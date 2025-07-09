@@ -1,13 +1,8 @@
 // Centralized Camera Management - Single Source of Truth
 export const videoStreamRef = { current: null as MediaStream | null };
-export let isCameraForcedOff = false; // Trigger control flag
+export let isHairAnalysisCameraOff = false; // Specific trigger for Hair Analysis only
 
 export async function ensureCameraReady(): Promise<MediaStream> {
-  if (isCameraForcedOff) {
-    console.log("🔴 Kamera trigger ile kapatılmış - stream yok");
-    throw new Error("Camera disabled by trigger");
-  }
-  
   if (videoStreamRef.current) {
     console.log("🔵 Kamera zaten hazır:", videoStreamRef.current);
     return videoStreamRef.current;
@@ -25,6 +20,15 @@ export async function ensureCameraReady(): Promise<MediaStream> {
   }
 }
 
+export async function ensureHairAnalysisCameraReady(): Promise<MediaStream> {
+  if (isHairAnalysisCameraOff) {
+    console.log("🔴 Hair analysis kamera trigger ile kapatılmış - stream yok");
+    throw new Error("Hair analysis camera disabled by trigger");
+  }
+  
+  return ensureCameraReady();
+}
+
 export function getCameraStream(): MediaStream | null {
   return videoStreamRef.current;
 }
@@ -37,14 +41,23 @@ export function stopCameraStream(): void {
   }
 }
 
-// Trigger functions for camera control
+// Trigger functions for Hair Analysis camera control only
+export function triggerHairAnalysisCameraOff(): void {
+  console.log("🔴 TRIGGER: kadirli - Hair analysis kamera kapatılıyor");
+  isHairAnalysisCameraOff = true;
+  // Don't stop main camera stream - only affects Hair analysis
+}
+
+export function triggerHairAnalysisCameraOn(): void {
+  console.log("🟢 TRIGGER: kozan - Hair analysis kamera açılıyor");
+  isHairAnalysisCameraOff = false;
+}
+
+// Legacy functions for backward compatibility (now only affect Hair analysis)
 export function triggerCameraOff(): void {
-  console.log("🔴 TRIGGER: kadirli - Kamera kapatılıyor");
-  isCameraForcedOff = true;
-  stopCameraStream();
+  triggerHairAnalysisCameraOff();
 }
 
 export function triggerCameraOn(): void {
-  console.log("🟢 TRIGGER: kozan - Kamera açılıyor");
-  isCameraForcedOff = false;
+  triggerHairAnalysisCameraOn();
 }

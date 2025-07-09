@@ -1882,16 +1882,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             { icon: Scissors, label: "Hair", angle: 306, action: async () => { 
                               console.log("🚨 Hair button clicked");
                               
-                              // Check if camera is forced off first
+                              // Check if Hair analysis camera is forced off first
                               try {
-                                const { isCameraForcedOff } = await import('../utils/camera-manager');
-                                if (isCameraForcedOff) {
-                                  console.log("🚨 Camera is forced off - cannot start hair analysis");
+                                const { isHairAnalysisCameraOff } = await import('../utils/camera-manager');
+                                if (isHairAnalysisCameraOff) {
+                                  console.log("🚨 Hair analysis camera is forced off - cannot start");
                                   
                                   // Add a temporary message to show user
                                   const tempMessage: Message = {
                                     id: `temp_${Date.now()}`,
-                                    text: "Kamera kapalı. Hair analysis için önce 'kozan' yazarak kamerayı açın.",
+                                    text: "Hair analysis kamerası kapalı. Hair analysis için önce 'kozan' yazarak açın.",
                                     sender: "bot",
                                     timestamp: new Date()
                                   };
@@ -1899,14 +1899,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                   return;
                                 }
                               } catch (err) {
-                                console.error("🚨 Error checking camera trigger status:", err);
+                                console.error("🚨 Error checking hair analysis camera trigger status:", err);
                               }
                               
                               let stream: MediaStream;
                               try {
-                                stream = await ensureCameraReady();
+                                const { ensureHairAnalysisCameraReady } = await import('../utils/camera-manager');
+                                stream = await ensureHairAnalysisCameraReady();
                               } catch (err) {
-                                console.error("🚨 ensureCameraReady hatası:", err);
+                                console.error("🚨 ensureHairAnalysisCameraReady hatası:", err);
                                 return;
                               }
 

@@ -54,30 +54,8 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, 
     }
   }, [hasPermission, capturePhotoRef]);
 
-  // Periodic camera trigger check
-  useEffect(() => {
-    const checkTriggerStatus = async () => {
-      try {
-        const { isCameraForcedOff } = await import('../utils/camera-manager');
-        if (isCameraForcedOff && streamRef.current) {
-          console.log("🎥 DEBUG: Periodic check - camera forced off, stopping stream");
-          stopCamera();
-          setCameraError(true);
-        } else if (!isCameraForcedOff && cameraError && isEnabled) {
-          console.log("🎥 DEBUG: Periodic check - camera enabled, restarting");
-          setCameraError(false);
-          if (hasPermission) {
-            startCamera();
-          }
-        }
-      } catch (err) {
-        console.error("🎥 DEBUG: Periodic trigger check failed:", err);
-      }
-    };
-
-    const interval = setInterval(checkTriggerStatus, 1000);
-    return () => clearInterval(interval);
-  }, [isEnabled, hasPermission, cameraError]);
+  // UserCameraView is not affected by Hair Analysis trigger
+  // No periodic trigger check needed for main camera
 
   useEffect(() => {
     console.log("🎥 DEBUG: Camera useEffect triggered");
@@ -86,19 +64,10 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, 
     console.log("🎥 DEBUG: hasPermission:", hasPermission);
     console.log("🎥 DEBUG: videoStreamRef.current:", videoStreamRef?.current);
     
-    // Check camera trigger status first
+    // Main camera is not affected by Hair Analysis trigger
     const checkAndStart = async () => {
-      try {
-        const { isCameraForcedOff } = await import('../utils/camera-manager');
-        if (isCameraForcedOff) {
-          console.log("🎥 DEBUG: Camera forced off by trigger - stopping all streams");
-          stopCamera();
-          setCameraError(true);
-          return;
-        }
-      } catch (err) {
-        console.error("🎥 DEBUG: Failed to check camera trigger status:", err);
-      }
+      // UserCameraView is not affected by Hair Analysis trigger
+      // Only Hair Analysis page is affected by kadirli/kozan triggers
       
       // If stream is already ready, use it
       if (streamReady && videoStreamRef?.current && videoRef.current) {
@@ -140,17 +109,8 @@ const UserCameraView = memo(({ isEnabled, onPermissionRequest, capturePhotoRef, 
     console.log("🎥 DEBUG: isEnabled:", isEnabled);
     console.log("🎥 DEBUG: manuallyTurnedOff:", manuallyTurnedOff);
     
-    // Check if camera is forced off by trigger
-    try {
-      const { isCameraForcedOff } = await import('../utils/camera-manager');
-      if (isCameraForcedOff) {
-        console.log("🎥 DEBUG: Camera forced off by trigger - stopping");
-        setCameraError(true);
-        return;
-      }
-    } catch (err) {
-      console.error("🎥 DEBUG: Failed to check camera trigger status:", err);
-    }
+    // Main camera is not affected by Hair Analysis trigger
+    // UserCameraView works independently
     
     try {
       console.log("🎥 DEBUG: Requesting camera permission...");

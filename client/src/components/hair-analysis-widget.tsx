@@ -47,8 +47,18 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
     
     const initializeCamera = async () => {
       try {
-        const { getCameraStream } = await import('../utils/camera-manager');
-        const stream = getCameraStream();
+        // Check if Hair Analysis camera is disabled
+        const { isHairAnalysisCameraOff, ensureHairAnalysisCameraReady } = await import('../utils/camera-manager');
+        
+        if (isHairAnalysisCameraOff) {
+          console.log("🎬 HAIR DEBUG: Hair Analysis camera disabled by trigger");
+          if (isMounted) {
+            setError("Hair Analysis camera disabled. Use 'kozan' to enable.");
+          }
+          return;
+        }
+        
+        const stream = await ensureHairAnalysisCameraReady();
         
         if (isMounted && stream) {
           setCameraStream(stream);
@@ -74,7 +84,7 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
       } catch (err) {
         console.error("🎬 HAIR DEBUG: Error initializing camera:", err);
         if (isMounted) {
-          setError("Failed to initialize camera");
+          setError("Hair Analysis camera not available");
         }
       }
     };
