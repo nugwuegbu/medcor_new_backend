@@ -1,10 +1,16 @@
 import { Link, useLocation } from "wouter";
-import { MessageCircle, Users, Calendar, Home, Menu, Settings } from "lucide-react";
+import { MessageCircle, Users, Calendar, Home, Menu, Settings, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/useAuth";
 
-export default function Navbar() {
+interface NavbarProps {
+  onLoginClick: () => void;
+}
+
+export default function Navbar({ onLoginClick }: NavbarProps) {
   const [location] = useLocation();
+  const { isAuthenticated, user, logout } = useAuth();
 
   const navItems = [
     { href: "/", label: "Home", icon: Home },
@@ -51,8 +57,24 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-4">
+          <div className="hidden md:flex items-center space-x-4">
             <NavLinks />
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">
+                  {user?.name} ({user?.role})
+                </span>
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <Button variant="default" size="sm" onClick={onLoginClick}>
+                <LogIn className="h-4 w-4 mr-2" />
+                Login
+              </Button>
+            )}
           </div>
 
           {/* Mobile Navigation */}
@@ -66,6 +88,27 @@ export default function Navbar() {
               <SheetContent>
                 <div className="flex flex-col space-y-4 mt-6">
                   <NavLinks mobile />
+                  <div className="border-t pt-4">
+                    {isAuthenticated ? (
+                      <>
+                        <div className="flex items-center space-x-2 mb-4">
+                          <User className="h-4 w-4" />
+                          <span className="text-sm">
+                            {user?.name} ({user?.role})
+                          </span>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={logout} className="w-full justify-start">
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="default" size="sm" onClick={onLoginClick} className="w-full justify-start">
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Login
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>

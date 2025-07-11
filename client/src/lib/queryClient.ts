@@ -7,7 +7,29 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Updated to support custom options including headers
 export async function apiRequest(
+  url: string, 
+  options: RequestInit = {}
+): Promise<any> {
+  const { method = "GET", headers = {}, ...restOptions } = options;
+  
+  const res = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    credentials: "include",
+    ...restOptions,
+  });
+
+  await throwIfResNotOk(res);
+  return await res.json();
+}
+
+// Legacy method support for backward compatibility
+export async function apiRequestLegacy(
   method: string,
   url: string,
   data?: unknown | undefined,

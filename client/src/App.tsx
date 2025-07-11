@@ -12,25 +12,55 @@ import Appointments from "@/pages/appointments";
 import SettingsPage from "@/pages/settings";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
-import { useEffect } from "react";
+import { AuthModal } from "@/components/auth-modal";
+import { ProtectedRoute } from "@/components/protected-route";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
 
 function Router() {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   return (
-    <Switch>
-      <Route path="/test" component={TestPage} />
-      <Route path="/" component={Home} />
-      <Route path="/login" component={Login} />
-      <Route path="/chat" component={Chat} />
-      <Route path="/doctors" component={Doctors} />
-      <Route path="/appointments" component={Appointments} />
-      <Route path="/settings" component={SettingsPage} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <Switch>
+        <Route path="/test" component={TestPage} />
+        <Route path="/" component={Home} />
+        <Route path="/login" component={Login} />
+        <Route path="/chat" component={Chat} />
+        <Route path="/doctors">
+          <ProtectedRoute onUnauthorized={() => setShowAuthModal(true)}>
+            <Doctors />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/appointments">
+          <ProtectedRoute 
+            allowedRoles={["patient", "doctor", "clinic", "admin"]}
+            onUnauthorized={() => setShowAuthModal(true)}
+          >
+            <Appointments />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/settings">
+          <ProtectedRoute onUnauthorized={() => setShowAuthModal(true)}>
+            <SettingsPage />
+          </ProtectedRoute>
+        </Route>
+        <Route component={NotFound} />
+      </Switch>
+      
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={() => setShowAuthModal(false)}
+      />
+    </>
   );
 }
 
-function App() {
+function AppContent() {
   console.log('App component rendering...');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { login } = useAuth();
   
   // Request location permission immediately on app load
   useEffect(() => {
@@ -55,15 +85,31 @@ function App() {
     }
   }, []);
 
+  const handleAuthSuccess = (token: string, user: any) => {
+    login(token, user);
+    setShowAuthModal(false);
+  };
+
+  return (
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <Navbar onLoginClick={() => setShowAuthModal(true)} />
+        <Router />
+        <AuthModal 
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onAuthSuccess={handleAuthSuccess}
+        />
+      </div>
+      <Toaster />
+    </TooltipProvider>
+  );
+}
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <div className="min-h-screen bg-background">
-          <Navbar />
-          <Router />
-        </div>
-        <Toaster />
-      </TooltipProvider>
+      <AppContent />
     </QueryClientProvider>
   );
 }

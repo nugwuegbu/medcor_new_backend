@@ -6,9 +6,9 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  email: text("email").unique(),
+  email: text("email").notNull().unique(),
   phoneNumber: text("phone_number"),
-  name: text("name"),
+  name: text("name").notNull(),
   profilePicture: text("profile_picture"),
   preferredLanguage: text("preferred_language").notNull().default("en"),
   faceId: text("face_id"), // Face recognition ID
@@ -20,7 +20,11 @@ export const users = pgTable("users", {
   oauthProviderId: text("oauth_provider_id"),
   lastLogin: timestamp("last_login"),
   isNewUser: boolean("is_new_user").notNull().default(true),
-  role: text("role").notNull().default("patient"), // patient, doctor, admin
+  role: text("role").notNull().default("patient"), // patient, doctor, admin, clinic
+  isActive: boolean("is_active").notNull().default(true),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  resetPasswordToken: text("reset_password_token"),
+  resetPasswordExpires: timestamp("reset_password_expires"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()
 });
@@ -119,37 +123,75 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
   createdAt: true,
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  faceId: true,
-  personId: true,
-  lastFaceLogin: true,
-  lastLogin: true,
-  createdAt: true,
-  updatedAt: true
-});
-
 export const insertFaceAnalysisReportSchema = createInsertSchema(faceAnalysisReports).omit({
   id: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
 });
 
 export const insertHairAnalysisReportSchema = createInsertSchema(hairAnalysisReports).omit({
   id: true,
   createdAt: true,
-  updatedAt: true
+  updatedAt: true,
 });
 
-export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
-export type Doctor = typeof doctors.$inferSelect;
-export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
-export type Appointment = typeof appointments.$inferSelect;
-export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
-export type ChatMessage = typeof chatMessages.$inferSelect;
+// User schemas
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastLogin: true,
+  resetPasswordToken: true,
+  resetPasswordExpires: true,
+});
+
+// Authentication schemas
+export const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export const signupSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"),
+  confirmPassword: z.string(),
+  phoneNumber: z.string().optional(),
+  role: z.enum(["patient", "doctor", "clinic", "admin"]).default("patient"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+// Type exports
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = z.infer<typeof insertUserSchema>;
+export type Doctor = typeof doctors.$inferSelect;
+export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
+export type Appointment = typeof appointments.$inferSelect;
+export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type FaceAnalysisReport = typeof faceAnalysisReports.$inferSelect;
 export type InsertFaceAnalysisReport = z.infer<typeof insertFaceAnalysisReportSchema>;
 export type HairAnalysisReport = typeof hairAnalysisReports.$inferSelect;
 export type InsertHairAnalysisReport = z.infer<typeof insertHairAnalysisReportSchema>;
+
+export type LoginData = z.infer<typeof loginSchema>;
+export type SignupData = z.infer<typeof signupSchema>;
+
+// JWT payload interface
+export interface JWTPayload {
+  userId: number;
+  email: string;
+  role: string;
+  iat?: number;
+  exp?: number;
+}
+
+

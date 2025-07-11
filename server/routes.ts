@@ -1,7 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertAppointmentSchema, insertChatMessageSchema, insertFaceAnalysisReportSchema, insertHairAnalysisReportSchema } from "@shared/schema";
+import { insertAppointmentSchema, insertChatMessageSchema, insertFaceAnalysisReportSchema, insertHairAnalysisReportSchema, loginSchema, signupSchema } from "@shared/schema";
+import { AuthService } from "./services/auth";
+import { authenticateToken, requireAdmin, requireDoctor, requireClinic, optionalAuth, type AuthenticatedRequest } from "./middleware/auth";
 import jsPDF from 'jspdf';
 import path from 'path';
 import { generateChatResponse } from "./services/openai";
@@ -31,7 +33,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
   configureSession(app);
   configureOAuthProviders();
 
-  // Authentication routes
+  // Create default accounts on startup
+  AuthService.createDefaultAccounts().catch(console.error);
+
+  // JWT Authentication routes
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const validatedData = signupSchema.parse(req.body);
+      const { user, token } = await AuthService.signup(validatedData);
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      
+      res.status(201).json({
+        success: true,
+        message: "Account created successfully",
+        user: userWithoutPassword,
+        token,
+      });
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      res.status(400).json({
+        success: false,
+        error: error.message || "Signup failed",
+        ...(error.issues && { validationErrors: error.issues }),
+      });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      const { user, token } = await AuthService.login(validatedData);
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      
+      res.json({
+        success: true,
+        message: "Login successful",
+        user: userWithoutPassword,
+        token,
+      });
+    } catch (error: any) {
+      console.error("Login error:", error);
+      res.status(400).json({
+        success: false,
+        error: error.message || "Login failed",
+        ...(error.issues && { validationErrors: error.issues }),
+      });
+    }
+  });
+
+  app.get("/api/auth/me", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ 
+          success: false,
+          error: "Not authenticated" 
+        });
+      }
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = req.user;
+      
+      res.json({
+        success: true,
+        user: userWithoutPassword,
+      });
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to get user information",
+      });
+    }
+  });
+
+  app.post("/api/auth/change-password", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          error: "Current password and new password are required",
+        });
+      }
+
+      if (!req.user) {
+        return res.status(401).json({ 
+          success: false,
+          error: "Not authenticated" 
+        });
+      }
+
+      await AuthService.changePassword(req.user.id, currentPassword, newPassword);
+      
+      res.json({
+        success: true,
+        message: "Password changed successfully",
+      });
+    } catch (error: any) {
+      console.error("Change password error:", error);
+      res.status(400).json({
+        success: false,
+        error: error.message || "Failed to change password",
+      });
+    }
+  });
+
+  // Legacy OAuth Authentication routes (keeping existing functionality)
   // Face recognition login
   app.post("/api/auth/face-login", async (req, res) => {
     try {

@@ -10,6 +10,10 @@ export interface IStorage {
   updateUserLastLogin(id: number): Promise<void>;
   linkOAuthAccount(userId: number, provider: string, providerId: string): Promise<void>;
   
+  // Authentication operations
+  verifyUserPassword(email: string, password: string): Promise<User | null>;
+  updateUserPassword(id: number, hashedPassword: string): Promise<void>;
+  
   getAllDoctors(): Promise<Doctor[]>;
   getDoctor(id: number): Promise<Doctor | undefined>;
   createDoctor(doctor: InsertDoctor): Promise<Doctor>;
@@ -151,6 +155,24 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(u => u.email === email);
   }
 
+  async verifyUserPassword(email: string, password: string): Promise<User | null> {
+    const user = await this.getUserByEmail(email);
+    if (!user) return null;
+    
+    // In a real implementation, you would use bcrypt.compare here
+    // For now, this is just a placeholder - the actual verification is done in AuthService
+    return user;
+  }
+
+  async updateUserPassword(id: number, hashedPassword: string): Promise<void> {
+    const user = this.users.get(id);
+    if (user) {
+      user.password = hashedPassword;
+      user.updatedAt = new Date();
+      this.users.set(id, user);
+    }
+  }
+
   async getUserByOAuthId(provider: string, providerId: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(u => 
       u.oauthProvider === provider && u.oauthProviderId === providerId
@@ -189,9 +211,9 @@ export class MemStorage implements IStorage {
       id,
       username: insertUser.username,
       password: insertUser.password,
-      email: insertUser.email || null,
+      email: insertUser.email,
       phoneNumber: insertUser.phoneNumber || null,
-      name: insertUser.name || null,
+      name: insertUser.name,
       profilePicture: insertUser.profilePicture || null,
       preferredLanguage: insertUser.preferredLanguage || "en",
       faceId: null,
@@ -204,6 +226,10 @@ export class MemStorage implements IStorage {
       lastLogin: null,
       isNewUser: insertUser.isNewUser !== undefined ? insertUser.isNewUser : true,
       role: insertUser.role || "patient",
+      isActive: true,
+      emailVerified: false,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
