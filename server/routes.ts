@@ -85,6 +85,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get authenticated user info
+  app.get("/api/auth/user", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ 
+          message: "Not authenticated" 
+        });
+      }
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = req.user;
+      
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({
+        message: "Failed to get user information",
+      });
+    }
+  });
+
   app.get("/api/auth/me", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
