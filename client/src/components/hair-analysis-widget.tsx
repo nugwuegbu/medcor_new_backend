@@ -29,53 +29,131 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   // Debug log for props
   console.log("🎬 HAIR WIDGET DEBUG: Props received:", { videoStream, hasVideoStream: !!videoStream });
 
-  // Setup camera stream - using standard HTML5 approach
+  // Setup camera stream - with improved timing and debugging
   useEffect(() => {
     let isMounted = true;
+    let retryCount = 0;
+    const maxRetries = 10;
     
-    const setupVideoStream = async () => {
-      try {
-        console.log("🎬 HAIR DEBUG: Setting up video stream");
-        
-        if (!videoStream) {
-          throw new Error("No video stream provided");
+    const setupVideoStream = () => {
+      console.log("🎬 HAIR DEBUG: Setting up video stream, retry count:", retryCount);
+      
+      if (!videoStream) {
+        console.log("🎬 HAIR DEBUG: No video stream provided yet");
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(setupVideoStream, 500);
         }
-        
-        const videoEl = videoRef.current;
-        if (videoEl && isMounted) {
-          console.log("🎬 HAIR DEBUG: Assigning video stream to video element");
-          videoEl.srcObject = videoStream;
-          
-          // Wait for video to load and start playing
-          const playPromise = videoEl.play();
-          
-          if (playPromise !== undefined) {
-            await playPromise;
-          }
-          
-          // Wait for video metadata to load
-          if (videoEl.readyState < 1) {
-            await new Promise((resolve) => {
-              videoEl.onloadedmetadata = () => {
-                console.log("🎬 HAIR DEBUG: Video metadata loaded, dimensions:", videoEl.videoWidth, "x", videoEl.videoHeight);
-                resolve(true);
-              };
-            });
-          }
-          
-          if (isMounted) {
-            setCameraReady(true);
-            console.log("🎬 HAIR DEBUG: Camera is ready for hair analysis");
-          }
-        }
-      } catch (err) {
-        console.error("🎬 HAIR ERROR: Failed to setup video stream:", err);
-        if (isMounted) {
-          setError("Failed to initialize camera for hair analysis");
-        }
+        return;
       }
+      
+      const videoEl = videoRef.current;
+      if (!videoEl) {
+        console.log("🎬 HAIR DEBUG: Video element not ready");
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(setupVideoStream, 200);
+        }
+        return;
+      }
+      
+      console.log("🎬 HAIR DEBUG: Both stream and video element are ready");
+      console.log("🎬 HAIR DEBUG: Video stream details:", {
+        id: videoStream.id,
+        active: videoStream.active,
+        tracks: videoStream.getTracks?.()?.length || 0
+      });
+      
+      // Set up the video element
+      videoEl.srcObject = videoStream;
+      videoEl.autoplay = true;
+      videoEl.playsInline = true;
+      videoEl.muted = true;
+      
+      console.log("🎬 HAIR DEBUG: Video element setup complete, waiting for ready state");
+      
+      // Multiple ways to detect when video is ready
+      let isReady = false;
+      
+      const markReady = () => {
+        if (isReady || !isMounted) return;
+        isReady = true;
+        
+        console.log("🎬 HAIR DEBUG: Video is now ready!");
+        setCameraReady(true);
+      };
+      
+      // Check if already ready
+      if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+        console.log("🎬 HAIR DEBUG: Video already has dimensions:", videoEl.videoWidth, "x", videoEl.videoHeight);
+        markReady();
+        return;
+      }
+      
+      // Set up event listeners
+      const onLoadedMetadata = () => {
+        console.log("🎬 HAIR DEBUG: onloadedmetadata event fired, dimensions:", videoEl.videoWidth, "x", videoEl.videoHeight);
+        if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+          markReady();
+        }
+      };
+      
+      const onLoadedData = () => {
+        console.log("🎬 HAIR DEBUG: onloadeddata event fired");
+        if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+          markReady();
+        }
+      };
+      
+      const onCanPlay = () => {
+        console.log("🎬 HAIR DEBUG: oncanplay event fired");
+        if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+          markReady();
+        }
+      };
+      
+      videoEl.addEventListener('loadedmetadata', onLoadedMetadata);
+      videoEl.addEventListener('loadeddata', onLoadedData);
+      videoEl.addEventListener('canplay', onCanPlay);
+      
+      // Polling backup (in case events don't fire)
+      let pollCount = 0;
+      const pollForReady = () => {
+        if (isReady || !isMounted) return;
+        
+        pollCount++;
+        console.log("🎬 HAIR DEBUG: Polling for ready state, attempt:", pollCount);
+        
+        if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+          console.log("🎬 HAIR DEBUG: Polling detected ready state");
+          markReady();
+        } else if (pollCount < 20) {
+          setTimeout(pollForReady, 300);
+        } else {
+          console.log("🎬 HAIR DEBUG: Polling timeout, forcing ready state");
+          setCameraReady(true);
+        }
+      };
+      
+      // Start polling after a short delay
+      setTimeout(pollForReady, 500);
+      
+      // Try to play the video
+      videoEl.play().then(() => {
+        console.log("🎬 HAIR DEBUG: Video play succeeded");
+      }).catch(err => {
+        console.log("🎬 HAIR DEBUG: Video play failed but continuing:", err);
+      });
+      
+      // Cleanup function for event listeners
+      return () => {
+        videoEl.removeEventListener('loadedmetadata', onLoadedMetadata);
+        videoEl.removeEventListener('loadeddata', onLoadedData);
+        videoEl.removeEventListener('canplay', onCanPlay);
+      };
     };
     
+    // Start the setup
     setupVideoStream();
     
     return () => {
