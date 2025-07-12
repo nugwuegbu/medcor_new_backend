@@ -1492,11 +1492,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Perfect Corp YCE Skin Analysis API integration');
       
-      const API_KEY = process.env.REACT_APP_YCE_API_KEY;
-      const ACCOUNT_ID = process.env.REACT_APP_YCE_ACCOUNT_ID;
-      const EMAIL = process.env.REACT_APP_YCE_EMAIL;
+      const API_KEY = process.env.YOUCAM_API_KEY;
+      const SECRET_KEY = process.env.YOUCAM_SECRET_KEY;
       
-      if (!API_KEY || !ACCOUNT_ID || !EMAIL) {
+      if (!API_KEY || !SECRET_KEY) {
         console.error('Missing YCE API credentials');
         return res.status(400).json({
           error: 'Missing YCE API credentials',
@@ -2018,8 +2017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Skin analysis endpoint with YouCam API
-  app.post("/api/skin-analysis", sendSkinAnalysis);
+  // Skin analysis endpoint with YouCam API (handled by the enhanced route above)
 
   // Test HeyGen API endpoint
   app.post("/api/avatar/test-streaming", async (req, res) => {
