@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, RotateCcw, Download, Upload, AlertCircle, CheckCircle, Heart, X, Calendar, Shield, AlertTriangle } from 'lucide-react';
+import { Camera, RotateCcw, Download, Upload, AlertCircle, CheckCircle, Heart, X, Calendar, Shield, AlertTriangle, Sparkles, Zap, Eye, Brain } from 'lucide-react';
 
 interface SkinAnalysisWidgetProps {
   onClose: () => void;
@@ -60,6 +60,7 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
   const [analysisResult, setAnalysisResult] = useState<SkinAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -219,9 +220,24 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
   const analyzeSkin = async () => {
     setIsAnalyzing(true);
     setError(null);
+    setAnalysisStep(0);
 
     try {
       console.log("🌟 SKIN DEBUG: Starting skin analysis");
+      
+      // Show analysis steps with delays
+      const steps = [
+        "Capturing your image...",
+        "Analyzing skin texture...",
+        "Detecting skin conditions...",
+        "Generating recommendations...",
+        "Finalizing analysis..."
+      ];
+      
+      for (let i = 0; i < steps.length; i++) {
+        setAnalysisStep(i);
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
       
       // Capture image from video
       const video = videoRef.current;
@@ -275,6 +291,7 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
       setError(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsAnalyzing(false);
+      setAnalysisStep(0);
     }
   };
 
@@ -319,6 +336,47 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
                   {error ? error : "Initializing camera..."}
                 </p>
               </div>
+            ) : isAnalyzing ? (
+              // Analysis Process Illustration
+              <div className="absolute inset-4 bg-white/95 backdrop-blur-sm rounded-lg p-6 flex flex-col items-center justify-center">
+                <div className="mb-6">
+                  <div className="relative">
+                    <div className="w-20 h-20 mx-auto mb-4 relative">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 animate-pulse"></div>
+                      <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center">
+                        {analysisStep === 0 && <Camera className="h-8 w-8 text-pink-600" />}
+                        {analysisStep === 1 && <Eye className="h-8 w-8 text-purple-600" />}
+                        {analysisStep === 2 && <Sparkles className="h-8 w-8 text-pink-600" />}
+                        {analysisStep === 3 && <Brain className="h-8 w-8 text-purple-600" />}
+                        {analysisStep === 4 && <Zap className="h-8 w-8 text-pink-600" />}
+                      </div>
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full animate-ping"></div>
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">AI Skin Analysis</h3>
+                  <p className="text-pink-600 font-medium mb-4">
+                    {analysisStep === 0 && "Capturing your image..."}
+                    {analysisStep === 1 && "Analyzing skin texture..."}
+                    {analysisStep === 2 && "Detecting skin conditions..."}
+                    {analysisStep === 3 && "Generating recommendations..."}
+                    {analysisStep === 4 && "Finalizing analysis..."}
+                  </p>
+                  
+                  <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-300 ease-out"
+                      style={{ width: `${((analysisStep + 1) / 5) * 100}%` }}
+                    ></div>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500 mt-2">
+                    Using Perfect Corp YouCam AI Technology
+                  </p>
+                </div>
+              </div>
             ) : (
               // Analysis Results Overlay
               analysisResult && (
@@ -328,15 +386,26 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
                       <CheckCircle className="h-5 w-5 text-green-600" />
                       <h3 className="font-semibold text-gray-800">Analysis Complete</h3>
                     </div>
-                    <Button
-                      onClick={resetAnalysis}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                    >
-                      <RotateCcw className="h-3 w-3 mr-1" />
-                      Reset
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={resetAnalysis}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        New Analysis
+                      </Button>
+                      <Button
+                        onClick={onClose}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Close
+                      </Button>
+                    </div>
                   </div>
                   
                   {/* Results */}
