@@ -27,6 +27,7 @@ import {
   isAuthenticated
 } from "./auth/oauth-providers";
 import crypto from "crypto";
+import { sendSkinAnalysis } from "./skin-analysis.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication
@@ -2016,6 +2017,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to send WhatsApp notification" });
     }
   });
+
+  // Skin analysis endpoint with YouCam API
+  app.post("/api/skin-analysis", sendSkinAnalysis);
 
   // Test HeyGen API endpoint
   app.post("/api/avatar/test-streaming", async (req, res) => {
