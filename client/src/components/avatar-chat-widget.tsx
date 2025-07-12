@@ -1244,17 +1244,26 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         const stream = await ensureCameraReady();
                         console.log("🎬 Camera stream ready:", stream);
                         
+                        // Validate stream has active tracks
+                        if (!stream || !stream.getTracks || stream.getTracks().length === 0) {
+                          throw new Error("Invalid camera stream - no active tracks");
+                        }
+                        
                         // Force update the shared stream reference
                         videoStreamRef.current = stream;
                         
-                        // Update UI states
-                        setShowHairPage(true); 
-                        setSelectedMenuItem("hair"); 
-                        setIsMinimized(false); 
-                        setShowChatInterface(false);
-                        setStreamReady(true);
+                        // Small delay to ensure videoStreamRef is properly set
+                        setTimeout(() => {
+                          // Update UI states
+                          setShowHairPage(true); 
+                          setSelectedMenuItem("hair"); 
+                          setIsMinimized(false); 
+                          setShowChatInterface(false);
+                          setStreamReady(true);
+                          
+                          console.log("🎬 Hair Analysis page activated from minimized menu");
+                        }, 100);
                         
-                        console.log("🎬 Hair Analysis page activated from minimized menu");
                       } catch (err) {
                         console.error("🎬 Hair Analysis camera setup failed:", err);
                         
@@ -1863,17 +1872,26 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 const stream = await ensureCameraReady();
                                 console.log("🎬 Camera stream ready:", stream);
                                 
+                                // Validate stream has active tracks
+                                if (!stream || !stream.getTracks || stream.getTracks().length === 0) {
+                                  throw new Error("Invalid camera stream - no active tracks");
+                                }
+                                
                                 // Force update the shared stream reference
                                 videoStreamRef.current = stream;
                                 
-                                // Update UI states
-                                setShowHairPage(true); 
-                                setSelectedMenuItem("hair"); 
-                                setIsMinimized(false); 
-                                setShowChatInterface(false);
-                                setStreamReady(true);
+                                // Small delay to ensure videoStreamRef is properly set
+                                setTimeout(() => {
+                                  // Update UI states
+                                  setShowHairPage(true); 
+                                  setSelectedMenuItem("hair"); 
+                                  setIsMinimized(false); 
+                                  setShowChatInterface(false);
+                                  setStreamReady(true);
+                                  
+                                  console.log("🎬 Hair Analysis page activated successfully");
+                                }, 100);
                                 
-                                console.log("🎬 Hair Analysis page activated successfully");
                               } catch (err) {
                                 console.error("🎬 Hair Analysis camera setup failed:", err);
                                 
@@ -1987,7 +2005,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             
             {/* Hair Analysis Content */}
             <div className="flex-1 pt-16">
-              {videoStreamRef.current ? (
+              {videoStreamRef.current && videoStreamRef.current.getTracks && videoStreamRef.current.getTracks().length > 0 ? (
                 <HairAnalysisWidget 
                   onClose={onClose}
                   videoStream={videoStreamRef.current}
@@ -1997,7 +2015,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Preparing camera for hair analysis...</p>
+                    <p className="text-gray-600">Initializing camera...</p>
+                    <p className="text-gray-500 text-xs mt-2">Setting up camera stream for hair analysis</p>
                   </div>
                 </div>
               )}
