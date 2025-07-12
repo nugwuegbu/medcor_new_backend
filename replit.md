@@ -259,6 +259,7 @@ Changelog:
 - July 12, 2025. Added close and new analysis icons to skin analysis results - users can now close the analysis or run another analysis with dedicated buttons
 - July 12, 2025. Implemented strict, personalized recommendations based on actual image analysis - recommendations now vary by skin type (Oily/Dry/Combination), age, and skin tone instead of generic advice
 - July 12, 2025. Created comprehensive avoidance sections with specific guidance for different skin types and conditions - daily mistakes, harmful ingredients, and lifestyle factors are now personalized based on skin analysis results
+- July 12, 2025. Updated skin analysis interface to use transparent backgrounds throughout - both the animated analysis process and recommendation cards now have semi-transparent backgrounds so the analyzed skin remains visible during the entire process
 
 ## User Preferences
 
