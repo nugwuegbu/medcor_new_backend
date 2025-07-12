@@ -19,6 +19,12 @@ export async function ensureCameraReady(): Promise<MediaStream> {
   }
 }
 
+// Hair Analysis specific camera function (alias for consistency)
+export async function ensureHairAnalysisCameraReady(): Promise<MediaStream> {
+  console.log("🎬 Hair Analysis camera requested - using shared camera manager");
+  return await ensureCameraReady();
+}
+
 export function getCameraStream(): MediaStream | null {
   return videoStreamRef.current;
 }

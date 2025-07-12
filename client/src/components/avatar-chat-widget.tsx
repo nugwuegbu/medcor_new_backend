@@ -17,6 +17,7 @@ import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
 import doctorEmilyPhoto from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751701299986.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
+import { videoStreamRef, ensureCameraReady } from "../utils/camera-manager";
 
 // Perfect Corp YCE SDK types
 declare global {
@@ -1236,34 +1237,36 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
-                      console.log("🚨 Hair button clicked - ensuring shared stream");
+                      console.log("🎬 Hair Analysis button clicked (minimized menu)");
                       
-                      let stream: MediaStream;
                       try {
-                        stream = await ensureCameraReady();
-                        console.log("🚨 Shared stream ready:", stream);
+                        // Ensure camera is ready first
+                        const stream = await ensureCameraReady();
+                        console.log("🎬 Camera stream ready:", stream);
                         
-                        // Force update videoStreamRef for Hair widget
+                        // Force update the shared stream reference
                         videoStreamRef.current = stream;
                         
-                        // Force trigger stream ready state
-                        setStreamReady(true);
-                        console.log("🚨 Stream force updated:", videoStreamRef.current);
-                      } catch (err) {
-                        console.error("🚨 ensureCameraReady hatası:", err);
-                        return;
-                      }
-
-                      console.log("🚨 Stream hazır, Hair widget'a geçiliyor:", stream);
-                      
-                      // Small delay to ensure videoStreamRef is updated
-                      setTimeout(() => {
-                        // Update states after camera is ready
+                        // Update UI states
                         setShowHairPage(true); 
                         setSelectedMenuItem("hair"); 
-                        setIsMinimized(true); 
-                        console.log("🚨 Hair page aktif, shared stream:", videoStreamRef.current);
-                      }, 100);
+                        setIsMinimized(false); 
+                        setShowChatInterface(false);
+                        setStreamReady(true);
+                        
+                        console.log("🎬 Hair Analysis page activated from minimized menu");
+                      } catch (err) {
+                        console.error("🎬 Hair Analysis camera setup failed:", err);
+                        
+                        // Show error message to user
+                        const errorMessage: Message = {
+                          id: `error_${Date.now()}`,
+                          text: "Camera access is required for hair analysis. Please enable camera permission and try again.",
+                          sender: "bot",
+                          timestamp: new Date()
+                        };
+                        setMessages(prev => [...prev, errorMessage]);
+                      }
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
                     { icon: Heart, label: "Skin", angle: 320, action: () => setSelectedMenuItem("skin") }
@@ -1852,45 +1855,37 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                             } },
                             { icon: Scissors, label: "Hair", angle: 306, action: async () => { 
-                              console.log("🚨 Hair button clicked");
+                              console.log("🎬 Hair Analysis button clicked");
                               
-                              // Check if Hair analysis camera is forced off first
                               try {
-                                const { isHairAnalysisCameraOff } = await import('../utils/camera-manager');
-                                if (isHairAnalysisCameraOff) {
-                                  console.log("🚨 Hair analysis camera is forced off - cannot start");
-                                  
-                                  // Add a temporary message to show user
-                                  const tempMessage: Message = {
-                                    id: `temp_${Date.now()}`,
-                                    text: "Hair analysis kamerası kapalı. Hair analysis için önce 'kozan' yazarak açın.",
-                                    sender: "bot",
-                                    timestamp: new Date()
-                                  };
-                                  setMessages(prev => [...prev, tempMessage]);
-                                  return;
-                                }
+                                // Ensure camera is ready first
+                                console.log("🎬 Ensuring camera is ready for hair analysis...");
+                                const stream = await ensureCameraReady();
+                                console.log("🎬 Camera stream ready:", stream);
+                                
+                                // Force update the shared stream reference
+                                videoStreamRef.current = stream;
+                                
+                                // Update UI states
+                                setShowHairPage(true); 
+                                setSelectedMenuItem("hair"); 
+                                setIsMinimized(false); 
+                                setShowChatInterface(false);
+                                setStreamReady(true);
+                                
+                                console.log("🎬 Hair Analysis page activated successfully");
                               } catch (err) {
-                                console.error("🚨 Error checking hair analysis camera trigger status:", err);
+                                console.error("🎬 Hair Analysis camera setup failed:", err);
+                                
+                                // Show error message to user
+                                const errorMessage: Message = {
+                                  id: `error_${Date.now()}`,
+                                  text: "Camera access is required for hair analysis. Please enable camera permission and try again.",
+                                  sender: "bot",
+                                  timestamp: new Date()
+                                };
+                                setMessages(prev => [...prev, errorMessage]);
                               }
-                              
-                              let stream: MediaStream;
-                              try {
-                                const { ensureHairAnalysisCameraReady } = await import('../utils/camera-manager');
-                                stream = await ensureHairAnalysisCameraReady();
-                              } catch (err) {
-                                console.error("🚨 ensureHairAnalysisCameraReady hatası:", err);
-                                return;
-                              }
-
-                              console.log("🚨 Stream hazır, devam ediyorum:", stream);
-                              
-                              // Update states after camera is ready
-                              setShowHairPage(true); 
-                              setSelectedMenuItem("hair"); 
-                              setIsMinimized(false); 
-                              setShowChatInterface(false);
-                              console.log("🚨 Hair page aktif, UI state güncellendi");
                             } }
                           ].map((item, index) => {
                             const angleRad = (item.angle * Math.PI) / 180;
