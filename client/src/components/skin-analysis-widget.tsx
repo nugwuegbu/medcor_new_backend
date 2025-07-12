@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, RotateCcw, Download, Upload, AlertCircle, CheckCircle, Heart } from 'lucide-react';
+import { Camera, RotateCcw, Download, Upload, AlertCircle, CheckCircle, Heart, X, Calendar, Shield, AlertTriangle } from 'lucide-react';
 
 interface SkinAnalysisWidgetProps {
   onClose: () => void;
@@ -9,20 +9,50 @@ interface SkinAnalysisWidgetProps {
 }
 
 interface SkinAnalysisResult {
-  skinType: string;
-  skinHealth: string;
-  skinConcerns: string[];
-  skinTone: string;
-  recommendations: string[];
-  confidence: number;
-  detailedAnalysis: {
-    acne: number;
-    wrinkles: number;
-    darkSpots: number;
-    pores: number;
-    oiliness: number;
-    dryness: number;
+  skin_health: {
+    overall_score: number;
+    skin_age: number;
+    skin_type: string;
+    skin_tone: string;
+    undertone: string;
   };
+  skin_conditions: {
+    acne: {
+      severity: string;
+      count: number;
+      type: string;
+      score: number;
+    };
+    wrinkles: {
+      forehead: string;
+      crow_feet: string;
+      laugh_lines: string;
+      overall_score: number;
+    };
+    dark_spots: {
+      count: number;
+      intensity: string;
+      type: string;
+      score: number;
+    };
+    pores: {
+      visibility: string;
+      t_zone: string;
+      cheeks: string;
+      score: number;
+    };
+  };
+  recommendations: {
+    daily_habits: string[];
+    weekly_practices: string[];
+    lifestyle_tips: string[];
+  };
+  avoid_practices: {
+    daily_mistakes: string[];
+    harmful_ingredients: string[];
+    lifestyle_factors: string[];
+  };
+  confidence: number;
 }
 
 export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoRef }: SkinAnalysisWidgetProps) {
@@ -234,8 +264,8 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
       const result = await response.json();
       console.log("🌟 SKIN DEBUG: API Response:", result);
       
-      if (result.success && result.analysis) {
-        setAnalysisResult(result.analysis);
+      if (result.success && result.result) {
+        setAnalysisResult(result.result);
       } else {
         throw new Error(result.error || 'Analysis failed');
       }
@@ -314,15 +344,15 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
                         <p className="font-medium text-gray-700">Skin Type</p>
-                        <p className="text-pink-600">{analysisResult.skinType}</p>
+                        <p className="text-pink-600">{analysisResult.skin_health.skin_type}</p>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-700">Skin Health</p>
-                        <p className="text-pink-600">{analysisResult.skinHealth}</p>
+                        <p className="font-medium text-gray-700">Health Score</p>
+                        <p className="text-pink-600">{analysisResult.skin_health.overall_score}/100</p>
                       </div>
                       <div>
                         <p className="font-medium text-gray-700">Skin Tone</p>
-                        <p className="text-pink-600">{analysisResult.skinTone}</p>
+                        <p className="text-pink-600">{analysisResult.skin_health.skin_tone}</p>
                       </div>
                       <div>
                         <p className="font-medium text-gray-700">Confidence</p>
@@ -330,63 +360,136 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
                       </div>
                     </div>
                     
-                    {/* Skin Concerns */}
-                    {analysisResult.skinConcerns.length > 0 && (
-                      <div>
-                        <p className="font-medium text-gray-700 mb-1">Skin Concerns</p>
-                        <div className="flex flex-wrap gap-1">
-                          {analysisResult.skinConcerns.map((concern, idx) => (
-                            <span key={idx} className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
-                              {concern}
-                            </span>
-                          ))}
+                    {/* Skin Conditions */}
+                    <div>
+                      <p className="font-medium text-gray-700 mb-2">Skin Conditions</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex justify-between">
+                          <span>Acne:</span>
+                          <span className="font-medium">{analysisResult.skin_conditions.acne.severity}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Wrinkles:</span>
+                          <span className="font-medium">{analysisResult.skin_conditions.wrinkles.forehead}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Dark Spots:</span>
+                          <span className="font-medium">{analysisResult.skin_conditions.dark_spots.count} spots</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Pores:</span>
+                          <span className="font-medium">{analysisResult.skin_conditions.pores.visibility}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Skin Age:</span>
+                          <span className="font-medium">{analysisResult.skin_health.skin_age} years</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Undertone:</span>
+                          <span className="font-medium">{analysisResult.skin_health.undertone}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Recommendations for Better Skin Health */}
+                    {analysisResult.recommendations && (
+                      <div className="space-y-3">
+                        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                          <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" />
+                            ✅ Daily Habits for Healthy Skin
+                          </h4>
+                          <div className="space-y-1 text-xs">
+                            {analysisResult.recommendations.daily_habits.map((habit, idx) => (
+                              <div key={idx} className="flex items-start gap-1">
+                                <span className="text-green-600 mt-1">•</span>
+                                <span className="text-green-700">{habit}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                          <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            📅 Weekly Practices
+                          </h4>
+                          <div className="space-y-1 text-xs">
+                            {analysisResult.recommendations.weekly_practices.map((practice, idx) => (
+                              <div key={idx} className="flex items-start gap-1">
+                                <span className="text-blue-600 mt-1">•</span>
+                                <span className="text-blue-700">{practice}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                          <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                            <Heart className="h-4 w-4" />
+                            💜 Lifestyle Tips
+                          </h4>
+                          <div className="space-y-1 text-xs">
+                            {analysisResult.recommendations.lifestyle_tips.map((tip, idx) => (
+                              <div key={idx} className="flex items-start gap-1">
+                                <span className="text-purple-600 mt-1">•</span>
+                                <span className="text-purple-700">{tip}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
                     
-                    {/* Detailed Analysis */}
-                    <div>
-                      <p className="font-medium text-gray-700 mb-2">Detailed Analysis</p>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="flex justify-between">
-                          <span>Acne:</span>
-                          <span className="font-medium">{analysisResult.detailedAnalysis.acne}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Wrinkles:</span>
-                          <span className="font-medium">{analysisResult.detailedAnalysis.wrinkles}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Dark Spots:</span>
-                          <span className="font-medium">{analysisResult.detailedAnalysis.darkSpots}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Pores:</span>
-                          <span className="font-medium">{analysisResult.detailedAnalysis.pores}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Oiliness:</span>
-                          <span className="font-medium">{analysisResult.detailedAnalysis.oiliness}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Dryness:</span>
-                          <span className="font-medium">{analysisResult.detailedAnalysis.dryness}%</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Recommendations */}
-                    <div>
-                      <p className="font-medium text-gray-700 mb-2">Recommendations</p>
-                      <div className="space-y-1 text-xs">
-                        {analysisResult.recommendations.map((rec, idx) => (
-                          <div key={idx} className="flex items-start gap-1">
-                            <span className="text-pink-600 mt-1">•</span>
-                            <span className="text-gray-600">{rec}</span>
+                    {/* Things to Avoid */}
+                    {analysisResult.avoid_practices && (
+                      <div className="space-y-3">
+                        <div className="bg-red-50 p-3 rounded-lg border border-red-200">
+                          <h4 className="font-semibold text-red-800 mb-2 flex items-center gap-2">
+                            <X className="h-4 w-4" />
+                            ❌ Daily Mistakes to Avoid
+                          </h4>
+                          <div className="space-y-1 text-xs">
+                            {analysisResult.avoid_practices.daily_mistakes.map((mistake, idx) => (
+                              <div key={idx} className="flex items-start gap-1">
+                                <span className="text-red-600 mt-1">•</span>
+                                <span className="text-red-700">{mistake}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+                        
+                        <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                          <h4 className="font-semibold text-orange-800 mb-2 flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4" />
+                            ⚠️ Harmful Ingredients to Avoid
+                          </h4>
+                          <div className="space-y-1 text-xs">
+                            {analysisResult.avoid_practices.harmful_ingredients.map((ingredient, idx) => (
+                              <div key={idx} className="flex items-start gap-1">
+                                <span className="text-orange-600 mt-1">•</span>
+                                <span className="text-orange-700">{ingredient}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                          <h4 className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            🚫 Lifestyle Factors to Avoid
+                          </h4>
+                          <div className="space-y-1 text-xs">
+                            {analysisResult.avoid_practices.lifestyle_factors.map((factor, idx) => (
+                              <div key={idx} className="flex items-start gap-1">
+                                <span className="text-yellow-600 mt-1">•</span>
+                                <span className="text-yellow-700">{factor}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               )

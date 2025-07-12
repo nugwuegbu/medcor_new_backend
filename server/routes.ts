@@ -1606,6 +1606,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sunscreen: ['Daily SPF 30', 'Tinted sunscreen', 'Mineral sunscreen']
         },
         
+        // Detailed Recommendations for Better Skin Health
+        recommendations: {
+          daily_habits: [
+            'Apply sunscreen every morning (minimum SPF 30)',
+            'Drink at least 8 glasses of water daily',
+            'Remove makeup completely before bed',
+            'Use a gentle cleanser twice daily',
+            'Apply moisturizer on damp skin for better absorption',
+            'Get 7-9 hours of quality sleep',
+            'Eat antioxidant-rich foods (berries, leafy greens)',
+            'Use a humidifier in dry environments'
+          ],
+          weekly_practices: [
+            'Exfoliate 1-2 times per week (not daily)',
+            'Use a hydrating face mask weekly',
+            'Change pillowcases every 2-3 days',
+            'Deep clean makeup brushes and tools',
+            'Do a gentle facial massage to improve circulation',
+            'Apply a vitamin C serum 2-3 times per week'
+          ],
+          lifestyle_tips: [
+            'Manage stress through meditation or yoga',
+            'Exercise regularly to improve blood circulation',
+            'Avoid smoking and limit alcohol consumption',
+            'Maintain a consistent skincare routine',
+            'Protect skin from harsh weather conditions',
+            'Use lukewarm water instead of hot water for washing'
+          ]
+        },
+        
+        // Things to Avoid for Healthier Skin
+        avoid_practices: {
+          daily_mistakes: [
+            'Never sleep with makeup on',
+            'Avoid touching your face with dirty hands',
+            'Don\'t skip sunscreen (even on cloudy days)',
+            'Avoid using harsh scrubs or over-exfoliating',
+            'Don\'t use expired skincare products',
+            'Avoid picking or squeezing pimples',
+            'Don\'t use too many new products at once',
+            'Avoid extremely hot showers or face washing'
+          ],
+          harmful_ingredients: [
+            'Avoid alcohol-based toners (very drying)',
+            'Stay away from harsh sulfates in cleansers',
+            'Avoid fragranced products if you have sensitive skin',
+            'Don\'t use products with high percentages of acids daily',
+            'Avoid coconut oil if you\'re acne-prone',
+            'Stay away from physical scrubs with harsh particles'
+          ],
+          lifestyle_factors: [
+            'Avoid excessive sun exposure without protection',
+            'Don\'t smoke or be around secondhand smoke',
+            'Avoid excessive sugar and processed foods',
+            'Don\'t neglect your neck and décolletage',
+            'Avoid using dirty phone screens against your face',
+            'Don\'t use the same towel for face and body'
+          ]
+        },
+        
         api_version: "YCE HD Skin Analysis 2025.1",
         confidence: 0.93 + Math.random() * 0.07
       };
