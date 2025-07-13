@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, RotateCcw, Download, Upload, AlertCircle, CheckCircle } from 'lucide-react';
-import { Scissors } from 'lucide-react';
+import { Camera, RotateCcw, Download, Upload, AlertCircle, CheckCircle, Scissors, X } from 'lucide-react';
 
 interface HairAnalysisWidgetProps {
   onClose: () => void;
@@ -208,22 +207,41 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
       const imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
       console.log("🎬 HAIR DEBUG: Image captured, size:", imageBase64.length);
       
-      // Simulate analysis delay (2-3 seconds for realistic feel)
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      // Call the hair analysis API
+      const response = await fetch('/api/hair-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageBase64: imageBase64
+        })
+      });
       
-      // Generate realistic hair analysis results
+      if (!response.ok) {
+        throw new Error(`Hair analysis API failed: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log("🎬 HAIR DEBUG: API response:", result);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Analysis failed');
+      }
+      
+      // Convert API response to widget format
       const hairAnalysis: HairAnalysisResult = {
-        hairType: "Normal - Medium texture",
-        hairCondition: "Healthy (Health Score: 88%)",
-        scalpHealth: "Good condition",
-        recommendations: [
+        hairType: `${result.result.hair_type.texture} - ${result.result.hair_type.curl_pattern}`,
+        hairCondition: `${result.result.hair_condition.damage_level} (Health Score: ${result.result.hair_condition.health_score}%)`,
+        scalpHealth: result.result.scalp_analysis.condition,
+        recommendations: result.result.hair_care_routine || [
           "Use moisturizing shampoo and conditioner 2-3 times per week",
           "Apply heat protectant before styling",
           "Regular scalp massage to improve blood circulation",
           "Consider deep conditioning treatment monthly",
           "Avoid excessive heat styling above 180°C"
         ],
-        confidence: 0.88
+        confidence: result.result.confidence || 0.88
       };
       
       setAnalysisResult(hairAnalysis);
@@ -263,62 +281,55 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-purple-50 to-blue-50">
+    <div className="flex flex-col h-full relative">
+      {/* Camera Video Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <canvas ref={canvasRef} className="hidden" />
+      </div>
+      
       {/* Header */}
-      <div className="text-center py-6 bg-white/80 backdrop-blur-sm border-b border-purple-200">
+      <div className="relative z-10 text-center py-6 bg-white/20 backdrop-blur-sm border-b border-white/30">
         <div className="flex items-center justify-center gap-3 mb-2">
-          <Scissors className="h-8 w-8 text-purple-600" />
-          <h1 className="text-2xl font-bold text-purple-800">Hair Analysis</h1>
+          <Scissors className="h-8 w-8 text-purple-300" />
+          <h1 className="text-2xl font-bold text-white drop-shadow-lg">Hair Analysis</h1>
         </div>
-        <p className="text-gray-600 text-sm">Advanced hair and scalp health assessment</p>
+        <p className="text-white/90 text-sm drop-shadow-lg">Advanced hair and scalp health assessment</p>
+        <p className="text-xs text-white/80 mt-2 drop-shadow-lg">
+          Using Perfect Corp YouCam AI Technology
+        </p>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        {!analysisResult ? (
-          <div className="h-full flex flex-col">
-            {/* Camera Container */}
-            <div className="flex-1 relative bg-black/5 border-2 border-dashed border-purple-300 m-4 rounded-lg overflow-hidden">
-              <div 
-                ref={containerRef}
-                className="absolute inset-0 flex items-center justify-center"
-              >
-                {!cameraReady ? (
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">
-                      {error ? error : "Initializing camera..."}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="relative w-full h-full">
-                    <video
-                      ref={videoRef}
-                      className="w-full h-full object-cover rounded-lg"
-                      autoPlay
-                      playsInline
-                      muted
-                    />
-                    <canvas
-                      ref={canvasRef}
-                      className="hidden"
-                    />
-                    <div className="absolute bottom-4 left-4 right-4 text-center">
-                      <p className="text-white text-sm bg-black/50 px-3 py-1 rounded-full">
-                        Position your head in the camera frame
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
+      <div className="relative z-10 flex-1 flex flex-col">
+        {!cameraReady ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
+              <p className="text-white">
+                {error ? error : "Initializing camera..."}
+              </p>
             </div>
-
-            {/* Analysis Button */}
-            <div className="p-6 bg-white/80 backdrop-blur-sm border-t border-purple-200">
+          </div>
+        ) : !analysisResult ? (
+          <div className="absolute inset-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 flex flex-col justify-center items-center">
+            <div className="text-center">
+              <div className="w-32 h-32 border-2 border-dashed border-purple-300 rounded-full flex items-center justify-center mb-4">
+                <Scissors className="h-16 w-16 text-purple-400" />
+              </div>
+              <p className="text-white text-sm mb-6 drop-shadow-lg">
+                Position your head in the camera frame for hair analysis
+              </p>
               <Button
                 onClick={analyzeHair}
                 disabled={isAnalyzing || !cameraReady}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105"
               >
                 {isAnalyzing ? (
                   <>
@@ -334,73 +345,85 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
               </Button>
               
               {error && (
-                <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  <span className="text-red-700 text-sm">{error}</span>
+                <div className="mt-4 p-3 bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-lg flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-300" />
+                  <span className="text-red-100 text-sm">{error}</span>
                 </div>
               )}
             </div>
           </div>
         ) : (
-          <div className="h-full overflow-y-auto p-6 space-y-6">
-            {/* Results Header */}
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-                <h2 className="text-xl font-semibold text-gray-800">Analysis Complete</h2>
+          <div className="absolute inset-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-400" />
+                <h3 className="font-semibold text-white drop-shadow-lg">Analysis Complete</h3>
               </div>
-              <p className="text-sm text-gray-600">
-                Confidence: {Math.round(analysisResult.confidence * 100)}%
-              </p>
+              <div className="flex gap-2">
+                <Button
+                  onClick={resetAnalysis}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                >
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  New Analysis
+                </Button>
+                <Button
+                  onClick={onClose}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Close
+                </Button>
+              </div>
             </div>
-
-            {/* Results Cards */}
-            <div className="space-y-4">
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-purple-200">
-                <h3 className="font-semibold text-purple-800 mb-2">Hair Type</h3>
-                <p className="text-gray-700">{analysisResult.hairType}</p>
+            
+            {/* Results */}
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="font-medium text-white drop-shadow-lg">Hair Type</p>
+                  <p className="text-purple-300 font-semibold">{analysisResult.hairType}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-white drop-shadow-lg">Confidence</p>
+                  <p className="text-purple-300 font-semibold">{Math.round(analysisResult.confidence * 100)}%</p>
+                </div>
               </div>
-
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-purple-200">
-                <h3 className="font-semibold text-purple-800 mb-2">Hair Condition</h3>
-                <p className="text-gray-700">{analysisResult.hairCondition}</p>
+              
+              <div className="bg-purple-500/20 backdrop-blur-sm p-3 rounded-lg border border-purple-400/30">
+                <h4 className="font-semibold text-purple-200 mb-2 flex items-center gap-2">
+                  <Scissors className="h-4 w-4" />
+                  Hair Condition
+                </h4>
+                <p className="text-purple-100 text-sm">{analysisResult.hairCondition}</p>
               </div>
-
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-purple-200">
-                <h3 className="font-semibold text-purple-800 mb-2">Scalp Health</h3>
-                <p className="text-gray-700">{analysisResult.scalpHealth}</p>
+              
+              <div className="bg-blue-500/20 backdrop-blur-sm p-3 rounded-lg border border-blue-400/30">
+                <h4 className="font-semibold text-blue-200 mb-2 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Scalp Health
+                </h4>
+                <p className="text-blue-100 text-sm">{analysisResult.scalpHealth}</p>
               </div>
-
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-purple-200">
-                <h3 className="font-semibold text-purple-800 mb-2">Recommendations</h3>
-                <ul className="space-y-2">
-                  {analysisResult.recommendations.map((rec, index) => (
-                    <li key={index} className="text-gray-700 text-sm flex items-start gap-2">
-                      <span className="text-purple-600 font-bold">•</span>
-                      {rec}
-                    </li>
+              
+              <div className="bg-green-500/20 backdrop-blur-sm p-3 rounded-lg border border-green-400/30">
+                <h4 className="font-semibold text-green-200 mb-2 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Care Recommendations
+                </h4>
+                <div className="space-y-1 text-xs">
+                  {analysisResult.recommendations.map((rec, idx) => (
+                    <div key={idx} className="flex items-start gap-1">
+                      <span className="text-green-300 mt-1">•</span>
+                      <span className="text-green-100">{rec}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
-              <Button
-                onClick={resetAnalysis}
-                variant="outline"
-                className="flex-1 border-purple-300 text-purple-600 hover:bg-purple-50"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                New Analysis
-              </Button>
-              <Button
-                onClick={downloadReport}
-                className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download Report
-              </Button>
             </div>
           </div>
         )}
