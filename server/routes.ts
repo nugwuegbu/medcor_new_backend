@@ -1273,21 +1273,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Image data is required" });
       }
 
-      console.log('Perfect Corp YCE Hair Analysis API integration');
+      console.log('Perfect Corp YouCam Hair Analysis API integration');
       
-      const API_KEY = process.env.REACT_APP_YCE_API_KEY;
-      const ACCOUNT_ID = process.env.REACT_APP_YCE_ACCOUNT_ID;
-      const EMAIL = process.env.REACT_APP_YCE_EMAIL;
+      const API_KEY = process.env.YOUCAM_API_KEY;
+      const SECRET_KEY = process.env.YOUCAM_SECRET_KEY;
       
-      if (!API_KEY || !ACCOUNT_ID || !EMAIL) {
-        console.error('Missing YCE API credentials');
+      if (!API_KEY || !SECRET_KEY) {
+        console.error('Missing YouCam API credentials');
         return res.status(400).json({
-          error: 'Missing YCE API credentials',
-          message: 'Please provide YCE API credentials in environment variables'
+          error: 'Missing YouCam API credentials',
+          message: 'Please provide YouCam API credentials in environment variables'
         });
       }
       
-      console.log('YCE API credentials found, processing hair analysis...');
+      console.log('YouCam API credentials found, processing hair analysis...');
       
       // Perfect Corp YCE Hair Analysis Full Feature Set
       const hairResult = {
