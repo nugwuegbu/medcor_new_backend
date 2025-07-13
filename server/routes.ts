@@ -1368,115 +1368,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Lips Analysis endpoint
   app.post("/api/lips-analysis", async (req, res) => {
     try {
-      const { imageBase64 } = req.body;
-      console.log('Lips analysis request received, image data length:', imageBase64?.length || 0);
+      const { image, analysis_type } = req.body;
       
-      if (!imageBase64) {
-        return res.status(400).json({ error: "Image data is required" });
-      }
-
-      console.log('Perfect Corp YCE Lips Analysis API integration');
-      
-      const API_KEY = process.env.REACT_APP_YCE_API_KEY;
-      const ACCOUNT_ID = process.env.REACT_APP_YCE_ACCOUNT_ID;
-      const EMAIL = process.env.REACT_APP_YCE_EMAIL;
-      
-      if (!API_KEY || !ACCOUNT_ID || !EMAIL) {
-        console.error('Missing YCE API credentials');
-        return res.status(400).json({
-          error: 'Missing YCE API credentials',
-          message: 'Please provide YCE API credentials in environment variables'
+      if (!image) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'No image provided' 
         });
       }
-      
-      console.log('YCE API credentials found, processing lips analysis...');
-      
-      // Perfect Corp YCE Lips Analysis Full Feature Set
-      const lipsResult = {
-        // Lip Shape Analysis
-        lip_shape: {
-          overall_shape: ['Full', 'Thin', 'Heart-shaped', 'Bow-shaped', 'Wide'][Math.floor(Math.random() * 5)],
-          upper_lip: ['Full', 'Thin', 'Defined', 'Flat'][Math.floor(Math.random() * 4)],
-          lower_lip: ['Full', 'Thin', 'Prominent', 'Balanced'][Math.floor(Math.random() * 4)],
-          lip_ratio: ['Balanced', 'Upper dominant', 'Lower dominant'][Math.floor(Math.random() * 3)],
-          cupid_bow: ['Pronounced', 'Subtle', 'Minimal'][Math.floor(Math.random() * 3)]
-        },
-        
-        // Lip Condition Analysis
-        lip_condition: {
-          health_score: 70 + Math.floor(Math.random() * 30),
-          hydration_level: ['Dry', 'Normal', 'Well-hydrated'][Math.floor(Math.random() * 3)],
-          texture: ['Smooth', 'Slightly rough', 'Chapped'][Math.floor(Math.random() * 3)],
-          pigmentation: ['Even', 'Slightly uneven', 'Uneven'][Math.floor(Math.random() * 3)],
-          fine_lines: Math.random() > 0.7 ? 'Mild' : 'None'
-        },
-        
-        // Lip Color Analysis
-        lip_color: {
-          natural_tone: ['Pink', 'Rose', 'Berry', 'Coral', 'Neutral'][Math.floor(Math.random() * 5)],
-          undertone: ['Cool', 'Warm', 'Neutral'][Math.floor(Math.random() * 3)],
-          intensity: ['Light', 'Medium', 'Dark'][Math.floor(Math.random() * 3)],
-          evenness: 75 + Math.floor(Math.random() * 25) + '%'
-        },
-        
-        // Makeup Recommendations
-        makeup_recommendations: {
-          lipstick_shades: {
-            everyday: ['Nude Pink', 'Soft Rose', 'Natural Berry'],
-            evening: ['Classic Red', 'Deep Berry', 'Wine'],
-            special_occasion: ['Bold Red', 'Burgundy', 'Plum']
-          },
-          lipstick_finishes: ['Matte', 'Satin', 'Gloss', 'Velvet'],
-          lip_liner_shade: ['One shade deeper', 'Matching tone', 'Nude base'],
-          application_tips: [
-            'Use lip primer for longer wear',
-            'Apply lip liner for definition',
-            'Blot and reapply for intensity'
-          ]
-        },
-        
-        // Lip Care Routine
-        lip_care_routine: [
-          'Gentle lip scrub 1-2 times per week',
-          'Daily lip balm with SPF',
-          'Overnight lip treatment',
-          'Avoid licking lips',
-          'Stay hydrated for natural moisture'
-        ],
-        
-        // Virtual Try-On Ready
-        virtual_tryon: {
-          supported: true,
-          recommended_products: [
-            'Liquid lipstick collection',
-            'Lip gloss variety pack',
-            'Lip stain options',
-            'Lip balm with tint'
-          ]
-        },
-        
-        api_version: "YCE Lips Analysis 2025.1",
-        confidence: 0.91 + Math.random() * 0.09
-      };
 
-      console.log('Lips analysis completed with YCE full features');
+      if (analysis_type !== 'lips') {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Invalid analysis type' 
+        });
+      }
+
+      console.log('💋 Lips analysis request received, image data length:', image.length);
       
-      return res.json({
+      // Import lips analysis function
+      const { analyzeLipsWithYCE } = await import('./lips-analysis');
+      
+      // Perform lips analysis
+      const analysisResult = await analyzeLipsWithYCE(image);
+      
+      res.json({
         success: true,
-        result: lipsResult,
-        message: "Lips analysis completed using Perfect Corp YCE SDK",
-        features_available: [
-          'lip_shape_analysis',
-          'lip_condition_assessment',
-          'color_analysis',
-          'makeup_recommendations',
-          'virtual_tryon_ready',
-          'care_routine_suggestions'
-        ]
+        result: analysisResult
       });
+      
     } catch (error) {
-      console.error("Lips analysis error:", error);
-      res.status(500).json({ error: "Lips analysis failed" });
+      console.error('💋 Lips analysis error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Analysis failed' 
+      });
     }
   });
 

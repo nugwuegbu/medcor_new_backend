@@ -13,6 +13,7 @@ import InfoOverlay from "./info-overlay";
 import FaceAnalysisWidgetInline from "./face-analysis-widget-inline";
 import HairAnalysisWidget from "./hair-analysis-widget";
 import SkinAnalysisWidget from "./skin-analysis-widget";
+import LipsAnalysisWidget from "./lips-analysis-widget";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -110,6 +111,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showFacePage, setShowFacePage] = useState(false);
   const [showHairPage, setShowHairPage] = useState(false);
   const [showSkinPage, setShowSkinPage] = useState(false);
+  const [showLipsPage, setShowLipsPage] = useState(false);
   const [faceAnalysisCameraActive, setFaceAnalysisCameraActive] = useState(false);
   const [faceAnalysisLoading, setFaceAnalysisLoading] = useState(false);
   const [faceAnalysisResult, setFaceAnalysisResult] = useState<any>(null);
@@ -201,7 +203,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   }, [isDragging, dragOffset.x, dragOffset.y]);
 
   const handleAvatarMouseDown = (e: React.MouseEvent) => {
-    if (!showDoctorList && !showRecordsList && !showHairPage && !isMinimized) return; // Only allow dragging in circular mode
+    if (!showDoctorList && !showRecordsList && !showHairPage && !showLipsPage && !isMinimized) return; // Only allow dragging in circular mode
     
     const rect = avatarContainerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -1030,8 +1032,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           <span className="text-gray-700 text-sm">AI Assistant</span>
         </div>
         
-        {/* User Camera View in center - Hide when Face Analysis or Hair Analysis is open */}
-        {!showFacePage && !showHairPage && (
+        {/* User Camera View in center - Hide when Face Analysis, Hair Analysis, or Lips Analysis is open */}
+        {!showFacePage && !showHairPage && !showLipsPage && (
           <div className="absolute left-1/2 transform -translate-x-1/2">
             <UserCameraView 
               isEnabled={cameraEnabled}
@@ -1058,14 +1060,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         <div 
           ref={avatarContainerRef}
           className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
-            showDoctorList || showRecordsList || showHairPage
+            showDoctorList || showRecordsList || showHairPage || showLipsPage
               ? 'w-24 h-24 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-4 ring-purple-600'
               : isMinimized 
                 ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 hover:scale-110' 
                 : 'inset-0 overflow-hidden'
           }`}
           style={{
-            ...(showDoctorList || showRecordsList || showHairPage || isMinimized ? {
+            ...(showDoctorList || showRecordsList || showHairPage || showLipsPage || isMinimized ? {
               cursor: isDragging ? 'grabbing' : 'grab',
               left: avatarPosition.x !== null ? `${avatarPosition.x}px` : 'auto',
               top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '75px',
@@ -1105,9 +1107,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               setSelectedMenuItem("");
               // Reset avatar position when going back from hair page
               setAvatarPosition({ x: null, y: null });
+            } else if (showLipsPage) {
+              setShowLipsPage(false);
+              setShowChatInterface(true);
+              setIsMinimized(false);
+              setSelectedMenuItem("");
+              // Reset avatar position when going back from lips page
+              setAvatarPosition({ x: null, y: null });
             }
           }}>
-          {isOpen && !showDoctorList && !showRecordsList && !showHairPage && (
+          {isOpen && !showDoctorList && !showRecordsList && !showHairPage && !showLipsPage && (
             <>
               {/* Show HeyGen avatar when NOT in specific list views */}
               <HeyGenSDKAvatar 
@@ -1279,7 +1288,48 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         setMessages(prev => [...prev, errorMessage]);
                       }
                     } },
-                    { icon: LipsIcon, label: "Lips", angle: 280, action: () => setSelectedMenuItem("lips") },
+                    { icon: LipsIcon, label: "Lips", angle: 280, action: async () => { 
+                      console.log("💋 Lips Analysis button clicked (minimized menu)");
+                      
+                      try {
+                        // Ensure camera is ready first
+                        console.log("💋 Ensuring camera is ready for lips analysis...");
+                        const stream = await ensureCameraReady();
+                        console.log("💋 Camera stream ready:", stream);
+                        
+                        // Validate stream has active tracks
+                        if (!stream || !stream.getTracks || stream.getTracks().length === 0) {
+                          throw new Error("Invalid camera stream - no active tracks");
+                        }
+                        
+                        // Force update the shared stream reference
+                        videoStreamRef.current = stream;
+                        
+                        // Small delay to ensure videoStreamRef is properly set
+                        setTimeout(() => {
+                          // Update UI states
+                          setShowLipsPage(true); 
+                          setSelectedMenuItem("lips"); 
+                          setIsMinimized(false); 
+                          setShowChatInterface(false);
+                          setStreamReady(true);
+                          
+                          console.log("💋 Lips Analysis page activated from minimized menu");
+                        }, 100);
+                        
+                      } catch (err) {
+                        console.error("💋 Lips Analysis camera setup failed:", err);
+                        
+                        // Show error message to user
+                        const errorMessage: Message = {
+                          id: `error_${Date.now()}`,
+                          text: "Camera access is required for lips analysis. Please enable camera permission and try again.",
+                          sender: "bot",
+                          timestamp: new Date()
+                        };
+                        setMessages(prev => [...prev, errorMessage]);
+                      }
+                    } },
                     { icon: Heart, label: "Skin", angle: 320, action: async () => { 
                       console.log("🌟 Skin Analysis button clicked");
                       
@@ -1327,7 +1377,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     const x = Math.cos(angleRad) * 130; // Increased to 130 for proper circle edge positioning
                     const y = Math.sin(angleRad) * 130; // Increased to 130 for proper circle edge positioning
                     
-                    const isSpecialIcon = ["hair", "skin", "doctors"].includes(item.label.toLowerCase());
+                    const isSpecialIcon = ["hair", "skin", "lips", "doctors"].includes(item.label.toLowerCase());
                     
                     return (
                       <button
@@ -1947,6 +1997,48 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 };
                                 setMessages(prev => [...prev, errorMessage]);
                               }
+                            } },
+                            { icon: LipsIcon, label: "Lips", angle: 280, action: async () => { 
+                              console.log("💋 Lips Analysis button clicked");
+                              
+                              try {
+                                // Ensure camera is ready first
+                                console.log("💋 Ensuring camera is ready for lips analysis...");
+                                const stream = await ensureCameraReady();
+                                console.log("💋 Camera stream ready:", stream);
+                                
+                                // Validate stream has active tracks
+                                if (!stream || !stream.getTracks || stream.getTracks().length === 0) {
+                                  throw new Error("Invalid camera stream - no active tracks");
+                                }
+                                
+                                // Force update the shared stream reference
+                                videoStreamRef.current = stream;
+                                
+                                // Small delay to ensure videoStreamRef is properly set
+                                setTimeout(() => {
+                                  // Update UI states
+                                  setShowLipsPage(true); 
+                                  setSelectedMenuItem("lips"); 
+                                  setIsMinimized(false); 
+                                  setShowChatInterface(false);
+                                  setStreamReady(true);
+                                  
+                                  console.log("💋 Lips Analysis page activated successfully");
+                                }, 100);
+                                
+                              } catch (err) {
+                                console.error("💋 Lips Analysis camera setup failed:", err);
+                                
+                                // Show error message to user
+                                const errorMessage: Message = {
+                                  id: `error_${Date.now()}`,
+                                  text: "Camera access is required for lips analysis. Please enable camera permission and try again.",
+                                  sender: "bot",
+                                  timestamp: new Date()
+                                };
+                                setMessages(prev => [...prev, errorMessage]);
+                              }
                             } }
                           ].map((item, index) => {
                             const angleRad = (item.angle * Math.PI) / 180;
@@ -2151,6 +2243,97 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto mb-4"></div>
                     <p className="text-gray-600">Initializing camera...</p>
                     <p className="text-gray-500 text-xs mt-2">Setting up camera stream for skin analysis</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Chat Input at Bottom */}
+            <div className="p-4 border-t border-gray-200 bg-white/80">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  className="w-full px-4 py-3 pr-24 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && inputText.trim()) {
+                      handleSendMessage(inputText);
+                      setInputText('');
+                    }
+                  }}
+                />
+                
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+                  <BrowserVoiceButton
+                    onTranscript={(transcript) => {
+                      setInputText(transcript);
+                      handleSendMessage(transcript);
+                      setInputText('');
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (inputText.trim()) {
+                        handleSendMessage(inputText);
+                        setInputText('');
+                      }
+                    }}
+                    className="p-3 bg-pink-600 text-white rounded-full hover:bg-pink-700 transition-all hover:scale-110 shadow-md"
+                  >
+                    <Send size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Lips Analysis View - Full chat widget structure */}
+        {showLipsPage && (
+          <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-pink-100/95 to-purple-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
+            {/* Header - Lips Analysis (No User Camera) */}
+            <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
+              <div className="flex items-center gap-2">
+                <LipsIcon className="h-4 w-4 text-pink-600" />
+                <span className="text-gray-700 text-sm">Lips Analysis</span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <span className="text-purple-600 font-bold text-lg">medcor</span>
+                <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Back Button */}
+            <button
+              onClick={() => {
+                setShowLipsPage(false);
+                setSelectedMenuItem(null);
+              }}
+              className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-pink-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-pink-700 transition-all transform hover:scale-105 z-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="font-medium text-sm">Back</span>
+            </button>
+            
+            {/* Lips Analysis Content */}
+            <div className="flex-1 pt-16">
+              {videoStreamRef.current && videoStreamRef.current.getTracks && videoStreamRef.current.getTracks().length > 0 ? (
+                <LipsAnalysisWidget 
+                  onClose={onClose}
+                  videoStream={videoStreamRef.current}
+                  hasVideoStream={videoStreamRef.current && videoStreamRef.current.getTracks && videoStreamRef.current.getTracks().length > 0}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Initializing camera...</p>
+                    <p className="text-gray-500 text-xs mt-2">Setting up camera stream for lips analysis</p>
                   </div>
                 </div>
               )}
