@@ -73,7 +73,6 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
   const [cameraReady, setCameraReady] = useState(false);
   const [analysisStep, setAnalysisStep] = useState(0);
   const [lipsDetected, setLipsDetected] = useState(false);
-  const [positioningApproved, setPositioningApproved] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -142,12 +141,7 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
     
     setLipsDetected(isLipsDetected);
     
-    // Check if lips are well-positioned (good detection and stable)
-    if (isLipsDetected && lipsRatio > 0.08) {
-      setPositioningApproved(true);
-    } else {
-      setPositioningApproved(false);
-    }
+    // Just track lips detection for visual feedback
   };
 
   // Start lips detection when camera is ready
@@ -286,7 +280,6 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
     setIsAnalyzing(false);
     setAnalysisStep(0);
     setLipsDetected(false);
-    setPositioningApproved(false);
   };
 
   // Cleanup function
@@ -361,36 +354,25 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="relative">
               <div className={`w-32 h-16 border-2 rounded-full border-dashed transition-all duration-300 ${
-                positioningApproved 
-                  ? 'border-green-500 bg-green-500/20' 
-                  : lipsDetected 
-                    ? 'border-yellow-400 bg-yellow-400/10' 
-                    : 'border-pink-400 animate-pulse'
+                lipsDetected 
+                  ? 'border-pink-500 bg-pink-500/10' 
+                  : 'border-pink-400 animate-pulse'
               }`}></div>
               
               {/* Positioning Status */}
               <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
                 <div className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
-                  positioningApproved 
-                    ? 'bg-green-500 text-white' 
-                    : lipsDetected 
-                      ? 'bg-yellow-400 text-white' 
-                      : 'bg-pink-500 text-white'
+                  lipsDetected 
+                    ? 'bg-pink-500 text-white' 
+                    : 'bg-pink-500 text-white'
                 }`}>
-                  {positioningApproved ? 'Perfect positioning!' : lipsDetected ? 'Adjusting...' : 'Position lips here'}
+                  {lipsDetected ? 'Lips detected' : 'Position lips here'}
                 </div>
               </div>
               
-              {/* Green Approval Checkmark */}
-              {positioningApproved && (
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
-                  <CheckCircle className="h-5 w-5 text-white" />
-                </div>
-              )}
-              
-              {/* Detection Indicators */}
-              {lipsDetected && !positioningApproved && (
-                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center animate-pulse">
+              {/* Movement Detection Indicator */}
+              {lipsDetected && (
+                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center animate-pulse">
                   <Eye className="h-3 w-3 text-white" />
                 </div>
               )}
@@ -611,39 +593,21 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
         <div className="p-6 bg-white/80 backdrop-blur-sm border-t border-pink-200">
           <Button
             onClick={analyzeLips}
-            disabled={isAnalyzing || !cameraReady || !positioningApproved}
-            className={`w-full font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 ${
-              positioningApproved 
-                ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white' 
-                : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white cursor-not-allowed'
-            }`}
+            disabled={isAnalyzing || !cameraReady}
+            className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
           >
             {isAnalyzing ? (
               <div className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 <span>Analyzing Lips...</span>
               </div>
-            ) : positioningApproved ? (
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                <span>Analyze Lips & Health</span>
-              </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Smile className="h-4 w-4" />
-                <span>Position lips properly first</span>
+                <span>Analyze Lips & Health</span>
               </div>
             )}
           </Button>
-          
-          {/* Positioning Status Info */}
-          {cameraReady && !positioningApproved && (
-            <div className="mt-2 text-center">
-              <p className="text-xs text-gray-600">
-                {lipsDetected ? 'Adjust lips within the guide area' : 'Position your lips in the guide area'}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
