@@ -380,18 +380,18 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
             ) : (
               // Analysis Results Overlay
               analysisResult && (
-                <div className="absolute inset-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 overflow-y-auto">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="absolute inset-2 sm:inset-4 bg-white/20 backdrop-blur-sm rounded-lg p-2 sm:p-4 overflow-y-auto max-h-[calc(100vh-8rem)]">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-5 w-5 text-green-400" />
-                      <h3 className="font-semibold text-white drop-shadow-lg">Analysis Complete</h3>
+                      <h3 className="font-bold text-white drop-shadow-lg text-base sm:text-lg">Analysis Complete</h3>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto">
                       <Button
                         onClick={resetAnalysis}
                         variant="outline"
                         size="sm"
-                        className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                        className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 flex-1 sm:flex-none"
                       >
                         <RotateCcw className="h-3 w-3 mr-1" />
                         New Analysis
@@ -400,7 +400,7 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
                         onClick={onClose}
                         variant="outline"
                         size="sm"
-                        className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                        className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 flex-1 sm:flex-none"
                       >
                         <X className="h-3 w-3 mr-1" />
                         Close
@@ -409,100 +409,100 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
                   </div>
                   
                   {/* Results */}
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <p className="font-medium text-white drop-shadow-lg">Skin Type</p>
-                        <p className="text-pink-300 font-semibold">{analysisResult.skin_health.skin_type}</p>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div className="bg-pink-500/20 backdrop-blur-sm p-3 rounded-lg border border-pink-400/30">
+                        <p className="font-bold text-white drop-shadow-lg text-xs uppercase tracking-wide">Skin Type</p>
+                        <p className="text-pink-200 font-semibold text-lg">{analysisResult.skin_health.skin_type}</p>
                       </div>
-                      <div>
-                        <p className="font-medium text-white drop-shadow-lg">Health Score</p>
-                        <p className="text-pink-300 font-semibold">{analysisResult.skin_health.overall_score}/100</p>
+                      <div className="bg-pink-500/20 backdrop-blur-sm p-3 rounded-lg border border-pink-400/30">
+                        <p className="font-bold text-white drop-shadow-lg text-xs uppercase tracking-wide">Health Score</p>
+                        <p className="text-pink-200 font-semibold text-lg">{analysisResult.skin_health.overall_score}/100</p>
                       </div>
-                      <div>
-                        <p className="font-medium text-white drop-shadow-lg">Skin Tone</p>
-                        <p className="text-pink-300 font-semibold">{analysisResult.skin_health.skin_tone}</p>
+                      <div className="bg-pink-500/20 backdrop-blur-sm p-3 rounded-lg border border-pink-400/30">
+                        <p className="font-bold text-white drop-shadow-lg text-xs uppercase tracking-wide">Skin Tone</p>
+                        <p className="text-pink-200 font-semibold text-lg">{analysisResult.skin_health.skin_tone}</p>
                       </div>
-                      <div>
-                        <p className="font-medium text-white drop-shadow-lg">Confidence</p>
-                        <p className="text-pink-300 font-semibold">{Math.round(analysisResult.confidence * 100)}%</p>
+                      <div className="bg-pink-500/20 backdrop-blur-sm p-3 rounded-lg border border-pink-400/30">
+                        <p className="font-bold text-white drop-shadow-lg text-xs uppercase tracking-wide">Confidence</p>
+                        <p className="text-pink-200 font-semibold text-lg">{Math.round(analysisResult.confidence * 100)}%</p>
                       </div>
                     </div>
                     
                     {/* Skin Conditions */}
-                    <div>
-                      <p className="font-medium text-white drop-shadow-lg mb-2">Skin Conditions</p>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-white/80">Acne:</span>
-                          <span className="font-medium text-white">{analysisResult.skin_conditions.acne.severity}</span>
+                    <div className="bg-purple-500/20 backdrop-blur-sm p-4 rounded-lg border border-purple-400/30">
+                      <p className="font-bold text-white drop-shadow-lg mb-3 text-sm uppercase tracking-wide">Skin Conditions</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                          <span className="text-white/90 font-medium">Acne:</span>
+                          <span className="font-bold text-white">{analysisResult.skin_conditions.acne.severity}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-white/80">Wrinkles:</span>
-                          <span className="font-medium text-white">{analysisResult.skin_conditions.wrinkles.forehead}</span>
+                        <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                          <span className="text-white/90 font-medium">Wrinkles:</span>
+                          <span className="font-bold text-white">{analysisResult.skin_conditions.wrinkles.forehead}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-white/80">Dark Spots:</span>
-                          <span className="font-medium text-white">{analysisResult.skin_conditions.dark_spots.count} spots</span>
+                        <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                          <span className="text-white/90 font-medium">Dark Spots:</span>
+                          <span className="font-bold text-white">{analysisResult.skin_conditions.dark_spots.count} spots</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-white/80">Pores:</span>
-                          <span className="font-medium text-white">{analysisResult.skin_conditions.pores.visibility}</span>
+                        <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                          <span className="text-white/90 font-medium">Pores:</span>
+                          <span className="font-bold text-white">{analysisResult.skin_conditions.pores.visibility}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-white/80">Skin Age:</span>
-                          <span className="font-medium text-white">{analysisResult.skin_health.skin_age} years</span>
+                        <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                          <span className="text-white/90 font-medium">Skin Age:</span>
+                          <span className="font-bold text-white">{analysisResult.skin_health.skin_age} years</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-white/80">Undertone:</span>
-                          <span className="font-medium text-white">{analysisResult.skin_health.undertone}</span>
+                        <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                          <span className="text-white/90 font-medium">Undertone:</span>
+                          <span className="font-bold text-white">{analysisResult.skin_health.undertone}</span>
                         </div>
                       </div>
                     </div>
                     
                     {/* Recommendations for Better Skin Health */}
                     {analysisResult.recommendations && (
-                      <div className="space-y-3">
-                        <div className="bg-green-500/20 backdrop-blur-sm p-3 rounded-lg border border-green-400/30">
-                          <h4 className="font-semibold text-green-200 mb-2 flex items-center gap-2">
+                      <div className="space-y-4">
+                        <div className="bg-green-500/20 backdrop-blur-sm p-4 rounded-lg border border-green-400/30">
+                          <h4 className="font-bold text-green-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                             <CheckCircle className="h-4 w-4" />
-                            ✅ Daily Habits for Healthy Skin
+                            Daily Habits for Healthy Skin
                           </h4>
-                          <div className="space-y-1 text-xs">
+                          <div className="space-y-2 text-sm">
                             {analysisResult.recommendations.daily_habits.map((habit, idx) => (
-                              <div key={idx} className="flex items-start gap-1">
-                                <span className="text-green-300 mt-1">•</span>
-                                <span className="text-green-100">{habit}</span>
+                              <div key={idx} className="flex items-start gap-2 p-2 bg-white/10 rounded-lg">
+                                <span className="text-green-300 mt-1 font-bold">•</span>
+                                <span className="text-green-100 font-medium leading-relaxed">{habit}</span>
                               </div>
                             ))}
                           </div>
                         </div>
                         
-                        <div className="bg-blue-500/20 backdrop-blur-sm p-3 rounded-lg border border-blue-400/30">
-                          <h4 className="font-semibold text-blue-200 mb-2 flex items-center gap-2">
+                        <div className="bg-blue-500/20 backdrop-blur-sm p-4 rounded-lg border border-blue-400/30">
+                          <h4 className="font-bold text-blue-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                             <Calendar className="h-4 w-4" />
-                            📅 Weekly Practices
+                            Weekly Practices
                           </h4>
-                          <div className="space-y-1 text-xs">
+                          <div className="space-y-2 text-sm">
                             {analysisResult.recommendations.weekly_practices.map((practice, idx) => (
-                              <div key={idx} className="flex items-start gap-1">
-                                <span className="text-blue-300 mt-1">•</span>
-                                <span className="text-blue-100">{practice}</span>
+                              <div key={idx} className="flex items-start gap-2 p-2 bg-white/10 rounded-lg">
+                                <span className="text-blue-300 mt-1 font-bold">•</span>
+                                <span className="text-blue-100 font-medium leading-relaxed">{practice}</span>
                               </div>
                             ))}
                           </div>
                         </div>
                         
-                        <div className="bg-purple-500/20 backdrop-blur-sm p-3 rounded-lg border border-purple-400/30">
-                          <h4 className="font-semibold text-purple-200 mb-2 flex items-center gap-2">
+                        <div className="bg-purple-500/20 backdrop-blur-sm p-4 rounded-lg border border-purple-400/30">
+                          <h4 className="font-bold text-purple-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                             <Heart className="h-4 w-4" />
-                            💜 Lifestyle Tips
+                            Lifestyle Tips
                           </h4>
-                          <div className="space-y-1 text-xs">
+                          <div className="space-y-2 text-sm">
                             {analysisResult.recommendations.lifestyle_tips.map((tip, idx) => (
-                              <div key={idx} className="flex items-start gap-1">
-                                <span className="text-purple-300 mt-1">•</span>
-                                <span className="text-purple-100">{tip}</span>
+                              <div key={idx} className="flex items-start gap-2 p-2 bg-white/10 rounded-lg">
+                                <span className="text-purple-300 mt-1 font-bold">•</span>
+                                <span className="text-purple-100 font-medium leading-relaxed">{tip}</span>
                               </div>
                             ))}
                           </div>
@@ -512,17 +512,17 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
                     
                     {/* Things to Avoid */}
                     {analysisResult.avoid_practices && (
-                      <div className="space-y-3">
-                        <div className="bg-red-500/20 backdrop-blur-sm p-3 rounded-lg border border-red-400/30">
-                          <h4 className="font-semibold text-red-200 mb-2 flex items-center gap-2">
+                      <div className="space-y-4">
+                        <div className="bg-red-500/20 backdrop-blur-sm p-4 rounded-lg border border-red-400/30">
+                          <h4 className="font-bold text-red-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                             <X className="h-4 w-4" />
-                            ❌ Daily Mistakes to Avoid
+                            Daily Mistakes to Avoid
                           </h4>
-                          <div className="space-y-1 text-xs">
+                          <div className="space-y-2 text-sm">
                             {analysisResult.avoid_practices.daily_mistakes.map((mistake, idx) => (
-                              <div key={idx} className="flex items-start gap-1">
-                                <span className="text-red-300 mt-1">•</span>
-                                <span className="text-red-100">{mistake}</span>
+                              <div key={idx} className="flex items-start gap-2 p-2 bg-white/10 rounded-lg">
+                                <span className="text-red-300 mt-1 font-bold">•</span>
+                                <span className="text-red-100 font-medium leading-relaxed">{mistake}</span>
                               </div>
                             ))}
                           </div>

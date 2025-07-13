@@ -563,18 +563,18 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
           ) : (
             // Analysis Results Overlay
             analysisResult && (
-              <div className="absolute inset-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 overflow-y-auto">
-                <div className="flex items-center justify-between mb-4">
+              <div className="absolute inset-2 sm:inset-4 bg-white/20 backdrop-blur-sm rounded-lg p-2 sm:p-4 overflow-y-auto max-h-[calc(100vh-8rem)]">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-400" />
-                    <h3 className="font-semibold text-white drop-shadow-lg">Lips Analysis Complete</h3>
+                    <h3 className="font-bold text-white drop-shadow-lg text-base sm:text-lg">Lips Analysis Complete</h3>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       onClick={resetAnalysis}
                       variant="outline"
                       size="sm"
-                      className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                      className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 flex-1 sm:flex-none"
                     >
                       <RotateCcw className="h-3 w-3 mr-1" />
                       New Analysis
@@ -583,7 +583,7 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
                       onClick={onClose}
                       variant="outline"
                       size="sm"
-                      className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                      className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 flex-1 sm:flex-none"
                     >
                       <X className="h-3 w-3 mr-1" />
                       Close
@@ -592,92 +592,92 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
                 </div>
                 
                 {/* Results */}
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <p className="font-medium text-white drop-shadow-lg">Lip Condition</p>
-                      <p className="text-pink-300 font-semibold">{analysisResult.lips_health.lip_condition}</p>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="bg-pink-500/20 backdrop-blur-sm p-3 rounded-lg border border-pink-400/30">
+                      <p className="font-bold text-white drop-shadow-lg text-xs uppercase tracking-wide">Lip Condition</p>
+                      <p className="text-pink-200 font-semibold text-lg">{analysisResult.lips_health.lip_condition}</p>
                     </div>
-                    <div>
-                      <p className="font-medium text-white drop-shadow-lg">Health Score</p>
-                      <p className="text-pink-300 font-semibold">{analysisResult.lips_health.overall_score}/100</p>
+                    <div className="bg-pink-500/20 backdrop-blur-sm p-3 rounded-lg border border-pink-400/30">
+                      <p className="font-bold text-white drop-shadow-lg text-xs uppercase tracking-wide">Health Score</p>
+                      <p className="text-pink-200 font-semibold text-lg">{analysisResult.lips_health.overall_score}/100</p>
                     </div>
-                    <div>
-                      <p className="font-medium text-white drop-shadow-lg">Hydration</p>
-                      <p className="text-pink-300 font-semibold">{analysisResult.lips_health.hydration_level}</p>
+                    <div className="bg-pink-500/20 backdrop-blur-sm p-3 rounded-lg border border-pink-400/30">
+                      <p className="font-bold text-white drop-shadow-lg text-xs uppercase tracking-wide">Hydration</p>
+                      <p className="text-pink-200 font-semibold text-lg">{analysisResult.lips_health.hydration_level}</p>
                     </div>
-                    <div>
-                      <p className="font-medium text-white drop-shadow-lg">Confidence</p>
-                      <p className="text-pink-300 font-semibold">{Math.round(analysisResult.confidence * 100)}%</p>
+                    <div className="bg-pink-500/20 backdrop-blur-sm p-3 rounded-lg border border-pink-400/30">
+                      <p className="font-bold text-white drop-shadow-lg text-xs uppercase tracking-wide">Confidence</p>
+                      <p className="text-pink-200 font-semibold text-lg">{Math.round(analysisResult.confidence * 100)}%</p>
                     </div>
                   </div>
                   
                   {/* Lip Conditions */}
-                  <div>
-                    <p className="font-medium text-white drop-shadow-lg mb-2">Lip Conditions</p>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-white/80">Dryness:</span>
-                        <span className="font-medium text-white">{analysisResult.lips_conditions.dryness.severity}</span>
+                  <div className="bg-purple-500/20 backdrop-blur-sm p-4 rounded-lg border border-purple-400/30">
+                    <p className="font-bold text-white drop-shadow-lg mb-3 text-sm uppercase tracking-wide">Lip Conditions</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                        <span className="text-white/90 font-medium">Dryness:</span>
+                        <span className="font-bold text-white">{analysisResult.lips_conditions.dryness.severity}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-white/80">Texture:</span>
-                        <span className="font-medium text-white">{analysisResult.lips_conditions.texture.smoothness}</span>
+                      <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                        <span className="text-white/90 font-medium">Texture:</span>
+                        <span className="font-bold text-white">{analysisResult.lips_conditions.texture.smoothness}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-white/80">Color:</span>
-                        <span className="font-medium text-white">{analysisResult.lips_health.lip_color}</span>
+                      <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                        <span className="text-white/90 font-medium">Color:</span>
+                        <span className="font-bold text-white">{analysisResult.lips_health.lip_color}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-white/80">Volume:</span>
-                        <span className="font-medium text-white">{analysisResult.lips_health.lip_volume}</span>
+                      <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                        <span className="text-white/90 font-medium">Volume:</span>
+                        <span className="font-bold text-white">{analysisResult.lips_health.lip_volume}</span>
                       </div>
                     </div>
                   </div>
                   
                   {/* Recommendations for Better Lip Health */}
                   {analysisResult.recommendations && (
-                    <div className="space-y-3">
-                      <div className="bg-green-500/20 backdrop-blur-sm p-3 rounded-lg border border-green-400/30">
-                        <h4 className="font-semibold text-green-200 mb-2 flex items-center gap-2">
+                    <div className="space-y-4">
+                      <div className="bg-green-500/20 backdrop-blur-sm p-4 rounded-lg border border-green-400/30">
+                        <h4 className="font-bold text-green-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                           <Droplets className="h-4 w-4" />
-                          💧 Daily Lip Care
+                          Daily Lip Care
                         </h4>
-                        <div className="space-y-1 text-xs">
+                        <div className="space-y-2 text-sm">
                           {analysisResult.recommendations.daily_care.map((care, idx) => (
-                            <div key={idx} className="flex items-start gap-1">
-                              <span className="text-green-300 mt-1">•</span>
-                              <span className="text-green-100">{care}</span>
+                            <div key={idx} className="flex items-start gap-2 p-2 bg-white/10 rounded-lg">
+                              <span className="text-green-300 mt-1 font-bold">•</span>
+                              <span className="text-green-100 font-medium leading-relaxed">{care}</span>
                             </div>
                           ))}
                         </div>
                       </div>
                       
-                      <div className="bg-blue-500/20 backdrop-blur-sm p-3 rounded-lg border border-blue-400/30">
-                        <h4 className="font-semibold text-blue-200 mb-2 flex items-center gap-2">
+                      <div className="bg-blue-500/20 backdrop-blur-sm p-4 rounded-lg border border-blue-400/30">
+                        <h4 className="font-bold text-blue-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                           <Calendar className="h-4 w-4" />
-                          📅 Weekly Treatments
+                          Weekly Treatments
                         </h4>
-                        <div className="space-y-1 text-xs">
+                        <div className="space-y-2 text-sm">
                           {analysisResult.recommendations.weekly_treatments.map((treatment, idx) => (
-                            <div key={idx} className="flex items-start gap-1">
-                              <span className="text-blue-300 mt-1">•</span>
-                              <span className="text-blue-100">{treatment}</span>
+                            <div key={idx} className="flex items-start gap-2 p-2 bg-white/10 rounded-lg">
+                              <span className="text-blue-300 mt-1 font-bold">•</span>
+                              <span className="text-blue-100 font-medium leading-relaxed">{treatment}</span>
                             </div>
                           ))}
                         </div>
                       </div>
                       
-                      <div className="bg-purple-500/20 backdrop-blur-sm p-3 rounded-lg border border-purple-400/30">
-                        <h4 className="font-semibold text-purple-200 mb-2 flex items-center gap-2">
+                      <div className="bg-purple-500/20 backdrop-blur-sm p-4 rounded-lg border border-purple-400/30">
+                        <h4 className="font-bold text-purple-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                           <Palette className="h-4 w-4" />
-                          💄 Product Recommendations
+                          Product Recommendations
                         </h4>
-                        <div className="space-y-1 text-xs">
+                        <div className="space-y-2 text-sm">
                           {analysisResult.recommendations.product_recommendations.map((product, idx) => (
-                            <div key={idx} className="flex items-start gap-1">
-                              <span className="text-purple-300 mt-1">•</span>
-                              <span className="text-purple-100">{product}</span>
+                            <div key={idx} className="flex items-start gap-2 p-2 bg-white/10 rounded-lg">
+                              <span className="text-purple-300 mt-1 font-bold">•</span>
+                              <span className="text-purple-100 font-medium leading-relaxed">{product}</span>
                             </div>
                           ))}
                         </div>
@@ -687,32 +687,32 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
                   
                   {/* Things to Avoid */}
                   {analysisResult.avoid_practices && (
-                    <div className="space-y-3">
-                      <div className="bg-red-500/20 backdrop-blur-sm p-3 rounded-lg border border-red-400/30">
-                        <h4 className="font-semibold text-red-200 mb-2 flex items-center gap-2">
+                    <div className="space-y-4">
+                      <div className="bg-red-500/20 backdrop-blur-sm p-4 rounded-lg border border-red-400/30">
+                        <h4 className="font-bold text-red-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                           <X className="h-4 w-4" />
-                          ❌ Daily Mistakes to Avoid
+                          Daily Mistakes to Avoid
                         </h4>
-                        <div className="space-y-1 text-xs">
+                        <div className="space-y-2 text-sm">
                           {analysisResult.avoid_practices.daily_mistakes.map((mistake, idx) => (
-                            <div key={idx} className="flex items-start gap-1">
-                              <span className="text-red-300 mt-1">•</span>
-                              <span className="text-red-100">{mistake}</span>
+                            <div key={idx} className="flex items-start gap-2 p-2 bg-white/10 rounded-lg">
+                              <span className="text-red-300 mt-1 font-bold">•</span>
+                              <span className="text-red-100 font-medium leading-relaxed">{mistake}</span>
                             </div>
                           ))}
                         </div>
                       </div>
                       
-                      <div className="bg-orange-500/20 backdrop-blur-sm p-3 rounded-lg border border-orange-400/30">
-                        <h4 className="font-semibold text-orange-200 mb-2 flex items-center gap-2">
+                      <div className="bg-orange-500/20 backdrop-blur-sm p-4 rounded-lg border border-orange-400/30">
+                        <h4 className="font-bold text-orange-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                           <AlertTriangle className="h-4 w-4" />
-                          ⚠️ Harmful Ingredients to Avoid
+                          Harmful Ingredients to Avoid
                         </h4>
-                        <div className="space-y-1 text-xs">
+                        <div className="space-y-2 text-sm">
                           {analysisResult.avoid_practices.harmful_ingredients.map((ingredient, idx) => (
-                            <div key={idx} className="flex items-start gap-1">
-                              <span className="text-orange-300 mt-1">•</span>
-                              <span className="text-orange-100">{ingredient}</span>
+                            <div key={idx} className="flex items-start gap-2 p-2 bg-white/10 rounded-lg">
+                              <span className="text-orange-300 mt-1 font-bold">•</span>
+                              <span className="text-orange-100 font-medium leading-relaxed">{ingredient}</span>
                             </div>
                           ))}
                         </div>

@@ -353,18 +353,18 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
             </div>
           </div>
         ) : (
-          <div className="absolute inset-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
+          <div className="absolute inset-2 sm:inset-4 bg-white/20 backdrop-blur-sm rounded-lg p-2 sm:p-4 overflow-y-auto max-h-[calc(100vh-8rem)]">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-400" />
-                <h3 className="font-semibold text-white drop-shadow-lg">Analysis Complete</h3>
+                <h3 className="font-bold text-white drop-shadow-lg text-base sm:text-lg">Hair Analysis Complete</h3>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <Button
                   onClick={resetAnalysis}
                   variant="outline"
                   size="sm"
-                  className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                  className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 flex-1 sm:flex-none"
                 >
                   <RotateCcw className="h-3 w-3 mr-1" />
                   New Analysis
@@ -373,7 +373,7 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
                   onClick={onClose}
                   variant="outline"
                   size="sm"
-                  className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                  className="text-xs bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30 flex-1 sm:flex-none"
                 >
                   <X className="h-3 w-3 mr-1" />
                   Close
@@ -382,44 +382,113 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
             </div>
             
             {/* Results */}
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <p className="font-medium text-white drop-shadow-lg">Hair Type</p>
-                  <p className="text-purple-300 font-semibold">{analysisResult.hairType}</p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div className="bg-purple-500/20 backdrop-blur-sm p-3 rounded-lg border border-purple-400/30">
+                  <p className="font-bold text-white drop-shadow-lg text-xs uppercase tracking-wide">Hair Type</p>
+                  <p className="text-purple-200 font-semibold text-lg">{analysisResult.hair_type?.curl_pattern || analysisResult.hairType}</p>
                 </div>
-                <div>
-                  <p className="font-medium text-white drop-shadow-lg">Confidence</p>
-                  <p className="text-purple-300 font-semibold">{Math.round(analysisResult.confidence * 100)}%</p>
+                <div className="bg-purple-500/20 backdrop-blur-sm p-3 rounded-lg border border-purple-400/30">
+                  <p className="font-bold text-white drop-shadow-lg text-xs uppercase tracking-wide">Confidence</p>
+                  <p className="text-purple-200 font-semibold text-lg">{Math.round(analysisResult.confidence * 100)}%</p>
                 </div>
               </div>
               
-              <div className="bg-purple-500/20 backdrop-blur-sm p-3 rounded-lg border border-purple-400/30">
-                <h4 className="font-semibold text-purple-200 mb-2 flex items-center gap-2">
-                  <Scissors className="h-4 w-4" />
+              {/* Hair Type Details */}
+              {analysisResult.hair_type && (
+                <div className="bg-purple-500/20 backdrop-blur-sm p-4 rounded-lg border border-purple-400/30">
+                  <h4 className="font-bold text-purple-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                    <Scissors className="h-4 w-4" />
+                    Hair Type Details
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Curl Pattern:</span>
+                      <span className="font-bold text-white">{analysisResult.hair_type.curl_pattern}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Texture:</span>
+                      <span className="font-bold text-white">{analysisResult.hair_type.texture}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Density:</span>
+                      <span className="font-bold text-white">{analysisResult.hair_type.density}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Porosity:</span>
+                      <span className="font-bold text-white">{analysisResult.hair_type.porosity}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Hair Condition */}
+              <div className="bg-blue-500/20 backdrop-blur-sm p-4 rounded-lg border border-blue-400/30">
+                <h4 className="font-bold text-blue-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
+                  <CheckCircle className="h-4 w-4" />
                   Hair Condition
                 </h4>
-                <p className="text-purple-100 text-sm">{analysisResult.hairCondition}</p>
+                {analysisResult.hair_condition ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Health Score:</span>
+                      <span className="font-bold text-white">{analysisResult.hair_condition.health_score}/100</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Damage Level:</span>
+                      <span className="font-bold text-white">{analysisResult.hair_condition.damage_level}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Dryness:</span>
+                      <span className="font-bold text-white">{analysisResult.hair_condition.dryness}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Shine Level:</span>
+                      <span className="font-bold text-white">{analysisResult.hair_condition.shine_level}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-blue-100 text-sm font-medium">{analysisResult.hairCondition}</p>
+                )}
               </div>
               
-              <div className="bg-blue-500/20 backdrop-blur-sm p-3 rounded-lg border border-blue-400/30">
-                <h4 className="font-semibold text-blue-200 mb-2 flex items-center gap-2">
+              {/* Scalp Health */}
+              <div className="bg-green-500/20 backdrop-blur-sm p-4 rounded-lg border border-green-400/30">
+                <h4 className="font-bold text-green-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                   <CheckCircle className="h-4 w-4" />
                   Scalp Health
                 </h4>
-                <p className="text-blue-100 text-sm">{analysisResult.scalpHealth}</p>
+                {analysisResult.scalp_analysis ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Condition:</span>
+                      <span className="font-bold text-white">{analysisResult.scalp_analysis.condition}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Dandruff:</span>
+                      <span className="font-bold text-white">{analysisResult.scalp_analysis.dandruff}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white/10 rounded-lg">
+                      <span className="text-white/90 font-medium">Irritation:</span>
+                      <span className="font-bold text-white">{analysisResult.scalp_analysis.irritation}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-green-100 text-sm font-medium">{analysisResult.scalpHealth}</p>
+                )}
               </div>
               
-              <div className="bg-green-500/20 backdrop-blur-sm p-3 rounded-lg border border-green-400/30">
-                <h4 className="font-semibold text-green-200 mb-2 flex items-center gap-2">
+              {/* Care Recommendations */}
+              <div className="bg-orange-500/20 backdrop-blur-sm p-4 rounded-lg border border-orange-400/30">
+                <h4 className="font-bold text-orange-200 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide">
                   <CheckCircle className="h-4 w-4" />
                   Care Recommendations
                 </h4>
-                <div className="space-y-1 text-xs">
-                  {analysisResult.recommendations.map((rec, idx) => (
-                    <div key={idx} className="flex items-start gap-1">
-                      <span className="text-green-300 mt-1">•</span>
-                      <span className="text-green-100">{rec}</span>
+                <div className="space-y-2 text-sm">
+                  {(analysisResult.hair_care_routine || analysisResult.recommendations || []).map((rec, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-2 bg-white/10 rounded-lg">
+                      <span className="text-orange-300 mt-1 font-bold">•</span>
+                      <span className="text-orange-100 font-medium leading-relaxed">{rec}</span>
                     </div>
                   ))}
                 </div>
