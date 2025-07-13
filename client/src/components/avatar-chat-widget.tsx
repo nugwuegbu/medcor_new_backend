@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -14,6 +14,8 @@ import FaceAnalysisWidgetInline from "./face-analysis-widget-inline";
 import HairAnalysisWidget from "./hair-analysis-widget";
 import SkinAnalysisWidget from "./skin-analysis-widget";
 import LipsAnalysisWidget from "./lips-analysis-widget";
+import VoiceSkincareWidget from "./voice-skincare-tips";
+import VoiceIcon from "./ui/voice-icon";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -112,6 +114,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showHairPage, setShowHairPage] = useState(false);
   const [showSkinPage, setShowSkinPage] = useState(false);
   const [showLipsPage, setShowLipsPage] = useState(false);
+  const [showVoiceTipsPage, setShowVoiceTipsPage] = useState(false);
   const [faceAnalysisCameraActive, setFaceAnalysisCameraActive] = useState(false);
   const [faceAnalysisLoading, setFaceAnalysisLoading] = useState(false);
   const [faceAnalysisResult, setFaceAnalysisResult] = useState<any>(null);
@@ -1371,13 +1374,19 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         };
                         setMessages(prev => [...prev, errorMessage]);
                       }
+                    } },
+                    { icon: Volume2, label: "Voice Tips", angle: 360, action: () => { 
+                      console.log("🎤 Voice Skincare Tips button clicked");
+                      setShowVoiceTipsPage(true); 
+                      setSelectedMenuItem("voice-tips"); 
+                      setShowChatInterface(false);
                     } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;
                     const x = Math.cos(angleRad) * 130; // Increased to 130 for proper circle edge positioning
                     const y = Math.sin(angleRad) * 130; // Increased to 130 for proper circle edge positioning
                     
-                    const isSpecialIcon = ["hair", "skin", "lips", "doctors"].includes(item.label.toLowerCase());
+                    const isSpecialIcon = ["hair", "skin", "lips", "doctors", "voice tips"].includes(item.label.toLowerCase());
                     
                     return (
                       <button
@@ -2974,6 +2983,48 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
           </div>
         </div>
       )}
+
+        {/* Voice Skincare Tips View - Full chat widget structure */}
+        {showVoiceTipsPage && (
+          <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-blue-100/95 to-green-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
+            {/* Header - Voice Skincare Tips */}
+            <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
+              <div className="flex items-center gap-2">
+                <VoiceIcon className="h-4 w-4 text-blue-600" />
+                <span className="text-gray-700 text-sm">Voice Skincare Tips</span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <span className="text-purple-600 font-bold text-lg">medcor</span>
+                <Button variant="ghost" size="sm" onClick={onClose} className="p-0">
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Back Button */}
+            <button
+              onClick={() => {
+                setShowVoiceTipsPage(false);
+                setSelectedMenuItem(null);
+              }}
+              className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-blue-700 transition-all transform hover:scale-105 z-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="font-medium text-sm">Back</span>
+            </button>
+            
+            {/* Voice Skincare Tips Content */}
+            <div className="flex-1 pt-16">
+              <VoiceSkincareWidget 
+                onClose={() => {
+                  setShowVoiceTipsPage(false);
+                  setSelectedMenuItem(null);
+                }}
+              />
+            </div>
+          </div>
+        )}
     </div>
     </>
   );
