@@ -73,6 +73,7 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
   const [cameraReady, setCameraReady] = useState(false);
   const [analysisStep, setAnalysisStep] = useState(0);
   const [lipsDetected, setLipsDetected] = useState(false);
+  const [lipsPosition, setLipsPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -114,9 +115,11 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
     const detectionWidth = canvas.width / 3;
     const detectionHeight = canvas.height / 4;
     
-    // Look for lips-like colors in the detection area
+    // Look for lips-like colors and find their bounds
     let lipsColorPixels = 0;
     let totalPixels = 0;
+    let minX = canvas.width, maxX = 0;
+    let minY = canvas.height, maxY = 0;
     
     for (let y = centerY - detectionHeight/2; y < centerY + detectionHeight/2; y++) {
       for (let x = centerX - detectionWidth/2; x < centerX + detectionWidth/2; x++) {
@@ -129,6 +132,10 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
           // Check if pixel color is lips-like (reddish/pinkish tones)
           if (r > g && r > b && r > 100 && (r - g) > 20 && (r - b) > 10) {
             lipsColorPixels++;
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
           }
           totalPixels++;
         }
@@ -141,7 +148,26 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
     
     setLipsDetected(isLipsDetected);
     
-    // Just track lips detection for visual feedback
+    // Calculate lips position and size relative to video element
+    if (isLipsDetected && minX < maxX && minY < maxY) {
+      const videoRect = video.getBoundingClientRect();
+      const scaleX = videoRect.width / canvas.width;
+      const scaleY = videoRect.height / canvas.height;
+      
+      // Add some padding around detected lips
+      const padding = 20;
+      const lipsWidth = Math.max(80, (maxX - minX + padding * 2) * scaleX);
+      const lipsHeight = Math.max(40, (maxY - minY + padding * 2) * scaleY);
+      
+      setLipsPosition({
+        x: ((minX + maxX) / 2 - padding) * scaleX - lipsWidth / 2,
+        y: ((minY + maxY) / 2 - padding) * scaleY - lipsHeight / 2,
+        width: lipsWidth,
+        height: lipsHeight
+      });
+    } else {
+      setLipsPosition(null);
+    }
   };
 
   // Start lips detection when camera is ready
@@ -280,6 +306,7 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
     setIsAnalyzing(false);
     setAnalysisStep(0);
     setLipsDetected(false);
+    setLipsPosition(null);
   };
 
   // Cleanup function
@@ -378,6 +405,115 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
               )}
             </div>
           </div>
+
+          {/* Green Broken Lines Around Detected Lips */}
+          {lipsPosition && (
+            <div 
+              className="absolute pointer-events-none transition-all duration-300 ease-in-out"
+              style={{
+                left: lipsPosition.x,
+                top: lipsPosition.y,
+                width: lipsPosition.width,
+                height: lipsPosition.height,
+              }}
+            >
+              {/* Top broken line */}
+              <div className="absolute top-0 left-0 w-full h-0.5 flex">
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+              </div>
+              
+              {/* Bottom broken line */}
+              <div className="absolute bottom-0 left-0 w-full h-0.5 flex">
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+                <div className="w-2 h-full bg-transparent"></div>
+                <div className="w-4 h-full bg-green-400 animate-pulse"></div>
+              </div>
+              
+              {/* Left broken line */}
+              <div className="absolute left-0 top-0 w-0.5 h-full flex flex-col">
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+              </div>
+              
+              {/* Right broken line */}
+              <div className="absolute right-0 top-0 w-0.5 h-full flex flex-col">
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+                <div className="w-full h-2 bg-transparent"></div>
+                <div className="w-full h-3 bg-green-400 animate-pulse"></div>
+              </div>
+            </div>
+          )}
 
           {/* Analysis Overlays */}
           {!cameraReady ? (
