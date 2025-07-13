@@ -72,8 +72,11 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
   const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [analysisStep, setAnalysisStep] = useState(0);
+  const [lipsDetected, setLipsDetected] = useState(false);
+  const [positioningApproved, setPositioningApproved] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const analysisSteps = [
     "Capturing lip image...",
@@ -84,6 +87,81 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
   ];
 
   const analysisIcons = [Camera, Eye, Sparkles, Brain, Zap];
+
+  // Function to detect lips positioning
+  const detectLipsPosition = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return;
+    
+    // Set canvas size to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw current video frame to canvas
+    ctx.drawImage(video, 0, 0);
+    
+    // Get image data for analysis
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    
+    // Define lips detection area (center third of the image)
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const detectionWidth = canvas.width / 3;
+    const detectionHeight = canvas.height / 4;
+    
+    // Look for lips-like colors in the detection area
+    let lipsColorPixels = 0;
+    let totalPixels = 0;
+    
+    for (let y = centerY - detectionHeight/2; y < centerY + detectionHeight/2; y++) {
+      for (let x = centerX - detectionWidth/2; x < centerX + detectionWidth/2; x++) {
+        if (x >= 0 && x < canvas.width && y >= 0 && y < canvas.height) {
+          const index = (y * canvas.width + x) * 4;
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          
+          // Check if pixel color is lips-like (reddish/pinkish tones)
+          if (r > g && r > b && r > 100 && (r - g) > 20 && (r - b) > 10) {
+            lipsColorPixels++;
+          }
+          totalPixels++;
+        }
+      }
+    }
+    
+    // Calculate lips detection confidence
+    const lipsRatio = lipsColorPixels / totalPixels;
+    const isLipsDetected = lipsRatio > 0.05; // 5% threshold for lips detection
+    
+    setLipsDetected(isLipsDetected);
+    
+    // Check if lips are well-positioned (good detection and stable)
+    if (isLipsDetected && lipsRatio > 0.08) {
+      setPositioningApproved(true);
+    } else {
+      setPositioningApproved(false);
+    }
+  };
+
+  // Start lips detection when camera is ready
+  useEffect(() => {
+    if (cameraReady && !isAnalyzing && !analysisResult) {
+      detectionIntervalRef.current = setInterval(detectLipsPosition, 200); // Check every 200ms
+      
+      return () => {
+        if (detectionIntervalRef.current) {
+          clearInterval(detectionIntervalRef.current);
+        }
+      };
+    }
+  }, [cameraReady, isAnalyzing, analysisResult]);
 
   useEffect(() => {
     if (videoStream && videoRef.current) {
@@ -207,7 +285,18 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
     setError(null);
     setIsAnalyzing(false);
     setAnalysisStep(0);
+    setLipsDetected(false);
+    setPositioningApproved(false);
   };
+
+  // Cleanup function
+  useEffect(() => {
+    return () => {
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
+      }
+    };
+  }, []);
 
   console.log('💋 LIPS WIDGET DEBUG: Props received:', { videoStream: !!videoStream, hasVideoStream });
 
@@ -271,12 +360,40 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
           {/* Lip Focus Guide */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="relative">
-              <div className="w-32 h-16 border-2 border-pink-400 rounded-full border-dashed animate-pulse"></div>
+              <div className={`w-32 h-16 border-2 rounded-full border-dashed transition-all duration-300 ${
+                positioningApproved 
+                  ? 'border-green-500 bg-green-500/20' 
+                  : lipsDetected 
+                    ? 'border-yellow-400 bg-yellow-400/10' 
+                    : 'border-pink-400 animate-pulse'
+              }`}></div>
+              
+              {/* Positioning Status */}
               <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
-                <div className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                  Position lips here
+                <div className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
+                  positioningApproved 
+                    ? 'bg-green-500 text-white' 
+                    : lipsDetected 
+                      ? 'bg-yellow-400 text-white' 
+                      : 'bg-pink-500 text-white'
+                }`}>
+                  {positioningApproved ? 'Perfect positioning!' : lipsDetected ? 'Adjusting...' : 'Position lips here'}
                 </div>
               </div>
+              
+              {/* Green Approval Checkmark */}
+              {positioningApproved && (
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
+              )}
+              
+              {/* Detection Indicators */}
+              {lipsDetected && !positioningApproved && (
+                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center animate-pulse">
+                  <Eye className="h-3 w-3 text-white" />
+                </div>
+              )}
             </div>
           </div>
 
@@ -494,21 +611,39 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
         <div className="p-6 bg-white/80 backdrop-blur-sm border-t border-pink-200">
           <Button
             onClick={analyzeLips}
-            disabled={isAnalyzing || !cameraReady}
-            className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
+            disabled={isAnalyzing || !cameraReady || !positioningApproved}
+            className={`w-full font-semibold py-3 rounded-lg transition-all duration-300 transform hover:scale-105 ${
+              positioningApproved 
+                ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white' 
+                : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white cursor-not-allowed'
+            }`}
           >
             {isAnalyzing ? (
               <div className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 <span>Analyzing Lips...</span>
               </div>
+            ) : positioningApproved ? (
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                <span>Analyze Lips & Health</span>
+              </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Smile className="h-4 w-4" />
-                <span>Analyze Lips & Health</span>
+                <span>Position lips properly first</span>
               </div>
             )}
           </Button>
+          
+          {/* Positioning Status Info */}
+          {cameraReady && !positioningApproved && (
+            <div className="mt-2 text-center">
+              <p className="text-xs text-gray-600">
+                {lipsDetected ? 'Adjust lips within the guide area' : 'Position your lips in the guide area'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
