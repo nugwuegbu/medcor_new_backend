@@ -270,7 +270,6 @@ Changelog:
 - July 13, 2025. RESPONSIVE UI IMPROVEMENTS - Enhanced all three analysis widgets (Skin, Lips, Hair) with improved text readability using bolder fonts, better contrast, and larger text sizes. Removed horizontal scrolling by implementing responsive grid layouts that stack on mobile devices. Made all widgets fully responsive across device sizes with proper spacing, padding adjustments, and flexible layouts for optimal viewing on smartphones, tablets, and desktop computers
 - July 14, 2025. LANDING PAGE RESTORATION - Restored original landing page with Medcor avatar functionality and comprehensive feature showcase. Added interactive avatar demo section highlighting HeyGen-powered AI assistant, face recognition login, multi-language support, and advanced healthcare features including skin, hair, and lips analysis. Maintained clean, professional design while showcasing all core platform capabilities
 - July 14, 2025. SIMPLIFIED LANDING PAGE - Reverted to clean, minimal landing page design with centered avatar icon, feature cards for skin/hair/lips analysis, and streamlined navigation. Removed complex sections and focused on core functionality while maintaining chat widget integration
-- July 14, 2025. MINIMAL LANDING PAGE - Reduced landing page to absolute minimum: only "Provide a preview of the chat feature on the welcome screen" text with gray background and floating chat button. Chat widget functionality preserved completely
 
 ## User Preferences
 
