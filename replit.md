@@ -269,6 +269,7 @@ Changelog:
 - July 13, 2025. HAIR ANALYSIS API FIXED - Corrected environment variable names from REACT_APP_YCE_* to YOUCAM_API_KEY/YOUCAM_SECRET_KEY, Hair Analysis API now returns comprehensive hair analysis data including hair type, condition, color, scalp analysis, styling recommendations, and care routine suggestions with 200 success response
 - July 13, 2025. RESPONSIVE UI IMPROVEMENTS - Enhanced all three analysis widgets (Skin, Lips, Hair) with improved text readability using bolder fonts, better contrast, and larger text sizes. Removed horizontal scrolling by implementing responsive grid layouts that stack on mobile devices. Made all widgets fully responsive across device sizes with proper spacing, padding adjustments, and flexible layouts for optimal viewing on smartphones, tablets, and desktop computers
 - July 14, 2025. LANDING PAGE RESTORATION - Restored original landing page with Medcor avatar functionality and comprehensive feature showcase. Added interactive avatar demo section highlighting HeyGen-powered AI assistant, face recognition login, multi-language support, and advanced healthcare features including skin, hair, and lips analysis. Maintained clean, professional design while showcasing all core platform capabilities
+- July 14, 2025. SIMPLIFIED LANDING PAGE - Reverted to clean, minimal landing page design with centered avatar icon, feature cards for skin/hair/lips analysis, and streamlined navigation. Removed complex sections and focused on core functionality while maintaining chat widget integration
 
 ## User Preferences
 

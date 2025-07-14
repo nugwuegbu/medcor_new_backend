@@ -1,49 +1,51 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageCircle, Users, Calendar, Shield, Clock, Phone } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { MessageCircle, Heart, Sparkles, Users, Calendar, BookOpen, User } from "lucide-react";
 import { Link } from "wouter";
-import FaqSection from "@/components/faq-section";
 import FloatingChatButton from "@/components/floating-chat-button";
 import MedcorChatModal from "@/components/medcor-chat-modal";
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
 
-  // Auto-show modal when users first visit
-  useEffect(() => {
-    const hasVisited = localStorage.getItem('medcor-visited');
-    if (!hasVisited) {
-      const timer = setTimeout(() => {
-        setShowModal(true);
-        localStorage.setItem('medcor-visited', 'true');
-      }, 1500); // Show after 1.5 seconds
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="medical-gradient text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Welcome to Medcor.ai
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      {/* Main Hero Section */}
+      <section className="py-32">
+        <div className="max-w-4xl mx-auto text-center px-4">
+          <div className="mb-12">
+            <div className="relative inline-block">
+              <div className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-2xl">
+                <MessageCircle className="h-16 w-16 text-white" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <div className="w-3 h-3 bg-white rounded-full"></div>
+              </div>
+            </div>
+            
+            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              Medcor.ai
             </h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-              Experience revolutionary healthcare with face recognition, interactive AI avatars, and instant multi-language support. 
-              Your personalized medical journey starts here.
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+              Your AI-powered healthcare assistant with face recognition, interactive avatars, and comprehensive health analysis
             </p>
+            
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                onClick={() => setShowModal(true)}
+                size="lg" 
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 text-lg"
+              >
+                <MessageCircle className="h-5 w-5 mr-2" />
+                Start Chat
+              </Button>
               <Link href="/chat">
-                <Button size="lg" className="bg-white text-primary hover:bg-gray-100">
-                  <MessageCircle className="h-5 w-5 mr-2" />
-                  Chat with AI Assistant
-                </Button>
-              </Link>
-              <Link href="/appointments">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-purple-600 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg"
+                >
                   <Calendar className="h-5 w-5 mr-2" />
                   Book Appointment
                 </Button>
@@ -53,233 +55,85 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Interactive Avatar Demo Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Meet Your AI Health Assistant
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Experience the future of healthcare with our HeyGen-powered interactive avatar. 
-              Face recognition, voice interaction, and multi-language support all in one.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <MessageCircle className="h-8 w-8 text-primary" />
+      {/* Feature Cards */}
+      <section className="py-16">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Heart className="h-8 w-8 text-white" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Interactive Avatar</h3>
-                  <p className="text-gray-600">
-                    Chat with our HeyGen-powered AI avatar that responds with realistic voice and gestures. 
-                    Your personal healthcare assistant available 24/7.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <Users className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Face Recognition Login</h3>
-                  <p className="text-gray-600">
-                    Instant patient recognition - no passwords needed. Just look at the camera 
-                    and our AI will recognize you and load your medical history.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <Shield className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Multi-Language Support</h3>
-                  <p className="text-gray-600">
-                    Automatic language detection and response. Speak in Turkish, English, or Arabic 
-                    and get personalized healthcare guidance in your preferred language.
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-center">
-              <Card className="max-w-md">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Try Interactive Avatar</h3>
-                  <p className="text-gray-600 mb-4">
-                    Experience the power of HeyGen interactive avatars with voice recognition and real-time responses.
-                  </p>
-                  <div className="space-y-3">
-                    <Button 
-                      onClick={() => setShowModal(true)}
-                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                    >
-                      Start Avatar Chat
-                    </Button>
-                    <Link href="/chat">
-                      <Button 
-                        variant="outline"
-                        className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
-                      >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Full Chat Interface
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-16 bg-muted/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Advanced Healthcare Features</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Comprehensive health analysis and personalized care recommendations
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="medical-card">
-              <CardHeader>
-                <Users className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>Skin Analysis</CardTitle>
-                <CardDescription>
-                  AI-powered skin health assessment with personalized recommendations
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  YouCam AI technology analyzes your skin condition, identifies concerns, 
-                  and provides personalized skincare routines and product recommendations.
-                </p>
+                <h3 className="text-lg font-semibold mb-2">Skin Analysis</h3>
+                <p className="text-sm text-gray-600">AI-powered skin health assessment with personalized recommendations</p>
               </CardContent>
             </Card>
 
-            <Card className="medical-card">
-              <CardHeader>
-                <Calendar className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>Hair Analysis</CardTitle>
-                <CardDescription>
-                  Comprehensive hair and scalp health evaluation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Advanced hair analysis detects hair type, scalp condition, and damage levels. 
-                  Get personalized hair care routines and styling recommendations.
-                </p>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Hair Analysis</h3>
+                <p className="text-sm text-gray-600">Comprehensive hair and scalp health evaluation</p>
               </CardContent>
             </Card>
 
-            <Card className="medical-card">
-              <CardHeader>
-                <MessageCircle className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>Lips Analysis</CardTitle>
-                <CardDescription>
-                  Detailed lip health assessment and care guidance
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Analyze lip condition, hydration levels, and overall lip health. 
-                  Receive personalized lip care recommendations and treatment suggestions.
-                </p>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageCircle className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Lips Analysis</h3>
+                <p className="text-sm text-gray-600">Detailed lip health assessment and care guidance</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Face Recognition</h3>
+                <p className="text-sm text-gray-600">Instant patient recognition and secure login</p>
               </CardContent>
             </Card>
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h3 className="text-3xl font-bold mb-6">Healthcare Made Simple</h3>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <Shield className="h-6 w-6 text-primary mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold">Secure & Private</h4>
-                    <p className="text-muted-foreground">Your health data is protected with industry-standard security</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <Clock className="h-6 w-6 text-primary mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold">24/7 Availability</h4>
-                    <p className="text-muted-foreground">Get help whenever you need it, day or night</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <Phone className="h-6 w-6 text-primary mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold">Multiple Support Channels</h4>
-                    <p className="text-muted-foreground">Chat, video calls, or in-person visits - your choice</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="aspect-video bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="h-10 w-10 text-white" />
-                </div>
-                <p className="text-lg font-semibold text-primary">AI Assistant Ready to Help</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Quick Actions */}
+      <section className="py-16">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Get Started</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer" onClick={() => setShowModal(true)}>
+              <CardContent className="p-8 text-center">
+                <MessageCircle className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Chat Now</h3>
+                <p className="text-gray-600">Start instant conversation with AI assistant</p>
+              </CardContent>
+            </Card>
 
-      {/* FAQ Section */}
-      <FaqSection />
+            <Link href="/appointments">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <CardContent className="p-8 text-center">
+                  <Calendar className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Book Appointment</h3>
+                  <p className="text-gray-600">Schedule your visit with a doctor</p>
+                </CardContent>
+              </Card>
+            </Link>
 
-      {/* Contact Section */}
-      <section className="py-16 bg-muted/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h3 className="text-3xl font-bold mb-6">Need Help?</h3>
-            <p className="text-lg text-muted-foreground mb-8">
-              Our support team is here to assist you
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Phone className="h-8 w-8 text-primary mx-auto mb-3" />
-                  <h4 className="font-semibold mb-2">Emergency</h4>
-                  <p className="text-muted-foreground">911</p>
+            <Link href="/doctors">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <CardContent className="p-8 text-center">
+                  <User className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Find Doctors</h3>
+                  <p className="text-gray-600">Browse our medical professionals</p>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Phone className="h-8 w-8 text-primary mx-auto mb-3" />
-                  <h4 className="font-semibold mb-2">General Inquiries</h4>
-                  <p className="text-muted-foreground">(555) 123-4567</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <MessageCircle className="h-8 w-8 text-primary mx-auto mb-3" />
-                  <h4 className="font-semibold mb-2">Chat Support</h4>
-                  <p className="text-muted-foreground">Available 24/7</p>
-                </CardContent>
-              </Card>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
@@ -287,7 +141,7 @@ export default function Home() {
       {/* Floating Chat Button */}
       <FloatingChatButton />
 
-      {/* Auto-show Modal */}
+      {/* Chat Modal */}
       <MedcorChatModal 
         isOpen={showModal} 
         onClose={() => setShowModal(false)} 
