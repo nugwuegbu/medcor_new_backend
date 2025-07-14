@@ -1,27 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageCircle, Users, Calendar, Shield, Clock, Phone, Camera, User as Face } from "lucide-react";
+import { MessageCircle, Users, Calendar, Shield, Clock, Phone } from "lucide-react";
 import { Link } from "wouter";
 import FaqSection from "@/components/faq-section";
 import FloatingChatButton from "@/components/floating-chat-button";
 import MedcorChatModal from "@/components/medcor-chat-modal";
-import SystemTest from "@/components/system-test";
-import FaceAnalysisWidget from "@/components/face-analysis-widget";
-import FaceAnalysisTest from "@/components/face-analysis-test";
-import FaceAnalysisSimple from "@/components/face-analysis-simple";
-import FaceAnalysisHtml from "@/components/face-analysis-html";
-import FaceAnalysisFixed from "@/components/face-analysis-fixed";
-import FaceAnalysisCamera from "@/components/face-analysis-camera";
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
-  const [showFaceAnalysis, setShowFaceAnalysis] = useState(false);
-  const [showFaceTest, setShowFaceTest] = useState(false);
-  const [showFaceSimple, setShowFaceSimple] = useState(false);
-  const [showFaceHtml, setShowFaceHtml] = useState(false);
-  const [showFaceFixed, setShowFaceFixed] = useState(false);
-  const [showGlobalFaceAnalysis, setShowGlobalFaceAnalysis] = useState(false);
 
   // Auto-show modal when users first visit
   useEffect(() => {
@@ -66,16 +53,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Face Recognition Demo Section */}
+      {/* Interactive Avatar Demo Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Instant Recognition & Personalized Care
+              Meet Your AI Health Assistant
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our advanced face recognition technology identifies returning patients instantly, 
-              automatically detects your preferred language, and provides seamless access to your medical history.
+              Experience the future of healthcare with our HeyGen-powered interactive avatar. 
+              Face recognition, voice interaction, and multi-language support all in one.
             </p>
           </div>
           
@@ -83,13 +70,26 @@ export default function Home() {
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
-                  <Camera className="h-8 w-8 text-primary" />
+                  <MessageCircle className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Instant Recognition</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Interactive Avatar</h3>
                   <p className="text-gray-600">
-                    Simply look at your camera and our AI will instantly recognize you, 
-                    eliminating the need for passwords or lengthy login processes.
+                    Chat with our HeyGen-powered AI avatar that responds with realistic voice and gestures. 
+                    Your personal healthcare assistant available 24/7.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <Users className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Face Recognition Login</h3>
+                  <p className="text-gray-600">
+                    Instant patient recognition - no passwords needed. Just look at the camera 
+                    and our AI will recognize you and load your medical history.
                   </p>
                 </div>
               </div>
@@ -99,23 +99,10 @@ export default function Home() {
                   <Shield className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Privacy First</h3>
-                  <p className="text-gray-600">
-                    Your face data is encrypted and stored securely. We never save actual images, 
-                    only mathematical patterns for recognition.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <MessageCircle className="h-8 w-8 text-primary" />
-                </div>
-                <div>
                   <h3 className="text-lg font-semibold text-gray-900">Multi-Language Support</h3>
                   <p className="text-gray-600">
-                    Our system automatically detects your preferred language and provides 
-                    personalized care in your native tongue.
+                    Automatic language detection and response. Speak in Turkish, English, or Arabic 
+                    and get personalized healthcare guidance in your preferred language.
                   </p>
                 </div>
               </div>
@@ -124,26 +111,29 @@ export default function Home() {
             <div className="flex justify-center">
               <Card className="max-w-md">
                 <CardContent className="p-6 text-center">
-                  <Camera className="h-12 w-12 text-primary mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Try Face Recognition</h3>
+                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageCircle className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Try Interactive Avatar</h3>
                   <p className="text-gray-600 mb-4">
-                    Click the chat button to experience instant patient recognition and personalized care.
+                    Experience the power of HeyGen interactive avatars with voice recognition and real-time responses.
                   </p>
                   <div className="space-y-3">
                     <Button 
                       onClick={() => setShowModal(true)}
                       className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                     >
-                      Start Chat Demo
+                      Start Avatar Chat
                     </Button>
-                    <Button 
-                      onClick={() => setShowFaceFixed(true)}
-                      variant="outline"
-                      className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
-                    >
-                      <Face className="h-4 w-4 mr-2" />
-                      Face Analysis
-                    </Button>
+                    <Link href="/chat">
+                      <Button 
+                        variant="outline"
+                        className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Full Chat Interface
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
@@ -156,41 +146,25 @@ export default function Home() {
       <section className="py-16 bg-muted/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Why Choose MedCare AI?</h2>
+            <h2 className="text-3xl font-bold mb-4">Advanced Healthcare Features</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Advanced healthcare technology meets compassionate care
+              Comprehensive health analysis and personalized care recommendations
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="medical-card">
               <CardHeader>
-                <MessageCircle className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>AI-Powered Assistant</CardTitle>
-                <CardDescription>
-                  Get instant answers to your health questions and guidance on next steps
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Our AI assistant provides 24/7 support, helping you understand symptoms, 
-                  find the right care, and navigate your health journey.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="medical-card">
-              <CardHeader>
                 <Users className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>Expert Doctors</CardTitle>
+                <CardTitle>Skin Analysis</CardTitle>
                 <CardDescription>
-                  Connect with board-certified specialists in various medical fields
+                  AI-powered skin health assessment with personalized recommendations
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Our network includes experienced doctors from cardiology, orthopedics, 
-                  pediatrics, and more, ensuring you get the right expertise.
+                  YouCam AI technology analyzes your skin condition, identifies concerns, 
+                  and provides personalized skincare routines and product recommendations.
                 </p>
               </CardContent>
             </Card>
@@ -198,15 +172,31 @@ export default function Home() {
             <Card className="medical-card">
               <CardHeader>
                 <Calendar className="h-12 w-12 text-primary mb-4" />
-                <CardTitle>Easy Scheduling</CardTitle>
+                <CardTitle>Hair Analysis</CardTitle>
                 <CardDescription>
-                  Book appointments online with real-time availability
+                  Comprehensive hair and scalp health evaluation
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Skip the phone calls and book appointments instantly. 
-                  View doctor availability and choose times that work for you.
+                  Advanced hair analysis detects hair type, scalp condition, and damage levels. 
+                  Get personalized hair care routines and styling recommendations.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="medical-card">
+              <CardHeader>
+                <MessageCircle className="h-12 w-12 text-primary mb-4" />
+                <CardTitle>Lips Analysis</CardTitle>
+                <CardDescription>
+                  Detailed lip health assessment and care guidance
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Analyze lip condition, hydration levels, and overall lip health. 
+                  Receive personalized lip care recommendations and treatment suggestions.
                 </p>
               </CardContent>
             </Card>
@@ -259,13 +249,6 @@ export default function Home() {
       {/* FAQ Section */}
       <FaqSection />
 
-      {/* System Test Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SystemTest />
-        </div>
-      </section>
-
       {/* Contact Section */}
       <section className="py-16 bg-muted/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -308,36 +291,6 @@ export default function Home() {
       <MedcorChatModal 
         isOpen={showModal} 
         onClose={() => setShowModal(false)} 
-      />
-
-      {/* Face Analysis Widget */}
-      <FaceAnalysisWidget 
-        isOpen={showFaceAnalysis} 
-        onClose={() => setShowFaceAnalysis(false)} 
-      />
-      
-      {/* Face Analysis Test */}
-      <FaceAnalysisTest 
-        isOpen={showFaceTest} 
-        onClose={() => setShowFaceTest(false)} 
-      />
-      
-      {/* Face Analysis Simple */}
-      <FaceAnalysisSimple 
-        isOpen={showFaceSimple} 
-        onClose={() => setShowFaceSimple(false)} 
-      />
-      
-      {/* Face Analysis HTML */}
-      <FaceAnalysisHtml 
-        isOpen={showFaceHtml} 
-        onClose={() => setShowFaceHtml(false)} 
-      />
-      
-      {/* Face Analysis Fixed */}
-      <FaceAnalysisFixed 
-        isOpen={showFaceFixed} 
-        onClose={() => setShowFaceFixed(false)} 
       />
     </div>
   );
