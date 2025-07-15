@@ -1118,11 +1118,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Perfect Corp YCE API integration');
       
       // Perfect Corp YCE API credentials
-      const API_KEY = process.env.REACT_APP_YCE_API_KEY;
-      const ACCOUNT_ID = process.env.REACT_APP_YCE_ACCOUNT_ID;
-      const EMAIL = process.env.REACT_APP_YCE_EMAIL;
+      const API_KEY = process.env.YOUCAM_API_KEY;
+      const SECRET_KEY = process.env.YOUCAM_SECRET_KEY;
       
-      if (!API_KEY || !ACCOUNT_ID || !EMAIL) {
+      if (!API_KEY || !SECRET_KEY) {
         console.error('Missing YCE API credentials');
         return res.status(400).json({
           error: 'Missing YCE API credentials',
@@ -1130,7 +1129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log('YCE API credentials found, processing image...');
+      console.log('YCE API credentials found, processing image with API key:', API_KEY?.substring(0, 10) + '...');
       
       // Perfect Corp YCE SDK Full Feature Set (2025 API)
       const age = Math.floor(Math.random() * 30) + 20;
