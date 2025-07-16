@@ -123,6 +123,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraPermissionRequested, setCameraPermissionRequested] = useState(false);
   const [streamReady, setStreamReady] = useState(false);
+  const [analysisStreamReady, setAnalysisStreamReady] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
   const [locationWeather, setLocationWeather] = useState<string>("");
   const [showInfoOverlay, setShowInfoOverlay] = useState(false);
@@ -1266,17 +1267,20 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         // Force update the shared stream reference
                         videoStreamRef.current = stream;
                         
-                        // Small delay to ensure videoStreamRef is properly set
-                        setTimeout(() => {
-                          // Update UI states
-                          setShowHairPage(true); 
-                          setSelectedMenuItem("hair"); 
-                          setIsMinimized(false); 
-                          setShowChatInterface(false);
-                          setStreamReady(true);
-                          
-                          console.log("🎬 Hair Analysis page activated from minimized menu");
-                        }, 100);
+                        // Update UI states immediately
+                        setShowHairPage(true); 
+                        setSelectedMenuItem("hair"); 
+                        setIsMinimized(false); 
+                        setShowChatInterface(false);
+                        setStreamReady(true);
+                        setAnalysisStreamReady(true);
+                        
+                        console.log("🎬 Hair Analysis page activated from minimized menu");
+                        console.log("🎬 Hair Analysis videoStreamRef status:", {
+                          hasRef: !!videoStreamRef.current,
+                          hasGetTracks: videoStreamRef.current?.getTracks,
+                          trackCount: videoStreamRef.current?.getTracks?.()?.length || 0
+                        });
                         
                       } catch (err) {
                         console.error("🎬 Hair Analysis camera setup failed:", err);
@@ -1308,17 +1312,20 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         // Force update the shared stream reference
                         videoStreamRef.current = stream;
                         
-                        // Small delay to ensure videoStreamRef is properly set
-                        setTimeout(() => {
-                          // Update UI states
-                          setShowLipsPage(true); 
-                          setSelectedMenuItem("lips"); 
-                          setIsMinimized(false); 
-                          setShowChatInterface(false);
-                          setStreamReady(true);
-                          
-                          console.log("💋 Lips Analysis page activated from minimized menu");
-                        }, 100);
+                        // Update UI states immediately
+                        setShowLipsPage(true); 
+                        setSelectedMenuItem("lips"); 
+                        setIsMinimized(false); 
+                        setShowChatInterface(false);
+                        setStreamReady(true);
+                        setAnalysisStreamReady(true);
+                        
+                        console.log("💋 Lips Analysis page activated from minimized menu");
+                        console.log("💋 Lips Analysis videoStreamRef status:", {
+                          hasRef: !!videoStreamRef.current,
+                          hasGetTracks: videoStreamRef.current?.getTracks,
+                          trackCount: videoStreamRef.current?.getTracks?.()?.length || 0
+                        });
                         
                       } catch (err) {
                         console.error("💋 Lips Analysis camera setup failed:", err);
@@ -1350,17 +1357,20 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         // Force update the shared stream reference
                         videoStreamRef.current = stream;
                         
-                        // Small delay to ensure videoStreamRef is properly set
-                        setTimeout(() => {
-                          // Update UI states
-                          setShowSkinPage(true); 
-                          setSelectedMenuItem("skin"); 
-                          setIsMinimized(false); 
-                          setShowChatInterface(false);
-                          setStreamReady(true);
-                          
-                          console.log("🌟 Skin Analysis page activated successfully");
-                        }, 100);
+                        // Update UI states immediately
+                        setShowSkinPage(true); 
+                        setSelectedMenuItem("skin"); 
+                        setIsMinimized(false); 
+                        setShowChatInterface(false);
+                        setStreamReady(true);
+                        setAnalysisStreamReady(true);
+                        
+                        console.log("🌟 Skin Analysis page activated successfully");
+                        console.log("🌟 Skin Analysis videoStreamRef status:", {
+                          hasRef: !!videoStreamRef.current,
+                          hasGetTracks: videoStreamRef.current?.getTracks,
+                          trackCount: videoStreamRef.current?.getTracks?.()?.length || 0
+                        });
                         
                       } catch (err) {
                         console.error("🌟 Skin Analysis camera setup failed:", err);
@@ -2140,6 +2150,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               onClick={() => {
                 setShowHairPage(false);
                 setSelectedMenuItem(null);
+                setAnalysisStreamReady(false); // Reset analysis stream state
               }}
               className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
             >
@@ -2149,7 +2160,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             
             {/* Hair Analysis Content */}
             <div className="flex-1 pt-16">
-              {videoStreamRef.current && videoStreamRef.current.getTracks && videoStreamRef.current.getTracks().length > 0 ? (
+              {(analysisStreamReady && videoStreamRef.current && videoStreamRef.current.getTracks && videoStreamRef.current.getTracks().length > 0) ? (
                 <HairAnalysisWidget 
                   onClose={onClose}
                   videoStream={videoStreamRef.current}
@@ -2231,6 +2242,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               onClick={() => {
                 setShowSkinPage(false);
                 setSelectedMenuItem(null);
+                setAnalysisStreamReady(false); // Reset analysis stream state
               }}
               className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-pink-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-pink-700 transition-all transform hover:scale-105 z-50"
             >
@@ -2240,7 +2252,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             
             {/* Skin Analysis Content */}
             <div className="flex-1 pt-16">
-              {videoStreamRef.current && videoStreamRef.current.getTracks && videoStreamRef.current.getTracks().length > 0 ? (
+              {(analysisStreamReady && videoStreamRef.current && videoStreamRef.current.getTracks && videoStreamRef.current.getTracks().length > 0) ? (
                 <SkinAnalysisWidget 
                   onClose={onClose}
                   videoStream={videoStreamRef.current}
@@ -2322,6 +2334,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               onClick={() => {
                 setShowLipsPage(false);
                 setSelectedMenuItem(null);
+                setAnalysisStreamReady(false); // Reset analysis stream state
               }}
               className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-pink-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-pink-700 transition-all transform hover:scale-105 z-50"
             >
@@ -2331,7 +2344,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             
             {/* Lips Analysis Content */}
             <div className="flex-1 pt-16">
-              {videoStreamRef.current && videoStreamRef.current.getTracks && videoStreamRef.current.getTracks().length > 0 ? (
+              {(analysisStreamReady && videoStreamRef.current && videoStreamRef.current.getTracks && videoStreamRef.current.getTracks().length > 0) ? (
                 <LipsAnalysisWidget 
                   onClose={onClose}
                   videoStream={videoStreamRef.current}
