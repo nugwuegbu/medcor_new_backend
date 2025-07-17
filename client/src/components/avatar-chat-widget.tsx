@@ -122,6 +122,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showDoctorList, setShowDoctorList] = useState(false);
   const [showRecordsList, setShowRecordsList] = useState(false);
   const [showAdminPage, setShowAdminPage] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminLoginData, setAdminLoginData] = useState({ email: '', password: '' });
   const [showFacePage, setShowFacePage] = useState(false);
   const [showHairPage, setShowHairPage] = useState(false);
   const [showSkinPage, setShowSkinPage] = useState(false);
@@ -1421,8 +1423,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     } },
                     { icon: Phone, label: "Call", angle: 120, action: () => setSelectedMenuItem("call") },
                     { icon: UserCheck, label: "Admin", angle: 160, action: () => { 
-                      console.log("Admin button clicked - redirecting to admin login");
-                      window.location.href = '/admin/login';
+                      console.log("Admin button clicked - showing admin login");
+                      setShowAdminLogin(true);
+                      setSelectedMenuItem("admin");
+                      setIsMinimized(false);
+                      setShowChatInterface(false);
                     } },
                     { icon: Smile, label: "Face", angle: 200, action: () => { 
                       if (!hasConsent) {
@@ -2123,6 +2128,99 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   </div>
                 )}
                 
+                {/* Admin Login Interface */}
+                {showAdminLogin && (
+                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => {
+                        setShowAdminLogin(false);
+                        setSelectedMenuItem(null);
+                      }}
+                      className="absolute top-[20px] left-[20px] flex items-center gap-1 px-3 py-2 bg-white/80 text-gray-700 rounded-md shadow-md hover:shadow-lg hover:bg-white transition-all transform hover:scale-105 z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Admin Login Form */}
+                    <div className="h-full flex items-center justify-center p-6">
+                      <div className="w-full max-w-md">
+                        {/* Welcome Header */}
+                        <div className="text-center mb-8">
+                          <h2 className="text-xl font-light text-gray-600 mb-2">Welcome</h2>
+                          <h1 className="text-2xl font-bold text-purple-600">medcorhospital</h1>
+                        </div>
+                        
+                        {/* Login Form */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
+                          <div className="mb-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-1">Login</h3>
+                            <div className="w-12 h-0.5 bg-purple-600"></div>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <input
+                                type="email"
+                                placeholder="Email"
+                                value={adminLoginData.email}
+                                onChange={(e) => setAdminLoginData(prev => ({ ...prev, email: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-100 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-700 placeholder-gray-500"
+                              />
+                            </div>
+                            
+                            <div>
+                              <input
+                                type="password"
+                                placeholder="Password"
+                                value={adminLoginData.password}
+                                onChange={(e) => setAdminLoginData(prev => ({ ...prev, password: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-100 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-700 placeholder-gray-500"
+                              />
+                            </div>
+                            
+                            <div className="flex gap-3 pt-4">
+                              <button
+                                onClick={() => {
+                                  console.log("Login attempted with:", adminLoginData);
+                                  // TODO: Implement login logic
+                                }}
+                                className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-medium py-3 px-6 rounded-full transition-all duration-200 transform hover:scale-105 shadow-lg"
+                              >
+                                LOGIN
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  console.log("Sign up clicked");
+                                  // TODO: Implement sign up logic
+                                }}
+                                className="flex-1 bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-full border border-gray-300 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                              >
+                                SIGN UP
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Continue as Guest */}
+                        <div className="text-center mt-6">
+                          <button
+                            onClick={() => {
+                              setShowAdminLogin(false);
+                              setSelectedMenuItem(null);
+                            }}
+                            className="text-purple-600 hover:text-purple-700 font-medium text-sm underline transition-colors"
+                          >
+                            Continue as Guest
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Admin Page View */}
                 {showAdminPage && (
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
@@ -2186,8 +2284,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             { icon: FileText, label: "Records", angle: 102, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                             { icon: Phone, label: "Call", angle: 153, action: () => setSelectedMenuItem("call") },
                             { icon: UserCheck, label: "Admin", angle: 204, action: () => { 
-                              console.log("Admin button clicked - redirecting to admin login");
-                              window.location.href = '/admin/login';
+                              console.log("Admin button clicked - showing admin login");
+                              setShowAdminLogin(true);
+                              setSelectedMenuItem("admin");
                             } },
                             { icon: Smile, label: "Face", angle: 255, action: () => { 
                               console.log('🔴 Face button clicked - Setting states synchronously');
