@@ -457,6 +457,129 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     }
   });
 
+  // Smart keyword detection function
+  const detectIntentAndRedirect = (text: string) => {
+    const normalizedText = text.toLowerCase();
+    
+    // Booking/Appointment keywords
+    const bookingKeywords = ['book', 'appointment', 'schedule', 'reserve', 'meet', 'visit', 'consultation'];
+    if (bookingKeywords.some(keyword => normalizedText.includes(keyword))) {
+      setShowChatInterface(false);
+      setShowBookingCalendar(true);
+      setSelectedMenuItem("book");
+      setSelectedDate(null);
+      setBookingFormData(prev => ({ ...prev, selectedDate: null }));
+      return true;
+    }
+    
+    // Doctor keywords
+    const doctorKeywords = ['doctor', 'physician', 'specialist', 'medical staff', 'healthcare provider', 'dr.', 'dr '];
+    if (doctorKeywords.some(keyword => normalizedText.includes(keyword))) {
+      setShowDoctorList(true);
+      setSelectedMenuItem("doctors");
+      setShowChatInterface(false);
+      setIsMinimized(true);
+      return true;
+    }
+    
+    // Records keywords
+    const recordsKeywords = ['record', 'history', 'medical record', 'document', 'report', 'upload'];
+    if (recordsKeywords.some(keyword => normalizedText.includes(keyword))) {
+      setShowRecordsList(true);
+      setSelectedMenuItem("records");
+      setShowChatInterface(false);
+      setIsMinimized(true);
+      return true;
+    }
+    
+    // Face analysis keywords
+    const faceKeywords = ['face', 'facial', 'face analysis', 'face scan', 'facial recognition'];
+    if (faceKeywords.some(keyword => normalizedText.includes(keyword))) {
+      if (hasConsent) {
+        setShowFacePage(true);
+        setSelectedMenuItem("face");
+        setShowChatInterface(true);
+        setShowDoctorList(false);
+        setShowRecordsList(false);
+        setShowAdminPage(false);
+        setShowBookingCalendar(false);
+        setIsMinimized(false);
+        setCameraEnabled(true);
+        setCameraPermissionRequested(true);
+        return true;
+      }
+    }
+    
+    // Hair analysis keywords
+    const hairKeywords = ['hair', 'hair analysis', 'hair scan', 'hair health', 'scalp', 'hair care'];
+    if (hairKeywords.some(keyword => normalizedText.includes(keyword))) {
+      if (hasConsent) {
+        setShowHairPage(true);
+        setSelectedMenuItem("hair");
+        setIsMinimized(false);
+        setShowChatInterface(false);
+        setStreamReady(true);
+        setAnalysisStreamReady(true);
+        return true;
+      }
+    }
+    
+    // Skin analysis keywords
+    const skinKeywords = ['skin', 'skin analysis', 'skin scan', 'skin health', 'skincare', 'complexion'];
+    if (skinKeywords.some(keyword => normalizedText.includes(keyword))) {
+      if (hasConsent) {
+        setShowSkinPage(true);
+        setSelectedMenuItem("skin");
+        setIsMinimized(false);
+        setShowChatInterface(false);
+        setStreamReady(true);
+        setAnalysisStreamReady(true);
+        return true;
+      }
+    }
+    
+    // Lips analysis keywords
+    const lipsKeywords = ['lips', 'lip analysis', 'lip scan', 'lip health', 'lip care'];
+    if (lipsKeywords.some(keyword => normalizedText.includes(keyword))) {
+      if (hasConsent) {
+        setShowLipsPage(true);
+        setSelectedMenuItem("lips");
+        setIsMinimized(false);
+        setShowChatInterface(false);
+        setStreamReady(true);
+        setAnalysisStreamReady(true);
+        return true;
+      }
+    }
+    
+    // Hair Extension keywords
+    const hairExtensionKeywords = ['hair extension', 'hair extensions', 'hair piece', 'hair augmentation'];
+    if (hairExtensionKeywords.some(keyword => normalizedText.includes(keyword))) {
+      if (hasConsent) {
+        setShowHairExtensionWidget(true);
+        setSelectedMenuItem("hair-extension");
+        return true;
+      }
+    }
+    
+    // Admin keywords
+    const adminKeywords = ['admin', 'administrator', 'management', 'backend', 'admin panel'];
+    if (adminKeywords.some(keyword => normalizedText.includes(keyword))) {
+      window.location.href = '/admin/login';
+      return true;
+    }
+    
+    // Call keywords
+    const callKeywords = ['call', 'phone', 'telephone', 'contact', 'speak to someone'];
+    if (callKeywords.some(keyword => normalizedText.includes(keyword))) {
+      setSelectedMenuItem("call");
+      // Add call functionality here
+      return true;
+    }
+    
+    return false; // No intent detected
+  };
+
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
@@ -479,6 +602,27 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     setMessages(prev => [...prev, userMessage]);
     setInputText("");
     
+    // Check for intent and redirect before sending to AI
+    const wasRedirected = detectIntentAndRedirect(text.trim());
+    
+    if (wasRedirected) {
+      // Add a bot message indicating redirection
+      const botMessage: Message = {
+        id: `bot_${Date.now()}`,
+        text: "I understand you want to access that feature. I'm redirecting you now.",
+        sender: "bot",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, botMessage]);
+      
+      // Make avatar speak the redirection message
+      if (avatarRef.current) {
+        avatarRef.current.speak("I understand you want to access that feature. I'm redirecting you now.");
+      }
+      
+      return; // Don't send to AI if redirected
+    }
+    
     // Track user messages and show auth after 2 messages
     const newCount = userMessageCount + 1;
     setUserMessageCount(newCount);
@@ -492,6 +636,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleDoctorsSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
+    // Check for consent before allowing AI interaction
+    if (!hasConsent) {
+      // Show consent modal if not accepted
+      return;
+    }
+
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
 
@@ -504,6 +654,27 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
     setMessages(prev => [...prev, userMessage]);
     setDoctorsInputText("");
+    
+    // Check for intent and redirect before sending to AI
+    const wasRedirected = detectIntentAndRedirect(text.trim());
+    
+    if (wasRedirected) {
+      // Add a bot message indicating redirection
+      const botMessage: Message = {
+        id: `bot_${Date.now()}`,
+        text: "I understand you want to access that feature. I'm redirecting you now.",
+        sender: "bot",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, botMessage]);
+      
+      // Make avatar speak the redirection message
+      if (avatarRef.current) {
+        avatarRef.current.speak("I understand you want to access that feature. I'm redirecting you now.");
+      }
+      
+      return; // Don't send to AI if redirected
+    }
     
     // Track user messages and show auth after 2 messages
     const newCount = userMessageCount + 1;
@@ -1242,7 +1413,12 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setShowChatInterface(false);
                       setIsMinimized(true);
                     } },
-                    { icon: FileText, label: "Records", angle: 80, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
+                    { icon: FileText, label: "Records", angle: 80, action: () => { 
+                      setShowRecordsList(true); 
+                      setSelectedMenuItem("records"); 
+                      setShowChatInterface(false);
+                      setIsMinimized(true);
+                    } },
                     { icon: Phone, label: "Call", angle: 120, action: () => setSelectedMenuItem("call") },
                     { icon: UserCheck, label: "Admin", angle: 160, action: () => { 
                       console.log("Admin button clicked - redirecting to admin login");
