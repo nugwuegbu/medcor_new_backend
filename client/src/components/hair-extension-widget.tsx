@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { X, Crown, Upload, Sparkles, Palette, RefreshCw, Download, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { X, Crown, Upload, Sparkles, Palette, RefreshCw, Download, ChevronLeft, ChevronRight, Loader2, Camera } from 'lucide-react';
 import { videoStreamRef } from "../utils/camera-manager";
 
 interface HairExtensionWidgetProps {
@@ -36,8 +36,12 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<'upload' | 'select' | 'process' | 'result'>('upload');
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [hasPermission, setHasPermission] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Initialize hair extension categories and styles
   useEffect(() => {
@@ -47,7 +51,17 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
       setSelectedImage(null);
       setProcessedImage(null);
       setError(null);
+      // Auto-start camera when widget opens
+      requestCameraPermission();
     }
+    
+    // Cleanup camera when widget closes
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        setCameraStream(null);
+      }
+    };
   }, [isOpen]);
 
   const loadHairExtensionStyles = async () => {
@@ -63,6 +77,64 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
       console.error('Failed to load hair extension styles:', error);
       setCategories(getMockCategories());
     }
+  };
+
+  // Camera functions
+  const requestCameraPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user' },
+        audio: false 
+      });
+      setCameraStream(stream);
+      setHasPermission(true);
+      setShowCamera(true);
+      
+      // Set up video element
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      
+      console.log('📷 Hair Extension: Camera access granted');
+    } catch (error) {
+      console.error('📷 Hair Extension: Camera access denied:', error);
+      setHasPermission(false);
+      setShowCamera(false);
+      setError('Camera access is required to capture your photo for hair extension analysis');
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        setSelectedImage(imageData);
+        setCurrentStep('select');
+        setShowCamera(false);
+        
+        // Stop camera stream after capture
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          setCameraStream(null);
+        }
+        
+        console.log('📷 Hair Extension: Photo captured successfully');
+      }
+    }
+  };
+
+  const retakePhoto = () => {
+    setSelectedImage(null);
+    setCurrentStep('upload');
+    requestCameraPermission();
   };
 
   const getMockCategories = (): HairExtensionCategory[] => [
@@ -265,6 +337,8 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        {/* Hidden canvas for photo capture */}
+        <canvas ref={canvasRef} className="hidden" />
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
           <div className="flex items-center justify-between">
@@ -298,7 +372,7 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                 {/* Camera Capture */}
                 <div className="bg-gray-50 rounded-xl p-6 text-center">
                   <h4 className="font-semibold mb-4">Capture from Camera</h4>
-                  {videoStreamRef.current ? (
+                  {showCamera && cameraStream ? (
                     <div className="space-y-4">
                       <video
                         ref={videoRef}
@@ -308,7 +382,7 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                         className="w-full h-48 object-cover rounded-lg bg-gray-200"
                       />
                       <Button
-                        onClick={captureFromCamera}
+                        onClick={capturePhoto}
                         className="w-full bg-purple-600 hover:bg-purple-700"
                       >
                         <Sparkles className="h-4 w-4 mr-2" />
@@ -316,8 +390,31 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                       </Button>
                     </div>
                   ) : (
-                    <div className="h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-500">Camera not available</p>
+                    <div className="space-y-4">
+                      <div className="h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+                        {hasPermission ? (
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                            <p className="text-gray-500">Starting camera...</p>
+                          </div>
+                        ) : (
+                          <div className="text-center">
+                            <div className="h-12 w-12 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                              <Sparkles className="h-6 w-6 text-white" />
+                            </div>
+                            <p className="text-gray-500">Camera access required</p>
+                          </div>
+                        )}
+                      </div>
+                      {!hasPermission && (
+                        <Button
+                          onClick={requestCameraPermission}
+                          className="w-full bg-purple-600 hover:bg-purple-700"
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Enable Camera
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
