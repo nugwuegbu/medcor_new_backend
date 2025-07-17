@@ -1389,10 +1389,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         setMessages(prev => [...prev, errorMessage]);
                       }
                     } },
-                    { icon: Volume2, label: "Voice Tips", angle: 360, action: () => { 
-                      console.log("🎤 Voice Skincare Tips button clicked");
+                    { icon: Volume2, label: "Hair Extension", angle: 360, action: () => { 
+                      console.log("🎤 Hair Extension button clicked");
                       setShowVoiceTipsPage(true); 
-                      setSelectedMenuItem("voice-tips"); 
+                      setSelectedMenuItem("hair-extension"); 
                       setShowChatInterface(false);
                     } }
                   ].map((item, index) => {
@@ -1400,7 +1400,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     const x = Math.cos(angleRad) * 130; // Increased to 130 for proper circle edge positioning
                     const y = Math.sin(angleRad) * 130; // Increased to 130 for proper circle edge positioning
                     
-                    const isSpecialIcon = ["hair", "skin", "lips", "doctors", "voice tips"].includes(item.label.toLowerCase());
+                    const isSpecialIcon = ["hair", "skin", "lips", "doctors", "hair extension"].includes(item.label.toLowerCase());
                     
                     return (
                       <div
@@ -1423,7 +1423,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         <button
                           onClick={item.action}
                           className={`w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-200 ${
-                            selectedMenuItem === item.label.toLowerCase()
+                            selectedMenuItem === item.label.toLowerCase().replace(' ', '-')
                               ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-105 shadow-xl"
                               : isSpecialIcon 
                                 ? "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
@@ -2109,7 +2109,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                                 <button
                                   onClick={item.action}
                                   className={`w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-200 ${
-                                    selectedMenuItem === item.label.toLowerCase()
+                                    selectedMenuItem === item.label.toLowerCase().replace(' ', '-')
                                       ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-105 shadow-xl"
                                       : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
                                   }`}
