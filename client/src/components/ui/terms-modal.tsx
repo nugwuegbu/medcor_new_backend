@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Shield, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Shield, FileText, AlertTriangle, CheckCircle, Clock, Eye, Users, Heart, Lock } from 'lucide-react';
 import { Button } from './button';
 
 interface TermsModalProps {
@@ -15,12 +15,18 @@ export const TermsModal: React.FC<TermsModalProps> = ({
   onAccept,
   onDecline
 }) => {
-  const [activeTab, setActiveTab] = useState<'disclaimer' | 'privacy' | 'terms'>('disclaimer');
+  const [activeTab, setActiveTab] = useState<'overview' | 'disclaimer' | 'privacy' | 'terms'>('overview');
   const [hasReadAll, setHasReadAll] = useState({
     disclaimer: false,
     privacy: false,
     terms: false
   });
+  const [scrollProgress, setScrollProgress] = useState({
+    disclaimer: 0,
+    privacy: 0,
+    terms: 0
+  });
+  const [acceptAll, setAcceptAll] = useState(false);
 
   if (!isOpen) return null;
 
@@ -28,110 +34,297 @@ export const TermsModal: React.FC<TermsModalProps> = ({
     setHasReadAll(prev => ({ ...prev, [tab]: true }));
   };
 
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>, tab: 'disclaimer' | 'privacy' | 'terms') => {
+    const element = e.target as HTMLDivElement;
+    const scrollPercentage = (element.scrollTop / (element.scrollHeight - element.clientHeight)) * 100;
+    setScrollProgress(prev => ({ ...prev, [tab]: scrollPercentage }));
+    
+    if (scrollPercentage > 80) {
+      markAsRead(tab);
+    }
+  };
+
   const allRead = Object.values(hasReadAll).every(Boolean);
+  const canProceed = allRead && acceptAll;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-gray-200 dark:border-gray-700">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
-            <div>
-              <h2 className="text-xl font-bold text-red-800 dark:text-red-200">
-                Medical Disclaimer & Terms
-              </h2>
-              <p className="text-sm text-red-600 dark:text-red-300">
-                Please read all sections before proceeding
-              </p>
+        <div className="relative bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/20 rounded-full">
+                <Shield className="h-8 w-8" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">
+                  Welcome to Medcor AI Assistant
+                </h2>
+                <p className="text-purple-100 mt-1">
+                  Please review our terms before accessing AI-powered healthcare features
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onDecline}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          
+          {/* Progress Indicator */}
+          <div className="mt-4 flex items-center gap-2 text-sm">
+            <Clock className="h-4 w-4" />
+            <span>Reading Progress: {Math.round((Object.values(scrollProgress).reduce((a, b) => a + b, 0) / 3))}%</span>
+            <div className="flex-1 bg-white/20 rounded-full h-2 ml-2">
+              <div 
+                className="bg-white rounded-full h-2 transition-all duration-300"
+                style={{ width: `${Math.round((Object.values(scrollProgress).reduce((a, b) => a + b, 0) / 3))}%` }}
+              />
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-red-100 dark:hover:bg-red-800/30 rounded-lg transition-colors"
-          >
-            <X className="h-5 w-5 text-red-600" />
-          </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <button
-            onClick={() => setActiveTab('disclaimer')}
-            className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'disclaimer'
-                ? 'bg-white dark:bg-gray-900 text-red-600 border-b-2 border-red-600'
-                : 'text-gray-600 dark:text-gray-400 hover:text-red-600'
-            }`}
-          >
-            <AlertTriangle className="h-4 w-4" />
-            Medical Disclaimer
-            {hasReadAll.disclaimer && <CheckCircle className="h-4 w-4 text-green-600" />}
-          </button>
-          <button
-            onClick={() => setActiveTab('privacy')}
-            className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'privacy'
-                ? 'bg-white dark:bg-gray-900 text-red-600 border-b-2 border-red-600'
-                : 'text-gray-600 dark:text-gray-400 hover:text-red-600'
-            }`}
-          >
-            <Shield className="h-4 w-4" />
-            Privacy Policy
-            {hasReadAll.privacy && <CheckCircle className="h-4 w-4 text-green-600" />}
-          </button>
-          <button
-            onClick={() => setActiveTab('terms')}
-            className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              activeTab === 'terms'
-                ? 'bg-white dark:bg-gray-900 text-red-600 border-b-2 border-red-600'
-                : 'text-gray-600 dark:text-gray-400 hover:text-red-600'
-            }`}
-          >
-            <FileText className="h-4 w-4" />
-            Terms of Service
-            {hasReadAll.terms && <CheckCircle className="h-4 w-4 text-green-600" />}
-          </button>
+        {/* Navigation Cards */}
+        <div className="p-6 bg-gray-50 dark:bg-gray-800">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                activeTab === 'overview'
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-purple-300'
+              }`}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <Eye className={`h-6 w-6 ${activeTab === 'overview' ? 'text-purple-600' : 'text-gray-500'}`} />
+                <span className={`text-sm font-medium ${activeTab === 'overview' ? 'text-purple-900 dark:text-purple-200' : 'text-gray-700 dark:text-gray-300'}`}>
+                  Overview
+                </span>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('disclaimer')}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                activeTab === 'disclaimer'
+                  ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-red-300'
+              }`}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <AlertTriangle className={`h-6 w-6 ${activeTab === 'disclaimer' ? 'text-red-600' : 'text-gray-500'}`} />
+                <span className={`text-sm font-medium ${activeTab === 'disclaimer' ? 'text-red-900 dark:text-red-200' : 'text-gray-700 dark:text-gray-300'}`}>
+                  Medical Disclaimer
+                </span>
+                {hasReadAll.disclaimer && (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                )}
+                {!hasReadAll.disclaimer && scrollProgress.disclaimer > 0 && (
+                  <div className="w-full bg-gray-200 rounded-full h-1">
+                    <div 
+                      className="bg-red-500 h-1 rounded-full transition-all duration-300"
+                      style={{ width: `${scrollProgress.disclaimer}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('privacy')}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                activeTab === 'privacy'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-blue-300'
+              }`}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <Lock className={`h-6 w-6 ${activeTab === 'privacy' ? 'text-blue-600' : 'text-gray-500'}`} />
+                <span className={`text-sm font-medium ${activeTab === 'privacy' ? 'text-blue-900 dark:text-blue-200' : 'text-gray-700 dark:text-gray-300'}`}>
+                  Privacy Policy
+                </span>
+                {hasReadAll.privacy && (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                )}
+                {!hasReadAll.privacy && scrollProgress.privacy > 0 && (
+                  <div className="w-full bg-gray-200 rounded-full h-1">
+                    <div 
+                      className="bg-blue-500 h-1 rounded-full transition-all duration-300"
+                      style={{ width: `${scrollProgress.privacy}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setActiveTab('terms')}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                activeTab === 'terms'
+                  ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-green-300'
+              }`}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <FileText className={`h-6 w-6 ${activeTab === 'terms' ? 'text-green-600' : 'text-gray-500'}`} />
+                <span className={`text-sm font-medium ${activeTab === 'terms' ? 'text-green-900 dark:text-green-200' : 'text-gray-700 dark:text-gray-300'}`}>
+                  Terms of Service
+                </span>
+                {hasReadAll.terms && (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                )}
+                {!hasReadAll.terms && scrollProgress.terms > 0 && (
+                  <div className="w-full bg-gray-200 rounded-full h-1">
+                    <div 
+                      className="bg-green-500 h-1 rounded-full transition-all duration-300"
+                      style={{ width: `${scrollProgress.terms}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
+        <div className="p-6 overflow-y-auto max-h-[50vh]">
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mb-4">
+                  <Heart className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Your Health, Our Priority
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                  Before accessing our AI-powered healthcare assistant, please review our legal terms to understand 
+                  how we protect your data and ensure safe, responsible use of medical AI technology.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-700">
+                  <AlertTriangle className="h-8 w-8 text-red-600 mb-3" />
+                  <h4 className="font-semibold text-red-900 dark:text-red-200 mb-2">Medical Disclaimer</h4>
+                  <p className="text-sm text-red-700 dark:text-red-300">
+                    Our AI assistant provides information only - not medical diagnosis or treatment advice.
+                  </p>
+                </div>
+                
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-700">
+                  <Lock className="h-8 w-8 text-blue-600 mb-3" />
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">Privacy Protection</h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Your personal health data is encrypted and protected according to HIPAA standards.
+                  </p>
+                </div>
+                
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-200 dark:border-green-700">
+                  <FileText className="h-8 w-8 text-green-600 mb-3" />
+                  <h4 className="font-semibold text-green-900 dark:text-green-200 mb-2">Terms of Service</h4>
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    Clear guidelines for using our platform responsibly and safely.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-200 dark:border-yellow-700">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-1">Reading Requirements</h4>
+                    <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                      You must scroll through and read each section completely. Progress indicators will track your reading, 
+                      and you'll need to accept all terms before accessing AI features.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'disclaimer' && (
-            <MedicalDisclaimer onRead={() => markAsRead('disclaimer')} />
+            <MedicalDisclaimer onRead={() => markAsRead('disclaimer')} onScroll={(e) => handleScroll(e, 'disclaimer')} />
           )}
           {activeTab === 'privacy' && (
-            <PrivacyPolicy onRead={() => markAsRead('privacy')} />
+            <PrivacyPolicy onRead={() => markAsRead('privacy')} onScroll={(e) => handleScroll(e, 'privacy')} />
           )}
           {activeTab === 'terms' && (
-            <TermsOfService onRead={() => markAsRead('terms')} />
+            <TermsOfService onRead={() => markAsRead('terms')} onScroll={(e) => handleScroll(e, 'terms')} />
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {allRead ? (
-              <span className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                All sections read
-              </span>
-            ) : (
-              'Please read all sections to continue'
-            )}
+        {/* Consent Checkbox */}
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="accept-all"
+              checked={acceptAll}
+              onChange={(e) => setAcceptAll(e.target.checked)}
+              disabled={!allRead}
+              className="mt-1 w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 disabled:opacity-50"
+            />
+            <label 
+              htmlFor="accept-all" 
+              className={`text-sm ${!allRead ? 'text-gray-400' : 'text-gray-700 dark:text-gray-300'} cursor-pointer`}
+            >
+              I have read and agree to the <strong>Medical Disclaimer</strong>, <strong>Privacy Policy</strong>, and <strong>Terms of Service</strong>. 
+              I understand that this AI assistant is for informational purposes only and does not replace professional medical advice.
+            </label>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              {canProceed ? (
+                <span className="flex items-center gap-2 text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  Ready to proceed
+                </span>
+              ) : !allRead ? (
+                <span className="flex items-center gap-2 text-orange-600">
+                  <Clock className="h-4 w-4" />
+                  Please read all sections
+                </span>
+              ) : (
+                <span className="flex items-center gap-2 text-blue-600">
+                  <AlertTriangle className="h-4 w-4" />
+                  Please accept terms
+                </span>
+              )}
+            </div>
+            
+            {/* Reading Progress Summary */}
+            <div className="hidden md:flex items-center gap-2 text-xs text-gray-500">
+              <span>Progress:</span>
+              <div className={`w-3 h-3 rounded-full ${hasReadAll.disclaimer ? 'bg-green-500' : 'bg-gray-300'}`} title="Medical Disclaimer" />
+              <div className={`w-3 h-3 rounded-full ${hasReadAll.privacy ? 'bg-green-500' : 'bg-gray-300'}`} title="Privacy Policy" />
+              <div className={`w-3 h-3 rounded-full ${hasReadAll.terms ? 'bg-green-500' : 'bg-gray-300'}`} title="Terms of Service" />
+            </div>
+          </div>
+          
           <div className="flex gap-3">
             <Button
               variant="outline"
               onClick={onDecline}
-              className="border-red-200 text-red-600 hover:bg-red-50"
+              className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
             >
-              Decline
+              <X className="h-4 w-4 mr-1" />
+              Decline & Exit
             </Button>
             <Button
               onClick={onAccept}
-              disabled={!allRead}
-              className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!canProceed}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed px-6"
             >
+              <CheckCircle className="h-4 w-4 mr-2" />
               Accept & Continue
             </Button>
           </div>
@@ -141,14 +334,14 @@ export const TermsModal: React.FC<TermsModalProps> = ({
   );
 };
 
-const MedicalDisclaimer: React.FC<{ onRead: () => void }> = ({ onRead }) => {
+const MedicalDisclaimer: React.FC<{ onRead: () => void; onScroll?: (e: React.UIEvent<HTMLDivElement>) => void }> = ({ onRead, onScroll }) => {
   React.useEffect(() => {
-    const timer = setTimeout(onRead, 3000); // Mark as read after 3 seconds
+    const timer = setTimeout(onRead, 5000); // Mark as read after 5 seconds
     return () => clearTimeout(timer);
   }, [onRead]);
 
   return (
-    <div className="space-y-6 text-sm text-gray-700 dark:text-gray-300">
+    <div className="space-y-6 text-sm text-gray-700 dark:text-gray-300" onScroll={onScroll}>
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
         <h3 className="font-bold text-red-800 dark:text-red-200 mb-2 flex items-center gap-2">
           <AlertTriangle className="h-5 w-5" />
@@ -217,14 +410,14 @@ const MedicalDisclaimer: React.FC<{ onRead: () => void }> = ({ onRead }) => {
   );
 };
 
-const PrivacyPolicy: React.FC<{ onRead: () => void }> = ({ onRead }) => {
+const PrivacyPolicy: React.FC<{ onRead: () => void; onScroll?: (e: React.UIEvent<HTMLDivElement>) => void }> = ({ onRead, onScroll }) => {
   React.useEffect(() => {
-    const timer = setTimeout(onRead, 3000);
+    const timer = setTimeout(onRead, 5000);
     return () => clearTimeout(timer);
   }, [onRead]);
 
   return (
-    <div className="space-y-6 text-sm text-gray-700 dark:text-gray-300">
+    <div className="space-y-6 text-sm text-gray-700 dark:text-gray-300" onScroll={onScroll}>
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
         <h3 className="font-bold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
           <Shield className="h-5 w-5" />
@@ -327,14 +520,14 @@ const PrivacyPolicy: React.FC<{ onRead: () => void }> = ({ onRead }) => {
   );
 };
 
-const TermsOfService: React.FC<{ onRead: () => void }> = ({ onRead }) => {
+const TermsOfService: React.FC<{ onRead: () => void; onScroll?: (e: React.UIEvent<HTMLDivElement>) => void }> = ({ onRead, onScroll }) => {
   React.useEffect(() => {
-    const timer = setTimeout(onRead, 3000);
+    const timer = setTimeout(onRead, 5000);
     return () => clearTimeout(timer);
   }, [onRead]);
 
   return (
-    <div className="space-y-6 text-sm text-gray-700 dark:text-gray-300">
+    <div className="space-y-6 text-sm text-gray-700 dark:text-gray-300" onScroll={onScroll}>
       <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
         <h3 className="font-bold text-green-800 dark:text-green-200 mb-2 flex items-center gap-2">
           <FileText className="h-5 w-5" />
