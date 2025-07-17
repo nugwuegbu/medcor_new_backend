@@ -1403,26 +1403,41 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     const isSpecialIcon = ["hair", "skin", "lips", "doctors", "voice tips"].includes(item.label.toLowerCase());
                     
                     return (
-                      <button
+                      <div
                         key={index}
-                        onClick={item.action}
-                        className={`absolute w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-200 ${
-                          selectedMenuItem === item.label.toLowerCase()
-                            ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-105 shadow-xl"
-                            : isSpecialIcon 
-                              ? "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
-                              : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
-                        }`}
+                        className="absolute group"
                         style={{
                           left: `calc(50% + ${x}px - 32px)`,
                           top: `calc(50% + ${y}px - 32px)`,
-                          transform: 'translateZ(0)', // Force hardware acceleration for stable rendering
-                          backfaceVisibility: 'hidden' // Prevent flickering during transitions
                         }}
                       >
-                        <item.icon className={`h-7 w-7 transition-transform duration-200 ${isSpecialIcon ? "hover:scale-105" : ""}`} />
-                        <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
-                      </button>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                          <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                            {item.label}
+                          </div>
+                          {/* Tooltip Arrow */}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                        </div>
+                        
+                        <button
+                          onClick={item.action}
+                          className={`w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-200 ${
+                            selectedMenuItem === item.label.toLowerCase()
+                              ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-105 shadow-xl"
+                              : isSpecialIcon 
+                                ? "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
+                                : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
+                          }`}
+                          style={{
+                            transform: 'translateZ(0)', // Force hardware acceleration for stable rendering
+                            backfaceVisibility: 'hidden' // Prevent flickering during transitions
+                          }}
+                        >
+                          <item.icon className={`h-7 w-7 transition-transform duration-200 ${isSpecialIcon ? "hover:scale-105" : ""}`} />
+                          <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
+                        </button>
+                      </div>
                     );
                   })}
                   </div>
@@ -2074,22 +2089,39 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             const y = Math.sin(angleRad) * 75;
                             
                             return (
-                              <button
+                              <div
                                 key={index}
-                                onClick={item.action}
-                                className={`absolute w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-300 transform ${
-                                  selectedMenuItem === item.label.toLowerCase()
-                                    ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-125 shadow-xl"
-                                    : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-125"
-                                }`}
+                                className="absolute group"
                                 style={{
                                   left: `calc(50% + ${x}px - 28px)`,
-                                  top: `calc(50% + ${y}px - 28px)`
+                                  top: `calc(50% + ${y}px - 28px)`,
                                 }}
                               >
-                                <item.icon className="h-7 w-7" />
-                                <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
-                              </button>
+                                {/* Tooltip */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                                  <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                    {item.label}
+                                  </div>
+                                  {/* Tooltip Arrow */}
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                                </div>
+                                
+                                <button
+                                  onClick={item.action}
+                                  className={`w-14 h-14 rounded-full flex flex-col items-center justify-center transition-all duration-200 ${
+                                    selectedMenuItem === item.label.toLowerCase()
+                                      ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-105 shadow-xl"
+                                      : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
+                                  }`}
+                                  style={{
+                                    transform: 'translateZ(0)',
+                                    backfaceVisibility: 'hidden'
+                                  }}
+                                >
+                                  <item.icon className="h-7 w-7 transition-transform duration-200" />
+                                  <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
+                                </button>
+                              </div>
                             );
                           })}
                         </div>
