@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2 } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
@@ -1389,8 +1389,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         setMessages(prev => [...prev, errorMessage]);
                       }
                     } },
-                    { icon: Scissors, label: "Hair Extension", angle: 360, action: () => { 
-                      console.log("✂️ Hair Extension button clicked");
+                    { icon: Crown, label: "Hair Extension", angle: 360, action: () => { 
+                      console.log("👑 Hair Extension button clicked");
                       setShowVoiceTipsPage(true); 
                       setSelectedMenuItem("hair-extension"); 
                       setShowChatInterface(false);
