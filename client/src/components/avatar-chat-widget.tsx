@@ -1389,8 +1389,8 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         setMessages(prev => [...prev, errorMessage]);
                       }
                     } },
-                    { icon: Volume2, label: "Hair Extension", angle: 360, action: () => { 
-                      console.log("🎤 Hair Extension button clicked");
+                    { icon: Scissors, label: "Hair Extension", angle: 360, action: () => { 
+                      console.log("✂️ Hair Extension button clicked");
                       setShowVoiceTipsPage(true); 
                       setSelectedMenuItem("hair-extension"); 
                       setShowChatInterface(false);
