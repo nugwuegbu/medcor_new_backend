@@ -723,16 +723,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   if (!isOpen) return null;
   
   // Debug - Log current states
-  console.log('🟡 Widget render - Current states:', {
-    showChatInterface,
-    showDoctorList,
-    showRecordsList,
-    showAdminPage,
-    showBookingCalendar,
-    showFacePage,
-    isMinimized,
-    selectedMenuItem
-  });
+  // Remove frequent logging to prevent re-render flickering
+  // console.log('🟡 Widget render - Current states:', {
+  //   showChatInterface,
+  //   showDoctorList,
+  //   showRecordsList,
+  //   showAdminPage,
+  //   showBookingCalendar,
+  //   showFacePage,
+  //   isMinimized,
+  //   selectedMenuItem
+  // });
   
   // If doctor list is being shown during booking, show contained within chat widget
   if (showDoctorList && !showChatInterface) {
@@ -1405,19 +1406,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       <button
                         key={index}
                         onClick={item.action}
-                        className={`absolute w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-300 transform ${
+                        className={`absolute w-16 h-16 rounded-full flex flex-col items-center justify-center transition-all duration-200 ${
                           selectedMenuItem === item.label.toLowerCase()
-                            ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-125 shadow-xl hover:scale-135"
+                            ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white scale-105 shadow-xl"
                             : isSpecialIcon 
-                              ? "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-130 hover:animate-bounce"
-                              : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-xl hover:scale-130"
+                              ? "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
+                              : "bg-white/90 hover:bg-white text-gray-700 shadow-md hover:shadow-lg hover:scale-105"
                         }`}
                         style={{
-                          left: `calc(50% + ${x}px - 32px)`, // Adjusted for new button size
-                          top: `calc(50% + ${y}px - 32px)`   // Adjusted for new button size
+                          left: `calc(50% + ${x}px - 32px)`,
+                          top: `calc(50% + ${y}px - 32px)`,
+                          transform: 'translateZ(0)', // Force hardware acceleration for stable rendering
+                          backfaceVisibility: 'hidden' // Prevent flickering during transitions
                         }}
                       >
-                        <item.icon className={`h-7 w-7 ${isSpecialIcon ? "transition-transform duration-300 hover:scale-110" : ""}`} />
+                        <item.icon className={`h-7 w-7 transition-transform duration-200 ${isSpecialIcon ? "hover:scale-105" : ""}`} />
                         <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
                       </button>
                     );
