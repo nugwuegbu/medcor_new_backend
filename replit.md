@@ -276,6 +276,19 @@ Changelog:
 
 Preferred communication style: Simple, everyday language.
 
+## Project Portability
+
+The project is designed with future language conversion in mind:
+- Modular architecture with clear separation of concerns
+- Standard REST API design that works with any backend language
+- Database abstraction layer using PostgreSQL (portable to any language)
+- Component-based frontend architecture
+- API-first approach for all integrations
+- Standard authentication patterns (JWT, OAuth)
+- External service integrations remain language-agnostic
+
+Potential conversion targets: Python (Django/FastAPI), Go, Java (Spring Boot), C# (ASP.NET Core), PHP (Laravel), Ruby (Rails)
+
 ## Critical Configuration - DO NOT MODIFY
 - HeyGen Avatar Display: The video element in heygen-sdk-avatar.tsx must always use:
   - className="absolute inset-0 w-full h-full object-cover"
