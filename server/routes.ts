@@ -2997,6 +2997,90 @@ const API_BASE_URL = 'https://your-backend-url.com';
     res.send(packagePageHtml);
   });
 
+  // Admin authentication endpoint
+  app.post("/api/auth/admin-login", async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      const { user, token } = await AuthService.login(validatedData);
+      
+      // Check if user has admin role
+      if (user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          error: "Admin access required",
+        });
+      }
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      
+      res.json({
+        success: true,
+        message: "Admin login successful",
+        user: userWithoutPassword,
+        token,
+      });
+    } catch (error: any) {
+      console.error("Admin login error:", error);
+      res.status(400).json({
+        success: false,
+        error: error.message || "Admin login failed",
+        ...(error.issues && { validationErrors: error.issues }),
+      });
+    }
+  });
+
+  // Admin endpoints - require admin authentication
+  app.get("/api/admin/stats", authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Get admin stats error:", error);
+      res.status(500).json({
+        message: "Failed to get admin statistics",
+      });
+    }
+  });
+
+  app.get("/api/admin/users", authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Remove passwords from response
+      const safeUsers = users.map(({ password, ...user }) => user);
+      res.json(safeUsers);
+    } catch (error) {
+      console.error("Get users error:", error);
+      res.status(500).json({
+        message: "Failed to get users",
+      });
+    }
+  });
+
+  app.get("/api/admin/doctors", authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const doctors = await storage.getAllDoctors();
+      res.json(doctors);
+    } catch (error) {
+      console.error("Get doctors error:", error);
+      res.status(500).json({
+        message: "Failed to get doctors",
+      });
+    }
+  });
+
+  app.get("/api/admin/appointments", authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const appointments = await storage.getAllAppointments();
+      res.json(appointments);
+    } catch (error) {
+      console.error("Get appointments error:", error);
+      res.status(500).json({
+        message: "Failed to get appointments",
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

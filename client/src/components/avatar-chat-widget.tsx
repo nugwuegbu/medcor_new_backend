@@ -1226,7 +1226,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     } },
                     { icon: FileText, label: "Records", angle: 80, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                     { icon: Phone, label: "Call", angle: 120, action: () => setSelectedMenuItem("call") },
-                    { icon: UserCheck, label: "Admin", angle: 160, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
+                    { icon: UserCheck, label: "Admin", angle: 160, action: () => { 
+                      console.log("Admin button clicked - redirecting to admin login");
+                      window.location.href = '/admin/login';
+                    } },
                     { icon: Smile, label: "Face", angle: 200, action: () => { 
                       console.log('🔴 Face button clicked - Setting states synchronously');
                       
@@ -1955,7 +1958,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             } },
                             { icon: FileText, label: "Records", angle: 102, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                             { icon: Phone, label: "Call", angle: 153, action: () => setSelectedMenuItem("call") },
-                            { icon: UserCheck, label: "Admin", angle: 204, action: () => { setShowAdminPage(true); setSelectedMenuItem("admin"); } },
+                            { icon: UserCheck, label: "Admin", angle: 204, action: () => { 
+                              console.log("Admin button clicked - redirecting to admin login");
+                              window.location.href = '/admin/login';
+                            } },
                             { icon: Smile, label: "Face", angle: 255, action: () => { 
                               console.log('🔴 Face button clicked - Setting states synchronously');
                               

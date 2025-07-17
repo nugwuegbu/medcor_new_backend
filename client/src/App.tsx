@@ -11,6 +11,8 @@ import Doctors from "@/pages/doctors";
 import Appointments from "@/pages/appointments";
 import SettingsPage from "@/pages/settings";
 import Login from "@/pages/login";
+import AdminLogin from "@/pages/admin-login";
+import AdminDashboard from "@/pages/admin-dashboard";
 import NotFound from "@/pages/not-found";
 import { AuthModal } from "@/components/auth-modal";
 import { ProtectedRoute } from "@/components/protected-route";
@@ -26,6 +28,8 @@ function Router() {
         <Route path="/test" component={TestPage} />
         <Route path="/" component={Home} />
         <Route path="/login" component={Login} />
+        <Route path="/admin/login" component={AdminLogin} />
+        <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route path="/chat" component={Chat} />
         <Route path="/doctors">
           <ProtectedRoute onUnauthorized={() => setShowAuthModal(true)}>

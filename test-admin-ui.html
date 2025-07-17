@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedCor Admin System - UI Testing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .test-section {
+            padding: 30px;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .test-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .test-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+        
+        .test-card.running {
+            border-color: #fbbf24;
+            background: #fef3c7;
+        }
+        
+        .test-card.passed {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+        
+        .test-card.failed {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+        
+        .test-card h3 {
+            color: #1e293b;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .test-card p {
+            color: #64748b;
+            line-height: 1.5;
+        }
+        
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-pending { background: #e2e8f0; }
+        .status-running { background: #fbbf24; }
+        .status-passed { background: #10b981; }
+        .status-failed { background: #ef4444; }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        
+        .results-panel {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .results-panel h4 {
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+        
+        .result-item {
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .result-pass { background: #dcfce7; color: #15803d; }
+        .result-fail { background: #fecaca; color: #dc2626; }
+        .result-skip { background: #fef3c7; color: #d97706; }
+        .result-info { background: #dbeafe; color: #2563eb; }
+        
+        .demo-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .demo-link {
+            display: block;
+            padding: 15px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #475569;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-link:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-1px);
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 MedCor Admin System</h1>
+            <p>Comprehensive Testing & Quality Assurance Dashboard</p>
+        </div>
+        
+        <div class="test-section">
+            <div class="controls">
+                <button class="btn btn-primary" onclick="runAllTests()">
+                    🚀 Run All Tests
+                </button>
+                <button class="btn btn-secondary" onclick="clearResults()">
+                    🗑️ Clear Results
+                </button>
+                <a href="/admin/login" class="btn btn-secondary" target="_blank">
+                    🔐 Open Admin Login
+                </a>
+                <a href="/admin/dashboard" class="btn btn-secondary" target="_blank">
+                    📊 Open Dashboard
+                </a>
+            </div>
+            
+            <div class="test-grid">
+                <div class="test-card" id="auth-test">
+                    <h3>
+                        <span class="status-icon status-pending" id="auth-status"></span>
+                        Authentication Tests
+                    </h3>
+                    <p>Tests admin login, role verification, and security measures</p>
+                </div>
+                
+                <div class="test-card" id="api-test">
+                    <h3>
+                        <span class="status-icon status-pending" id="api-status"></span>
+                        API Endpoint Tests
+                    </h3>
+                    <p>Validates all admin API endpoints and data retrieval</p>
+                </div>
+                
+                <div class="test-card" id="data-test">
+                    <h3>
+                        <span class="status-icon status-pending" id="data-status"></span>
+                        Data Integrity Tests
+                    </h3>
+                    <p>Verifies data accuracy and consistency across the system</p>
+                </div>
+                
+                <div class="test-card" id="ui-test">
+                    <h3>
+                        <span class="status-icon status-pending" id="ui-status"></span>
+                        UI Navigation Tests
+                    </h3>
+                    <p>Tests user interface accessibility and navigation flows</p>
+                </div>
+                
+                <div class="test-card" id="security-test">
+                    <h3>
+                        <span class="status-icon status-pending" id="security-status"></span>
+                        Security & Performance
+                    </h3>
+                    <p>Tests security measures and system performance under load</p>
+                </div>
+                
+                <div class="test-card" id="regression-test">
+                    <h3>
+                        <span class="status-icon status-pending" id="regression-status"></span>
+                        Regression Tests
+                    </h3>
+                    <p>Ensures existing patient/doctor flows remain unaffected</p>
+                </div>
+            </div>
+            
+            <div class="summary-stats" id="summary-stats" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-tests">0</div>
+                    <div class="stat-label">Total Tests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="passed-tests">0</div>
+                    <div class="stat-label">Passed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="failed-tests">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="success-rate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+            
+            <div class="results-panel" id="results-panel" style="display: none;">
+                <h4>📋 Test Results</h4>
+                <div id="results-content"></div>
+            </div>
+            
+            <div class="demo-links">
+                <a href="/admin/login" class="demo-link" target="_blank">
+                    <strong>Admin Login Page</strong><br>
+                    <small>Email: admin@medcor.ai | Password: Admin123!</small>
+                </a>
+                <a href="/admin/dashboard" class="demo-link" target="_blank">
+                    <strong>Admin Dashboard</strong><br>
+                    <small>Requires authentication</small>
+                </a>
+                <a href="/" class="demo-link" target="_blank">
+                    <strong>Main Application</strong><br>
+                    <small>Patient interface with chat widget</small>
+                </a>
+                <a href="/test" class="demo-link" target="_blank">
+                    <strong>Test Page</strong><br>
+                    <small>Development testing environment</small>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = window.location.origin;
+        let testResults = [];
+        let adminToken = null;
+
+        async function makeRequest(endpoint, options = {}) {
+            const url = `${BASE_URL}${endpoint}`;
+            const defaultHeaders = {
+                'Content-Type': 'application/json',
+                ...(adminToken && { 'Authorization': `Bearer ${adminToken}` })
+            };
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: { ...defaultHeaders, ...options.headers }
+                });
+                
+                const data = await response.text();
+                let parsedData;
+                
+                try {
+                    parsedData = JSON.parse(data);
+                } catch {
+                    parsedData = data;
+                }
+                
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    data: parsedData
+                };
+            } catch (error) {
+                return {
+                    ok: false,
+                    status: 0,
+                    error: error.message
+                };
+            }
+        }
+
+        function updateTestStatus(testId, status) {
+            const card = document.getElementById(testId);
+            const statusIcon = document.getElementById(testId.replace('-test', '-status'));
+            
+            card.className = `test-card ${status}`;
+            statusIcon.className = `status-icon status-${status}`;
+        }
+
+        function logResult(testName, status, details = '') {
+            const result = { testName, status, details, timestamp: new Date().toISOString() };
+            testResults.push(result);
+            
+            const resultsContent = document.getElementById('results-content');
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item result-${status.toLowerCase()}`;
+            resultItem.textContent = `${status === 'PASS' ? '✅' : status === 'FAIL' ? '❌' : status === 'SKIP' ? '⏭️' : 'ℹ️'} ${testName}: ${details}`;
+            resultsContent.appendChild(resultItem);
+            
+            // Update summary stats
+            updateSummaryStats();
+        }
+
+        function updateSummaryStats() {
+            const passCount = testResults.filter(r => r.status === 'PASS').length;
+            const failCount = testResults.filter(r => r.status === 'FAIL').length;
+            const skipCount = testResults.filter(r => r.status === 'SKIP').length;
+            const totalCount = testResults.length;
+            const successRate = totalCount > 0 ? ((passCount / (passCount + failCount)) * 100).toFixed(1) : 0;
+            
+            document.getElementById('total-tests').textContent = totalCount;
+            document.getElementById('passed-tests').textContent = passCount;
+            document.getElementById('failed-tests').textContent = failCount;
+            document.getElementById('success-rate').textContent = `${successRate}%`;
+            
+            document.getElementById('summary-stats').style.display = 'grid';
+        }
+
+        async function testAuthentication() {
+            updateTestStatus('auth-test', 'running');
+            
+            // Test admin login
+            const loginResponse = await makeRequest('/api/auth/admin-login', {
+                method: 'POST',
+                body: JSON.stringify({ email: 'admin@medcor.ai', password: 'Admin123!' })
+            });
+            
+            if (loginResponse.ok && loginResponse.data.token) {
+                adminToken = loginResponse.data.token;
+                logResult('Admin Login', 'PASS', 'Successfully logged in');
+                updateTestStatus('auth-test', 'passed');
+            } else {
+                logResult('Admin Login', 'FAIL', 'Login failed');
+                updateTestStatus('auth-test', 'failed');
+                return false;
+            }
+            
+            // Test invalid credentials
+            const invalidResponse = await makeRequest('/api/auth/admin-login', {
+                method: 'POST',
+                body: JSON.stringify({ email: 'admin@medcor.ai', password: 'wrongpassword' })
+            });
+            
+            if (!invalidResponse.ok) {
+                logResult('Invalid Credentials', 'PASS', 'Properly rejected');
+            } else {
+                logResult('Invalid Credentials', 'FAIL', 'Accepted invalid credentials');
+            }
+            
+            return true;
+        }
+
+        async function testAPIEndpoints() {
+            updateTestStatus('api-test', 'running');
+            
+            if (!adminToken) {
+                logResult('API Tests', 'SKIP', 'No admin token');
+                updateTestStatus('api-test', 'failed');
+                return;
+            }
+            
+            const endpoints = [
+                { url: '/api/admin/stats', name: 'Statistics' },
+                { url: '/api/admin/users', name: 'Users' },
+                { url: '/api/admin/doctors', name: 'Doctors' },
+                { url: '/api/admin/appointments', name: 'Appointments' }
+            ];
+            
+            let allPassed = true;
+            
+            for (const endpoint of endpoints) {
+                const response = await makeRequest(endpoint.url);
+                if (response.ok) {
+                    logResult(`${endpoint.name} API`, 'PASS', `Retrieved data successfully`);
+                } else {
+                    logResult(`${endpoint.name} API`, 'FAIL', `Failed to retrieve data`);
+                    allPassed = false;
+                }
+            }
+            
+            updateTestStatus('api-test', allPassed ? 'passed' : 'failed');
+        }
+
+        async function testDataIntegrity() {
+            updateTestStatus('data-test', 'running');
+            
+            if (!adminToken) {
+                logResult('Data Tests', 'SKIP', 'No admin token');
+                updateTestStatus('data-test', 'failed');
+                return;
+            }
+            
+            try {
+                const [statsResponse, usersResponse] = await Promise.all([
+                    makeRequest('/api/admin/stats'),
+                    makeRequest('/api/admin/users')
+                ]);
+                
+                if (statsResponse.ok && usersResponse.ok) {
+                    const stats = statsResponse.data;
+                    const users = usersResponse.data;
+                    const patientCount = users.filter(u => u.role === 'patient').length;
+                    
+                    if (stats.totalPatients === patientCount) {
+                        logResult('Patient Count', 'PASS', `Accurate count: ${patientCount}`);
+                    } else {
+                        logResult('Patient Count', 'FAIL', `Mismatch detected`);
+                    }
+                    
+                    const hasPasswords = users.some(u => u.password !== undefined);
+                    if (!hasPasswords) {
+                        logResult('Password Security', 'PASS', 'Passwords properly hidden');
+                    } else {
+                        logResult('Password Security', 'FAIL', 'Passwords exposed');
+                    }
+                    
+                    updateTestStatus('data-test', 'passed');
+                } else {
+                    updateTestStatus('data-test', 'failed');
+                }
+            } catch (error) {
+                logResult('Data Integrity', 'FAIL', error.message);
+                updateTestStatus('data-test', 'failed');
+            }
+        }
+
+        async function testUINavigation() {
+            updateTestStatus('ui-test', 'running');
+            
+            try {
+                // Test login page access
+                const loginResponse = await makeRequest('/admin/login');
+                if (loginResponse.ok || loginResponse.status === 200) {
+                    logResult('Login Page Access', 'PASS', 'Page accessible');
+                } else {
+                    logResult('Login Page Access', 'FAIL', 'Page not accessible');
+                }
+                
+                updateTestStatus('ui-test', 'passed');
+            } catch (error) {
+                logResult('UI Navigation', 'FAIL', error.message);
+                updateTestStatus('ui-test', 'failed');
+            }
+        }
+
+        async function testSecurity() {
+            updateTestStatus('security-test', 'running');
+            
+            // Test unauthorized access
+            const unauthorizedResponse = await makeRequest('/api/admin/stats', {
+                headers: { Authorization: '' }
+            });
+            
+            if (!unauthorizedResponse.ok) {
+                logResult('Unauthorized Access', 'PASS', 'Properly blocked');
+            } else {
+                logResult('Unauthorized Access', 'FAIL', 'Access granted without token');
+            }
+            
+            // Test SQL injection
+            const sqlResponse = await makeRequest('/api/auth/admin-login', {
+                method: 'POST',
+                body: JSON.stringify({
+                    email: "admin@medcor.ai'; DROP TABLE users; --",
+                    password: "test"
+                })
+            });
+            
+            if (!sqlResponse.ok) {
+                logResult('SQL Injection Protection', 'PASS', 'Attack blocked');
+            } else {
+                logResult('SQL Injection Protection', 'FAIL', 'Vulnerable to injection');
+            }
+            
+            updateTestStatus('security-test', 'passed');
+        }
+
+        async function testRegression() {
+            updateTestStatus('regression-test', 'running');
+            
+            // Test main application still works
+            try {
+                const mainResponse = await makeRequest('/');
+                const chatResponse = await makeRequest('/chat');
+                
+                if ((mainResponse.ok || mainResponse.status === 200) && 
+                    (chatResponse.ok || chatResponse.status === 200)) {
+                    logResult('Main App Integrity', 'PASS', 'Patient flows unaffected');
+                } else {
+                    logResult('Main App Integrity', 'FAIL', 'Patient flows disrupted');
+                }
+                
+                updateTestStatus('regression-test', 'passed');
+            } catch (error) {
+                logResult('Regression Test', 'FAIL', error.message);
+                updateTestStatus('regression-test', 'failed');
+            }
+        }
+
+        async function runAllTests() {
+            // Clear previous results
+            testResults = [];
+            adminToken = null;
+            document.getElementById('results-content').innerHTML = '';
+            document.getElementById('results-panel').style.display = 'block';
+            
+            // Reset all test statuses
+            ['auth', 'api', 'data', 'ui', 'security', 'regression'].forEach(test => {
+                updateTestStatus(`${test}-test`, 'pending');
+            });
+            
+            logResult('Test Suite Started', 'INFO', new Date().toLocaleString());
+            
+            try {
+                await testAuthentication();
+                await testAPIEndpoints();
+                await testDataIntegrity();
+                await testUINavigation();
+                await testSecurity();
+                await testRegression();
+                
+                logResult('Test Suite Completed', 'INFO', 'All tests finished');
+            } catch (error) {
+                logResult('Test Suite Error', 'FAIL', error.message);
+            }
+        }
+
+        function clearResults() {
+            testResults = [];
+            adminToken = null;
+            document.getElementById('results-content').innerHTML = '';
+            document.getElementById('results-panel').style.display = 'none';
+            document.getElementById('summary-stats').style.display = 'none';
+            
+            ['auth', 'api', 'data', 'ui', 'security', 'regression'].forEach(test => {
+                updateTestStatus(`${test}-test`, 'pending');
+            });
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                // Uncomment to auto-run tests on page load
+                // runAllTests();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

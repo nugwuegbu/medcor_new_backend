@@ -28,6 +28,17 @@ export interface IStorage {
   createFaceAnalysisReport(report: InsertFaceAnalysisReport): Promise<FaceAnalysisReport>;
   createHairAnalysisReport(report: InsertHairAnalysisReport): Promise<HairAnalysisReport>;
   getHairAnalysisReports(sessionId: string): Promise<HairAnalysisReport[]>;
+  
+  // Admin operations
+  getAllUsers(): Promise<User[]>;
+  getAdminStats(): Promise<{
+    totalPatients: number;
+    totalDoctors: number;
+    totalAppointments: number;
+    pendingAppointments: number;
+    todayAppointments: number;
+    monthlyGrowth: number;
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -59,6 +70,7 @@ export class MemStorage implements IStorage {
     this.currentHairAnalysisReportId = 1;
     
     this.seedDoctors();
+    this.seedTestData();
   }
 
   private seedDoctors() {
@@ -138,6 +150,112 @@ export class MemStorage implements IStorage {
         description: doctor.description || null
       };
       this.doctors.set(id, fullDoctor);
+    });
+  }
+
+  private seedTestData() {
+    // Seed test users
+    const testUsers: InsertUser[] = [
+      {
+        username: "john_patient",
+        password: "Patient123!",
+        email: "john@patient.com",
+        name: "John Patient",
+        role: "patient",
+        phoneNumber: "+1234567890",
+        preferredLanguage: "en"
+      },
+      {
+        username: "sarah_doctor", 
+        password: "Doctor123!",
+        email: "sarah@doctor.com",
+        name: "Dr. Sarah Medical",
+        role: "doctor",
+        phoneNumber: "+1234567891",
+        preferredLanguage: "en"
+      },
+      {
+        username: "clinic_staff",
+        password: "Clinic123!",
+        email: "staff@clinic.com",
+        name: "Clinic Manager",
+        role: "clinic",
+        phoneNumber: "+1234567892",
+        preferredLanguage: "en"
+      }
+    ];
+
+    testUsers.forEach(userData => {
+      const id = this.currentUserId++;
+      const user: User = { 
+        id,
+        username: userData.username,
+        password: userData.password,
+        email: userData.email,
+        phoneNumber: userData.phoneNumber || null,
+        name: userData.name,
+        profilePicture: null,
+        preferredLanguage: userData.preferredLanguage || "en",
+        faceId: null,
+        personId: null,
+        lastFaceLogin: null,
+        faceLoginEnabled: false,
+        faceRegistered: false,
+        oauthProvider: null,
+        oauthProviderId: null,
+        lastLogin: new Date(),
+        isNewUser: false,
+        role: userData.role || "patient",
+        isActive: true,
+        emailVerified: true,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      this.users.set(id, user);
+    });
+
+    // Seed test appointments
+    const testAppointments: InsertAppointment[] = [
+      {
+        patientName: "John Patient",
+        patientEmail: "john@patient.com",
+        patientPhone: "+1234567890",
+        doctorId: 1,
+        appointmentDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+        appointmentTime: "10:00 AM",
+        reason: "General checkup"
+      },
+      {
+        patientName: "Jane Smith",
+        patientEmail: "jane@smith.com", 
+        patientPhone: "+1234567893",
+        doctorId: 2,
+        appointmentDate: new Date(),
+        appointmentTime: "2:00 PM",
+        reason: "Follow-up consultation"
+      },
+      {
+        patientName: "Bob Johnson",
+        patientEmail: "bob@johnson.com",
+        patientPhone: "+1234567894",
+        doctorId: 1,
+        appointmentDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Next week
+        appointmentTime: "11:30 AM",
+        reason: "Cardiology consultation"
+      }
+    ];
+
+    testAppointments.forEach(appointment => {
+      const id = this.currentAppointmentId++;
+      const fullAppointment: Appointment = { 
+        ...appointment, 
+        id, 
+        status: Math.random() > 0.5 ? "confirmed" : "pending",
+        createdAt: new Date()
+      };
+      this.appointments.set(id, fullAppointment);
     });
   }
 
@@ -332,6 +450,42 @@ export class MemStorage implements IStorage {
     return Array.from(this.hairAnalysisReports.values()).filter(
       (report) => report.sessionId === sessionId
     );
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async getAdminStats(): Promise<{
+    totalPatients: number;
+    totalDoctors: number;
+    totalAppointments: number;
+    pendingAppointments: number;
+    todayAppointments: number;
+    monthlyGrowth: number;
+  }> {
+    const users = Array.from(this.users.values());
+    const appointments = Array.from(this.appointments.values());
+    const doctors = Array.from(this.doctors.values());
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayAppointments = appointments.filter(apt => {
+      const aptDate = new Date(apt.appointmentDate);
+      return aptDate >= today && aptDate < tomorrow;
+    });
+
+    return {
+      totalPatients: users.filter(u => u.role === 'patient').length,
+      totalDoctors: doctors.length,
+      totalAppointments: appointments.length,
+      pendingAppointments: appointments.filter(apt => apt.status === 'pending').length,
+      todayAppointments: todayAppointments.length,
+      monthlyGrowth: Math.floor(Math.random() * 20) + 5 // Mock growth percentage
+    };
   }
 }
 
