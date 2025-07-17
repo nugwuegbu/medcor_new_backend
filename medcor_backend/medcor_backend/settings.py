@@ -14,8 +14,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security settings
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-your-secret-key-here')
-DEBUG = os.getenv('NODE_ENV', 'development') == 'development'
-ALLOWED_HOSTS = ['*']
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if os.getenv('ALLOWED_HOSTS') else ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -127,19 +127,13 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5000",
-]
-
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5000,http://127.0.0.1:3000,http://127.0.0.1:5000').split(',')
+CORS_ALLOW_CREDENTIALS = os.getenv('CORS_ALLOW_CREDENTIALS', 'True').lower() == 'true'
 
 # JWT settings
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
-JWT_ALGORITHM = 'HS256'
-JWT_ACCESS_TOKEN_LIFETIME = 24 * 60 * 60  # 24 hours in seconds
+JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
+JWT_ACCESS_TOKEN_LIFETIME = int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME', 86400))  # 24 hours in seconds
 JWT_REFRESH_TOKEN_LIFETIME = 7 * 24 * 60 * 60  # 7 days in seconds
 
 # External API settings
@@ -147,6 +141,10 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 HEYGEN_API_KEY = os.getenv('HEYGEN_API_KEY')
 YOUCAM_API_KEY = os.getenv('YOUCAM_API_KEY')
 YOUCAM_SECRET_KEY = os.getenv('YOUCAM_SECRET_KEY')
+AZURE_FACE_API_KEY = os.getenv('AZURE_FACE_API_KEY')
+AZURE_FACE_ENDPOINT = os.getenv('AZURE_FACE_ENDPOINT')
+ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
+WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
 
 # Logging
 LOGGING = {
