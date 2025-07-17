@@ -15,6 +15,7 @@ import HairAnalysisWidget from "./hair-analysis-widget";
 import SkinAnalysisWidget from "./skin-analysis-widget";
 import LipsAnalysisWidget from "./lips-analysis-widget";
 import VoiceSkincareWidget from "./voice-skincare-tips";
+import HairExtensionWidget from "./hair-extension-widget";
 import VoiceIcon from "./ui/voice-icon";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
@@ -115,6 +116,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const [showSkinPage, setShowSkinPage] = useState(false);
   const [showLipsPage, setShowLipsPage] = useState(false);
   const [showVoiceTipsPage, setShowVoiceTipsPage] = useState(false);
+  const [showHairExtensionWidget, setShowHairExtensionWidget] = useState(false);
   const [faceAnalysisCameraActive, setFaceAnalysisCameraActive] = useState(false);
   const [faceAnalysisLoading, setFaceAnalysisLoading] = useState(false);
   const [faceAnalysisResult, setFaceAnalysisResult] = useState<any>(null);
@@ -1391,7 +1393,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     } },
                     { icon: Crown, label: "Hair Extension", angle: 360, action: () => { 
                       console.log("👑 Hair Extension button clicked");
-                      setShowVoiceTipsPage(true); 
+                      setShowHairExtensionWidget(true);
                       setSelectedMenuItem("hair-extension"); 
                       setShowChatInterface(false);
                     } }
@@ -3079,6 +3081,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             </div>
           </div>
         )}
+
+        {/* Hair Extension Widget */}
+        <HairExtensionWidget 
+          isOpen={showHairExtensionWidget}
+          onClose={() => {
+            setShowHairExtensionWidget(false);
+            setSelectedMenuItem(null);
+          }}
+        />
     </div>
     </>
   );

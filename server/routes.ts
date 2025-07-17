@@ -28,6 +28,7 @@ import {
 } from "./auth/oauth-providers";
 import crypto from "crypto";
 import { sendSkinAnalysis } from "./skin-analysis.js";
+import hairExtensionRouter from "./hair-extension-api";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication
@@ -3080,6 +3081,9 @@ const API_BASE_URL = 'https://your-backend-url.com';
       });
     }
   });
+
+  // Hair Extension API routes
+  app.use("/api/hair-extension", hairExtensionRouter);
 
   const httpServer = createServer(app);
   return httpServer;
