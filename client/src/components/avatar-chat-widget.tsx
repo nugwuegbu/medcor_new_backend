@@ -23,6 +23,8 @@ import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-
 import doctorEmilyPhoto from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751701299986.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
 import { videoStreamRef, ensureCameraReady } from "../utils/camera-manager";
+import { TermsModal } from "@/components/ui/terms-modal";
+import { useConsentManager } from "@/hooks/useConsentManager";
 
 // Perfect Corp YCE SDK types
 declare global {
@@ -96,6 +98,15 @@ const LipsIcon = ({ className }: { className?: string }) => (
 );
 
 export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
+  // Consent Management
+  const { 
+    hasConsent, 
+    showConsentModal, 
+    giveConsent, 
+    declineConsent, 
+    hideConsentModal 
+  } = useConsentManager();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [doctorsInputText, setDoctorsInputText] = useState("");
@@ -449,7 +460,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-
+    // Check for consent before allowing AI interaction
+    if (!hasConsent) {
+      // Show consent modal if not accepted
+      return;
+    }
 
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
@@ -1234,6 +1249,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       window.location.href = '/admin/login';
                     } },
                     { icon: Smile, label: "Face", angle: 200, action: () => { 
+                      if (!hasConsent) {
+                        return; // Block access if no consent
+                      }
+                      
                       console.log('🔴 Face button clicked - Setting states synchronously');
                       
                       // Set Face page state first
@@ -1258,6 +1277,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
+                      if (!hasConsent) {
+                        return; // Block access if no consent
+                      }
+
                       console.log("🎬 Hair Analysis button clicked (minimized menu)");
                       
                       try {
@@ -1302,6 +1325,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       }
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: async () => { 
+                      if (!hasConsent) {
+                        return; // Block access if no consent
+                      }
+
                       console.log("💋 Lips Analysis button clicked (minimized menu)");
                       
                       try {
@@ -1347,6 +1374,10 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       }
                     } },
                     { icon: Heart, label: "Skin", angle: 320, action: async () => { 
+                      if (!hasConsent) {
+                        return; // Block access if no consent
+                      }
+
                       console.log("🌟 Skin Analysis button clicked");
                       
                       try {
@@ -3089,6 +3120,19 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             setShowHairExtensionWidget(false);
             setSelectedMenuItem(null);
           }}
+        />
+
+        {/* Terms and Consent Modal */}
+        <TermsModal
+          isOpen={showConsentModal}
+          onClose={hideConsentModal}
+          onAccept={async () => {
+            const success = await giveConsent();
+            if (success) {
+              hideConsentModal();
+            }
+          }}
+          onDecline={declineConsent}
         />
     </div>
     </>

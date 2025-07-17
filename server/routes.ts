@@ -38,6 +38,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create default accounts on startup
   AuthService.createDefaultAccounts().catch(console.error);
 
+  // Consent management endpoints
+  app.post('/api/consent/record', async (req, res) => {
+    try {
+      const consentData = req.body;
+      // Log consent for audit trail
+      console.log('User consent recorded:', {
+        timestamp: consentData.timestamp,
+        version: consentData.version,
+        userAgent: consentData.userAgent,
+        acceptedTerms: consentData.acceptedTerms,
+        acceptedPrivacy: consentData.acceptedPrivacy,
+        acceptedDisclaimer: consentData.acceptedDisclaimer,
+        ipAddress: req.ip
+      });
+      
+      res.json({ success: true, message: 'Consent recorded successfully' });
+    } catch (error) {
+      console.error('Error recording consent:', error);
+      res.status(500).json({ error: 'Failed to record consent' });
+    }
+  });
+
+  app.post('/api/consent/revoke', async (req, res) => {
+    try {
+      // Log consent revocation for audit trail
+      console.log('User consent revoked:', {
+        timestamp: new Date().toISOString(),
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      res.json({ success: true, message: 'Consent revoked successfully' });
+    } catch (error) {
+      console.error('Error revoking consent:', error);
+      res.status(500).json({ error: 'Failed to revoke consent' });
+    }
+  });
+
   // JWT Authentication routes
   app.post("/api/auth/signup", async (req, res) => {
     try {
