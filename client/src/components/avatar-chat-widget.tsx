@@ -1428,6 +1428,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setSelectedMenuItem("admin");
                       setIsMinimized(false);
                       setShowChatInterface(false);
+                      setShowDoctorList(false);
+                      setShowRecordsList(false);
+                      setShowAdminPage(false);
+                      setShowBookingCalendar(false);
+                      console.log("Admin login states set (minimized menu)");
                     } },
                     { icon: Smile, label: "Face", angle: 200, action: () => { 
                       if (!hasConsent) {
@@ -2130,6 +2135,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 
                 {/* Admin Login Interface */}
                 {showAdminLogin && (
+                  console.log("🔐 Admin login interface rendering"),
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
                     {/* Back Button */}
                     <button
@@ -2287,6 +2293,13 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               console.log("Admin button clicked - showing admin login");
                               setShowAdminLogin(true);
                               setSelectedMenuItem("admin");
+                              setShowChatInterface(false);
+                              setShowDoctorList(false);
+                              setShowRecordsList(false);
+                              setShowAdminPage(false);
+                              setShowBookingCalendar(false);
+                              setIsMinimized(false);
+                              console.log("Admin login states set");
                             } },
                             { icon: Smile, label: "Face", angle: 255, action: () => { 
                               console.log('🔴 Face button clicked - Setting states synchronously');
