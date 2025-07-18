@@ -2135,34 +2135,94 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 )}
                 
                 {/* Admin Page View */}
-                {showAdminPage && (() => {
-                  console.log("🔧 Admin page is rendering!");
-                  return (
-                    <div className="absolute inset-0 bg-red-500/95 z-[60] rounded-lg flex flex-col">
-                      {/* Back Button */}
-                      <button
-                        onClick={() => {
-                          console.log("🔧 Back button clicked");
-                          setShowAdminPage(false);
-                          setSelectedMenuItem(null);
-                          setIsMinimized(false);
-                        }}
-                        className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 bg-white text-black rounded-md shadow-md hover:shadow-lg z-50"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="font-medium text-sm">Back</span>
-                      </button>
-                      
-                      {/* Simple Test Content */}
-                      <div className="flex-1 flex items-center justify-center">
-                        <div className="bg-white p-8 rounded-lg shadow-xl text-center">
-                          <h1 className="text-2xl font-bold text-gray-800 mb-4">Admin Dashboard</h1>
-                          <p className="text-gray-600">This is a test admin interface</p>
+                {showAdminPage && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 z-[60] rounded-lg flex flex-col">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => {
+                        setShowAdminPage(false);
+                        setSelectedMenuItem(null);
+                        setIsMinimized(false);
+                      }}
+                      className="absolute top-4 left-4 flex items-center gap-1 px-3 py-2 bg-white/10 backdrop-blur-sm text-white rounded-md shadow-md hover:bg-white/20 transition-all z-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="font-medium text-sm">Back</span>
+                    </button>
+                    
+                    {/* Admin Login Form */}
+                    <div className="flex-1 flex items-center justify-center p-6">
+                      <div className="w-full max-w-sm">
+                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white/20">
+                          {/* Logo/Header */}
+                          <div className="text-center mb-8">
+                            <div className="w-16 h-16 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <UserCheck className="h-8 w-8 text-white" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-2">Admin Login</h2>
+                            <p className="text-white/70 text-sm">Healthcare Management Portal</p>
+                          </div>
+
+                          {/* Login Form */}
+                          <form className="space-y-6">
+                            <div>
+                              <label className="block text-sm font-medium text-white/90 mb-2">
+                                Email Address
+                              </label>
+                              <input
+                                type="email"
+                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                                placeholder="admin@medcor.ai"
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-white/90 mb-2">
+                                Password
+                              </label>
+                              <input
+                                type="password"
+                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                                placeholder="Enter your password"
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <label className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 text-purple-400 bg-white/10 border-white/20 rounded focus:ring-purple-400 focus:ring-2"
+                                />
+                                <span className="ml-2 text-sm text-white/70">Remember me</span>
+                              </label>
+                              
+                              <button
+                                type="button"
+                                className="text-sm text-purple-300 hover:text-purple-200 transition-colors"
+                              >
+                                Forgot password?
+                              </button>
+                            </div>
+
+                            <button
+                              type="submit"
+                              className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+                            >
+                              Sign In
+                            </button>
+                          </form>
+
+                          {/* Footer */}
+                          <div className="mt-8 pt-6 border-t border-white/10">
+                            <p className="text-center text-xs text-white/50">
+                              Secure access to healthcare management system
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  );
-                })()}
+                  </div>
+                )}
 
 
                 
