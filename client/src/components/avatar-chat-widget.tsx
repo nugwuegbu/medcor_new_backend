@@ -2136,7 +2136,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 
                 {/* Admin Page View */}
                 {showAdminPage && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-[60] rounded-lg overflow-hidden flex flex-col">
                     {/* Back Button */}
                     <button
                       onClick={() => {
@@ -2300,7 +2300,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
                 
                 {/* Regular Chat Interface Content */}
-                {!showFacePage && (
+                {!showFacePage && !showAdminPage && !showDoctorList && !showRecordsList && !showBookingCalendar && !showSkinPage && !showLipsPage && !showHairPage && !showVoiceTipsPage && (
                   <div className="h-full flex flex-col">
                     {/* Menu Section - Centered */}
                     <div className="flex-1 flex items-center justify-center">
