@@ -14,7 +14,10 @@ const YOUCAM_CLIENT_SECRET = process.env.YOUCAM_CLIENT_SECRET || process.env.YOU
 function encryptWithRSA(data: string, publicKey: string): string {
   try {
     const pemKey = `-----BEGIN PUBLIC KEY-----\n${publicKey.match(/.{1,64}/g)?.join('\n')}\n-----END PUBLIC KEY-----`;
-    const encrypted = crypto.publicEncrypt(pemKey, Buffer.from(data));
+    const encrypted = crypto.publicEncrypt({
+      key: pemKey,
+      padding: crypto.constants.RSA_PKCS1_PADDING,
+    }, Buffer.from(data));
     return encrypted.toString('base64');
   } catch (error) {
     console.error('RSA encryption error:', error);
@@ -59,6 +62,33 @@ async function getYouCamAccessToken(): Promise<string> {
 // Get hair extension style groups
 router.get('/styles', async (req, res) => {
   try {
+    // Check if credentials are configured
+    if (!YOUCAM_CLIENT_ID || !YOUCAM_CLIENT_SECRET) {
+      console.warn('YouCam API credentials not configured - returning demo data');
+      return res.json({
+        categories: [
+          {
+            id: 'long-straight',
+            name: 'Long Straight',
+            description: 'Long straight hair extensions',
+            styles: [
+              { id: 'ls1', name: 'Classic Long Straight', preview: '/demo/hair1.jpg' },
+              { id: 'ls2', name: 'Silky Long Straight', preview: '/demo/hair2.jpg' }
+            ]
+          },
+          {
+            id: 'wavy',
+            name: 'Wavy',
+            description: 'Wavy hair extensions',
+            styles: [
+              { id: 'w1', name: 'Beach Waves', preview: '/demo/hair3.jpg' },
+              { id: 'w2', name: 'Loose Waves', preview: '/demo/hair4.jpg' }
+            ]
+          }
+        ]
+      });
+    }
+
     const accessToken = await getYouCamAccessToken();
     
     const response = await fetch(`${YOUCAM_API_BASE}/style-groups/hair-extension`, {

@@ -1600,9 +1600,14 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     } },
                     { icon: Crown, label: "Hair Extension", angle: 360, action: () => { 
                       console.log("👑 Hair Extension button clicked");
-                      setShowHairExtensionWidget(true);
-                      setSelectedMenuItem("hair-extension"); 
-                      setShowChatInterface(false);
+                      try {
+                        setShowHairExtensionWidget(true);
+                        setSelectedMenuItem("hair-extension"); 
+                        setShowChatInterface(false);
+                        setIsMinimized(true);
+                      } catch (error) {
+                        console.error("Error opening Hair Extension:", error);
+                      }
                     } }
                   ].map((item, index) => {
                     const angleRad = (item.angle * Math.PI) / 180;

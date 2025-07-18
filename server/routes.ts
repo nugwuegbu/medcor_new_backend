@@ -3122,6 +3122,23 @@ const API_BASE_URL = 'https://your-backend-url.com';
   // Hair Extension API routes
   app.use("/api/hair-extension", hairExtensionRouter);
 
+  // Placeholder images for hair extensions
+  app.get("/api/placeholder/:filename", (req, res) => {
+    const { filename } = req.params;
+    console.log(`Placeholder image requested: ${filename}`);
+    
+    // Send a simple SVG placeholder
+    const svg = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+      <rect width="200" height="200" fill="#f0f0f0"/>
+      <text x="100" y="100" font-family="Arial" font-size="14" fill="#666" text-anchor="middle" dy="0.35em">
+        Hair Extension
+      </text>
+    </svg>`;
+    
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(svg);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
