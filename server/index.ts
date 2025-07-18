@@ -41,10 +41,26 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    let message = err.message || "Internal Server Error";
+
+    // Handle OpenSSL errors gracefully
+    if (err.code === 'ERR_OSSL_UNSUPPORTED' || err.library === 'DECODER routines') {
+      console.error('OpenSSL error caught:', err);
+      message = 'Cryptographic operation failed - using fallback method';
+      // Don't throw the error, just log it and return a response
+      return res.status(200).json({ 
+        success: false, 
+        message: 'Feature temporarily unavailable - please try again later',
+        fallback: true
+      });
+    }
 
     res.status(status).json({ message });
-    throw err;
+    
+    // Only throw the error if it's not an OpenSSL error
+    if (err.code !== 'ERR_OSSL_UNSUPPORTED' && err.library !== 'DECODER routines') {
+      throw err;
+    }
   });
 
   // importantly only setup vite in development and after

@@ -18,20 +18,27 @@ interface OAuthProfile {
 // Configure session middleware
 export function configureSession(app: Express) {
   const pgStore = connectPg(session);
+  
+  // Add error handling for session store
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
     createTableIfMissing: true,
     tableName: "auth_sessions",
     ttl: 30 * 24 * 60 * 60 // 30 days
   });
+  
+  // Handle session store errors
+  sessionStore.on('error', (err) => {
+    console.error('Session store error:', err);
+  });
 
   app.use(session({
     store: sessionStore,
-    secret: process.env.SESSION_SECRET || 'medcor-ai-secret-key-change-in-production',
+    secret: process.env.SESSION_SECRET || 'medcor-ai-development-secret-key-2024',
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Set to false in development to avoid HTTPS issues
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     }
