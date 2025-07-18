@@ -2135,167 +2135,34 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 )}
                 
                 {/* Admin Page View */}
-                {showAdminPage && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-[60] rounded-lg overflow-hidden flex flex-col">
-                    {/* Back Button */}
-                    <button
-                      onClick={() => {
-                        setShowAdminPage(false);
-                        setSelectedMenuItem(null);
-                        setIsMinimized(false);
-                      }}
-                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="font-medium text-sm">Back</span>
-                    </button>
-                    
-                    {/* Admin Dashboard Content */}
-                    <div className="flex-1 pt-16 overflow-hidden">
-                      <div className="h-full bg-white/80 backdrop-blur-sm m-6 mt-10 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-                        {/* Admin Header */}
-                        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4">
-                          <div className="flex items-center gap-3">
-                            <UserCheck className="h-6 w-6" />
-                            <div>
-                              <h2 className="text-lg font-bold">Admin Dashboard</h2>
-                              <p className="text-purple-100 text-sm">Healthcare Management Portal</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Admin Content Tabs */}
-                        <div className="flex-1 flex flex-col overflow-hidden">
-                          {/* Tab Navigation */}
-                          <div className="flex border-b border-gray-200 bg-gray-50">
-                            {['Overview', 'Users', 'Doctors', 'Appointments'].map((tab) => (
-                              <button
-                                key={tab}
-                                className="flex-1 py-3 px-2 text-xs font-medium text-gray-600 hover:text-purple-600 hover:bg-white transition-colors"
-                              >
-                                {tab}
-                              </button>
-                            ))}
-                          </div>
-
-                          {/* Tab Content */}
-                          <div className="flex-1 overflow-auto p-4">
-                            {/* Overview Stats */}
-                            <div className="grid grid-cols-2 gap-3 mb-6">
-                              <div className="bg-blue-50 p-3 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                  <Users className="h-4 w-4 text-blue-600" />
-                                  <span className="text-xs font-medium text-blue-800">Total Users</span>
-                                </div>
-                                <p className="text-lg font-bold text-blue-900 mt-1">1,247</p>
-                              </div>
-                              
-                              <div className="bg-green-50 p-3 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4 text-green-600" />
-                                  <span className="text-xs font-medium text-green-800">Appointments</span>
-                                </div>
-                                <p className="text-lg font-bold text-green-900 mt-1">89</p>
-                              </div>
-                              
-                              <div className="bg-purple-50 p-3 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                  <Heart className="h-4 w-4 text-purple-600" />
-                                  <span className="text-xs font-medium text-purple-800">Analyses</span>
-                                </div>
-                                <p className="text-lg font-bold text-purple-900 mt-1">534</p>
-                              </div>
-                              
-                              <div className="bg-orange-50 p-3 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                  <Phone className="h-4 w-4 text-orange-600" />
-                                  <span className="text-xs font-medium text-orange-800">Active Calls</span>
-                                </div>
-                                <p className="text-lg font-bold text-orange-900 mt-1">12</p>
-                              </div>
-                            </div>
-
-                            {/* Recent Activity */}
-                            <div className="bg-gray-50 rounded-lg p-4">
-                              <h3 className="text-sm font-semibold text-gray-800 mb-3">Recent Activity</h3>
-                              <div className="space-y-3">
-                                <div className="flex items-center gap-3 p-2 bg-white rounded">
-                                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <User className="h-4 w-4 text-blue-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-xs font-medium text-gray-800">New user registration</p>
-                                    <p className="text-xs text-gray-500">sarah.jones@email.com</p>
-                                  </div>
-                                  <span className="text-xs text-gray-400">2m ago</span>
-                                </div>
-                                
-                                <div className="flex items-center gap-3 p-2 bg-white rounded">
-                                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                    <Calendar className="h-4 w-4 text-green-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-xs font-medium text-gray-800">Appointment booked</p>
-                                    <p className="text-xs text-gray-500">Dr. Sarah Johnson - Cardiology</p>
-                                  </div>
-                                  <span className="text-xs text-gray-400">5m ago</span>
-                                </div>
-                                
-                                <div className="flex items-center gap-3 p-2 bg-white rounded">
-                                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <Heart className="h-4 w-4 text-purple-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-xs font-medium text-gray-800">Skin analysis completed</p>
-                                    <p className="text-xs text-gray-500">Patient ID: #4521</p>
-                                  </div>
-                                  <span className="text-xs text-gray-400">8m ago</span>
-                                </div>
-                                
-                                <div className="flex items-center gap-3 p-2 bg-white rounded">
-                                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                                    <Phone className="h-4 w-4 text-orange-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="text-xs font-medium text-gray-800">Voice call initiated</p>
-                                    <p className="text-xs text-gray-500">Dr. Michael Chen with Patient #3401</p>
-                                  </div>
-                                  <span className="text-xs text-gray-400">12m ago</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Quick Actions */}
-                            <div className="mt-6">
-                              <h3 className="text-sm font-semibold text-gray-800 mb-3">Quick Actions</h3>
-                              <div className="grid grid-cols-2 gap-3">
-                                <button className="p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                                  <Users className="h-4 w-4 mx-auto mb-1" />
-                                  <span className="text-xs font-medium">Manage Users</span>
-                                </button>
-                                
-                                <button className="p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-                                  <Calendar className="h-4 w-4 mx-auto mb-1" />
-                                  <span className="text-xs font-medium">View Schedule</span>
-                                </button>
-                                
-                                <button className="p-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
-                                  <FileText className="h-4 w-4 mx-auto mb-1" />
-                                  <span className="text-xs font-medium">Export Reports</span>
-                                </button>
-                                
-                                <button className="p-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
-                                  <UserCheck className="h-4 w-4 mx-auto mb-1" />
-                                  <span className="text-xs font-medium">System Settings</span>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
+                {showAdminPage && (() => {
+                  console.log("🔧 Admin page is rendering!");
+                  return (
+                    <div className="absolute inset-0 bg-red-500/95 z-[60] rounded-lg flex flex-col">
+                      {/* Back Button */}
+                      <button
+                        onClick={() => {
+                          console.log("🔧 Back button clicked");
+                          setShowAdminPage(false);
+                          setSelectedMenuItem(null);
+                          setIsMinimized(false);
+                        }}
+                        className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 bg-white text-black rounded-md shadow-md hover:shadow-lg z-50"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="font-medium text-sm">Back</span>
+                      </button>
+                      
+                      {/* Simple Test Content */}
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="bg-white p-8 rounded-lg shadow-xl text-center">
+                          <h1 className="text-2xl font-bold text-gray-800 mb-4">Admin Dashboard</h1>
+                          <p className="text-gray-600">This is a test admin interface</p>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
 
                 
