@@ -2,9 +2,10 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django_tenants.models import TenantMixin, DomainMixin
 from tenant_users.tenants.models import TenantBase, UserProfile
+from core.models import TimeStampedModel
 
 
-class Client(TenantBase):
+class Client(TenantBase, TimeStampedModel):
     """
     Tenant model for multi-tenancy support.
     Each tenant represents a hospital/clinic using the system.
@@ -19,7 +20,7 @@ class Client(TenantBase):
         return self.name
 
 
-class Domain(DomainMixin):
+class Domain(DomainMixin, TimeStampedModel):
     """
     Domain model for tenant routing.
     Each domain points to a specific tenant.
