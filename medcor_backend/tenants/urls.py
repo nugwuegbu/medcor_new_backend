@@ -14,4 +14,6 @@ urlpatterns = [
     path('api/admin/login/', admin_views.admin_login, name='admin_login'),
     path('api/admin/logout/', admin_views.admin_logout, name='admin_logout'),
     path('api/admin/profile/', admin_views.admin_profile, name='admin_profile'),
+    path('api/admin/stats/', admin_views.admin_stats, name='admin_stats'),
+    path('api/admin/users/', admin_views.admin_users, name='admin_users'),
 ]

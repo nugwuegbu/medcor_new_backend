@@ -46,10 +46,10 @@ class UserAdmin(admin.ModelAdmin):
 class ClientAdmin(admin.ModelAdmin):
     """Admin for tenant clients."""
     
-    list_display = ['name', 'schema_name', 'created_on']
-    list_filter = ['created_on']
+    list_display = ['name', 'schema_name', 'created_at']
+    list_filter = ['created_at']
     search_fields = ['name', 'schema_name']
-    ordering = ['-created_on']
+    ordering = ['-created_at']
 
 
 @admin.register(Domain)

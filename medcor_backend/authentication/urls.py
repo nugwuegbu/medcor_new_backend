@@ -9,4 +9,5 @@ urlpatterns = [
     path('register-face/', views.RegisterFaceView.as_view(), name='register-face'),
     path('update-phone/', views.UpdatePhoneView.as_view(), name='update-phone'),
     path('logout/', views.LogoutView.as_view(), name='logout'),
+    path('verify-token/', views.VerifyTokenView.as_view(), name='verify-token'),
 ]

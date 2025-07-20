@@ -227,3 +227,23 @@ class LogoutView(APIView):
                 'success': False,
                 'message': 'Logout failed'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class VerifyTokenView(APIView):
+    """Token verification endpoint for admin routes."""
+    
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            user = request.user
+            return Response({
+                'user': UserSerializer(user).data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Token verification error: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'Token verification failed'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

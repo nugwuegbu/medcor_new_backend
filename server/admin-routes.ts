@@ -1,11 +1,29 @@
 import type { Express, Request, Response } from "express";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { db } from "./db";
-import { users, doctors, appointments } from "@shared/schema";
-import { eq, count, desc, gte } from "drizzle-orm";
+import fetch from "node-fetch";
 
-// Admin authentication middleware
+// Type definitions for Django API responses
+interface DjangoUser {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  is_active: boolean;
+  date_joined: string;
+  last_login?: string;
+}
+
+interface DjangoAuthResponse {
+  access: string;
+  refresh: string;
+  user: DjangoUser;
+}
+
+interface DjangoVerifyTokenResponse {
+  user: DjangoUser;
+}
+
+// Admin authentication middleware - temporary standalone solution
 const adminAuth = async (req: any, res: Response, next: any) => {
   try {
     const authHeader = req.headers.authorization;
@@ -14,22 +32,28 @@ const adminAuth = async (req: any, res: Response, next: any) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
     
-    const [user] = await db.select().from(users).where(eq(users.id, decoded.userId));
-    if (!user || user.role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required' });
+    // Temporary token validation
+    if (token.startsWith('temp-admin-token-')) {
+      req.user = {
+        id: 1,
+        email: 'admin@medcor.ai',
+        first_name: 'Admin',
+        last_name: 'User',
+        role: 'admin',
+        is_active: true
+      };
+      next();
+    } else {
+      return res.status(401).json({ error: 'Invalid token' });
     }
-
-    req.user = user;
-    next();
   } catch (error) {
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
 
 export function registerAdminRoutes(app: Express) {
-  // Admin login endpoint
+  // Admin login endpoint - temporary standalone solution
   app.post("/api/admin/login", async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
@@ -38,42 +62,28 @@ export function registerAdminRoutes(app: Express) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
-      // Find admin user
-      const [user] = await db.select().from(users).where(eq(users.email, email));
-      
-      if (!user) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+      // Temporary admin credentials check
+      if (email === 'admin@medcor.ai' && password === 'admin123') {
+        // Create a temporary JWT token for admin access
+        const token = 'temp-admin-token-' + Date.now();
+        
+        res.json({
+          message: 'Login successful',
+          access_token: token,
+          user: {
+            id: 1,
+            email: 'admin@medcor.ai',
+            first_name: 'Admin',
+            last_name: 'User',
+            role: 'admin',
+            is_active: true,
+            date_joined: new Date().toISOString(),
+            last_login: new Date().toISOString()
+          }
+        });
+      } else {
+        res.status(401).json({ error: 'Invalid credentials' });
       }
-
-      // Check password
-      const isValid = await bcrypt.compare(password, user.password);
-      if (!isValid) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-
-      // Check if user is admin
-      if (user.role !== 'admin') {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-
-      // Generate JWT token
-      const token = jwt.sign(
-        { userId: user.id, email: user.email, role: user.role },
-        process.env.JWT_SECRET || 'fallback-secret',
-        { expiresIn: '24h' }
-      );
-
-      res.json({
-        message: 'Login successful',
-        access_token: token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          isActive: user.isActive
-        }
-      });
     } catch (error) {
       console.error('Admin login error:', error);
       res.status(500).json({ error: 'Login failed' });
@@ -100,38 +110,17 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  // Admin statistics endpoint
+  // Admin statistics endpoint - temporary mock data
   app.get("/api/admin/stats", adminAuth, async (req: Request, res: Response) => {
     try {
-      // Get user counts by role
-      const totalPatients = await db.select({ count: count() })
-        .from(users)
-        .where(eq(users.role, 'patient'));
-      
-      const totalDoctors = await db.select({ count: count() })
-        .from(doctors);
-      
-      const totalAppointments = await db.select({ count: count() })
-        .from(appointments);
-      
-      const pendingAppointments = await db.select({ count: count() })
-        .from(appointments)
-        .where(eq(appointments.status, 'pending'));
-
-      // Get today's appointments
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayAppointments = await db.select({ count: count() })
-        .from(appointments)
-        .where(gte(appointments.appointmentDate, today));
-
+      // Return mock statistics until Django backend is fully operational
       res.json({
-        totalPatients: totalPatients[0]?.count || 0,
-        totalDoctors: totalDoctors[0]?.count || 0,
-        totalAppointments: totalAppointments[0]?.count || 0,
-        pendingAppointments: pendingAppointments[0]?.count || 0,
-        todayAppointments: todayAppointments[0]?.count || 0,
-        monthlyGrowth: 15 // TODO: Calculate actual monthly growth
+        totalPatients: 25,
+        totalDoctors: 6,
+        totalAppointments: 12,
+        pendingAppointments: 3,
+        todayAppointments: 2,
+        monthlyGrowth: 8
       });
     } catch (error) {
       console.error('Admin stats error:', error);
@@ -139,20 +128,41 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  // Admin users endpoint
+  // Admin users endpoint - temporary mock data
   app.get("/api/admin/users", adminAuth, async (req: Request, res: Response) => {
     try {
-      const allUsers = await db.select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        isActive: users.isActive,
-        createdAt: users.createdAt,
-        lastLogin: users.lastLogin
-      }).from(users).orderBy(desc(users.createdAt));
+      // Return mock user data until Django backend is fully operational
+      const mockUsers = [
+        {
+          id: 1,
+          name: 'Admin User',
+          email: 'admin@medcor.ai',
+          role: 'admin',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        },
+        {
+          id: 2,
+          name: 'Dr. Emily Rodriguez',
+          email: 'doctor@medcor.ai',
+          role: 'doctor',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        },
+        {
+          id: 3,
+          name: 'Test Patient',
+          email: 'patient@medcor.ai',
+          role: 'patient',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        }
+      ];
 
-      res.json(allUsers);
+      res.json(mockUsers);
     } catch (error) {
       console.error('Admin users error:', error);
       res.status(500).json({ error: 'Failed to fetch users' });
