@@ -1,9 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django_tenants.models import TenantMixin, DomainMixin
+from tenant_users.tenants.models import TenantBase, UserProfile
 
 
-class Client(TenantMixin):
+class Client(TenantBase):
     """
     Tenant model for multi-tenancy support.
     Each tenant represents a hospital/clinic using the system.
@@ -26,11 +27,16 @@ class Domain(DomainMixin):
     pass
 
 
-class User(AbstractUser):
+class User(UserProfile):
     """
-    Custom user model that extends Django's AbstractUser.
+    Custom user model that extends django-tenant-users UserProfile.
     This model will be created in each tenant's schema for isolated user management.
     """
+    # Add standard user fields that UserProfile doesn't have
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    username = models.CharField(max_length=150, blank=True, null=True)
+    
     # Extend the default user model with additional fields
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.URLField(blank=True, null=True)
@@ -76,28 +82,23 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    class Meta:
-        db_table = 'auth_user'  # Keep the same table name as default Django user model
-        verbose_name = 'User'
-        verbose_name_plural = 'Users'
-        app_label = 'tenants'
-    
     def __str__(self):
-        return f"{self.username} ({self.get_full_name() or self.email})"
+        return f"{self.get_display_name()} ({str(self.email)})"
     
     def get_full_name(self):
         """Return the first_name plus the last_name, with a space in between."""
-        full_name = f"{self.first_name} {self.last_name}"
-        return full_name.strip()
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}".strip()
+        return ""
     
     def get_display_name(self):
         """Return a user-friendly display name."""
         if self.get_full_name():
             return self.get_full_name()
-        elif self.email:
-            return self.email
-        else:
+        elif self.username:
             return self.username
+        else:
+            return str(self.email).split('@')[0] if self.email else 'User'
     
     def has_face_recognition(self):
         """Check if user has face recognition enabled."""

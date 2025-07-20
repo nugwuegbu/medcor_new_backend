@@ -4,7 +4,7 @@ from .models import User, Client, Domain
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(admin.ModelAdmin):
     """Custom user admin for tenant users."""
     
     list_display = ['email', 'username', 'role', 'is_active', 'face_registered', 'created_at']
@@ -12,7 +12,10 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ['email', 'username', 'first_name', 'last_name']
     ordering = ['-created_at']
     
-    fieldsets = BaseUserAdmin.fieldsets + (
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('email', 'username', 'first_name', 'last_name', 'is_active', 'is_verified')
+        }),
         ('Personal Information', {
             'fields': ('phone_number', 'date_of_birth', 'address', 'emergency_contact', 'emergency_phone')
         }),

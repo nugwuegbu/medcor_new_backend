@@ -20,6 +20,8 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if 
 # Application definition
 SHARED_APPS = [
     'django_tenants',  # mandatory
+    'tenant_users.tenants',  # django-tenant-users tenant management
+    'tenant_users.permissions',  # django-tenant-users permissions
     'tenants',         # custom tenant app
     
     'django.contrib.admin',
@@ -142,6 +144,10 @@ AUTH_USER_MODEL = 'tenants.User'
 # Multi-tenant configuration settings
 TENANT_USER_CREATION_ENABLED = True  # Allow tenant user creation
 TENANT_ADMIN_ENABLED = True  # Enable admin access for tenants
+
+# django-tenant-users configuration
+TENANT_USERS_DOMAIN = 'localhost'  # Default domain for development
+PUBLIC_SCHEMA_URLCONF = 'medcor_backend.urls_public'  # Public schema URL configuration
 
 # Django REST Framework
 REST_FRAMEWORK = {

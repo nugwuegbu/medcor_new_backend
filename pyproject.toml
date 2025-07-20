@@ -19,4 +19,5 @@ dependencies = [
     "requests>=2.32.4",
     "djangorestframework-simplejwt>=5.4.0",
     "django-tenants>=3.8.0",
+    "django-tenant-users>=2.1.1",
 ]
