@@ -29,11 +29,15 @@ import {
 import crypto from "crypto";
 import { sendSkinAnalysis } from "./skin-analysis.js";
 import hairExtensionRouter from "./hair-extension-api";
+import { registerAdminRoutes } from "./admin-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication
   configureSession(app);
   configureOAuthProviders();
+
+  // Register admin routes
+  registerAdminRoutes(app);
 
   // Create default accounts on startup
   AuthService.createDefaultAccounts().catch(console.error);

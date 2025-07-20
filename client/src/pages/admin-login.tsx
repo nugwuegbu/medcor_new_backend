@@ -34,14 +34,14 @@ export default function AdminLogin() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: AdminLoginData) => {
-      return await apiRequest('/api/auth/admin-login', {
+      return await apiRequest('/api/admin/login/', {
         method: 'POST',
         body: JSON.stringify(data),
       });
     },
     onSuccess: (response) => {
       // Store admin token
-      localStorage.setItem('adminToken', response.token);
+      localStorage.setItem('adminToken', response.access_token);
       localStorage.setItem('adminUser', JSON.stringify(response.user));
       
       toast({
@@ -178,8 +178,8 @@ export default function AdminLogin() {
               <div>
                 <h4 className="font-semibold text-amber-800">Demo Credentials</h4>
                 <div className="text-sm text-amber-700 mt-1">
-                  <p>Email: admin@medcor.ai</p>
-                  <p>Password: Admin123!</p>
+                  <p>Email: admin@medcare.localhost</p>
+                  <p>Password: admin123</p>
                 </div>
               </div>
             </div>

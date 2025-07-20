@@ -93,8 +93,8 @@ export default function AdminDashboard() {
 
   // Fetch doctors
   const { data: doctors, isLoading: doctorsLoading } = useQuery({
-    queryKey: ['/api/admin/doctors'],
-    queryFn: () => apiRequest('/api/admin/doctors', {
+    queryKey: ['/api/doctors'],
+    queryFn: () => apiRequest('/api/doctors', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
       }
@@ -103,8 +103,8 @@ export default function AdminDashboard() {
 
   // Fetch appointments
   const { data: appointments, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ['/api/admin/appointments'],
-    queryFn: () => apiRequest('/api/admin/appointments', {
+    queryKey: ['/api/appointments'],
+    queryFn: () => apiRequest('/api/appointments', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
       }

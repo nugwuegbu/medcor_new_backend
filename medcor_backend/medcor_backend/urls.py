@@ -10,6 +10,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('authentication.urls')),
     path('api/', include('api.urls')),
+    path('', include('tenants.urls')),  # Include tenant management URLs
 ]
 
 # Serve media files during development

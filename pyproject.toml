@@ -8,6 +8,7 @@ dependencies = [
     "asyncio>=3.4.3",
     "bcrypt>=4.3.0",
     "cryptography>=45.0.5",
+    "django-tenant-schemas>=1.12.0",
     "django>=5.2.4",
     "django-cors-headers>=4.7.0",
     "djangorestframework>=3.16.0",
@@ -16,4 +17,6 @@ dependencies = [
     "pyjwt>=2.10.1",
     "python-dotenv>=1.1.1",
     "requests>=2.32.4",
+    "django-tenant-users>=2.1.1",
+    "djangorestframework-simplejwt>=5.4.0",
 ]
