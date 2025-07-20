@@ -139,6 +139,10 @@ TENANT_DOMAIN_MODEL = "tenants.Domain"  # app.Model
 # Custom User model
 AUTH_USER_MODEL = 'tenants.User'
 
+# Multi-tenant configuration settings
+TENANT_USER_CREATION_ENABLED = True  # Allow tenant user creation
+TENANT_ADMIN_ENABLED = True  # Enable admin access for tenants
+
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
