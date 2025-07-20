@@ -1,33 +1,7 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Doctor, Appointment, ChatMessage, FaceRecognitionLog, FaceAnalysisReport, HairAnalysisReport
+from .models import Doctor, Appointment, ChatMessage, FaceRecognitionLog, FaceAnalysisReport, HairAnalysisReport
 
-
-@admin.register(User)
-class UserAdmin(BaseUserAdmin):
-    """Custom user admin."""
-    
-    list_display = ['email', 'name', 'role', 'is_active', 'face_registered', 'created_at']
-    list_filter = ['role', 'is_active', 'face_registered', 'created_at']
-    search_fields = ['email', 'name', 'username']
-    ordering = ['-created_at']
-    
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('Custom Fields', {
-            'fields': ('name', 'phone_number', 'role', 'profile_picture', 'preferred_language')
-        }),
-        ('Face Recognition', {
-            'fields': ('face_id', 'person_id', 'face_registered', 'face_login_enabled', 'last_face_login')
-        }),
-        ('OAuth', {
-            'fields': ('oauth_provider', 'oauth_provider_id')
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at')
-        }),
-    )
-    
-    readonly_fields = ['created_at', 'updated_at']
+# User model is now handled by tenants app admin
 
 
 @admin.register(Doctor)

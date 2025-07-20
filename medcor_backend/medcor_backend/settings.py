@@ -137,7 +137,7 @@ TENANT_MODEL = "tenants.Client"  # app.Model
 TENANT_DOMAIN_MODEL = "tenants.Domain"  # app.Model
 
 # Custom User model
-AUTH_USER_MODEL = 'core.User'
+AUTH_USER_MODEL = 'tenants.User'
 
 # Django REST Framework
 REST_FRAMEWORK = {
