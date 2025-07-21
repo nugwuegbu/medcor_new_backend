@@ -1369,7 +1369,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
         {/* Info Overlay hidden when minimized since content is shown in white area */}
         
         {/* Chat Interface View - Separate from Face Analysis */}
-        {showChatInterface && !showFacePage && (
+        {showChatInterface && !showFacePage && !showAdminPage && (
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-40 rounded-lg overflow-hidden">
             {/* Back Button - Top Left Corner */}
             <button
@@ -2129,27 +2129,27 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   </div>
                 )}
                 
-                {/* Admin Page View */}
-                {showAdminPage && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 z-[60] rounded-lg flex flex-col">
-                    {/* Back Button */}
-                    <button
-                      onClick={() => {
-                        console.log("Admin back button clicked");
-                        setShowAdminPage(false);
-                        setSelectedMenuItem(null);
-                        setIsMinimized(false);
-                        setShowChatInterface(true); // Return to chat interface
-                      }}
-                      className="absolute top-4 left-4 flex items-center gap-1 px-3 py-2 bg-white/10 backdrop-blur-sm text-white rounded-md shadow-md hover:bg-white/20 transition-all z-50"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="font-medium text-sm">Back</span>
-                    </button>
-                    
-                    {/* Admin Login Form */}
-                    <div className="flex-1 flex items-center justify-center p-6">
-                      <div className="w-full max-w-sm">
+        {/* Admin Page View - TOP LEVEL */}
+        {showAdminPage && (
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 z-[60] rounded-lg flex flex-col">
+            {/* Back Button */}
+            <button
+              onClick={() => {
+                console.log("Admin back button clicked");
+                setShowAdminPage(false);
+                setSelectedMenuItem(null);
+                setIsMinimized(false);
+                setShowChatInterface(true); // Return to chat interface
+              }}
+              className="absolute top-4 left-4 flex items-center gap-1 px-3 py-2 bg-white/10 backdrop-blur-sm text-white rounded-md shadow-md hover:bg-white/20 transition-all z-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="font-medium text-sm">Back</span>
+            </button>
+            
+            {/* Admin Login Form */}
+            <div className="flex-1 flex items-center justify-center p-6">
+              <div className="w-full max-w-sm">
                         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white/20">
                           {/* Logo/Header */}
                           <div className="text-center mb-8">
@@ -2220,8 +2220,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     </div>
                   </div>
                 )}
-
-
                 
                 {/* Regular Chat Interface Content */}
                 {!showFacePage && !showAdminPage && !showDoctorList && !showRecordsList && !showBookingCalendar && !showSkinPage && !showLipsPage && !showHairPage && !showVoiceTipsPage && (
