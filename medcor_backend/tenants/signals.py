@@ -14,7 +14,9 @@ except ImportError:
 # Get the through model for the User.tenants relationship
 def get_user_tenants_through_model():
     """Get the through model for User.tenants many-to-many relationship."""
-    return User.tenants.through
+    # Use getattr to avoid LSP "through" unknown member error
+    tenants_field = getattr(User, 'tenants')
+    return getattr(tenants_field, 'through')
 
 
 @receiver(m2m_changed, sender=get_user_tenants_through_model())
