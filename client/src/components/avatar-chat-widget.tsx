@@ -1555,27 +1555,17 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       }
                     } },
                     { icon: Heart, label: "Skin", angle: 320, action: async () => { 
+                      console.log("🌟 Skin Analysis button clicked - DIRECT TEST");
+                      
                       if (!hasConsent) {
-                        return; // Block access if no consent
+                        console.log("🌟 No consent - blocking access");
+                        return;
                       }
 
-                      console.log("🌟 Skin Analysis button clicked");
-                      
                       try {
-                        // Ensure camera is ready first
-                        console.log("🌟 Ensuring camera is ready for skin analysis...");
-                        const stream = await ensureCameraReady();
-                        console.log("🌟 Camera stream ready:", stream);
+                        console.log("🌟 Setting skin analysis states...");
                         
-                        // Validate stream has active tracks
-                        if (!stream || !stream.getTracks || stream.getTracks().length === 0) {
-                          throw new Error("Invalid camera stream - no active tracks");
-                        }
-                        
-                        // Force update the shared stream reference
-                        videoStreamRef.current = stream;
-                        
-                        // Update UI states immediately
+                        // Update UI states immediately without camera dependency
                         setShowSkinPage(true); 
                         setSelectedMenuItem("skin"); 
                         setIsMinimized(false); 
@@ -1584,23 +1574,20 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                         setAnalysisStreamReady(true);
                         
                         console.log("🌟 Skin Analysis page activated successfully");
-                        console.log("🌟 Skin Analysis videoStreamRef status:", {
-                          hasRef: !!videoStreamRef.current,
-                          hasGetTracks: videoStreamRef.current?.getTracks,
-                          trackCount: videoStreamRef.current?.getTracks?.()?.length || 0
-                        });
+                        
+                        // Try to get camera in background
+                        try {
+                          const stream = await ensureCameraReady();
+                          if (stream) {
+                            videoStreamRef.current = stream;
+                            console.log("🌟 Camera stream ready for skin analysis");
+                          }
+                        } catch (cameraErr) {
+                          console.log("🌟 Camera not available, continuing without it");
+                        }
                         
                       } catch (err) {
-                        console.error("🌟 Skin Analysis camera setup failed:", err);
-                        
-                        // Show error message to user
-                        const errorMessage: Message = {
-                          id: `error_${Date.now()}`,
-                          text: "Camera access is required for skin analysis. Please enable camera permission and try again.",
-                          sender: "bot",
-                          timestamp: new Date()
-                        };
-                        setMessages(prev => [...prev, errorMessage]);
+                        console.error("🌟 Skin Analysis setup failed:", err);
                       }
                     } },
                     { icon: Crown, label: "Hair Extension", angle: 360, action: () => { 
