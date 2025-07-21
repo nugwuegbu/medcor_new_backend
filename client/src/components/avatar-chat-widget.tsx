@@ -1427,7 +1427,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setShowAdminPage(true);
                       setSelectedMenuItem("admin");
                       setShowChatInterface(false);
-                      setIsMinimized(true);
+                      setIsMinimized(false); // FIXED: Do not minimize when showing admin page
+                      
+                      // Reset other conflicting states
+                      setShowDoctorList(false);
+                      setShowRecordsList(false);
+                      setShowBookingCalendar(false);
+                      setShowFacePage(false);
+                      setShowHairPage(false);
+                      setShowSkinPage(false);
+                      setShowLipsPage(false);
                     } },
                     { icon: Smile, label: "Face", angle: 200, action: () => { 
                       if (!hasConsent) {
@@ -2126,9 +2135,11 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     {/* Back Button */}
                     <button
                       onClick={() => {
+                        console.log("Admin back button clicked");
                         setShowAdminPage(false);
                         setSelectedMenuItem(null);
                         setIsMinimized(false);
+                        setShowChatInterface(true); // Return to chat interface
                       }}
                       className="absolute top-4 left-4 flex items-center gap-1 px-3 py-2 bg-white/10 backdrop-blur-sm text-white rounded-md shadow-md hover:bg-white/20 transition-all z-50"
                     >
@@ -2254,7 +2265,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               setShowAdminPage(true);
                               setSelectedMenuItem("admin");
                               setShowChatInterface(false);
-                              setIsMinimized(true);
+                              setIsMinimized(false); // FIXED: Do not minimize when showing admin page
+                              
+                              // Reset other conflicting states
+                              setShowDoctorList(false);
+                              setShowRecordsList(false);
+                              setShowBookingCalendar(false);
+                              setShowFacePage(false);
+                              setShowHairPage(false);
+                              setShowSkinPage(false);
+                              setShowLipsPage(false);
                             } },
                             { icon: Smile, label: "Face", angle: 255, action: () => { 
                               console.log('🔴 Face button clicked - Setting states synchronously');
