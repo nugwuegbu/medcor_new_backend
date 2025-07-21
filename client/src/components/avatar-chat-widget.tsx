@@ -2129,9 +2129,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                   </div>
                 )}
                 
-        {/* Admin Page View - TOP LEVEL */}
+        {/* Admin Page View - TOP LEVEL - HIGHEST Z-INDEX */}
         {showAdminPage && (
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 z-[60] rounded-lg flex flex-col">
+          <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 z-[9999] rounded-lg flex flex-col">
             {/* Back Button */}
             <button
               onClick={() => {
@@ -2141,7 +2141,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                 setIsMinimized(false);
                 setShowChatInterface(true); // Return to chat interface
               }}
-              className="absolute top-4 left-4 flex items-center gap-1 px-3 py-2 bg-white/10 backdrop-blur-sm text-white rounded-md shadow-md hover:bg-white/20 transition-all z-50"
+              className="absolute top-4 left-4 flex items-center gap-1 px-3 py-2 bg-white/10 backdrop-blur-sm text-white rounded-md shadow-md hover:bg-white/20 transition-all z-[10000]"
             >
               <ChevronLeft className="h-4 w-4" />
               <span className="font-medium text-sm">Back</span>
@@ -2259,13 +2259,16 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                             { icon: FileText, label: "Records", angle: 102, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
                             { icon: Phone, label: "Call", angle: 153, action: () => setSelectedMenuItem("call") },
                             { icon: UserCheck, label: "Admin", angle: 204, action: () => { 
-                              console.log("Admin button clicked - opening admin interface");
+                              console.log("🔥 ADMIN BUTTON CLICKED - Starting admin process");
+                              console.log("🔥 Before state change - showAdminPage:", false);
+                              
+                              // Complete state reset for admin page
                               setShowAdminPage(true);
                               setSelectedMenuItem("admin");
                               setShowChatInterface(false);
-                              setIsMinimized(false); // FIXED: Do not minimize when showing admin page
+                              setIsMinimized(false);
                               
-                              // Reset other conflicting states
+                              // Reset ALL other conflicting states
                               setShowDoctorList(false);
                               setShowRecordsList(false);
                               setShowBookingCalendar(false);
@@ -2273,6 +2276,15 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                               setShowHairPage(false);
                               setShowSkinPage(false);
                               setShowLipsPage(false);
+                              setShowVoiceTipsPage(false);
+                              setShowBookingForm(false);
+                              
+                              console.log("🔥 After state change - showAdminPage should be true");
+                              
+                              // Debug timeout to check state
+                              setTimeout(() => {
+                                console.log("🔥 1 second later - checking if admin page is visible");
+                              }, 1000);
                             } },
                             { icon: Smile, label: "Face", angle: 255, action: () => { 
                               console.log('🔴 Face button clicked - Setting states synchronously');
