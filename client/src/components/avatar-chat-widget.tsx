@@ -1422,7 +1422,34 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setIsMinimized(true);
                     } },
                     { icon: Phone, label: "Call", angle: 120, action: () => setSelectedMenuItem("call") },
-
+                    { icon: UserCheck, label: "Admin", angle: 160, action: () => { 
+                      console.log("🔥 ADMIN BUTTON CLICKED - Starting admin process");
+                      console.log("🔥 Before state change - showAdminPage:", false);
+                      
+                      // Complete state reset for admin page
+                      setShowAdminPage(true);
+                      setSelectedMenuItem("admin");
+                      setShowChatInterface(false);
+                      setIsMinimized(false);
+                      
+                      // Reset ALL other conflicting states
+                      setShowDoctorList(false);
+                      setShowRecordsList(false);
+                      setShowBookingCalendar(false);
+                      setShowFacePage(false);
+                      setShowHairPage(false);
+                      setShowSkinPage(false);
+                      setShowLipsPage(false);
+                      setShowVoiceTipsPage(false);
+                      setShowBookingForm(false);
+                      
+                      console.log("🔥 After state change - showAdminPage should be true");
+                      
+                      // Debug timeout to check state
+                      setTimeout(() => {
+                        console.log("🔥 1 second later - checking if admin page is visible");
+                      }, 1000);
+                    } },
                     { icon: Smile, label: "Face", angle: 200, action: () => { 
                       if (!hasConsent) {
                         return; // Block access if no consent
