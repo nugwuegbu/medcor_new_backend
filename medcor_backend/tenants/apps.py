@@ -6,7 +6,7 @@ class TenantsConfig(AppConfig):
     name = 'tenants'
 
     def ready(self):
-        import tenants.signals
-
-    def ready(self):
-        import tenants.signals
+        try:
+            import tenants.signals
+        except ImportError:
+            pass

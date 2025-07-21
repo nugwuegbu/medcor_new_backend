@@ -33,6 +33,9 @@ class User(UserProfile):
     Custom user model that extends django-tenant-users UserProfile.
     This model will be created in each tenant's schema for isolated user management.
     """
+    # Add many-to-many relationship with tenants
+    tenants = models.ManyToManyField(Client, blank=True, related_name='users')
+    
     # Add standard user fields that UserProfile doesn't have
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
