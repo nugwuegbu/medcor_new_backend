@@ -1,24 +1,37 @@
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django_tenants.utils import schema_context
 from tenant_users.permissions.models import UserTenantPermissions
+from tenant_users.tenants.models import UserTenantRelationship
 from .models import User, Client
 
 
-@receiver(m2m_changed, sender=User.tenants.through)
-def on_tenant_users_tenants_changed(
-        sender, instance, action, reverse, model, pk_set, **kwargs
-):
-    # Automatically create 'UserTenantPermissions' when user is added to a tenant
-    if action == "post_add":
-        for tenant_id in pk_set:
-            tenant = model.objects.get(pk=tenant_id)
-            with schema_context(tenant.schema_name):
-                UserTenantPermissions.objects.get_or_create(profile=instance)
+@receiver(post_save, sender=UserTenantRelationship)
+def on_user_tenant_relationship_created(sender, instance, created, **kwargs):
+    """
+    Automatically create UserTenantPermissions when a user is added to a tenant.
+    This signal is triggered when UserTenantRelationship is created.
+    """
+    if created:
+        # Get the tenant from the relationship
+        tenant = instance.tenant
+        user = instance.user
+        
+        # Switch to the tenant's schema and create permissions
+        with schema_context(tenant.schema_name):
+            UserTenantPermissions.objects.get_or_create(profile=user)
 
-    # Automatically delete 'UserTenantPermissions' when user is removed from a tenant
-    if action == "post_remove":
-        for tenant_id in pk_set:
-            tenant = model.objects.get(pk=tenant_id)
-            with schema_context(tenant.schema_name):
-                UserTenantPermissions.objects.filter(profile=instance).delete()
+
+@receiver(post_delete, sender=UserTenantRelationship)
+def on_user_tenant_relationship_deleted(sender, instance, **kwargs):
+    """
+    Automatically delete UserTenantPermissions when a user is removed from a tenant.
+    This signal is triggered when UserTenantRelationship is deleted.
+    """
+    # Get the tenant from the relationship
+    tenant = instance.tenant
+    user = instance.user
+    
+    # Switch to the tenant's schema and delete permissions
+    with schema_context(tenant.schema_name):
+        UserTenantPermissions.objects.filter(profile=user).delete()
