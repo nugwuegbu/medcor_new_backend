@@ -1422,22 +1422,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       setIsMinimized(true);
                     } },
                     { icon: Phone, label: "Call", angle: 120, action: () => setSelectedMenuItem("call") },
-                    { icon: UserCheck, label: "Admin", angle: 160, action: () => { 
-                      console.log("Admin button clicked - opening admin interface");
-                      setShowAdminPage(true);
-                      setSelectedMenuItem("admin");
-                      setShowChatInterface(false);
-                      setIsMinimized(false); // FIXED: Do not minimize when showing admin page
-                      
-                      // Reset other conflicting states
-                      setShowDoctorList(false);
-                      setShowRecordsList(false);
-                      setShowBookingCalendar(false);
-                      setShowFacePage(false);
-                      setShowHairPage(false);
-                      setShowSkinPage(false);
-                      setShowLipsPage(false);
-                    } },
+
                     { icon: Smile, label: "Face", angle: 200, action: () => { 
                       if (!hasConsent) {
                         return; // Block access if no consent
