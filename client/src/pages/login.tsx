@@ -232,18 +232,7 @@ export default function Login() {
               </TabsContent>
             </Tabs>
 
-            <div className="mt-6 text-center text-sm text-gray-600">
-              <p>By signing in, you agree to our</p>
-              <div className="flex items-center justify-center gap-2">
-                <Link href="/terms" className="text-purple-600 hover:underline">
-                  Terms of Service
-                </Link>
-                <span>and</span>
-                <Link href="/privacy" className="text-purple-600 hover:underline">
-                  Privacy Policy
-                </Link>
-              </div>
-            </div>
+
           </CardContent>
         </Card>
 

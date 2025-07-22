@@ -23,8 +23,6 @@ import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-
 import doctorEmilyPhoto from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751701299986.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
 import { videoStreamRef, ensureCameraReady } from "../utils/camera-manager";
-import { TermsModal } from "@/components/ui/terms-modal";
-import { useConsentManager } from "@/hooks/useConsentManager";
 
 // Perfect Corp YCE SDK types
 declare global {
@@ -97,16 +95,13 @@ const LipsIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
-  // Consent Management
-  const { 
-    hasConsent, 
-    showConsentModal, 
-    giveConsent, 
-    declineConsent, 
-    hideConsentModal 
-  } = useConsentManager();
+function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
+  // Early return for closed widget
+  if (!isOpen) {
+    return null;
+  }
 
+  // State definitions
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [doctorsInputText, setDoctorsInputText] = useState("");
@@ -495,39 +490,34 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     // Face analysis keywords
     const faceKeywords = ['face', 'facial', 'face analysis', 'face scan', 'facial recognition'];
     if (faceKeywords.some(keyword => normalizedText.includes(keyword))) {
-      if (hasConsent) {
-        setShowFacePage(true);
-        setSelectedMenuItem("face");
-        setShowChatInterface(true);
-        setShowDoctorList(false);
-        setShowRecordsList(false);
-        setShowAdminPage(false);
-        setShowBookingCalendar(false);
-        setIsMinimized(false);
-        setCameraEnabled(true);
-        setCameraPermissionRequested(true);
-        return true;
-      }
+      setShowFacePage(true);
+      setSelectedMenuItem("face");
+      setShowChatInterface(true);
+      setShowDoctorList(false);
+      setShowRecordsList(false);
+      setShowAdminPage(false);
+      setShowBookingCalendar(false);
+      setIsMinimized(false);
+      setCameraEnabled(true);
+      setCameraPermissionRequested(true);
+      return true;
     }
     
     // Hair analysis keywords
     const hairKeywords = ['hair', 'hair analysis', 'hair scan', 'hair health', 'scalp', 'hair care'];
     if (hairKeywords.some(keyword => normalizedText.includes(keyword))) {
-      if (hasConsent) {
-        setShowHairPage(true);
-        setSelectedMenuItem("hair");
-        setIsMinimized(false);
-        setShowChatInterface(false);
-        setStreamReady(true);
-        setAnalysisStreamReady(true);
-        return true;
-      }
+      setShowHairPage(true);
+      setSelectedMenuItem("hair");
+      setIsMinimized(false);
+      setShowChatInterface(false);
+      setStreamReady(true);
+      setAnalysisStreamReady(true);
+      return true;
     }
     
     // Skin analysis keywords
     const skinKeywords = ['skin', 'skin analysis', 'skin scan', 'skin health', 'skincare', 'complexion'];
     if (skinKeywords.some(keyword => normalizedText.includes(keyword))) {
-      if (hasConsent) {
         setShowSkinPage(true);
         setSelectedMenuItem("skin");
         setIsMinimized(false);
@@ -541,25 +531,21 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     // Lips analysis keywords
     const lipsKeywords = ['lips', 'lip analysis', 'lip scan', 'lip health', 'lip care'];
     if (lipsKeywords.some(keyword => normalizedText.includes(keyword))) {
-      if (hasConsent) {
-        setShowLipsPage(true);
-        setSelectedMenuItem("lips");
-        setIsMinimized(false);
-        setShowChatInterface(false);
-        setStreamReady(true);
-        setAnalysisStreamReady(true);
-        return true;
-      }
+      setShowLipsPage(true);
+      setSelectedMenuItem("lips");
+      setIsMinimized(false);
+      setShowChatInterface(false);
+      setStreamReady(true);
+      setAnalysisStreamReady(true);
+      return true;
     }
     
     // Hair Extension keywords
     const hairExtensionKeywords = ['hair extension', 'hair extensions', 'hair piece', 'hair augmentation'];
     if (hairExtensionKeywords.some(keyword => normalizedText.includes(keyword))) {
-      if (hasConsent) {
-        setShowHairExtensionWidget(true);
-        setSelectedMenuItem("hair-extension");
-        return true;
-      }
+      setShowHairExtensionWidget(true);
+      setSelectedMenuItem("hair-extension");
+      return true;
     }
     
     // Admin keywords
@@ -585,12 +571,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
-
-    // Check for consent before allowing AI interaction
-    if (!hasConsent) {
-      // Show consent modal if not accepted
-      return;
-    }
 
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
@@ -638,12 +618,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
 
   const handleDoctorsSendMessage = async (text: string) => {
     if (!text.trim()) return;
-
-    // Check for consent before allowing AI interaction
-    if (!hasConsent) {
-      // Show consent modal if not accepted
-      return;
-    }
 
     // Activate HeyGen avatar on first user interaction
     setUserHasInteracted(true);
@@ -910,8 +884,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
     }
     */
   }, []);
-
-  if (!isOpen) return null;
   
   // Debug - Log current states
   // Remove frequent logging to prevent re-render flickering
@@ -1451,10 +1423,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       }, 1000);
                     } },
                     { icon: Smile, label: "Face", angle: 200, action: () => { 
-                      if (!hasConsent) {
-                        return; // Block access if no consent
-                      }
-                      
                       console.log('🔴 Face button clicked - Setting states synchronously');
                       
                       // Set Face page state first
@@ -1479,10 +1447,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
-                      if (!hasConsent) {
-                        return; // Block access if no consent
-                      }
-
                       console.log("🎬 Hair Analysis button clicked (minimized menu)");
                       
                       try {
@@ -1527,10 +1491,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                       }
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: async () => { 
-                      if (!hasConsent) {
-                        return; // Block access if no consent
-                      }
-
                       console.log("💋 Lips Analysis button clicked (minimized menu)");
                       
                       try {
@@ -1578,11 +1538,6 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
                     { icon: Heart, label: "Skin", angle: 320, action: async () => { 
                       console.log("🌟 Skin Analysis button clicked - DIRECT TEST");
                       
-                      if (!hasConsent) {
-                        console.log("🌟 No consent - blocking access");
-                        return;
-                      }
-
                       try {
                         console.log("🌟 Setting skin analysis states...");
                         
@@ -3349,9 +3304,7 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
               </button>
             </div>
 
-            <p className="text-center text-sm text-gray-500 mt-6">
-              By continuing, you agree to our Terms of Service and Privacy Policy
-            </p>
+
           </div>
         </div>
       )}
@@ -3406,20 +3359,9 @@ export default function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetPr
             setSelectedMenuItem(null);
           }}
         />
-
-        {/* Terms and Consent Modal */}
-        <TermsModal
-          isOpen={showConsentModal}
-          onClose={hideConsentModal}
-          onAccept={async () => {
-            const success = await giveConsent();
-            if (success) {
-              hideConsentModal();
-            }
-          }}
-          onDecline={declineConsent}
-        />
     </div>
     </>
   );
 }
+
+export default AvatarChatWidget;
