@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
 import HeyGenSDKAvatar, { HeyGenSDKAvatarRef } from "./heygen-sdk-avatar";
@@ -100,6 +101,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   if (!isOpen) {
     return null;
   }
+
+  // Initialize toast hook
+  const { toast } = useToast();
 
   // State definitions
   const [messages, setMessages] = useState<Message[]>([]);
@@ -2043,11 +2047,76 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                                 type="file"
                                 className="hidden"
                                 accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                onChange={(e) => {
+                                onChange={async (e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
-                                    console.log('Medical record selected:', file.name);
-                                    // TODO: Handle file upload
+                                    try {
+                                      // Show loading toast
+                                      const loadingToast = toast({
+                                        title: "Uploading Medical Record",
+                                        description: `Uploading ${file.name}...`,
+                                        variant: "default"
+                                      });
+
+                                      // Validate file size (5MB limit)
+                                      if (file.size > 5 * 1024 * 1024) {
+                                        loadingToast.dismiss();
+                                        toast({
+                                          title: "File Too Large ❌",
+                                          description: "Please select a file smaller than 5MB.",
+                                          variant: "destructive"
+                                        });
+                                        return;
+                                      }
+
+                                      // Create FormData and upload
+                                      const formData = new FormData();
+                                      formData.append('file', file);
+                                      formData.append('recordType', 'medical_document');
+
+                                      const response = await fetch('/api/upload-medical-record', {
+                                        method: 'POST',
+                                        body: formData
+                                      });
+
+                                      loadingToast.dismiss();
+
+                                      if (response.ok) {
+                                        const uploadResult = await response.json();
+                                        
+                                        // Show success toast
+                                        toast({
+                                          title: "Upload Successful! ✅",
+                                          description: `${file.name} has been uploaded to your medical records. Our AI will analyze it for insights.`,
+                                          variant: "default"
+                                        });
+
+                                        console.log('Medical record uploaded:', uploadResult);
+                                        
+                                        // Add a message to chat about the upload
+                                        const uploadMessage = {
+                                          id: Date.now().toString(),
+                                          text: `Medical record "${file.name}" uploaded successfully. The document is now part of your health profile.`,
+                                          sender: 'bot' as const,
+                                          timestamp: new Date()
+                                        };
+                                        setMessages(prev => [...prev, uploadMessage]);
+
+                                      } else {
+                                        const errorData = await response.json();
+                                        throw new Error(errorData.message || 'Upload failed');
+                                      }
+
+                                    } catch (error) {
+                                      console.error('File upload error:', error);
+                                      
+                                      // Show error toast
+                                      toast({
+                                        title: "Upload Failed ❌",
+                                        description: error instanceof Error ? error.message : "Failed to upload the file. Please check your connection and try again.",
+                                        variant: "destructive"
+                                      });
+                                    }
                                   }
                                 }}
                               />
@@ -2152,10 +2221,70 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                   </div>
 
                   {/* Login Form */}
-                  <form className="space-y-4" onSubmit={(e) => {
+                  <form className="space-y-4" onSubmit={async (e) => {
                     e.preventDefault();
-                    // For demo purposes, just show success
-                    alert("Admin login successful! (Demo mode)");
+                    
+                    try {
+                      // Get form data
+                      const formData = new FormData(e.currentTarget);
+                      const email = formData.get('email') as string;
+                      const password = formData.get('password') as string;
+
+                      // Show loading toast
+                      const loadingToast = toast({
+                        title: "Signing In",
+                        description: "Verifying your credentials...",
+                        variant: "default"
+                      });
+
+                      // Simulate API call (replace with actual admin authentication)
+                      const response = await fetch('/api/auth/admin-login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                      });
+
+                      // Dismiss loading toast
+                      loadingToast.dismiss();
+
+                      if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Show success toast
+                        toast({
+                          title: "Login Successful! ✅",
+                          description: `Welcome back, ${data.user?.name || 'Admin'}! You now have access to the healthcare management portal.`,
+                          variant: "default"
+                        });
+
+                        // Store auth data (if needed)
+                        if (data.token) {
+                          localStorage.setItem('adminToken', data.token);
+                          localStorage.setItem('adminUser', JSON.stringify(data.user));
+                        }
+
+                        // Close admin page and return to chat
+                        setTimeout(() => {
+                          setShowAdminPage(false);
+                          setSelectedMenuItem(null);
+                          setShowChatInterface(true);
+                        }, 1500);
+
+                      } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Invalid credentials');
+                      }
+
+                    } catch (error) {
+                      console.error('Admin login error:', error);
+                      
+                      // Show error toast
+                      toast({
+                        title: "Login Failed ❌",
+                        description: error instanceof Error ? error.message : "Invalid email or password. Please check your credentials and try again.",
+                        variant: "destructive"
+                      });
+                    }
                   }}>
                     <div>
                       <label className="block text-xs font-medium text-white/90 mb-1">
@@ -2163,7 +2292,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       </label>
                       <input
                         type="email"
+                        name="email"
                         defaultValue="admin@medcor.ai"
+                        required
                         className="w-full px-3 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm"
                         placeholder="admin@medcor.ai"
                       />
@@ -2175,7 +2306,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       </label>
                       <input
                         type="password"
+                        name="password"
                         defaultValue="admin123"
+                        required
                         className="w-full px-3 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm"
                         placeholder="Enter password"
                       />
@@ -2995,6 +3128,13 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                 <button
                   onClick={async () => {
                     try {
+                      // Show loading toast
+                      const loadingToast = toast({
+                        title: "Booking Appointment",
+                        description: "Please wait while we confirm your appointment...",
+                        variant: "default"
+                      });
+
                       // Confirm appointment with booking assistant
                       const response = await fetch('/api/booking-assistant/confirm', {
                         method: 'POST',
@@ -3004,8 +3144,22 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                         })
                       });
                       
+                      // Dismiss loading toast
+                      loadingToast.dismiss();
+
+                      if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                      }
+                      
                       const assistantStep = await response.json();
                       console.log('Appointment confirmed with assistant:', assistantStep);
+                      
+                      // Show success toast
+                      toast({
+                        title: "Appointment Booked Successfully! ✅",
+                        description: `Your appointment with ${bookingFormData.doctorId === 1 ? 'Dr. Sarah Johnson' : 'Dr. Emily Rodriguez'} has been confirmed. You will receive a confirmation email shortly.`,
+                        variant: "default"
+                      });
                       
                       // Add assistant confirmation message
                       const assistantMessage = {
@@ -3045,7 +3199,13 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       
                     } catch (error) {
                       console.error('Booking confirmation error:', error);
-                      alert("Failed to confirm appointment. Please try again.");
+                      
+                      // Show error toast
+                      toast({
+                        title: "Booking Failed ❌",
+                        description: "Unable to confirm your appointment. Please check your connection and try again, or contact our support team.",
+                        variant: "destructive"
+                      });
                     }
                   }}
                   disabled={!bookingFormData.patientName || !bookingFormData.patientEmail || !bookingFormData.patientPhone}
