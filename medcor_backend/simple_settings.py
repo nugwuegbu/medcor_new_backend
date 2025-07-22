@@ -43,9 +43,13 @@ INSTALLED_APPS = [
     'ckeditor',
     'django_filters',
     'drf_spectacular',
+    # Core models for timestamps
+    'core',
     # Simple apps without tenant complexity
     'simple_treatment',
     'simple_appointment',
+    # Simple tenant management
+    'simple_tenant',
 ]
 
 MIDDLEWARE = [
