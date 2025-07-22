@@ -518,14 +518,13 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
     // Skin analysis keywords
     const skinKeywords = ['skin', 'skin analysis', 'skin scan', 'skin health', 'skincare', 'complexion'];
     if (skinKeywords.some(keyword => normalizedText.includes(keyword))) {
-        setShowSkinPage(true);
-        setSelectedMenuItem("skin");
-        setIsMinimized(false);
-        setShowChatInterface(false);
-        setStreamReady(true);
-        setAnalysisStreamReady(true);
-        return true;
-      }
+      setShowSkinPage(true);
+      setSelectedMenuItem("skin");
+      setIsMinimized(false);
+      setShowChatInterface(false);
+      setStreamReady(true);
+      setAnalysisStreamReady(true);
+      return true;
     }
     
     // Lips analysis keywords
@@ -600,7 +599,11 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
       
       // Make avatar speak the redirection message
       if (avatarRef.current) {
-        avatarRef.current.speak("I understand you want to access that feature. I'm redirecting you now.");
+        avatarRef.current.speak({
+          text: "I understand you want to access that feature. I'm redirecting you now.",
+          taskType: TaskType.TALK,
+          taskMode: TaskMode.SYNC
+        });
       }
       
       return; // Don't send to AI if redirected
@@ -647,7 +650,11 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
       
       // Make avatar speak the redirection message
       if (avatarRef.current) {
-        avatarRef.current.speak("I understand you want to access that feature. I'm redirecting you now.");
+        avatarRef.current.speak({
+          text: "I understand you want to access that feature. I'm redirecting you now.",
+          taskType: TaskType.TALK,
+          taskMode: TaskMode.SYNC
+        });
       }
       
       return; // Don't send to AI if redirected
