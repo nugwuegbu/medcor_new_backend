@@ -330,6 +330,19 @@ wheels = [
 ]
 
 [[package]]
+name = "django-ckeditor"
+version = "6.7.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "django-js-asset" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/15/6e/7923d3932bcdc6df7deea3d0cc31552144444130e5a2bef669e88c4e8141/django_ckeditor-6.7.3.tar.gz", hash = "sha256:889fd80ee7d368e3c5b828c8dabf8907d56bcad6bf5881f3898416df4f2adfe7", size = 1726851 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/03/b2095f13b571ab78b2a3f55d30e2b3f126b3f4f350391037c37c418f7c2f/django_ckeditor-6.7.3-py3-none-any.whl", hash = "sha256:09771c9b8fb33b84bd2767dfc891a24b7fbdb0120910a7ec65b763a4ae6807bb", size = 2455696 },
+]
+
+[[package]]
 name = "django-cors-headers"
 version = "4.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -340,6 +353,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/93/6c/16f6cb6064c63074fd5b2bd494eb319afd846236d9c1a6c765946df2c289/django_cors_headers-4.7.0.tar.gz", hash = "sha256:6fdf31bf9c6d6448ba09ef57157db2268d515d94fc5c89a0a1028e1fc03ee52b", size = 21037 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7e/a2/7bcfff86314bd9dd698180e31ba00604001606efb518a06cca6833a54285/django_cors_headers-4.7.0-py3-none-any.whl", hash = "sha256:f1c125dcd58479fe7a67fe2499c16ee38b81b397463cf025f0e2c42937421070", size = 12794 },
+]
+
+[[package]]
+name = "django-js-asset"
+version = "3.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e6/91/c63f136f553ec24fc46ccf20ac7292a8df04815b383975b6f3f7f0060217/django_js_asset-3.1.2.tar.gz", hash = "sha256:1fc7584199ed1941ed7c8e7b87ca5524bb0f2ba941561d2a104e88ee9f07bedd", size = 9471 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/cf/b208767db5e56b5189829f753eec6a14ee75d074922dc2bd19220b22a34d/django_js_asset-3.1.2-py3-none-any.whl", hash = "sha256:b5ffe376aebbd73b7af886d675ac9f43ca63b39540190fa8409c9f8e79145f68", size = 5905 },
 ]
 
 [[package]]
@@ -818,6 +843,7 @@ dependencies = [
     { name = "bcrypt" },
     { name = "cryptography" },
     { name = "django" },
+    { name = "django-ckeditor" },
     { name = "django-cors-headers" },
     { name = "django-tenant-schemas" },
     { name = "django-tenant-users" },
@@ -838,6 +864,7 @@ requires-dist = [
     { name = "bcrypt", specifier = ">=4.3.0" },
     { name = "cryptography", specifier = ">=45.0.5" },
     { name = "django", specifier = ">=5.2.4" },
+    { name = "django-ckeditor", specifier = ">=6.7.3" },
     { name = "django-cors-headers", specifier = ">=4.7.0" },
     { name = "django-tenant-schemas", specifier = ">=1.12.0" },
     { name = "django-tenant-users", specifier = ">=2.1.1" },

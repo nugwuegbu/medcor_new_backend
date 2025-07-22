@@ -33,6 +33,7 @@ SHARED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'ckeditor',        # Rich text editor
     'core',            # Move core to shared to avoid User model conflicts
 ]
 
@@ -49,6 +50,7 @@ TENANT_APPS = [
     'core',
     'authentication',
     'api',
+    'treatment',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
