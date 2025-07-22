@@ -2,7 +2,9 @@ from rest_framework import generics, status, filters
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q
+from django.db.models import Q, QuerySet
+from rest_framework.serializers import BaseSerializer
+from typing import Type, Union, Any, Optional
 from .models import Treatment
 from .serializers import (
     TreatmentSerializer,
@@ -26,7 +28,7 @@ class TreatmentListCreateView(generics.ListCreateAPIView):
     ordering_fields = ['name', 'cost', 'created_at']
     ordering = ['name']
     
-    def get_serializer_class(self):
+    def get_serializer_class(self):  # type: ignore
         if self.request.method == 'POST':
             return TreatmentCreateSerializer
         return TreatmentListSerializer
@@ -51,7 +53,7 @@ class TreatmentDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Treatment.objects.all()
     permission_classes = [IsAuthenticated]
     
-    def get_serializer_class(self):
+    def get_serializer_class(self):  # type: ignore
         if self.request.method in ['PUT', 'PATCH']:
             return TreatmentUpdateSerializer
         return TreatmentSerializer
@@ -110,21 +112,24 @@ class TreatmentSearchView(generics.ListAPIView):
         
         if min_cost:
             try:
-                queryset = queryset.filter(cost__gte=float(min_cost))
-            except ValueError:
+                min_cost_val = float(min_cost) if isinstance(min_cost, str) else min_cost
+                queryset = queryset.filter(cost__gte=min_cost_val)
+            except (ValueError, TypeError):
                 pass
                 
         if max_cost:
             try:
-                queryset = queryset.filter(cost__lte=float(max_cost))
-            except ValueError:
+                max_cost_val = float(max_cost) if isinstance(max_cost, str) else max_cost
+                queryset = queryset.filter(cost__lte=max_cost_val)
+            except (ValueError, TypeError):
                 pass
                 
         if tenant_id:
             queryset = queryset.filter(tenant_id=tenant_id)
             
         if is_active is not None:
-            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+            is_active_str = str(is_active).lower() if is_active else ''
+            queryset = queryset.filter(is_active=is_active_str == 'true')
         
         return queryset.order_by('name')
 

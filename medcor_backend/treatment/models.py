@@ -1,5 +1,9 @@
 from django.db import models
 from ckeditor.fields import RichTextField
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tenants.models import Client
 
 
 class Treatment(models.Model):
@@ -18,7 +22,10 @@ class Treatment(models.Model):
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)  # type: ignore
+    
+    # Type annotation for Django ORM manager
+    objects = models.Manager()
     
     class Meta:
         ordering = ['name']
