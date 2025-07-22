@@ -25,6 +25,10 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
 ]
 
+# Disable CSRF for development admin interface
+CSRF_COOKIE_DOMAIN = None
+CSRF_USE_SESSIONS = True
+
 # Application definition - Simplified without multi-tenant complexity
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -49,7 +53,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
