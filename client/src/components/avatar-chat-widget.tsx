@@ -3329,17 +3329,11 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
         
         {/* Animated Button on Chest Area */}
         <div className={`absolute left-1/2 top-[68%] transform -translate-x-1/2 -translate-y-1/2 z-30 ${showChatInterface ? 'hidden' : ''}`}>
-          <TooltipProvider>
+          <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   className="relative w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-110 animate-float"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = `translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px) scale(1.1)`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translate(0, 0) scale(1)';
-                  }}
                   onClick={() => {
                     setShowChatInterface(true);
                   }}
@@ -3354,8 +3348,8 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
               </TooltipTrigger>
               <TooltipContent 
                 side="top" 
-                sideOffset={8}
-                className="bg-gray-900 text-white text-sm px-3 py-2 rounded-lg shadow-lg border-none"
+                sideOffset={12}
+                className="bg-gray-900 text-white text-sm px-3 py-2 rounded-lg shadow-xl border-none z-[100]"
               >
                 <p>Click to open AI assistant menu</p>
               </TooltipContent>
