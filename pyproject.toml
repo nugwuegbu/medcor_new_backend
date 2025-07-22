@@ -21,4 +21,5 @@ dependencies = [
     "django-tenants>=3.8.0",
     "django-tenant-users>=2.1.1",
     "django-ckeditor>=6.7.3",
+    "django-filter>=25.1",
 ]

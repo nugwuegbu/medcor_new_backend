@@ -23,13 +23,16 @@ MedCare AI is an advanced healthcare platform featuring HeyGen interactive avata
 - **API Design**: Django REST Framework with RESTful endpoints
 - **Authentication**: JWT-based authentication with bcrypt password hashing
 - **Session Management**: Django sessions with PostgreSQL backend
+- **Treatment Management**: Comprehensive API for medical treatments with rich text descriptions, image uploads, and cost tracking
 
 ### Database Schema
 The application uses a relational database with the following core entities:
-- **Users**: Authentication and user management
+- **Users**: Authentication and user management with medical fields and face recognition
 - **Doctors**: Healthcare provider profiles with specialties and availability
 - **Appointments**: Patient booking system with status tracking
 - **Chat Messages**: AI conversation history with session management
+- **Treatments**: Medical procedures and services with rich descriptions, images, and cost management
+- **Tenants**: Multi-tenant architecture for hospital/clinic separation
 
 ## Key Components
 
@@ -283,6 +286,7 @@ Changelog:
 - July 20, 2025. TIMESTAMPED MODEL MIXIN CREATION - Created TimeStampedModel abstract base class in core/models.py providing self-updating 'created_at' and 'updated_at' fields. This reusable mixin can be inherited by any Django model to automatically track creation and modification timestamps. Successfully tested import and field verification - ready for use across all models in the application.
 - July 20, 2025. TIMESTAMPED MODEL INHERITANCE IMPLEMENTATION - Updated Client and Domain models in tenants/models.py to inherit from TimeStampedModel mixin. Both models now automatically include created_at and updated_at timestamp fields. Verified inheritance is working correctly - Client has 10 total fields including timestamps, Domain has 6 total fields including timestamps. Django system check passes without issues.
 - July 21, 2025. DJANGO SIGNALS SYSTEM IMPLEMENTATION - Created comprehensive signals.py system in medcor_backend/tenants for automatic UserTenantPermissions management. Added tenants ManyToManyField to User model enabling User.tenants.through relationship. Implemented m2m_changed signal receiver that automatically creates/deletes UserTenantPermissions when users are added to or removed from tenants. Fixed all LSP errors related to django-tenant-users integration with proper error handling and getattr usage for dynamic object access.
+- July 22, 2025. TREATMENT MANAGEMENT API IMPLEMENTATION - Created comprehensive Treatment Django app with full CRUD functionality. Built Treatment model with tenant ForeignKey, name CharField(100), image ImageField, description RichTextField (CKEditor), and cost DecimalField(10,2). Implemented complete Django REST Framework API with TreatmentSerializer, TreatmentCreateSerializer, TreatmentUpdateSerializer, and TreatmentListSerializer. Added advanced API endpoints: list/create, detail CRUD, tenant-specific filtering, search with multiple criteria, and statistics. Integrated django-filter and django-ckeditor packages. Added 5 API endpoints at /api/treatments/ with comprehensive validation, authentication, and tenant-based permissions. Created detailed API documentation with usage examples.
 
 ## User Preferences
 

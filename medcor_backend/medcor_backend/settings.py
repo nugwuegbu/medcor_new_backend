@@ -34,6 +34,7 @@ SHARED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'ckeditor',        # Rich text editor
+    'django_filters',  # Advanced filtering for DRF
     'core',            # Move core to shared to avoid User model conflicts
 ]
 

@@ -10,6 +10,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('authentication.urls')),
     path('api/', include('api.urls')),
+    path('api/treatments/', include('treatment.urls')),
     path('', include('tenants.urls')),  # Include tenant management URLs
 ]
 
