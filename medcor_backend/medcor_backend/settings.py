@@ -52,6 +52,7 @@ TENANT_APPS = [
     'authentication',
     'api',
     'treatment',
+    'appointment',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
