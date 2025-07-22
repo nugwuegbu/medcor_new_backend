@@ -5,6 +5,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, QuerySet
 from rest_framework.serializers import BaseSerializer
 from typing import Type, Union, Any, Optional
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 from .models import Treatment
 from .serializers import (
     TreatmentSerializer,
@@ -14,6 +16,18 @@ from .serializers import (
 )
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary="List treatments",
+        description="Retrieve a list of all medical treatments with filtering and search capabilities.",
+        tags=['Treatments']
+    ),
+    post=extend_schema(
+        summary="Create treatment",
+        description="Create a new medical treatment with details, cost, and rich text description.",
+        tags=['Treatments']
+    ),
+)
 class TreatmentListCreateView(generics.ListCreateAPIView):
     """
     API view for listing and creating treatments.
@@ -43,6 +57,28 @@ class TreatmentListCreateView(generics.ListCreateAPIView):
         return queryset
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary="Get treatment details",
+        description="Retrieve detailed information about a specific treatment.",
+        tags=['Treatments']
+    ),
+    put=extend_schema(
+        summary="Update treatment",
+        description="Update all fields of an existing treatment.",
+        tags=['Treatments']
+    ),
+    patch=extend_schema(
+        summary="Partially update treatment",
+        description="Update specific fields of an existing treatment.",
+        tags=['Treatments']
+    ),
+    delete=extend_schema(
+        summary="Delete treatment",
+        description="Delete a treatment from the system.",
+        tags=['Treatments']
+    ),
+)
 class TreatmentDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     API view for retrieving, updating, and deleting a specific treatment.
@@ -63,6 +99,20 @@ class TreatmentDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Treatment.objects.select_related('tenant')
 
 
+@extend_schema(
+    summary="List treatments by tenant",
+    description="Retrieve all treatments for a specific tenant/clinic.",
+    parameters=[
+        OpenApiParameter(
+            name='tenant_id',
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH,
+            description='ID of the tenant/clinic',
+            required=True,
+        ),
+    ],
+    tags=['Treatments']
+)
 class TreatmentByTenantView(generics.ListAPIView):
     """
     API view for listing treatments by tenant.

@@ -47,6 +47,7 @@ TENANT_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',
     'corsheaders',
     'core',
     'authentication',
@@ -166,6 +167,7 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # Simple JWT configuration
@@ -184,6 +186,60 @@ SIMPLE_JWT = {
 # CORS settings
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5000,http://127.0.0.1:3000,http://127.0.0.1:5000').split(',')
 CORS_ALLOW_CREDENTIALS = os.getenv('CORS_ALLOW_CREDENTIALS', 'True').lower() == 'true'
+
+# DRF Spectacular settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MedCor.ai Healthcare Platform API',
+    'DESCRIPTION': 'Comprehensive API documentation for the MedCor.ai healthcare platform featuring multi-tenant architecture, AI-powered chat, face recognition authentication, appointment management, treatment tracking, and medical analysis tools.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SORT_OPERATIONS': False,
+    'ENABLE_DJANGO_ADMIN_LOGIN_FORM': True,
+    'AUTHENTICATION_WHITELIST': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'SERVERS': [
+        {
+            'url': 'http://localhost:8000',
+            'description': 'Development Server'
+        },
+        {
+            'url': 'https://your-production-domain.com',
+            'description': 'Production Server'
+        }
+    ],
+    'TAGS': [
+        {
+            'name': 'Authentication', 
+            'description': 'User authentication, registration, and JWT token management'
+        },
+        {
+            'name': 'Appointments', 
+            'description': 'Medical appointment scheduling and management'
+        },
+        {
+            'name': 'Treatments', 
+            'description': 'Medical treatments and procedures management'
+        },
+        {
+            'name': 'Analysis', 
+            'description': 'AI-powered medical analysis (hair, skin, lips)'
+        },
+        {
+            'name': 'Chat', 
+            'description': 'AI-powered chat system with HeyGen avatars'
+        },
+        {
+            'name': 'Users', 
+            'description': 'User management and profiles'
+        },
+    ],
+    'EXTERNAL_DOCS': {
+        'description': 'MedCor.ai Platform Documentation',
+        'url': 'https://github.com/your-org/medcor-ai/docs',
+    },
+}
 
 # JWT settings
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)

@@ -5,6 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 from .models import Slot, SlotExclusion, Appointment
 from .serializers import (
     SlotSerializer, SlotCreateSerializer,
@@ -14,6 +16,38 @@ from .serializers import (
 )
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List doctor availability slots",
+        description="Retrieve a list of all doctor availability slots with filtering and search capabilities.",
+        tags=['Appointments']
+    ),
+    create=extend_schema(
+        summary="Create availability slot",
+        description="Create a new availability slot for a doctor.",
+        tags=['Appointments']
+    ),
+    retrieve=extend_schema(
+        summary="Get slot details",
+        description="Retrieve detailed information about a specific availability slot.",
+        tags=['Appointments']
+    ),
+    update=extend_schema(
+        summary="Update slot",
+        description="Update an existing availability slot.",
+        tags=['Appointments']
+    ),
+    partial_update=extend_schema(
+        summary="Partially update slot",
+        description="Partially update an existing availability slot.",
+        tags=['Appointments']
+    ),
+    destroy=extend_schema(
+        summary="Delete slot",
+        description="Delete an availability slot.",
+        tags=['Appointments']
+    ),
+)
 class SlotViewSet(viewsets.ModelViewSet):
     """ViewSet for managing doctor availability slots"""
     queryset = Slot.objects.all().select_related('doctor')
@@ -30,6 +64,20 @@ class SlotViewSet(viewsets.ModelViewSet):
             return SlotCreateSerializer
         return SlotSerializer
 
+    @extend_schema(
+        summary="Get slots by doctor",
+        description="Retrieve all availability slots for a specific doctor.",
+        parameters=[
+            OpenApiParameter(
+                name='doctor_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='ID of the doctor',
+                required=True,
+            ),
+        ],
+        tags=['Appointments']
+    )
     @action(detail=False, methods=['get'])
     def by_doctor(self, request):
         """Get slots filtered by doctor ID"""
@@ -44,6 +92,27 @@ class SlotViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(slots, many=True)
         return Response(serializer.data)
 
+    @extend_schema(
+        summary="Get available slots",
+        description="Retrieve available slots for booking, excluding slot exclusions and existing appointments.",
+        parameters=[
+            OpenApiParameter(
+                name='doctor_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Filter by doctor ID',
+                required=False,
+            ),
+            OpenApiParameter(
+                name='date',
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                description='Filter by specific date',
+                required=False,
+            ),
+        ],
+        tags=['Appointments']
+    )
     @action(detail=False, methods=['get'])
     def available_slots(self, request):
         """Get available slots excluding exclusions"""
@@ -59,6 +128,38 @@ class SlotViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List slot exclusions",
+        description="Retrieve a list of all doctor slot exclusions (unavailable periods).",
+        tags=['Appointments']
+    ),
+    create=extend_schema(
+        summary="Create slot exclusion",
+        description="Create a new slot exclusion period for a doctor.",
+        tags=['Appointments']
+    ),
+    retrieve=extend_schema(
+        summary="Get exclusion details",
+        description="Retrieve detailed information about a specific slot exclusion.",
+        tags=['Appointments']
+    ),
+    update=extend_schema(
+        summary="Update exclusion",
+        description="Update an existing slot exclusion period.",
+        tags=['Appointments']
+    ),
+    partial_update=extend_schema(
+        summary="Partially update exclusion",
+        description="Partially update an existing slot exclusion period.",
+        tags=['Appointments']
+    ),
+    destroy=extend_schema(
+        summary="Delete exclusion",
+        description="Delete a slot exclusion period.",
+        tags=['Appointments']
+    ),
+)
 class SlotExclusionViewSet(viewsets.ModelViewSet):
     """ViewSet for managing doctor slot exclusions"""
     queryset = SlotExclusion.objects.all().select_related('doctor')
@@ -75,6 +176,20 @@ class SlotExclusionViewSet(viewsets.ModelViewSet):
             return SlotExclusionCreateSerializer
         return SlotExclusionSerializer
 
+    @extend_schema(
+        summary="Get exclusions by doctor",
+        description="Retrieve all slot exclusions for a specific doctor.",
+        parameters=[
+            OpenApiParameter(
+                name='doctor_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='ID of the doctor',
+                required=True,
+            ),
+        ],
+        tags=['Appointments']
+    )
     @action(detail=False, methods=['get'])
     def by_doctor(self, request):
         """Get exclusions filtered by doctor ID"""
@@ -90,6 +205,38 @@ class SlotExclusionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List appointments",
+        description="Retrieve a list of appointments with filtering, search, and role-based access control.",
+        tags=['Appointments']
+    ),
+    create=extend_schema(
+        summary="Create appointment",
+        description="Create a new medical appointment.",
+        tags=['Appointments']
+    ),
+    retrieve=extend_schema(
+        summary="Get appointment details",
+        description="Retrieve detailed information about a specific appointment.",
+        tags=['Appointments']
+    ),
+    update=extend_schema(
+        summary="Update appointment",
+        description="Update an existing appointment.",
+        tags=['Appointments']
+    ),
+    partial_update=extend_schema(
+        summary="Partially update appointment",
+        description="Partially update an existing appointment.",
+        tags=['Appointments']
+    ),
+    destroy=extend_schema(
+        summary="Delete appointment",
+        description="Delete an appointment.",
+        tags=['Appointments']
+    ),
+)
 class AppointmentViewSet(viewsets.ModelViewSet):
     """ViewSet for managing appointments"""
     queryset = Appointment.objects.all().select_related(
@@ -133,6 +280,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         
         return queryset
 
+    @extend_schema(
+        summary="Get my appointments",
+        description="Retrieve current user's appointments (patients see their bookings, doctors see their scheduled appointments).",
+        tags=['Appointments']
+    )
     @action(detail=False, methods=['get'])
     def my_appointments(self, request):
         """Get current user's appointments"""
@@ -151,6 +303,26 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(appointments, many=True)
         return Response(serializer.data)
 
+    @extend_schema(
+        summary="Get appointments by status",
+        description="Retrieve appointments filtered by appointment status.",
+        parameters=[
+            OpenApiParameter(
+                name='status',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Appointment status (pending, approved, cancelled, completed)',
+                required=True,
+                examples=[
+                    OpenApiExample('Pending', value='pending'),
+                    OpenApiExample('Approved', value='approved'),
+                    OpenApiExample('Cancelled', value='cancelled'),
+                    OpenApiExample('Completed', value='completed'),
+                ]
+            ),
+        ],
+        tags=['Appointments']
+    )
     @action(detail=False, methods=['get'])
     def by_status(self, request):
         """Get appointments by status"""
@@ -165,6 +337,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(appointments, many=True)
         return Response(serializer.data)
 
+    @extend_schema(
+        summary="Get appointment statistics",
+        description="Retrieve comprehensive statistics about appointments including counts by status, doctor, and treatment.",
+        tags=['Appointments']
+    )
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """Get appointment statistics"""
@@ -192,6 +369,24 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         
         return Response(stats)
 
+    @extend_schema(
+        summary="Update appointment status",
+        description="Update the status of a specific appointment.",
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'status': {
+                        'type': 'string',
+                        'enum': ['pending', 'approved', 'completed', 'cancelled'],
+                        'description': 'New appointment status'
+                    }
+                },
+                'required': ['status']
+            }
+        },
+        tags=['Appointments']
+    )
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
         """Update appointment status"""
@@ -218,6 +413,20 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(appointment)
         return Response(serializer.data)
 
+    @extend_schema(
+        summary="Search appointments",
+        description="Advanced search across appointment fields including patient, doctor, and treatment names.",
+        parameters=[
+            OpenApiParameter(
+                name='q',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Search query to match against patient, doctor, treatment names, or appointment status',
+                required=True,
+            ),
+        ],
+        tags=['Appointments']
+    )
     @action(detail=False, methods=['get'])
     def search(self, request):
         """Advanced search for appointments"""
