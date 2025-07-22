@@ -110,6 +110,9 @@ urlpatterns = [
     
     # Django admin interface
     path('admin/', admin.site.urls),
+    
+    # Tenant branding API endpoints
+    path('api/tenants/', include('simple_tenant.urls')),
 ]
 
 # Serve static and media files in development
