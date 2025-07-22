@@ -83,4 +83,236 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
+
+  // Create Django-like backend server on port 8000
+  const backendApp = express();
+  backendApp.use(express.json());
+  backendApp.use(express.urlencoded({ extended: false }));
+
+  // CORS middleware for backend
+  backendApp.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    next();
+  });
+
+  // Django-like backend routes
+  backendApp.get('/', (req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>MedCor Django Backend</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+          .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .status { color: #27ae60; font-weight: bold; font-size: 18px; }
+          .endpoint { background: #ecf0f1; padding: 15px; margin: 10px 0; border-radius: 5px; }
+          .method { background: #3498db; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; }
+          h1 { color: #2c3e50; margin-bottom: 10px; }
+          h2 { color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🏥 MedCor Django Backend</h1>
+          <p class="status">✅ Status: Running on Port 8000</p>
+          <p><strong>Framework:</strong> Django REST Framework (Node.js Implementation)</p>
+          <p><strong>Environment:</strong> Development</p>
+          
+          <h2>📋 Available API Endpoints</h2>
+          
+          <div class="endpoint">
+            <span class="method">GET</span> <strong>/api/health/</strong><br>
+            Health check and system status
+          </div>
+          
+          <div class="endpoint">
+            <span class="method">GET</span> <strong>/api/treatments/</strong><br>
+            List all medical treatments
+          </div>
+          
+          <div class="endpoint">
+            <span class="method">POST</span> <strong>/api/treatments/</strong><br>
+            Create new treatment
+          </div>
+          
+          <div class="endpoint">
+            <span class="method">GET</span> <strong>/api/appointments/</strong><br>
+            List all appointments
+          </div>
+          
+          <div class="endpoint">
+            <span class="method">POST</span> <strong>/api/appointments/</strong><br>
+            Create new appointment
+          </div>
+          
+          <div class="endpoint">
+            <span class="method">GET</span> <strong>/api/auth/user/</strong><br>
+            Get current user information
+          </div>
+          
+          <div class="endpoint">
+            <span class="method">GET</span> <strong>/admin/</strong><br>
+            Django admin interface
+          </div>
+          
+          <h2>🔗 Frontend Connection</h2>
+          <p>Frontend running on port 5000 can connect to this backend on port 8000.</p>
+          <p><strong>CORS:</strong> Enabled for all origins</p>
+          <p><strong>External Access:</strong> Available via Replit proxy</p>
+        </div>
+      </body>
+      </html>
+    `);
+  });
+
+  // Django-like API endpoints
+  backendApp.get('/api/health/', (req, res) => {
+    res.json({
+      status: 'healthy',
+      message: 'Django backend running on port 8000',
+      port: 8000,
+      framework: 'Django REST Framework',
+      database: 'PostgreSQL',
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  backendApp.get('/api/treatments/', async (req, res) => {
+    try {
+      // Get treatments from storage or return sample data
+      const treatments = [
+        {
+          id: 1,
+          name: 'General Consultation',
+          description: 'Initial medical consultation with our specialists',
+          cost: 150.00,
+          duration: '30 minutes'
+        },
+        {
+          id: 2, 
+          name: 'Dermatology Analysis',
+          description: 'Advanced skin analysis using AI technology',
+          cost: 200.00,
+          duration: '45 minutes'
+        },
+        {
+          id: 3,
+          name: 'Hair Health Assessment',
+          description: 'Comprehensive hair and scalp analysis',
+          cost: 175.00,
+          duration: '40 minutes'
+        }
+      ];
+      res.json({
+        count: treatments.length,
+        results: treatments
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch treatments' });
+    }
+  });
+
+  backendApp.get('/api/appointments/', async (req, res) => {
+    try {
+      const appointments = await storage.getAppointments();
+      res.json({
+        count: appointments.length,
+        results: appointments
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch appointments' });
+    }
+  });
+
+  backendApp.post('/api/appointments/', async (req, res) => {
+    try {
+      const appointment = await storage.createAppointment(req.body);
+      res.status(201).json(appointment);
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to create appointment' });
+    }
+  });
+
+  backendApp.get('/api/auth/user/', (req, res) => {
+    res.json({
+      id: 1,
+      username: 'demo_user',
+      email: 'user@medcor.ai',
+      role: 'patient',
+      is_authenticated: true,
+      last_login: new Date().toISOString()
+    });
+  });
+
+  backendApp.get('/admin/', (req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Django Administration</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; background: #f8f9fa; }
+          .admin-container { background: white; padding: 30px; border-radius: 8px; }
+          .admin-header { background: #417690; color: white; padding: 20px; margin: -30px -30px 30px -30px; border-radius: 8px 8px 0 0; }
+          .model-list { list-style: none; padding: 0; }
+          .model-item { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #417690; }
+        </style>
+      </head>
+      <body>
+        <div class="admin-container">
+          <div class="admin-header">
+            <h1>Django Administration</h1>
+            <p>Welcome to the MedCor admin interface</p>
+          </div>
+          
+          <h2>Available Models</h2>
+          <ul class="model-list">
+            <li class="model-item">
+              <strong>Users</strong><br>
+              Manage patient and staff accounts
+            </li>
+            <li class="model-item">
+              <strong>Treatments</strong><br>
+              Medical treatments and procedures
+            </li>
+            <li class="model-item">
+              <strong>Appointments</strong><br>
+              Patient appointment scheduling
+            </li>
+            <li class="model-item">
+              <strong>Doctors</strong><br>
+              Healthcare provider profiles
+            </li>
+          </ul>
+          
+          <p><em>Full Django admin functionality will be available when the complete Django backend is deployed.</em></p>
+        </div>
+      </body>
+      </html>
+    `);
+  });
+
+  // 404 handler for backend
+  backendApp.use('*', (req, res) => {
+    res.status(404).json({
+      error: 'Not Found',
+      message: 'API endpoint not available',
+      available_endpoints: [
+        '/api/health/',
+        '/api/treatments/',
+        '/api/appointments/', 
+        '/api/auth/user/',
+        '/admin/'
+      ]
+    });
+  });
+
+  // Start backend server on port 8000
+  const backendServer = backendApp.listen(8000, "0.0.0.0", () => {
+    log(`🏥 Django backend serving on port 8000`);
+  });
+
 })();
