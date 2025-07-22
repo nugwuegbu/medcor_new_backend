@@ -12,7 +12,7 @@ if __name__ == '__main__':
     backend_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(backend_dir)
     
-    # Set the Django settings module
+    # Set the Django settings module back to working version
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'simple_settings')
     
     # Override command line args to run the server

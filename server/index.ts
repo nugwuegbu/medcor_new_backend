@@ -312,7 +312,7 @@ app.use((req, res, next) => {
   });
 
   // Start real Django admin backend on port 8000
-  const djangoProcess = spawn('python', ['medcor_backend/fix_admin.py'], {
+  const djangoProcess = spawn('python', ['medcor_backend/ultimate_admin.py'], {
     cwd: process.cwd(),
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env }
