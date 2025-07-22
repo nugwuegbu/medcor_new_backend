@@ -17,6 +17,14 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-simple-admin-key-for-devel
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
+# CSRF settings for Replit deployment
+CSRF_TRUSTED_ORIGINS = [
+    'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000',
+    'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
 # Application definition - Simplified without multi-tenant complexity
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -105,6 +113,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5000",
     "https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev",
 ]
+
+# Security settings for production
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Spectacular settings for API documentation
 SPECTACULAR_SETTINGS = {
