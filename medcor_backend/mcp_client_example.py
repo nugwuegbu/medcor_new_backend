@@ -16,7 +16,7 @@ class MCPClient:
         self.tools_available = [
             "list_doctors", "create_doctor",
             "list_nurses", "create_nurse", 
-            "list_patients", "create_patient",
+            "list_patients", "create_patient",    
             "list_treatments", "create_treatment",
             "list_appointments", "create_appointment"
         ]

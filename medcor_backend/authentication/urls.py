@@ -10,4 +10,10 @@ urlpatterns = [
     path('update-phone/', views.UpdatePhoneView.as_view(), name='update-phone'),
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path('verify-token/', views.VerifyTokenView.as_view(), name='verify-token'),
+    
+    # OAuth endpoints
+    path('google/', views.GoogleOAuthView.as_view(), name='google-oauth'),
+    path('apple/', views.AppleOAuthView.as_view(), name='apple-oauth'),
+    path('microsoft/', views.MicrosoftOAuthView.as_view(), name='microsoft-oauth'),
+    path('oauth-callback/', views.OAuthCallbackView.as_view(), name='oauth-callback'),
 ]
