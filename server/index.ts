@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { spawn } from 'child_process';
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -310,9 +311,27 @@ app.use((req, res, next) => {
     });
   });
 
-  // Start backend server on port 8000
-  const backendServer = backendApp.listen(8000, "0.0.0.0", () => {
-    log(`🏥 Django backend serving on port 8000`);
+  // Start real Django admin backend on port 8000
+  const djangoProcess = spawn('python', ['medcor_backend/run_admin_server.py'], {
+    cwd: process.cwd(),
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: { ...process.env }
+  });
+  
+  log(`🏥 Django backend serving on port 8000`);
+  log(`📋 Admin Interface: http://localhost:8000/admin/`);
+  log(`🔑 Login: admin / admin123`);
+  
+  djangoProcess.stdout?.on('data', (data) => {
+    console.log(`[django] ${data.toString().trim()}`);
+  });
+  
+  djangoProcess.stderr?.on('data', (data) => {
+    console.error(`[django] ${data.toString().trim()}`);
+  });
+  
+  djangoProcess.on('exit', (code) => {
+    console.log(`Django backend process exited with code ${code}`);
   });
 
 })();

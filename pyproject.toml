@@ -26,4 +26,5 @@ dependencies = [
     "mcp>=1.12.0",
     "pydantic>=2.11.7",
     "typing-extensions>=4.14.1",
+    "dj-database-url>=3.0.1",
 ]
