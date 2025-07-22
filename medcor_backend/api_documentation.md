@@ -39,7 +39,12 @@ The MedCor.ai Healthcare Platform API provides comprehensive endpoints for:
 - Skin analysis with recommendations
 - Lips analysis and health assessment
 
-### 👥 Chat (`/api/`)
+### 👥 User Management (`/api/tenants/`)
+- **Patients** - Complete patient management with medical records
+- **Doctors** - Professional healthcare provider management
+- **Nurses** - Nursing staff management with department assignments
+
+### 💬 Chat (`/api/`)
 - HeyGen avatar integration
 - AI-powered conversation system
 - Multi-language support
@@ -106,6 +111,36 @@ DELETE /api/treatments/{id}/                       # Delete treatment
 GET    /api/treatments/by-tenant/{tenant_id}/      # List treatments by tenant
 GET    /api/treatments/search/                     # Search treatments
 GET    /api/treatments/statistics/                 # Treatment statistics
+```
+
+### User Role Management (Multi-tenant)
+```
+GET    /api/tenants/patients/                      # List patients
+POST   /api/tenants/patients/                      # Create patient
+GET    /api/tenants/patients/{id}/                 # Get patient details
+PUT    /api/tenants/patients/{id}/                 # Update patient
+PATCH  /api/tenants/patients/{id}/                 # Partially update patient
+DELETE /api/tenants/patients/{id}/                 # Delete patient
+GET    /api/tenants/patients/statistics/           # Patient statistics
+GET    /api/tenants/patients/search/?q=term        # Search patients
+
+GET    /api/tenants/doctors/                       # List doctors
+POST   /api/tenants/doctors/                       # Create doctor
+GET    /api/tenants/doctors/{id}/                  # Get doctor details
+PUT    /api/tenants/doctors/{id}/                  # Update doctor
+PATCH  /api/tenants/doctors/{id}/                  # Partially update doctor
+DELETE /api/tenants/doctors/{id}/                  # Delete doctor
+GET    /api/tenants/doctors/statistics/            # Doctor statistics
+GET    /api/tenants/doctors/search/?q=term         # Search doctors
+
+GET    /api/tenants/nurses/                        # List nurses
+POST   /api/tenants/nurses/                        # Create nurse
+GET    /api/tenants/nurses/{id}/                   # Get nurse details
+PUT    /api/tenants/nurses/{id}/                   # Update nurse
+PATCH  /api/tenants/nurses/{id}/                   # Partially update nurse
+DELETE /api/tenants/nurses/{id}/                   # Delete nurse
+GET    /api/tenants/nurses/statistics/             # Nurse statistics
+GET    /api/tenants/nurses/search/?q=term          # Search nurses
 ```
 
 ### Authentication

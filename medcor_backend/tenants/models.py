@@ -16,8 +16,8 @@ class Client(TenantBase, TimeStampedModel):
     # Default true, schema will be automatically created and synced when it is saved
     auto_create_schema = True
 
-    def __str__(self):
-        return self.name
+    def __str__(self) -> str:
+        return str(self.name)
 
 
 class Domain(DomainMixin, TimeStampedModel):

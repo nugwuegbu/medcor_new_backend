@@ -5,6 +5,9 @@ from . import views, admin_views
 router = DefaultRouter()
 router.register(r'clients', views.ClientViewSet)
 router.register(r'domains', views.DomainViewSet)
+router.register(r'patients', views.PatientViewSet, basename='patient')
+router.register(r'doctors', views.DoctorViewSet, basename='doctor')
+router.register(r'nurses', views.NurseViewSet, basename='nurse')
 
 urlpatterns = [
     # API routes for tenant management
