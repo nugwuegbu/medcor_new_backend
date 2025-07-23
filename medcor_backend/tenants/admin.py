@@ -2,9 +2,9 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, Client, Domain
 from .forms import UserAdminForm
+from django_tenants.admin import TenantAdminMixin
 
-
-@admin.register(User)
+#@admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     """Custom user admin for tenant users."""
     form = UserAdminForm
@@ -52,7 +52,7 @@ class UserAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
 
 
-@admin.register(Client)
+#@admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
     """Admin for tenant clients."""
 
@@ -62,10 +62,13 @@ class ClientAdmin(admin.ModelAdmin):
     ordering = ['-created_at']
 
 
-@admin.register(Domain)
+#@admin.register(Domain)
 class DomainAdmin(admin.ModelAdmin):
     """Admin for tenant domains."""
 
     list_display = ['domain', 'tenant', 'is_primary']
     list_filter = ['is_primary']
     search_fields = ['domain']
+
+
+
