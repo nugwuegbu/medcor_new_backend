@@ -6,6 +6,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse, HttpResponse
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 def api_health(request):
     """Health check endpoint"""
@@ -101,7 +102,7 @@ def root_view(request):
     </body>
     </html>
     """
-    return HttpResponse(html_content)
+    return HttpResponse(html_content.encode('utf-8'), content_type='text/html; charset=utf-8')
 
 def api_root(request):
     """Root API endpoint showing all available endpoints"""
@@ -123,6 +124,11 @@ def api_root(request):
             'admin': {
                 'interface': '/admin/',
                 'login': '/admin/login/'
+            },
+            'documentation': {
+                'swagger': '/api/swagger/',
+                'redoc': '/api/redoc/',
+                'schema': '/api/schema/'
             }
         },
         'authentication': 'Django admin session required for protected endpoints',
@@ -141,6 +147,11 @@ urlpatterns = [
     
     # Tenant branding API endpoints
     path('api/tenants/', include('simple_tenant.urls')),
+    
+    # API Documentation endpoints
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
 # Serve static and media files in development
