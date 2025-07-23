@@ -62,7 +62,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'admin_only_urls'
+ROOT_URLCONF = 'medcor_backend.simple_urls'
 
 TEMPLATES = [
     {
