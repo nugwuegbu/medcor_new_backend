@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'simple_appointment',
     # Simple tenant management
     'simple_tenant',
+    # User authentication API with Swagger documentation
+    'user_auth',
 ]
 
 MIDDLEWARE = [

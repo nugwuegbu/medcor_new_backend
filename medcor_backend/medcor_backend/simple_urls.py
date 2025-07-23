@@ -122,6 +122,16 @@ def api_root(request):
                 'tenant_preview': '/api/tenants/branding/<id>/preview/',
                 'apply_preset': '/api/tenants/branding/apply-preset/'
             },
+            'user_management': {
+                'login': '/api/auth/login/',
+                'logout': '/api/auth/logout/',
+                'profile': '/api/auth/profile/',
+                'stats': '/api/auth/stats/',
+                'users': '/api/auth/users/',
+                'patients': '/api/tenants/patients/',
+                'doctors': '/api/tenants/doctors/',
+                'nurses': '/api/tenants/nurses/'
+            },
             'admin': {
                 'interface': '/admin/',
                 'login': '/admin/login/'
@@ -157,6 +167,9 @@ urlpatterns = [
     
     # Tenant branding API endpoints
     path('api/tenants/', include('simple_tenant.urls')),
+    
+    # User authentication endpoints with Swagger documentation
+    path('', include('user_auth.urls')),
     
     # API Documentation endpoints
     path('api/docs/', api_docs_redirect, name='api_docs'),
