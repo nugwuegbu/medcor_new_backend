@@ -28,7 +28,7 @@ def api_info(request):
 
 def root_view(request):
     """Root endpoint with admin interface information"""
-    return HttpResponse("""
+    html_content = """
     <!DOCTYPE html>
     <html>
     <head>
@@ -100,7 +100,8 @@ def root_view(request):
         </div>
     </body>
     </html>
-    """)
+    """
+    return HttpResponse(html_content)
 
 urlpatterns = [
     # Root and info endpoints
