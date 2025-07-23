@@ -6,6 +6,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse, HttpResponse
+from django.shortcuts import redirect
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 def api_health(request):
@@ -126,6 +127,7 @@ def api_root(request):
                 'login': '/admin/login/'
             },
             'documentation': {
+                'docs': '/api/docs/',
                 'swagger': '/api/swagger/',
                 'redoc': '/api/redoc/',
                 'schema': '/api/schema/'
@@ -134,6 +136,10 @@ def api_root(request):
         'authentication': 'Django admin session required for protected endpoints',
         'base_url': 'http://localhost:8000'
     })
+
+def api_docs_redirect(request):
+    """Redirect /api/docs/ to Swagger UI for better UX"""
+    return redirect('/api/swagger/')
 
 urlpatterns = [
     # Root and info endpoints
@@ -149,6 +155,7 @@ urlpatterns = [
     path('api/tenants/', include('simple_tenant.urls')),
     
     # API Documentation endpoints
+    path('api/docs/', api_docs_redirect, name='api_docs'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
