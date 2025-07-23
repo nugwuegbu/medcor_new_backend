@@ -141,6 +141,10 @@ def api_docs_redirect(request):
     """Redirect /api/docs/ to Swagger UI for better UX"""
     return redirect('/api/swagger/')
 
+def api_redocs_redirect(request):
+    """Redirect /api/redocs/ to ReDoc for better UX (common typo)"""
+    return redirect('/api/redoc/')
+
 urlpatterns = [
     # Root and info endpoints
     path('', root_view, name='root'),
@@ -156,6 +160,7 @@ urlpatterns = [
     
     # API Documentation endpoints
     path('api/docs/', api_docs_redirect, name='api_docs'),
+    path('api/redocs/', api_redocs_redirect, name='api_redocs_redirect'),  # Handle common typo
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
