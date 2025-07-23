@@ -50,10 +50,10 @@ TENANT_APPS = [
     'drf_spectacular',
     'corsheaders',
     'core',
-    'authentication',
     'api',
     'treatment',
     'appointment',
+    'user_auth',  # Correct app name
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
