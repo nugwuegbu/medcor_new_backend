@@ -143,6 +143,18 @@ def api_root(request):
                 'treatment_stats': '/api/medical/treatments/statistics/',
                 'appointment_stats': '/api/medical/appointments/statistics/'
             },
+            'tenant_api': {
+                'tenants': '/api/tenants/tenants/',
+                'domains': '/api/tenants/domains/',
+                'branding_presets': '/api/tenants/branding-presets/',
+                'tenant_patients': '/api/tenants/patients/',
+                'tenant_doctors': '/api/tenants/doctors/',
+                'tenant_nurses': '/api/tenants/nurses/',
+                'tenant_stats': '/api/tenants/tenants/statistics/',
+                'patient_stats': '/api/tenants/patients/statistics/',
+                'doctor_stats': '/api/tenants/doctors/statistics/',
+                'nurse_stats': '/api/tenants/nurses/statistics/'
+            },
             'admin': {
                 'interface': '/admin/',
                 'login': '/admin/login/'
@@ -184,6 +196,9 @@ urlpatterns = [
     
     # Medical API endpoints with comprehensive Swagger documentation  
     path('', include('medical_api.urls')),
+    
+    # Tenant API endpoints with comprehensive Swagger documentation
+    path('', include('tenant_api.urls')),
     
     # API Documentation endpoints
     path('api/docs/', api_docs_redirect, name='api_docs'),
