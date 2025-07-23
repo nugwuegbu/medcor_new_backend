@@ -1236,6 +1236,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
       <div className="flex-1 relative">
         {/* Avatar Background - Always Active */}
         {/* Avatar Container - Adapts for chat, doctors view, and minimized state */}
+        {!showRecordsList && (
         <div 
           ref={avatarContainerRef}
           className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
@@ -1315,6 +1316,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
             </>
           )}
         </div>
+        )}
         
         {/* White Content Area when minimized */}
         {isMinimized && (
