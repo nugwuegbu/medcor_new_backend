@@ -103,9 +103,36 @@ def root_view(request):
     """
     return HttpResponse(html_content)
 
+def api_root(request):
+    """Root API endpoint showing all available endpoints"""
+    return JsonResponse({
+        'message': 'MedCor Backend API',
+        'version': '1.0',
+        'available_endpoints': {
+            'system': {
+                'health': '/api/health/',
+                'info': '/api/info/'
+            },
+            'tenant_branding': {
+                'presets': '/api/tenants/branding/presets/',
+                'tenant_css': '/api/tenants/branding/<id>/css/',
+                'tenant_json': '/api/tenants/branding/<id>/json/',
+                'tenant_preview': '/api/tenants/branding/<id>/preview/',
+                'apply_preset': '/api/tenants/branding/apply-preset/'
+            },
+            'admin': {
+                'interface': '/admin/',
+                'login': '/admin/login/'
+            }
+        },
+        'authentication': 'Django admin session required for protected endpoints',
+        'base_url': 'http://localhost:8000'
+    })
+
 urlpatterns = [
     # Root and info endpoints
     path('', root_view, name='root'),
+    path('api/', api_root, name='api_root'),
     path('api/health/', api_health, name='api_health'),
     path('api/info/', api_info, name='api_info'),
     
