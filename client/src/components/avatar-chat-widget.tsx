@@ -220,7 +220,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   }, [isDragging, dragOffset.x, dragOffset.y]);
 
   const handleAvatarMouseDown = (e: React.MouseEvent) => {
-    if (!showDoctorList && !showRecordsList && !showHairPage && !showLipsPage && !isMinimized) return; // Only allow dragging in circular mode
+    if (!showDoctorList && !showHairPage && !showLipsPage && !isMinimized) return; // Only allow dragging in circular mode
     
     const rect = avatarContainerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -1239,14 +1239,14 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
         <div 
           ref={avatarContainerRef}
           className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
-            showDoctorList || showRecordsList || showHairPage || showLipsPage
+            showDoctorList || showHairPage || showLipsPage
               ? 'w-24 h-24 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-4 ring-purple-600'
               : isMinimized 
                 ? 'w-32 h-32 rounded-full overflow-hidden shadow-2xl z-50 hover:scale-110' 
                 : 'inset-0 overflow-hidden'
           }`}
           style={{
-            ...(showDoctorList || showRecordsList || showHairPage || showLipsPage || isMinimized ? {
+            ...(showDoctorList || showHairPage || showLipsPage || isMinimized ? {
               cursor: isDragging ? 'grabbing' : 'grab',
               left: avatarPosition.x !== null ? `${avatarPosition.x}px` : 'auto',
               top: avatarPosition.y !== null ? `${avatarPosition.y}px` : '75px',
@@ -1295,7 +1295,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
               setAvatarPosition({ x: null, y: null });
             }
           }}>
-          {isOpen && !showDoctorList && !showRecordsList && !showHairPage && !showLipsPage && (
+          {isOpen && !showDoctorList && !showHairPage && !showLipsPage && (
             <>
               {/* Show HeyGen avatar when NOT in specific list views */}
               <HeyGenSDKAvatar 
