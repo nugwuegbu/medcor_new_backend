@@ -398,26 +398,7 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
                 gap: '12px',
                 fontSize: '14px'
               }}>
-                <div style={{ 
-                  padding: '10px 14px',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between'
-                }}>
-                  <span style={{ color: '#6b7280' }}>Age:</span>
-                  <span style={{ fontWeight: '600', color: '#374151' }}>{result.age} years</span>
-                </div>
-                <div style={{ 
-                  padding: '10px 14px',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between'
-                }}>
-                  <span style={{ color: '#6b7280' }}>Gender:</span>
-                  <span style={{ fontWeight: '600', color: '#374151' }}>{result.gender}</span>
-                </div>
+
                 <div style={{ 
                   padding: '10px 14px',
                   backgroundColor: '#f9fafb',

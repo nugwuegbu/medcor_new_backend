@@ -349,10 +349,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let yPosition = 100;
       
       // Basic Information
-      pdf.text(`Age: ${analysisResult.age} years`, 20, yPosition);
-      yPosition += 10;
-      pdf.text(`Gender: ${analysisResult.gender}`, 20, yPosition);
-      yPosition += 10;
       pdf.text(`Emotion: ${analysisResult.emotion}`, 20, yPosition);
       yPosition += 10;
       pdf.text(`Beauty Score: ${analysisResult.beauty_score}/100`, 20, yPosition);
@@ -455,7 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 <p>Thank you for using MEDCOR AI face analysis service. Please find your detailed analysis report attached as a PDF.</p>
                 <p>Your analysis includes:</p>
                 <ul>
-                  <li>Basic demographic information</li>
+                  <li>Emotion and beauty analysis</li>
                   <li>Skin analysis and recommendations</li>
                   <li>Makeup recommendations</li>
                   <li>Personalized skincare routine</li>
@@ -1174,13 +1170,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('YCE API credentials found, processing image with API key:', API_KEY?.substring(0, 10) + '...');
       
       // Perfect Corp YCE SDK Full Feature Set (2025 API)
-      const age = Math.floor(Math.random() * 30) + 20;
-      const gender = Math.random() > 0.5 ? 'Female' : 'Male';
       
       const demoResult = {
         // Basic Demographics
-        age,
-        gender,
         emotion: ['Happy', 'Confident', 'Calm', 'Neutral', 'Surprised'][Math.floor(Math.random() * 5)],
         beauty_score: Math.floor(Math.random() * 30) + 70,
         face_shape: ['Oval', 'Round', 'Square', 'Heart', 'Diamond'][Math.floor(Math.random() * 5)],
@@ -1221,8 +1213,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             score: 70 + Math.floor(Math.random() * 30)
           },
           wrinkles: {
-            forehead: age > 35 ? (Math.random() > 0.5 ? 'Mild' : 'None') : 'None',
-            crow_feet: age > 30 ? (Math.random() > 0.6 ? 'Mild' : 'None') : 'None',
+            forehead: Math.random() > 0.7 ? 'Mild' : 'None',
+            crow_feet: Math.random() > 0.8 ? 'Mild' : 'None',
             score: 80 + Math.floor(Math.random() * 20)
           },
           spots: {
@@ -1239,8 +1231,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             overall: ['Dry', 'Combination', 'Normal', 'Oily'][Math.floor(Math.random() * 4)]
           },
           acne: {
-            severity: age < 25 ? ['None', 'Mild', 'Moderate'][Math.floor(Math.random() * 3)] : 'None',
-            count: age < 25 ? Math.floor(Math.random() * 5) : 0
+            severity: ['None', 'Mild', 'Moderate'][Math.floor(Math.random() * 3)],
+            count: Math.floor(Math.random() * 3)
           }
         },
         
@@ -1264,12 +1256,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           skincare_routine: [
             'Gentle cleanser twice daily',
             'Vitamin C serum in the morning',
-            age > 30 ? 'Retinol at night (start 2x/week)' : 'Niacinamide serum',
+            'Niacinamide serum for pore refinement',
             'Daily SPF 30+ sunscreen',
             'Weekly hydrating mask'
           ],
           priority_concerns: [
-            age > 35 ? 'Anti-aging' : 'Prevention',
+            'Prevention',
             'Hydration',
             'Even skin tone'
           ]
