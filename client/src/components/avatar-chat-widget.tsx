@@ -1236,7 +1236,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
       <div className="flex-1 relative">
         {/* Avatar Background - Always Active */}
         {/* Avatar Container - Adapts for chat, doctors view, and minimized state */}
-        {!showRecordsList && (
+        {!showRecordsList && !showChatInterface && (
         <div 
           ref={avatarContainerRef}
           className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
@@ -1296,9 +1296,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
               setAvatarPosition({ x: null, y: null });
             }
           }}>
-          {isOpen && !showDoctorList && !showRecordsList && !showHairPage && !showLipsPage && (
+          {isOpen && !showDoctorList && !showRecordsList && !showHairPage && !showLipsPage && !showChatInterface && (
             <>
-              {/* Show HeyGen avatar when NOT in specific list views */}
+              {/* Show HeyGen avatar when NOT in specific list views or chat interface menu */}
               <HeyGenSDKAvatar 
                 ref={avatarRef}
                 key="single-avatar-instance"
