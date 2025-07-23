@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'simple_tenant',
     # User authentication API with Swagger documentation
     'user_auth',
+    # Comprehensive medical API with Swagger documentation
+    'medical_api',
 ]
 
 MIDDLEWARE = [
