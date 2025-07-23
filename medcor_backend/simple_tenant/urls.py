@@ -4,18 +4,12 @@ from . import views
 app_name = 'simple_tenant'
 
 urlpatterns = [
-    # Tenant branding CSS endpoint
+    # Legacy Django views (for backwards compatibility)
     path('branding/<int:tenant_id>/css/', views.tenant_branding_css, name='tenant_branding_css'),
-    
-    # Tenant branding JSON API
-    path('branding/<int:tenant_id>/json/', views.tenant_branding_json, name='tenant_branding_json'),
-    
-    # Tenant branding preview
     path('branding/<int:tenant_id>/preview/', views.tenant_branding_preview, name='tenant_branding_preview'),
     
-    # Apply preset to tenant
-    path('branding/apply-preset/', views.ApplyPresetView.as_view(), name='apply_preset'),
-    
-    # List available presets
-    path('branding/presets/', views.branding_presets_list, name='branding_presets_list'),
+    # NEW DRF API Views (documented in Swagger)
+    path('branding/<int:tenant_id>/json/', views.TenantBrandingJSONAPIView.as_view(), name='tenant_branding_json_api'),
+    path('branding/presets/', views.BrandingPresetsListAPIView.as_view(), name='branding_presets_api'),
+    path('branding/apply-preset/', views.ApplyPresetAPIView.as_view(), name='apply_preset_api'),
 ]

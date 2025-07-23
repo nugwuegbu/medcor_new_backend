@@ -5,6 +5,12 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.decorators import method_decorator
 from django.views import View
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAdminUser
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from .models import Tenant, TenantBrandingPreset
 import json
 
@@ -132,6 +138,167 @@ def branding_presets_list(request):
         'presets': presets_data,
         'total_count': len(presets_data)
     })
+
+
+# NEW DRF API VIEWS FOR SWAGGER DOCUMENTATION
+
+class TenantBrandingJSONAPIView(APIView):
+    """
+    Get tenant branding configuration as JSON
+    """
+    permission_classes = [IsAdminUser]
+    
+    @extend_schema(
+        operation_id='get_tenant_branding',
+        summary='Get tenant branding configuration',
+        description='Retrieve complete branding configuration for a specific tenant',
+        parameters=[
+            OpenApiParameter(
+                name='tenant_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='Unique identifier for the tenant'
+            )
+        ],
+        responses={
+            200: OpenApiResponse(description='Tenant branding configuration'),
+            404: OpenApiResponse(description='Tenant not found'),
+        }
+    )
+    def get(self, request, tenant_id):
+        tenant = get_object_or_404(Tenant, id=tenant_id)
+        
+        branding_data = {
+            'tenant_id': tenant.id,
+            'tenant_name': tenant.name,
+            'schema_name': tenant.schema_name,
+            'branding': {
+                'logo_url': tenant.logo_url,
+                'favicon_url': tenant.favicon_url,
+                'primary_color': tenant.primary_color,
+                'secondary_color': tenant.secondary_color,
+                'accent_color': tenant.accent_color,
+                'background_color': tenant.background_color,
+                'text_color': tenant.text_color,
+                'font_family': tenant.font_family,
+                'sidebar_style': tenant.sidebar_style,
+                'custom_css': tenant.custom_css,
+            },
+            'css_variables': {
+                '--tenant-primary-color': tenant.primary_color,
+                '--tenant-secondary-color': tenant.secondary_color,
+                '--tenant-accent-color': tenant.accent_color,
+                '--tenant-background-color': tenant.background_color,
+                '--tenant-text-color': tenant.text_color,
+                '--tenant-font-family': tenant.font_family,
+            }
+        }
+        
+        return Response(branding_data, status=status.HTTP_200_OK)
+
+
+class BrandingPresetsListAPIView(APIView):
+    """
+    List all available branding presets
+    """
+    permission_classes = [IsAdminUser]
+    
+    @extend_schema(
+        operation_id='list_branding_presets',
+        summary='List branding presets',
+        description='Get list of all available branding presets for medical tenants',
+        responses={
+            200: OpenApiResponse(description='List of branding presets'),
+        }
+    )
+    def get(self, request):
+        presets = TenantBrandingPreset.objects.filter(is_active=True).order_by('name')
+        
+        presets_data = []
+        for preset in presets:
+            presets_data.append({
+                'id': preset.id,
+                'name': preset.name,
+                'description': preset.description,
+                'colors': {
+                    'primary': preset.primary_color,
+                    'secondary': preset.secondary_color,
+                    'accent': preset.accent_color,
+                    'background': preset.background_color,
+                    'text': preset.text_color,
+                },
+                'font_family': preset.font_family,
+                'sidebar_style': preset.sidebar_style,
+            })
+        
+        return Response({
+            'presets': presets_data,
+            'total_count': len(presets_data)
+        }, status=status.HTTP_200_OK)
+
+
+class ApplyPresetAPIView(APIView):
+    """
+    Apply a branding preset to a tenant
+    """
+    permission_classes = [IsAdminUser]
+    
+    @extend_schema(
+        operation_id='apply_branding_preset',
+        summary='Apply preset to tenant',
+        description='Apply a specific branding preset to a tenant',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'preset_id': {'type': 'integer', 'description': 'ID of the preset to apply'},
+                    'tenant_id': {'type': 'integer', 'description': 'ID of the tenant to apply preset to'}
+                },
+                'required': ['preset_id', 'tenant_id']
+            }
+        },
+        responses={
+            200: OpenApiResponse(description='Preset applied successfully'),
+            400: OpenApiResponse(description='Bad request - missing required fields'),
+            404: OpenApiResponse(description='Preset or tenant not found'),
+        }
+    )
+    def post(self, request):
+        try:
+            preset_id = request.data.get('preset_id')
+            tenant_id = request.data.get('tenant_id')
+            
+            if not preset_id or not tenant_id:
+                return Response({
+                    'success': False,
+                    'error': 'Both preset_id and tenant_id are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            preset = get_object_or_404(TenantBrandingPreset, id=preset_id, is_active=True)
+            tenant = get_object_or_404(Tenant, id=tenant_id)
+            
+            # Apply preset to tenant
+            preset.apply_to_tenant(tenant)
+            
+            return Response({
+                'success': True,
+                'message': f'Applied "{preset.name}" preset to {tenant.name}',
+                'tenant_branding': {
+                    'primary_color': tenant.primary_color,
+                    'secondary_color': tenant.secondary_color,
+                    'accent_color': tenant.accent_color,
+                    'background_color': tenant.background_color,
+                    'text_color': tenant.text_color,
+                    'font_family': tenant.font_family,
+                    'sidebar_style': tenant.sidebar_style,
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @staff_member_required
