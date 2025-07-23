@@ -1295,7 +1295,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
               setAvatarPosition({ x: null, y: null });
             }
           }}>
-          {isOpen && !showDoctorList && !showHairPage && !showLipsPage && (
+          {isOpen && !showDoctorList && !showRecordsList && !showHairPage && !showLipsPage && (
             <>
               {/* Show HeyGen avatar when NOT in specific list views */}
               <HeyGenSDKAvatar 
