@@ -108,6 +108,38 @@ export const hairAnalysisReports = pgTable("hair_analysis_reports", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+export const clinics = pgTable("clinics", {
+  id: serial("id").primaryKey(),
+  clinicName: text("clinic_name").notNull(),
+  clinicType: text("clinic_type").notNull(),
+  licenseNumber: text("license_number").notNull(),
+  establishedYear: text("established_year").notNull(),
+  website: text("website"),
+  description: text("description").notNull(),
+  contactPersonName: text("contact_person_name").notNull(),
+  email: text("email").notNull().unique(),
+  phone: text("phone").notNull(),
+  alternatePhone: text("alternate_phone"),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  zipCode: text("zip_code").notNull(),
+  country: text("country").notNull(),
+  specializations: json("specializations").notNull(), // Array of strings
+  numberOfDoctors: text("number_of_doctors").notNull(),
+  numberOfStaff: text("number_of_staff").notNull(),
+  patientsPerMonth: text("patients_per_month").notNull(),
+  selectedPlan: text("selected_plan").notNull(), // starter, professional, enterprise
+  registrationStatus: text("registration_status").notNull().default("pending"), // pending, approved, rejected
+  paymentStatus: text("payment_status").notNull().default("pending"), // pending, paid, failed
+  agreeToTerms: boolean("agree_to_terms").notNull().default(false),
+  agreeToPrivacy: boolean("agree_to_privacy").notNull().default(false),
+  subscribeToUpdates: boolean("subscribe_to_updates").notNull().default(true),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
 export const insertDoctorSchema = createInsertSchema(doctors).omit({
   id: true,
 });
@@ -133,6 +165,15 @@ export const insertHairAnalysisReportSchema = createInsertSchema(hairAnalysisRep
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertClinicSchema = createInsertSchema(clinics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  registrationStatus: true,
+  paymentStatus: true,
+  isActive: true,
 });
 
 // User schemas
@@ -181,6 +222,8 @@ export type FaceAnalysisReport = typeof faceAnalysisReports.$inferSelect;
 export type InsertFaceAnalysisReport = z.infer<typeof insertFaceAnalysisReportSchema>;
 export type HairAnalysisReport = typeof hairAnalysisReports.$inferSelect;
 export type InsertHairAnalysisReport = z.infer<typeof insertHairAnalysisReportSchema>;
+export type Clinic = typeof clinics.$inferSelect;
+export type InsertClinic = z.infer<typeof insertClinicSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;
 export type SignupData = z.infer<typeof signupSchema>;

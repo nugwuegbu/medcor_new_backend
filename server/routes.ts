@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertAppointmentSchema, insertChatMessageSchema, insertFaceAnalysisReportSchema, insertHairAnalysisReportSchema, loginSchema, signupSchema } from "@shared/schema";
+import { insertAppointmentSchema, insertChatMessageSchema, insertFaceAnalysisReportSchema, insertHairAnalysisReportSchema, insertClinicSchema, loginSchema, signupSchema } from "@shared/schema";
 import { AuthService } from "./services/auth";
 import { authenticateToken, requireAdmin, requireDoctor, requireClinic, optionalAuth, type AuthenticatedRequest } from "./middleware/auth";
 import jsPDF from 'jspdf';
@@ -307,6 +307,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ message: "Logged out successfully" });
     });
+  });
+
+  // Clinic signup endpoint
+  app.post("/api/clinics/signup", async (req, res) => {
+    try {
+      const clinicData = insertClinicSchema.parse(req.body);
+      
+      // Check if clinic email already exists
+      const existingClinic = await storage.getClinicByEmail(clinicData.email);
+      if (existingClinic) {
+        return res.status(409).json({ 
+          message: "A clinic with this email address already exists",
+          field: "email"
+        });
+      }
+
+      // Create the clinic
+      const clinic = await storage.createClinic(clinicData);
+      
+      console.log(`Clinic signup successful: ${clinic.clinicName} (${clinic.email})`);
+      
+      res.status(201).json({
+        success: true,
+        message: "Clinic registration successful",
+        clinic: {
+          id: clinic.id,
+          clinicName: clinic.clinicName,
+          email: clinic.email,
+          registrationStatus: clinic.registrationStatus,
+          paymentStatus: clinic.paymentStatus
+        }
+      });
+    } catch (error) {
+      console.error("Clinic signup error:", error);
+      
+      if (error instanceof Error && error.name === "ZodError") {
+        return res.status(400).json({
+          message: "Invalid clinic data",
+          errors: (error as any).errors
+        });
+      }
+      
+      res.status(500).json({ 
+        message: "Failed to register clinic",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get clinic by ID (for admin purposes)
+  app.get("/api/clinics/:id", requireAdmin, async (req, res) => {
+    try {
+      const clinicId = parseInt(req.params.id);
+      const clinic = await storage.getClinic(clinicId);
+      
+      if (!clinic) {
+        return res.status(404).json({ message: "Clinic not found" });
+      }
+      
+      res.json(clinic);
+    } catch (error) {
+      console.error("Get clinic error:", error);
+      res.status(500).json({ message: "Failed to retrieve clinic" });
+    }
+  });
+
+  // List all clinics (for admin purposes)
+  app.get("/api/clinics", requireAdmin, async (req, res) => {
+    try {
+      const clinics = await storage.getAllClinics();
+      res.json(clinics);
+    } catch (error) {
+      console.error("List clinics error:", error);
+      res.status(500).json({ message: "Failed to retrieve clinics" });
+    }
   });
 
   // Face Analysis Report Generation

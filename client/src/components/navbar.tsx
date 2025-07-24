@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { MessageCircle, Users, Calendar, Home, Menu, Settings, LogIn, LogOut, User } from "lucide-react";
+import { MessageCircle, Users, Calendar, Home, Menu, Settings, LogIn, LogOut, User, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
 
   const navItems = [
     { href: "/", label: "Home", icon: Home },
+    { href: "/pricing", label: "Pricing", icon: DollarSign },
     { href: "/chat", label: "AI Assistant", icon: MessageCircle },
     { href: "/appointments", label: "Appointments", icon: Calendar },
     { href: "/settings", label: "Settings", icon: Settings },

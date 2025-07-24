@@ -13,6 +13,9 @@ import SettingsPage from "@/pages/settings";
 import Login from "@/pages/login";
 import AdminLogin from "@/pages/admin-login";
 import AdminDashboard from "@/pages/admin-dashboard";
+import Pricing from "@/pages/pricing";
+import Signup from "@/pages/signup";
+import Payment from "@/pages/payment";
 import NotFound from "@/pages/not-found";
 import { AuthModal } from "@/components/auth-modal";
 import { ProtectedRoute } from "@/components/protected-route";
@@ -27,6 +30,9 @@ function Router() {
       <Switch>
         <Route path="/test" component={TestPage} />
         <Route path="/" component={Home} />
+        <Route path="/pricing" component={Pricing} />
+        <Route path="/signup" component={Signup} />
+        <Route path="/payment" component={Payment} />
         <Route path="/login" component={Login} />
         <Route path="/admin/login" component={AdminLogin} />
         <Route path="/admin/dashboard" component={AdminDashboard} />

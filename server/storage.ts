@@ -1,4 +1,4 @@
-import { doctors, appointments, chatMessages, faceAnalysisReports, hairAnalysisReports, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser, type FaceAnalysisReport, type InsertFaceAnalysisReport, type HairAnalysisReport, type InsertHairAnalysisReport } from "@shared/schema";
+import { doctors, appointments, chatMessages, faceAnalysisReports, hairAnalysisReports, clinics, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser, type FaceAnalysisReport, type InsertFaceAnalysisReport, type HairAnalysisReport, type InsertHairAnalysisReport, type Clinic, type InsertClinic } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -29,6 +29,13 @@ export interface IStorage {
   createHairAnalysisReport(report: InsertHairAnalysisReport): Promise<HairAnalysisReport>;
   getHairAnalysisReports(sessionId: string): Promise<HairAnalysisReport[]>;
   
+  // Clinic operations
+  getAllClinics(): Promise<Clinic[]>;
+  getClinic(id: number): Promise<Clinic | undefined>;
+  getClinicByEmail(email: string): Promise<Clinic | undefined>;
+  createClinic(clinic: InsertClinic): Promise<Clinic>;
+  updateClinic(id: number, updates: Partial<Clinic>): Promise<Clinic>;
+  
   // Admin operations
   getAllUsers(): Promise<User[]>;
   getAdminStats(): Promise<{
@@ -48,12 +55,14 @@ export class MemStorage implements IStorage {
   private chatMessages: Map<number, ChatMessage>;
   private faceAnalysisReports: Map<number, FaceAnalysisReport>;
   private hairAnalysisReports: Map<number, HairAnalysisReport>;
+  private clinics: Map<number, Clinic>;
   private currentUserId: number;
   private currentDoctorId: number;
   private currentAppointmentId: number;
   private currentChatMessageId: number;
   private currentFaceAnalysisReportId: number;
   private currentHairAnalysisReportId: number;
+  private currentClinicId: number;
 
   constructor() {
     this.users = new Map();
@@ -62,12 +71,14 @@ export class MemStorage implements IStorage {
     this.chatMessages = new Map();
     this.faceAnalysisReports = new Map();
     this.hairAnalysisReports = new Map();
+    this.clinics = new Map();
     this.currentUserId = 1;
     this.currentDoctorId = 1;
     this.currentAppointmentId = 1;
     this.currentChatMessageId = 1;
     this.currentFaceAnalysisReportId = 1;
     this.currentHairAnalysisReportId = 1;
+    this.currentClinicId = 1;
     
     this.seedDoctors();
     this.seedTestData();
@@ -450,6 +461,49 @@ export class MemStorage implements IStorage {
     return Array.from(this.hairAnalysisReports.values()).filter(
       (report) => report.sessionId === sessionId
     );
+  }
+
+  // Clinic operations
+  async getAllClinics(): Promise<Clinic[]> {
+    return Array.from(this.clinics.values());
+  }
+
+  async getClinic(id: number): Promise<Clinic | undefined> {
+    return this.clinics.get(id);
+  }
+
+  async getClinicByEmail(email: string): Promise<Clinic | undefined> {
+    return Array.from(this.clinics.values()).find(clinic => clinic.email === email);
+  }
+
+  async createClinic(insertClinic: InsertClinic): Promise<Clinic> {
+    const id = this.currentClinicId++;
+    const clinic: Clinic = { 
+      ...insertClinic, 
+      id,
+      registrationStatus: "pending",
+      paymentStatus: "pending",
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.clinics.set(id, clinic);
+    return clinic;
+  }
+
+  async updateClinic(id: number, updates: Partial<Clinic>): Promise<Clinic> {
+    const clinic = this.clinics.get(id);
+    if (!clinic) {
+      throw new Error("Clinic not found");
+    }
+    
+    const updatedClinic: Clinic = { 
+      ...clinic, 
+      ...updates, 
+      updatedAt: new Date() 
+    };
+    this.clinics.set(id, updatedClinic);
+    return updatedClinic;
   }
 
   async getAllUsers(): Promise<User[]> {
