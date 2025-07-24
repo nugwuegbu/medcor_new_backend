@@ -1,9 +1,15 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import HeyGenAvatar from "./heygen-avatar";
 import HeyGenWebRTCAvatar from "./heygen-webrtc-avatar";
 import HeyGenSDKAvatar, { HeyGenSDKAvatarRef } from "./heygen-sdk-avatar";
@@ -51,6 +57,14 @@ interface AvatarChatWidgetProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+// Login form validation schema
+const clinicLoginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+type ClinicLoginForm = z.infer<typeof clinicLoginSchema>;
 
 // Enhanced language detection function
 function detectLanguageFromText(text: string): string {
@@ -162,6 +176,8 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
     doctorId: 1,
     selectedDate: null as Date | null
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -172,6 +188,58 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const lastSpeakTimeRef = useRef<number>(0);
   const avatarContainerRef = useRef<HTMLDivElement>(null);
   const faceAnalysisCameraRef = useRef<HTMLVideoElement>(null);
+
+  // Login form setup
+  const loginForm = useForm<ClinicLoginForm>({
+    resolver: zodResolver(clinicLoginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  // Login mutation
+  const loginMutation = useMutation({
+    mutationFn: async (data: ClinicLoginForm) => {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Login failed");
+      }
+      return result;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        localStorage.setItem("medcor_token", data.token);
+        setShowAuthOverlay(false);
+        setLoginError(null);
+        toast({
+          title: "Login Successful",
+          description: "Welcome to MedCare AI!",
+        });
+      }
+    },
+    onError: (error: any) => {
+      setLoginError(error.message || "Login failed. Please try again.");
+      toast({
+        title: "Login Failed",
+        description: error.message || "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Form submission handler
+  const handleLoginSubmit = (data: ClinicLoginForm) => {
+    setLoginError(null);
+    loginMutation.mutate(data);
+  };
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -3466,52 +3534,129 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
 
       </div>
 
-      {/* Authentication Overlay */}
+      {/* Clinic Login Overlay */}
       {showAuthOverlay && (
-        <div className="absolute inset-0 bg-white bg-opacity-95 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+        <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 relative">
             <button
               onClick={() => setShowAuthOverlay(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
             >
               <X className="h-6 w-6" />
             </button>
             
-            <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="h-10 w-10 text-white" />
+            <div className="p-8">
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <User className="h-10 w-10 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Clinic Login</h2>
+                <p className="text-gray-600">Access your healthcare dashboard</p>
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Create Your Account</h2>
-              <p className="text-gray-600">Continue with your preferred provider</p>
+
+              {/* Login Form */}
+              <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-6">
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                    Email Address
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      className="pl-10 h-12"
+                      {...loginForm.register("email")}
+                    />
+                  </div>
+                  {loginForm.formState.errors.email && (
+                    <p className="text-sm text-red-500">
+                      {loginForm.formState.errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Password Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      className="pl-10 pr-10 h-12"
+                      {...loginForm.register("password")}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {loginForm.formState.errors.password && (
+                    <p className="text-sm text-red-500">
+                      {loginForm.formState.errors.password.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Error Message */}
+                {loginError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{loginError}</p>
+                  </div>
+                )}
+
+                {/* Login Button */}
+                <Button
+                  type="submit"
+                  className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium"
+                  disabled={loginMutation.isPending}
+                >
+                  {loginMutation.isPending ? "Signing in..." : "Sign In"}
+                </Button>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
+                {/* Google SSO */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-12 border-gray-300 hover:bg-gray-50"
+                  onClick={() => window.location.href = '/api/auth/google'}
+                >
+                  <FaGoogle className="h-5 w-5 text-red-500 mr-2" />
+                  <span className="text-gray-700 font-medium">Continue with Google</span>
+                </Button>
+
+                {/* Demo Credentials Info */}
+                <div className="text-center text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
+                  <p className="font-medium mb-2">Demo Credentials:</p>
+                  <div className="space-y-1 text-xs">
+                    <p><strong>Clinic:</strong> clinic@medcor.ai / clinic123</p>
+                    <p><strong>Doctor:</strong> doctor@medcor.ai / doctor123</p>
+                    <p><strong>Admin:</strong> admin@medcor.ai / admin123</p>
+                  </div>
+                </div>
+              </form>
             </div>
-
-            <div className="space-y-4">
-              <button
-                onClick={() => window.location.href = '/api/auth/google'}
-                className="w-full flex items-center justify-center gap-3 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <FaGoogle className="h-5 w-5 text-red-500" />
-                <span className="text-gray-700 font-medium">Continue with Google</span>
-              </button>
-
-              <button
-                onClick={() => window.location.href = '/api/auth/apple'}
-                className="w-full flex items-center justify-center gap-3 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <FaApple className="h-5 w-5 text-black" />
-                <span className="text-gray-700 font-medium">Continue with Apple</span>
-              </button>
-
-              <button
-                onClick={() => window.location.href = '/api/auth/microsoft'}
-                className="w-full flex items-center justify-center gap-3 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <FaMicrosoft className="h-5 w-5 text-blue-600" />
-                <span className="text-gray-700 font-medium">Continue with Microsoft</span>
-              </button>
-            </div>
-
-
           </div>
         </div>
       )}
