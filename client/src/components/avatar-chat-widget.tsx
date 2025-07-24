@@ -3534,74 +3534,74 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
 
       </div>
 
-      {/* Clinic Login Overlay */}
+      {/* Patient Login Overlay */}
       {showAuthOverlay && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 relative">
+        <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-2">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-xs mx-2 relative max-h-[90%] overflow-y-auto">
             <button
               onClick={() => setShowAuthOverlay(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-10"
             >
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5" />
             </button>
             
-            <div className="p-8">
-              <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User className="h-10 w-10 text-white" />
+            <div className="p-5">
+              <div className="text-center mb-5">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <User className="h-6 w-6 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Clinic Login</h2>
-                <p className="text-gray-600">Access your healthcare dashboard</p>
+                <h2 className="text-lg font-bold text-gray-800 mb-1">Patient Login</h2>
+                <p className="text-sm text-gray-600">Access your health records</p>
               </div>
 
               {/* Login Form */}
-              <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-6">
+              <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4">
                 {/* Email Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                <div className="space-y-1">
+                  <Label htmlFor="email" className="text-xs font-medium text-gray-700">
                     Email Address
                   </Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Mail className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
                     <Input
                       id="email"
                       type="email"
                       placeholder="Enter your email"
-                      className="pl-10 h-12"
+                      className="pl-8 h-9 text-sm"
                       {...loginForm.register("email")}
                     />
                   </div>
                   {loginForm.formState.errors.email && (
-                    <p className="text-sm text-red-500">
+                    <p className="text-xs text-red-500">
                       {loginForm.formState.errors.email.message}
                     </p>
                   )}
                 </div>
 
                 {/* Password Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                <div className="space-y-1">
+                  <Label htmlFor="password" className="text-xs font-medium text-gray-700">
                     Password
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Lock className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      className="pl-10 pr-10 h-12"
+                      className="pl-8 pr-8 h-9 text-sm"
                       {...loginForm.register("password")}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                      className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600"
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                     </button>
                   </div>
                   {loginForm.formState.errors.password && (
-                    <p className="text-sm text-red-500">
+                    <p className="text-xs text-red-500">
                       {loginForm.formState.errors.password.message}
                     </p>
                   )}
@@ -3609,22 +3609,22 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
 
                 {/* Error Message */}
                 {loginError && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-600">{loginError}</p>
+                  <div className="p-2 bg-red-50 border border-red-200 rounded">
+                    <p className="text-xs text-red-600">{loginError}</p>
                   </div>
                 )}
 
                 {/* Login Button */}
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium"
+                  className="w-full h-9 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-sm font-medium"
                   disabled={loginMutation.isPending}
                 >
                   {loginMutation.isPending ? "Signing in..." : "Sign In"}
                 </Button>
 
                 {/* Divider */}
-                <div className="relative">
+                <div className="relative my-3">
                   <div className="absolute inset-0 flex items-center">
                     <Separator />
                   </div>
@@ -3639,22 +3639,12 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-12 border-gray-300 hover:bg-gray-50"
+                  className="w-full h-9 border-gray-300 hover:bg-gray-50 text-sm"
                   onClick={() => window.location.href = '/api/auth/google'}
                 >
-                  <FaGoogle className="h-5 w-5 text-red-500 mr-2" />
+                  <FaGoogle className="h-4 w-4 text-red-500 mr-2" />
                   <span className="text-gray-700 font-medium">Continue with Google</span>
                 </Button>
-
-                {/* Demo Credentials Info */}
-                <div className="text-center text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
-                  <p className="font-medium mb-2">Demo Credentials:</p>
-                  <div className="space-y-1 text-xs">
-                    <p><strong>Clinic:</strong> clinic@medcor.ai / clinic123</p>
-                    <p><strong>Doctor:</strong> doctor@medcor.ai / doctor123</p>
-                    <p><strong>Admin:</strong> admin@medcor.ai / admin123</p>
-                  </div>
-                </div>
               </form>
             </div>
           </div>
