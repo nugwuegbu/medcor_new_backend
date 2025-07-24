@@ -15,15 +15,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security settings
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-your-secret-key-here')
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if os.getenv('ALLOWED_HOSTS') else ['*']
+ALLOWED_HOSTS = os.getenv(
+    'ALLOWED_HOSTS',
+    'localhost,127.0.0.1').split(',') if os.getenv('ALLOWED_HOSTS') else ['*']
 
 # Application definition
 SHARED_APPS = [
     'django_tenants',  # mandatory
     'tenant_users.tenants',  # django-tenant-users tenant management
     'tenant_users.permissions',  # django-tenant-users permissions
-    'tenants',         # custom tenant app
-    
+    'tenants',  # custom tenant app
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -33,9 +34,9 @@ SHARED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'ckeditor',        # Rich text editor
+    'ckeditor',  # Rich text editor
     'django_filters',  # Advanced filtering for DRF
-    'core',            # Move core to shared to avoid User model conflicts
+    'core',  # Move core to shared to avoid User model conflicts
 ]
 
 TENANT_APPS = [
@@ -43,6 +44,7 @@ TENANT_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'tenant_users.permissions',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
@@ -53,10 +55,11 @@ TENANT_APPS = [
     'api',
     'treatment',
     'appointment',
-    'user_auth',  # Correct app name
 ]
 
-INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+INSTALLED_APPS = list(SHARED_APPS) + [
+    app for app in TENANT_APPS if app not in SHARED_APPS
+]
 
 MIDDLEWARE = [
     'django_tenants.middleware.main.TenantMainMiddleware',
@@ -66,8 +69,13 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'tenant_users.tenants.middleware.TenantAccessMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    "tenant_users.permissions.backend.UserBackend",
 ]
 
 ROOT_URLCONF = 'medcor_backend.urls'
@@ -102,23 +110,25 @@ DATABASES = {
     }
 }
 
-DATABASE_ROUTERS = (
-    'django_tenants.routers.TenantSyncRouter',
-)
+DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME':
+        'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME':
+        'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME':
+        'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME':
+        'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 
@@ -162,12 +172,15 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
+    'DEFAULT_PAGINATION_CLASS':
+    'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE':
+    20,
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_SCHEMA_CLASS':
+    'drf_spectacular.openapi.AutoSchema',
 }
 
 # Simple JWT configuration
@@ -184,54 +197,64 @@ SIMPLE_JWT = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5000,http://127.0.0.1:3000,http://127.0.0.1:5000').split(',')
-CORS_ALLOW_CREDENTIALS = os.getenv('CORS_ALLOW_CREDENTIALS', 'True').lower() == 'true'
+CORS_ALLOWED_ORIGINS = os.getenv(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:3000,http://localhost:5000,http://127.0.0.1:3000,http://127.0.0.1:5000'
+).split(',')
+CORS_ALLOW_CREDENTIALS = os.getenv('CORS_ALLOW_CREDENTIALS',
+                                   'True').lower() == 'true'
 
 # DRF Spectacular settings
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'MedCor.ai Healthcare Platform API',
-    'DESCRIPTION': 'Comprehensive API documentation for the MedCor.ai healthcare platform featuring multi-tenant architecture, AI-powered chat, face recognition authentication, appointment management, treatment tracking, and medical analysis tools.',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    'COMPONENT_SPLIT_REQUEST': True,
-    'SORT_OPERATIONS': False,
-    'ENABLE_DJANGO_ADMIN_LOGIN_FORM': True,
+    'TITLE':
+    'MedCor.ai Healthcare Platform API',
+    'DESCRIPTION':
+    'Comprehensive API documentation for the MedCor.ai healthcare platform featuring multi-tenant architecture, AI-powered chat, face recognition authentication, appointment management, treatment tracking, and medical analysis tools.',
+    'VERSION':
+    '1.0.0',
+    'SERVE_INCLUDE_SCHEMA':
+    False,
+    'COMPONENT_SPLIT_REQUEST':
+    True,
+    'SORT_OPERATIONS':
+    False,
+    'ENABLE_DJANGO_ADMIN_LOGIN_FORM':
+    True,
     'AUTHENTICATION_WHITELIST': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    'SERVERS': [
-        {
-            'url': 'http://localhost:8000',
-            'description': 'Development Server'
-        },
-        {
-            'url': 'https://your-production-domain.com',
-            'description': 'Production Server'
-        }
-    ],
+    'SERVERS': [{
+        'url': 'http://localhost:8000',
+        'description': 'Development Server'
+    }, {
+        'url': 'https://your-production-domain.com',
+        'description': 'Production Server'
+    }],
     'TAGS': [
         {
-            'name': 'Authentication', 
-            'description': 'User authentication, registration, and JWT token management'
+            'name':
+            'Authentication',
+            'description':
+            'User authentication, registration, and JWT token management'
         },
         {
-            'name': 'Appointments', 
+            'name': 'Appointments',
             'description': 'Medical appointment scheduling and management'
         },
         {
-            'name': 'Treatments', 
+            'name': 'Treatments',
             'description': 'Medical treatments and procedures management'
         },
         {
-            'name': 'Analysis', 
+            'name': 'Analysis',
             'description': 'AI-powered medical analysis (hair, skin, lips)'
         },
         {
-            'name': 'Chat', 
+            'name': 'Chat',
             'description': 'AI-powered chat system with HeyGen avatars'
         },
         {
-            'name': 'Users', 
+            'name': 'Users',
             'description': 'User management and profiles'
         },
     ],
@@ -244,7 +267,8 @@ SPECTACULAR_SETTINGS = {
 # JWT settings
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
 JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
-JWT_ACCESS_TOKEN_LIFETIME = int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME', 86400))  # 24 hours in seconds
+JWT_ACCESS_TOKEN_LIFETIME = int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME',
+                                          86400))  # 24 hours in seconds
 JWT_REFRESH_TOKEN_LIFETIME = 7 * 24 * 60 * 60  # 7 days in seconds
 
 # External API settings
