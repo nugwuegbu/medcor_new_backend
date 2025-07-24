@@ -4,6 +4,7 @@ from .models import User, Client, Domain
 from .forms import UserAdminForm
 from django_tenants.admin import TenantAdminMixin
 
+
 #@admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     """Custom user admin for tenant users."""
@@ -53,7 +54,7 @@ class UserAdmin(admin.ModelAdmin):
 
 
 #@admin.register(Client)
-class ClientAdmin(admin.ModelAdmin):
+class ClientAdmin(TenantAdminMixin, admin.ModelAdmin):
     """Admin for tenant clients."""
 
     list_display = ['name', 'schema_name', 'created_at']
@@ -71,4 +72,6 @@ class DomainAdmin(admin.ModelAdmin):
     search_fields = ['domain']
 
 
-
+admin.site.register(User, UserAdmin)
+admin.site.register(Client, ClientAdmin)
+admin.site.register(Domain, DomainAdmin)
