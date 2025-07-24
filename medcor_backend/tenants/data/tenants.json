@@ -12,9 +12,9 @@
   },
   {
     "id": 2,
-    "name": "Demo1 Tenant",
-    "schema_name": "demo1",
-    "subdomain": "demo1",
+    "name": "Medcor Hospital",
+    "schema_name": "medcorhospital",
+    "subdomain": "medcorhospital",
     "owner": {
       "username": "admin@demo1.localhost",
       "email": "admin@demo1.localhost",
@@ -23,9 +23,9 @@
   },
   {
     "id": 3,
-    "name": "Demo2 Tenant",
-    "schema_name": "demo2",
-    "subdomain": "demo2",
+    "name": "Medcor Clinic",
+    "schema_name": "medcorclinic",
+    "subdomain": "medcorclinic",
     "owner": {
       "username": "admin@demo2.localhost",
       "email": "admin@demo2.localhost",

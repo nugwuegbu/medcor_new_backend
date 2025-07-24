@@ -6,7 +6,7 @@ from django.core.management import BaseCommand, call_command
 from tenant_users.tenants.tasks import provision_tenant
 from tenant_users.tenants.utils import create_public_tenant
 
-from core import settings
+from django.conf import settings
 from tenants.models import User
 
 

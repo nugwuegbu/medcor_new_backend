@@ -6,7 +6,4 @@ class TenantsConfig(AppConfig):
     name = "tenants"
 
     def ready(self):
-        try:
-            import tenants.signals
-        except ImportError:
-            pass
+        from tenants import signals
