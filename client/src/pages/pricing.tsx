@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Check, Zap, Crown, Rocket, Users, MessageCircle, Shield, Phone, BarChart3, Calendar } from "lucide-react";
 import { Link } from "wouter";
 
@@ -100,6 +102,22 @@ const additionalFeatures = [
 
 export default function Pricing() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [isYearly, setIsYearly] = useState(false);
+
+  // Calculate price based on billing period
+  const getPrice = (price: number) => {
+    if (isYearly) {
+      return Math.round(price * 12 * 0.8); // 20% discount for yearly
+    }
+    return price;
+  };
+
+  const getOriginalPrice = (originalPrice: number) => {
+    if (isYearly) {
+      return originalPrice * 12;
+    }
+    return originalPrice;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
@@ -135,8 +153,41 @@ export default function Pricing() {
         </div>
       </div>
 
+      {/* Billing Toggle */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-center mb-12">
+          <div className="flex items-center space-x-4 bg-white rounded-full p-2 shadow-lg border">
+            <Label 
+              htmlFor="billing-toggle" 
+              className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${
+                !isYearly ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Monthly
+            </Label>
+            <Switch
+              id="billing-toggle"
+              checked={isYearly}
+              onCheckedChange={setIsYearly}
+              className="data-[state=checked]:bg-blue-600"
+            />
+            <Label 
+              htmlFor="billing-toggle" 
+              className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${
+                isYearly ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Yearly
+              <Badge className="ml-2 bg-green-500 text-white text-xs">
+                Save 20%
+              </Badge>
+            </Label>
+          </div>
+        </div>
+      </div>
+
       {/* Pricing Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="grid md:grid-cols-3 gap-8">
           {pricingPlans.map((plan, index) => {
             const IconComponent = plan.icon;
@@ -176,15 +227,15 @@ export default function Pricing() {
                   <div className="mt-6">
                     <div className="flex items-center justify-center space-x-2">
                       <span className="text-4xl font-bold text-gray-900">
-                        ${plan.price}
+                        ${getPrice(plan.price).toLocaleString()}
                       </span>
                       <span className="text-lg text-gray-500 line-through">
-                        ${plan.originalPrice}
+                        ${getOriginalPrice(plan.originalPrice).toLocaleString()}
                       </span>
                     </div>
-                    <div className="text-sm text-gray-500 mt-1">per month</div>
+                    <div className="text-sm text-gray-500 mt-1">per {isYearly ? 'year' : 'month'}</div>
                     <Badge variant="secondary" className="mt-2 bg-green-100 text-green-800">
-                      {plan.discount}
+                      {isYearly ? 'Save 20%' : plan.discount}
                     </Badge>
                   </div>
                 </CardHeader>
