@@ -143,7 +143,7 @@ export default function Pricing() {
             return (
               <Card 
                 key={plan.id}
-                className={`relative overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 ${
+                className={`relative overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 flex flex-col h-full ${
                   plan.isPopular 
                     ? 'border-purple-500 shadow-purple-200 shadow-lg' 
                     : selectedPlan === plan.id 
@@ -189,10 +189,10 @@ export default function Pricing() {
                   </div>
                 </CardHeader>
 
-                <CardContent className="space-y-4">
-                  <div>
+                <CardContent className="flex-1 flex flex-col">
+                  <div className="flex-1">
                     <h4 className="font-semibold text-gray-900 mb-3">What's included:</h4>
-                    <ul className="space-y-2">
+                    <ul className="space-y-2 mb-6">
                       {plan.features.map((feature, idx) => (
                         <li key={idx} className="flex items-start text-sm">
                           <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
@@ -203,7 +203,7 @@ export default function Pricing() {
                   </div>
                   
                   {plan.limitations.length > 0 && (
-                    <div>
+                    <div className="mt-auto">
                       <h4 className="font-semibold text-gray-700 mb-2 text-sm">Limitations:</h4>
                       <ul className="space-y-1">
                         {plan.limitations.map((limitation, idx) => (
@@ -217,13 +217,13 @@ export default function Pricing() {
                   )}
                 </CardContent>
 
-                <CardFooter>
+                <CardFooter className="mt-auto pt-6">
                   <Link href={`/signup?plan=${plan.id}`} className="w-full">
                     <Button 
-                      className={`w-full h-12 font-semibold transition-all duration-300 ${
+                      className={`w-full h-12 font-semibold transition-all duration-300 text-white ${
                         plan.isPopular
-                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg'
-                          : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white'
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg'
+                          : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700'
                       }`}
                     >
                       Start Free Trial
@@ -283,11 +283,11 @@ export default function Pricing() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
-              <Button size="lg" className="bg-white text-blue-900 hover:bg-blue-50 font-semibold px-8">
+              <Button size="lg" className="bg-white text-blue-900 hover:bg-blue-50 hover:text-blue-900 font-semibold px-8 border-0">
                 Start Your Free Trial
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-8">
+            <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-blue-900 font-semibold px-8">
               Schedule Demo
             </Button>
           </div>
