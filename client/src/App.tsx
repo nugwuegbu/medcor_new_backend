@@ -16,6 +16,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import Pricing from "@/pages/pricing";
 import Signup from "@/pages/signup";
 import Payment from "@/pages/payment";
+import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 import { AuthModal } from "@/components/auth-modal";
 import { ProtectedRoute } from "@/components/protected-route";
@@ -33,6 +34,7 @@ function Router() {
         <Route path="/pricing" component={Pricing} />
         <Route path="/signup" component={Signup} />
         <Route path="/payment" component={Payment} />
+        <Route path="/dashboard" component={Dashboard} />
         <Route path="/login" component={Login} />
         <Route path="/admin/login" component={AdminLogin} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
