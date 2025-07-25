@@ -1182,7 +1182,7 @@ export default function Dashboard({ userRole: propUserRole }: DashboardProps) {
       </div>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+      <div className="flex-1 flex flex-col transition-all duration-300">
         {/* Header */}
         <header className="bg-white shadow-sm border-b px-6 py-4">
           <div className="flex items-center justify-between">
