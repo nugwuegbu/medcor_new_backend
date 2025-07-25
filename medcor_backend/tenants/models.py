@@ -61,6 +61,10 @@ class User(UserProfile):
     blood_type = models.CharField(max_length=5, blank=True, null=True)
     allergies = models.TextField(blank=True, null=True)
     
+    # Django admin fields (required for admin access)
+    is_staff = models.BooleanField(default=False, help_text='Designates whether the user can log into the admin site.')
+    is_superuser = models.BooleanField(default=False, help_text='Designates that this user has all permissions without explicitly assigning them.')
+    
     # Role-based access control
     ROLE_CHOICES = [
         ('patient', 'Patient'),
@@ -112,3 +116,19 @@ class User(UserProfile):
     def has_face_recognition(self):
         """Check if user has face recognition enabled."""
         return self.face_registered and self.face_id and self.person_id
+    
+    def has_perm(self, perm, obj=None):
+        """
+        Return True if the user has the specified permission.
+        """
+        if self.is_superuser:
+            return True
+        return False
+    
+    def has_module_perms(self, app_label):
+        """
+        Return True if the user has any permissions in the given app label.
+        """
+        if self.is_superuser:
+            return True
+        return False
