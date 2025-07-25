@@ -90,6 +90,7 @@ MIDDLEWARE = [
 ]
 
 AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Default Django backend
     "tenant_users.permissions.backend.UserBackend",
 ]
 
