@@ -32,7 +32,14 @@ CSRF_TRUSTED_ORIGINS = [
 # Session and CSRF settings for admin
 CSRF_COOKIE_SECURE = False  # For development
 SESSION_COOKIE_SECURE = False  # For development
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access for debugging
+CSRF_USE_SESSIONS = False  # Use cookies instead of sessions
 CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
+
+# Session configuration for better compatibility
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_SAVE_EVERY_REQUEST = True
 
 # Application definition
 SHARED_APPS = [
@@ -84,7 +91,6 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'tenant_users.tenants.middleware.TenantAccessMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
