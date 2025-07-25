@@ -73,6 +73,7 @@ const pricingPlans = {
 export default function Payment() {
   const [location] = useLocation();
   const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const [clinicData, setClinicData] = useState<any>(null);
   const selectedPlan = searchParams.get('plan') || 'professional';
   const clinicId = searchParams.get('clinicId');
   
@@ -82,6 +83,20 @@ export default function Payment() {
   const { toast } = useToast();
 
   const plan = pricingPlans[selectedPlan as keyof typeof pricingPlans];
+
+  // Load clinic data from localStorage
+  useEffect(() => {
+    const savedClinicData = localStorage.getItem('clinicRegistrationData');
+    if (savedClinicData) {
+      try {
+        const parsedData = JSON.parse(savedClinicData);
+        setClinicData(parsedData);
+        console.log("Loaded clinic data from localStorage:", parsedData);
+      } catch (error) {
+        console.error("Error parsing clinic data from localStorage:", error);
+      }
+    }
+  }, []);
   
   // Calculate prices based on billing period
   const getPrice = () => {

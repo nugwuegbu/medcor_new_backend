@@ -96,6 +96,7 @@ export default function Signup() {
 
   const form = useForm<ClinicSignupForm>({
     resolver: zodResolver(clinicSignupSchema),
+    mode: "onSubmit", // Only validate on submit, not onChange
     defaultValues: {
       specializations: [],
       agreeToTerms: false,
@@ -106,7 +107,7 @@ export default function Signup() {
 
   const signupMutation = useMutation({
     mutationFn: async (data: ClinicSignupForm) => {
-      // Map form data to clinic schema structure
+      // Store clinic data in localStorage temporarily instead of API call
       const clinicData = {
         clinicName: data.clinicName,
         clinicType: data.clinicType,
@@ -122,29 +123,38 @@ export default function Signup() {
         website: data.website || null,
         description: data.description,
         licenseNumber: data.licenseNumber,
-        establishedYear: parseInt(data.establishedYear),
+        establishedYear: data.establishedYear, // Keep as string for localStorage
         specializations: data.specializations,
-        numberOfDoctors: parseInt(data.numberOfDoctors),
-        numberOfStaff: parseInt(data.numberOfStaff),
-        patientsPerMonth: parseInt(data.patientsPerMonth),
+        numberOfDoctors: data.numberOfDoctors, // Keep as string for localStorage
+        numberOfStaff: data.numberOfStaff, // Keep as string for localStorage
+        patientsPerMonth: data.patientsPerMonth, // Keep as string for localStorage
         selectedPlan,
         agreeToTerms: data.agreeToTerms,
         agreeToPrivacy: data.agreeToPrivacy,
-        subscribeToUpdates: data.subscribeToUpdates || false
+        subscribeToUpdates: data.subscribeToUpdates || false,
+        registrationDate: new Date().toISOString()
       };
 
-      return apiRequest("/api/clinics/signup", {
-        method: "POST",
-        body: JSON.stringify(clinicData),
+      // Store in localStorage
+      localStorage.setItem('clinicRegistrationData', JSON.stringify(clinicData));
+      
+      // Simulate API response
+      return Promise.resolve({
+        success: true,
+        message: "Clinic registration data saved locally",
+        clinic: {
+          id: Date.now().toString(),
+          ...clinicData
+        }
       });
     },
     onSuccess: (response) => {
       toast({
         title: "Registration Successful!",
-        description: "Your clinic has been registered. Redirecting to payment...",
+        description: "Your clinic data has been saved. Redirecting to payment...",
       });
       
-      console.log("Clinic registration response:", response);
+      console.log("Clinic registration saved to localStorage:", response);
       
       // Redirect to payment page with clinic ID
       setTimeout(() => {
@@ -163,6 +173,7 @@ export default function Signup() {
   });
 
   const onSubmit = (data: ClinicSignupForm) => {
+    console.log("Form submission data:", { ...data, specializations: selectedSpecializations });
     signupMutation.mutate({ ...data, specializations: selectedSpecializations });
   };
 
@@ -578,7 +589,7 @@ export default function Signup() {
                         understand that this is a binding agreement for healthcare AI services.
                       </Label>
                     </div>
-                    {form.formState.errors.agreeToTerms && (
+                    {form.formState.errors.agreeToTerms && form.formState.isSubmitted && (
                       <p className="text-sm text-red-500">{form.formState.errors.agreeToTerms.message}</p>
                     )}
 
@@ -593,7 +604,7 @@ export default function Signup() {
                         consent to data processing for healthcare services in compliance with HIPAA regulations.
                       </Label>
                     </div>
-                    {form.formState.errors.agreeToPrivacy && (
+                    {form.formState.errors.agreeToPrivacy && form.formState.isSubmitted && (
                       <p className="text-sm text-red-500">{form.formState.errors.agreeToPrivacy.message}</p>
                     )}
 
