@@ -19,6 +19,19 @@ ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS',
     'localhost,127.0.0.1').split(',') if os.getenv('ALLOWED_HOSTS') else ['*']
 
+# CSRF Configuration
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://localhost:8000',
+    'https://127.0.0.1:8000',
+]
+
+# Session and CSRF settings for admin
+CSRF_COOKIE_SECURE = False  # For development
+SESSION_COOKIE_SECURE = False  # For development
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
+
 # Application definition
 SHARED_APPS = [
     'django_tenants',  # mandatory

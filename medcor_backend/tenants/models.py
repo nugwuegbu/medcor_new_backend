@@ -121,7 +121,7 @@ class User(UserProfile):
         """
         Return True if the user has the specified permission.
         """
-        if self.is_superuser:
+        if self.is_active and self.is_superuser:
             return True
         return False
     
@@ -129,6 +129,28 @@ class User(UserProfile):
         """
         Return True if the user has any permissions in the given app label.
         """
-        if self.is_superuser:
+        if self.is_active and self.is_superuser:
             return True
         return False
+    
+    def get_all_permissions(self, obj=None):
+        """
+        Return a set of all permissions for the user.
+        """
+        if self.is_active and self.is_superuser:
+            return set(['*'])  # Superuser has all permissions
+        return set()
+    
+    def get_group_permissions(self, obj=None):
+        """
+        Return a set of permission strings that this user has through their groups.
+        """
+        return set()
+    
+    def has_perms(self, perm_list, obj=None):
+        """
+        Return True if the user has each of the permissions in perm_list.
+        """
+        if self.is_active and self.is_superuser:
+            return True
+        return all(self.has_perm(perm, obj) for perm in perm_list)
