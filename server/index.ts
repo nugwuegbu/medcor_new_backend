@@ -87,7 +87,7 @@ app.use((req, res, next) => {
 
   // Start Django backend server on port 8000
   const startDjangoServer = () => {
-    const djangoProcess = spawn('python', ['manage.py', 'runserver', '0.0.0.0:8000', '--noreload', '--settings=medcor_backend.simple_settings'], {
+    const djangoProcess = spawn('python', ['manage.py', 'runserver', '0.0.0.0:8000', '--noreload', '--settings=medcor_backend.settings'], {
       cwd: './medcor_backend',
       stdio: ['pipe', 'pipe', 'pipe'],
       detached: false
