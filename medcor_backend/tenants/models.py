@@ -32,6 +32,7 @@ class User(UserProfile):
     """
     Custom user model that extends django-tenant-users UserProfile.
     This model will be created in each tenant's schema for isolated user management.
+    Uses email as the username field for authentication.
     """
     # Add many-to-many relationship with tenants
     #tenants = models.ManyToManyField(Client, blank=True, related_name='users')
@@ -40,6 +41,10 @@ class User(UserProfile):
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
     username = models.CharField(max_length=150, blank=True, null=True)
+    
+    # Use email as the username field for authentication
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name']
     
     # Extend the default user model with additional fields
     phone_number = models.CharField(max_length=20, blank=True, null=True)
