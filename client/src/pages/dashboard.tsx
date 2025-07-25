@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { useSubdomain, type TenantInfo } from "@/hooks/useSubdomain";
+import { TenantSwitcher } from "@/components/tenant-switcher";
 import { 
   Building2, 
   Users, 
@@ -50,9 +52,9 @@ import { Link } from "wouter";
 const sampleData = {
   hospitals: [
     {
-      id: "medcor-main",
-      name: "MedCor Main Hospital",
-      subdomain: "medcormain.medcor.ai",
+      id: "medcorhospital",
+      name: "Medcor Hospital",
+      subdomain: "medcorhospital.medcor.ai",
       type: "General Hospital",
       location: "New York, NY",
       totalDoctors: 45,
@@ -60,10 +62,10 @@ const sampleData = {
       activeChats: 24
     },
     {
-      id: "heart-center",
-      name: "Heart Care Center",
-      subdomain: "heartcare.medcor.ai", 
-      type: "Cardiology Specialist",
+      id: "medcorclinic",
+      name: "Medcor Clinic",
+      subdomain: "medcorclinic.medcor.ai", 
+      type: "Specialized Clinic",
       location: "Los Angeles, CA",
       totalDoctors: 18,
       totalPatients: 1250,
@@ -156,9 +158,10 @@ const sampleData = {
 
 interface DashboardProps {
   userRole?: "admin" | "doctor" | "patient";
+  tenantInfo?: TenantInfo | null;
 }
 
-export default function Dashboard({ userRole: propUserRole }: DashboardProps) {
+export default function Dashboard({ userRole: propUserRole, tenantInfo }: DashboardProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [userRole, setUserRole] = useState(propUserRole || "admin");
@@ -183,11 +186,19 @@ export default function Dashboard({ userRole: propUserRole }: DashboardProps) {
       setSelectedHospital(JSON.parse(savedHospital));
     }
     
+    // Use tenant info if available
+    if (tenantInfo && tenantInfo.subdomain !== "public") {
+      const hospitalData = sampleData.hospitals.find(h => h.id === tenantInfo.id);
+      if (hospitalData) {
+        setSelectedHospital(hospitalData);
+      }
+    }
+    
     // Use prop role instead of localStorage for role-based URLs
     if (propUserRole) {
       setUserRole(propUserRole);
     }
-  }, [propUserRole]);
+  }, [propUserRole, tenantInfo]);
 
   const sidebarItems = {
     admin: [
@@ -1197,8 +1208,13 @@ export default function Dashboard({ userRole: propUserRole }: DashboardProps) {
           <div className="flex items-center justify-between">
             {!sidebarCollapsed && (
               <div className="flex items-center space-x-2">
-                <Building2 className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold text-gray-800">MedCor</span>
+                <Building2 
+                  className="h-8 w-8" 
+                  style={{ color: tenantInfo?.branding?.primaryColor || '#2563eb' }}
+                />
+                <span className="text-xl font-bold text-gray-800">
+                  {tenantInfo && tenantInfo.subdomain !== "public" ? tenantInfo.name : "MedCor"}
+                </span>
               </div>
             )}
             <Button
@@ -1243,12 +1259,28 @@ export default function Dashboard({ userRole: propUserRole }: DashboardProps) {
             <div className="flex items-center space-x-4">
               <Menu className="h-6 w-6 text-gray-500 md:hidden" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-800 capitalize">{userRole} Dashboard</h1>
-                <p className="text-sm text-gray-500">{selectedHospital.name}</p>
+                <h1 className="text-2xl font-bold text-gray-800 capitalize">
+                  {userRole} Dashboard
+                  {tenantInfo && tenantInfo.subdomain !== "public" && (
+                    <Badge 
+                      className="ml-2 text-xs" 
+                      style={{ 
+                        backgroundColor: tenantInfo.branding?.primaryColor || '#2563eb',
+                        color: 'white'
+                      }}
+                    >
+                      {tenantInfo.name}
+                    </Badge>
+                  )}
+                </h1>
+                <p className="text-sm text-gray-500">
+                  {tenantInfo ? tenantInfo.description : selectedHospital.name}
+                </p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
+              <TenantSwitcher />
               <Button variant="ghost" size="sm">
                 <Bell className="h-5 w-5" />
               </Button>

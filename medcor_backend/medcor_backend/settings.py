@@ -94,6 +94,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'tenant_users.tenants.middleware.TenantAccessMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -174,6 +175,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+BASE_DOMAIN = "14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev"
+PUBLIC_SCHEMA_NAME = "public"
+
 # Tenant configuration
 TENANT_MODEL = "tenants.Client"  # app.Model
 TENANT_DOMAIN_MODEL = "tenants.Domain"  # app.Model
@@ -186,7 +190,7 @@ TENANT_USER_CREATION_ENABLED = True  # Allow tenant user creation
 TENANT_ADMIN_ENABLED = True  # Enable admin access for tenants
 
 # django-tenant-users configuration
-TENANT_USERS_DOMAIN = 'localhost'  # Default domain for development
+TENANT_USERS_DOMAIN = '14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev'  # Default domain for development
 PUBLIC_SCHEMA_URLCONF = 'medcor_backend.urls_public'  # Public schema URL configuration
 
 # Django REST Framework

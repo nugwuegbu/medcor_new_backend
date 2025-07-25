@@ -21,35 +21,61 @@ import NotFound from "@/pages/not-found";
 import { AuthModal } from "@/components/auth-modal";
 import { ProtectedRoute } from "@/components/protected-route";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubdomain } from "@/hooks/useSubdomain";
 import { useEffect, useState } from "react";
 
 function Router() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [location] = useLocation();
+  const { tenantInfo, isLoading, isMultiTenant } = useSubdomain();
   
   // Check if current route is a dashboard route
   const isDashboardRoute = location.includes('/dashboard');
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading tenant configuration...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // For tenant subdomains, show tenant-specific dashboard by default
+  if (isMultiTenant && location === '/') {
+    return <Dashboard tenantInfo={tenantInfo} />;
+  }
+
   return (
     <>
-      {/* Only show navbar on non-dashboard pages */}
-      {!isDashboardRoute && <Navbar onLoginClick={() => setShowAuthModal(true)} />}
+      {/* Only show navbar on non-dashboard pages and non-tenant subdomains */}
+      {!isDashboardRoute && !isMultiTenant && <Navbar onLoginClick={() => setShowAuthModal(true)} />}
       
       <Switch>
         <Route path="/test" component={TestPage} />
-        <Route path="/" component={Home} />
+        <Route path="/">
+          {isMultiTenant ? (
+            <Dashboard tenantInfo={tenantInfo} />
+          ) : (
+            <Home />
+          )}
+        </Route>
         <Route path="/pricing" component={Pricing} />
         <Route path="/signup" component={Signup} />
         <Route path="/payment" component={Payment} />
-        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/dashboard">
+          <Dashboard tenantInfo={tenantInfo} />
+        </Route>
         <Route path="/admin/dashboard">
-          <Dashboard userRole="admin" />
+          <Dashboard userRole="admin" tenantInfo={tenantInfo} />
         </Route>
         <Route path="/doctors/dashboard">
-          <Dashboard userRole="doctor" />
+          <Dashboard userRole="doctor" tenantInfo={tenantInfo} />
         </Route>
         <Route path="/patients/dashboard">
-          <Dashboard userRole="patient" />
+          <Dashboard userRole="patient" tenantInfo={tenantInfo} />
         </Route>
         <Route path="/login" component={Login} />
         <Route path="/admin/login" component={AdminLogin} />

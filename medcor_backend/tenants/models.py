@@ -71,7 +71,7 @@ class User(UserProfile):
         ('doctor', 'Doctor'),
         ('nurse', 'Nurse'),
         ('admin', 'Admin'),
-        ('receptionist', 'Receptionist'),
+        # ('receptionist', 'Receptionist'),
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='patient')
     

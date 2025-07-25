@@ -4,10 +4,16 @@
     "name": "Public Tenant",
     "schema_name": "public",
     "subdomain": "",
+    "description": "Public schema for shared tenant data",
     "owner": {
       "username": "admin@localhost",
       "email": "admin@localhost",
-      "password": "password"
+      "first_name": "System",
+      "last_name": "Administrator",
+      "password": "admin123",
+      "is_staff": true,
+      "is_superuser": true,
+      "is_active": true
     }
   },
   {
@@ -15,21 +21,33 @@
     "name": "Medcor Hospital",
     "schema_name": "medcorhospital",
     "subdomain": "medcorhospital",
+    "description": "Multi-specialty hospital with comprehensive medical services",
     "owner": {
-      "username": "admin@demo1.localhost",
-      "email": "admin@demo1.localhost",
-      "password": "password"
+      "username": "admin@medcorhospital.com",
+      "email": "admin@medcorhospital.com", 
+      "first_name": "Hospital",
+      "last_name": "Administrator",
+      "password": "hospital123",
+      "is_staff": true,
+      "is_superuser": false,
+      "is_active": true
     }
   },
   {
     "id": 3,
     "name": "Medcor Clinic",
-    "schema_name": "medcorclinic",
+    "schema_name": "medcorclinic", 
     "subdomain": "medcorclinic",
+    "description": "Specialized outpatient clinic providing focused medical care",
     "owner": {
-      "username": "admin@demo2.localhost",
-      "email": "admin@demo2.localhost",
-      "password": "password"
+      "username": "admin@medcorclinic.com",
+      "email": "admin@medcorclinic.com",
+      "first_name": "Clinic",
+      "last_name": "Administrator", 
+      "password": "clinic123",
+      "is_staff": true,
+      "is_superuser": false,
+      "is_active": true
     }
   }
 ]

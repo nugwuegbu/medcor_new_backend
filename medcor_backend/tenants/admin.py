@@ -52,11 +52,12 @@ class UserAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ['created_at', 'updated_at']
-    
+
     def delete_model(self, request, obj):
-        
-        if obj.id in Tenant.objects.values_list("owner_id", flat=True):
-            raise ValidationError("You cannot delete a user that is a tenant owner.")
+
+        if obj.id in Client.objects.values_list("owner_id", flat=True):
+            raise ValidationError(
+                "You cannot delete a user that is a tenant owner.")
 
         # Cancel the delete if the user still belongs to any tenant
         if obj.tenants.count() > 0:
@@ -64,7 +65,6 @@ class UserAdmin(admin.ModelAdmin):
 
         # Otherwise, delete the user
         obj.delete(force_drop=True)
-        
 
 
 #@admin.register(Client)

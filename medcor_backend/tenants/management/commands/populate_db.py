@@ -1,135 +1,119 @@
-
 import json
-
-from psycopg2 import connect, sql
-from django.core.management import BaseCommand, call_command
-from tenant_users.tenants.tasks import provision_tenant
-from tenant_users.tenants.utils import create_public_tenant
-
-from django.conf import settings
-from tenants.models import User
+import os
+from django.core.management.base import BaseCommand
+from django.contrib.auth.hashers import make_password
+from django.db import transaction
+from tenants.models import User, Client, Domain
 
 
 class Command(BaseCommand):
-    help = "Creates a public tenant and two demo tenants"
-    tenants_data_file = "tenants/data/tenants.json"
+    help = 'Populate database with tenants and users from tenants.json'
 
-    root_user = None
-    public_tenant = None
-
-    def __init__(self, stdout=None, stderr=None, no_color=False, force_color=False):
-        super().__init__(stdout, stderr, no_color, force_color)
-
-        # Load the tenant data from the JSON file
-        self.tenants_data = []
-        with open(self.tenants_data_file, "r") as file:
-            self.tenants_data = json.load(file)
-
-    def handle(self, *args, **kwargs):
-        self.drop_and_recreate_db()
-        call_command("migrate_schemas", "--shared", "--noinput")
-        self.stdout.write(
-            self.style.SUCCESS("Database recreated & migrated successfully.")
+    def handle(self, *args, **options):
+        # Get the path to tenants.json
+        tenants_json_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            'data',
+            'tenants.json'
         )
-
-        self.create_public_tenant()
-        self.create_private_tenants()
-
-        self.stdout.write(
-            self.style.SUCCESS("Yay, database has been populated successfully.")
-        )
-
-    def drop_and_recreate_db(self):
-        db = settings.DATABASES["default"]
-        db_name = db["NAME"]
-
-        # Create a connection to the database
-        conn = connect(
-            dbname="postgres",
-            user=db["USER"],
-            password=db["PASSWORD"],
-            host=db["HOST"],
-            port=db["PORT"],
-        )
-        conn.autocommit = True
-        cur = conn.cursor()
-
-        # Terminate all connections to the database except the current one
-        cur.execute(
-            """
-            SELECT pg_terminate_backend(pid)
-            FROM pg_stat_activity
-            WHERE datname = %s
-              AND pid <> pg_backend_pid();
-            """,
-            [db_name],
-        )
-
-        # Drop the database if it exists and create a new one
-        cur.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(db_name)))
-        cur.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(db_name)))
-
-        cur.close()
-        conn.close()
-
-    def create_public_tenant(self):
-        self.stdout.write(f"Creating the public tenant...")
-        public_tenant_data = self.tenants_data[0]
-
-        # Create the public tenant and the root user
-        public_tenant, public_tenant_domain, root_user = create_public_tenant(
-            domain_url=settings.BASE_DOMAIN,
-            tenant_extra_data={"slug": public_tenant_data["subdomain"]},
-            owner_email=public_tenant_data["owner"]["email"],
-            is_superuser=True,
-            is_staff=True,
-            **{
-                "password": public_tenant_data["owner"]["password"],
-                "is_verified": True,
-            },
-        )
-        self.public_tenant = public_tenant
-        self.root_user = root_user
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Public tenant ('{public_tenant.schema_name}') has been successfully created."
-            )
-        )
-
-    def create_private_tenants(self):
-        private_tenant_data = self.tenants_data[1:]
-
-        for tenant_data in private_tenant_data:
-            self.stdout.write(f"Creating tenant {tenant_data['schema_name']}...")
-
-            # Create the tenant owner
-            tenant_owner = User.objects.create_user(
-                email=tenant_data["owner"]["email"],
-                password=tenant_data["owner"]["password"],
-            )
-            tenant_owner.is_verified = True
-            tenant_owner.save()
-
-            # Create the tenant
-            tenant, domain = provision_tenant(
-                tenant_name=tenant_data["name"],
-                tenant_slug=tenant_data["subdomain"],
-                schema_name=tenant_data["schema_name"],
-                owner=tenant_owner,
-                is_superuser=True,
-                is_staff=True,
-            )
-
-            # Add the root user to the tenant
-            tenant.add_user(
-                self.root_user,
-                is_superuser=True,
-                is_staff=True,
-            )
-
+        
+        if not os.path.exists(tenants_json_path):
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"Tenant '{tenant.schema_name}' has been successfully created."
-                )
+                self.style.ERROR(f'tenants.json not found at {tenants_json_path}')
             )
+            return
+
+        # Load tenant data
+        with open(tenants_json_path, 'r') as f:
+            tenants_data = json.load(f)
+
+        with transaction.atomic():
+            for tenant_data in tenants_data:
+                self.stdout.write(f"Processing tenant: {tenant_data['name']}")
+                
+                # Create or get tenant (Client)
+                client, created = Client.objects.get_or_create(
+                    schema_name=tenant_data['schema_name'],
+                    defaults={
+                        'name': tenant_data['name'],
+                        'description': f"Multi-tenant organization for {tenant_data['name']}",
+                        'created_on_domain': tenant_data.get('subdomain', ''),
+                    }
+                )
+                
+                if created:
+                    self.stdout.write(
+                        self.style.SUCCESS(f'✅ Created tenant: {client.name}')
+                    )
+                else:
+                    self.stdout.write(f'✅ Tenant already exists: {client.name}')
+
+                # Create domain if subdomain exists
+                if tenant_data.get('subdomain'):
+                    domain_name = f"{tenant_data['subdomain']}.localhost"
+                    domain, domain_created = Domain.objects.get_or_create(
+                        domain=domain_name,
+                        defaults={
+                            'tenant': client,
+                            'is_primary': True,
+                        }
+                    )
+                    
+                    if domain_created:
+                        self.stdout.write(
+                            self.style.SUCCESS(f'✅ Created domain: {domain_name}')
+                        )
+
+                # Create owner user
+                owner_data = tenant_data['owner']
+                
+                # Prepare user data with defaults for missing fields
+                user_data = {
+                    'email': owner_data['email'],
+                    'first_name': owner_data.get('first_name', 'Admin'),
+                    'last_name': owner_data.get('last_name', 'User'),
+                    'is_staff': owner_data.get('is_staff', True),
+                    'is_superuser': owner_data.get('is_superuser', tenant_data['schema_name'] == 'public'),
+                    'is_active': owner_data.get('is_active', True),
+                }
+                
+                # Create or get user
+                user, user_created = User.objects.get_or_create(
+                    email=owner_data['email'],
+                    defaults=user_data
+                )
+                
+                # Set password properly (handles encryption automatically)
+                if user_created or not user.has_usable_password():
+                    user.set_password(owner_data['password'])
+                    user.save()
+                    self.stdout.write(f'✅ Password set for user: {user.email}')
+                
+                if user_created:
+                    self.stdout.write(
+                        self.style.SUCCESS(f'✅ Created user: {user.email}')
+                    )
+                    
+                    # Add user to tenant
+                    user.tenants.add(client)
+                    self.stdout.write(f'✅ Added user to tenant: {client.name}')
+                else:
+                    self.stdout.write(f'✅ User already exists: {user.email}')
+                    # Ensure user is associated with tenant
+                    if not user.tenants.filter(pk=client.pk).exists():
+                        user.tenants.add(client)
+                        self.stdout.write(f'✅ Associated existing user with tenant: {client.name}')
+
+        self.stdout.write(
+            self.style.SUCCESS('🎉 Database population completed successfully!')
+        )
+        
+        # Print summary
+        total_tenants = Client.objects.count()
+        total_users = User.objects.count()
+        total_domains = Domain.objects.count()
+        
+        self.stdout.write('\n📊 Summary:')
+        self.stdout.write(f'  - Tenants: {total_tenants}')
+        self.stdout.write(f'  - Users: {total_users}')
+        self.stdout.write(f'  - Domains: {total_domains}')
