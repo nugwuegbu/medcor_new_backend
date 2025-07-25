@@ -15,9 +15,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security settings
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-your-secret-key-here')
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = os.getenv(
-    'ALLOWED_HOSTS',
-    'localhost,127.0.0.1').split(',') if os.getenv('ALLOWED_HOSTS') else ['*']
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev',
+    '*'  # Allow all hosts for development
+]
 
 # CSRF Configuration
 CSRF_TRUSTED_ORIGINS = [
@@ -71,7 +74,7 @@ TENANT_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'drf_spectacular',
+    # 'drf_spectacular',  # Temporarily disabled due to schema conflicts
     'corsheaders',
     'core',
     'api',
