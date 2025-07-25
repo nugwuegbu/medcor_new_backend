@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -25,9 +25,16 @@ import { useEffect, useState } from "react";
 
 function Router() {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [location] = useLocation();
+  
+  // Check if current route is a dashboard route
+  const isDashboardRoute = location.includes('/dashboard');
 
   return (
     <>
+      {/* Only show navbar on non-dashboard pages */}
+      {!isDashboardRoute && <Navbar onLoginClick={() => setShowAuthModal(true)} />}
+      
       <Switch>
         <Route path="/test" component={TestPage} />
         <Route path="/" component={Home} />
@@ -35,6 +42,15 @@ function Router() {
         <Route path="/signup" component={Signup} />
         <Route path="/payment" component={Payment} />
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/admin/dashboard">
+          <Dashboard userRole="admin" />
+        </Route>
+        <Route path="/doctors/dashboard">
+          <Dashboard userRole="doctor" />
+        </Route>
+        <Route path="/patients/dashboard">
+          <Dashboard userRole="patient" />
+        </Route>
         <Route path="/login" component={Login} />
         <Route path="/admin/login" component={AdminLogin} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
@@ -105,7 +121,6 @@ function AppContent() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background">
-        <Navbar onLoginClick={() => setShowAuthModal(true)} />
         <Router />
         <AuthModal 
           isOpen={showAuthModal}

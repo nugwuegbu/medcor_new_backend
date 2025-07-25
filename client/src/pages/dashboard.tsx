@@ -5,6 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { 
   Building2, 
   Users, 
@@ -28,7 +32,17 @@ import {
   Edit,
   Trash2,
   Eye,
-  Plus
+  Plus,
+  Download,
+  Upload,
+  X,
+  Save,
+  ArrowUpCircle,
+  DollarSign,
+  CreditCard,
+  FileText,
+  Zap,
+  TrendingUp
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -140,12 +154,19 @@ const sampleData = {
   ]
 };
 
-export default function Dashboard() {
+interface DashboardProps {
+  userRole?: "admin" | "doctor" | "patient";
+}
+
+export default function Dashboard({ userRole: propUserRole }: DashboardProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [userRole, setUserRole] = useState("admin"); // admin, doctor, patient
+  const [userRole, setUserRole] = useState(propUserRole || "admin");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedHospital, setSelectedHospital] = useState(sampleData.hospitals[0]);
+  const [showForm, setShowForm] = useState(false);
+  const [formType, setFormType] = useState<"add" | "edit">("add");
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   // Load data from localStorage or use sample data
   useEffect(() => {
@@ -154,11 +175,11 @@ export default function Dashboard() {
       setSelectedHospital(JSON.parse(savedHospital));
     }
     
-    const savedRole = localStorage.getItem('userRole');
-    if (savedRole) {
-      setUserRole(savedRole);
+    // Use prop role instead of localStorage for role-based URLs
+    if (propUserRole) {
+      setUserRole(propUserRole);
     }
-  }, []);
+  }, [propUserRole]);
 
   const sidebarItems = {
     admin: [
@@ -166,7 +187,9 @@ export default function Dashboard() {
       { id: "doctors", label: "Doctors", icon: Stethoscope },
       { id: "patients", label: "Patients", icon: Users },
       { id: "appointments", label: "Appointments", icon: Calendar },
-      { id: "analytics", label: "Analytics", icon: Activity },
+      { id: "records", label: "Medical Records", icon: Activity },
+      { id: "analytics", label: "Analytics", icon: BarChart3 },
+      { id: "billing", label: "Billing", icon: CreditCard },
       { id: "chatbot", label: "Chatbot Settings", icon: MessageSquare },
       { id: "settings", label: "Settings", icon: Settings }
     ],
@@ -306,10 +329,20 @@ export default function Dashboard() {
           <h2 className="text-2xl font-bold">Doctors Management</h2>
           <p className="text-gray-600">Manage your medical staff</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Doctor
-        </Button>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={() => exportToCSV(sampleData.doctors, "doctors-list.csv")}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
+            setFormType("add");
+            setSelectedItem(null);
+            setShowForm(true);
+          }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Doctor
+          </Button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -393,10 +426,20 @@ export default function Dashboard() {
           <h2 className="text-2xl font-bold">Patients Management</h2>
           <p className="text-gray-600">Manage patient records and care</p>
         </div>
-        <Button className="bg-green-600 hover:bg-green-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Patient
-        </Button>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={() => exportToCSV(sampleData.patients, "patients-list.csv")}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button className="bg-green-600 hover:bg-green-700" onClick={() => {
+            setFormType("add");
+            setSelectedItem(null);
+            setShowForm(true);
+          }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Patient
+          </Button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -468,44 +511,623 @@ export default function Dashboard() {
     </div>
   );
 
+  // CSV Export Functions
+  const exportToCSV = (data: any[], filename: string) => {
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + Object.keys(data[0]).join(",") + "\n"
+      + data.map(row => Object.values(row).join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Form Components
+  const DoctorForm = () => (
+    <Dialog open={showForm} onOpenChange={setShowForm}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{formType === "add" ? "Add New Doctor" : "Edit Doctor"}</DialogTitle>
+          <DialogDescription>
+            {formType === "add" ? "Add a new doctor to your medical team" : "Update doctor information"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="name">Full Name</Label>
+            <Input id="name" placeholder="Dr. John Smith" />
+          </div>
+          <div>
+            <Label htmlFor="specialty">Specialty</Label>
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select specialty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cardiology">Cardiology</SelectItem>
+                <SelectItem value="neurology">Neurology</SelectItem>
+                <SelectItem value="pediatrics">Pediatrics</SelectItem>
+                <SelectItem value="orthopedics">Orthopedics</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" placeholder="doctor@hospital.com" />
+          </div>
+          <div>
+            <Label htmlFor="phone">Phone</Label>
+            <Input id="phone" placeholder="+1 (555) 123-4567" />
+          </div>
+          <div className="col-span-2">
+            <Label htmlFor="experience">Years of Experience</Label>
+            <Input id="experience" placeholder="10" />
+          </div>
+        </div>
+        <div className="flex justify-end space-x-2 mt-6">
+          <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+          <Button onClick={() => setShowForm(false)}>
+            <Save className="h-4 w-4 mr-2" />
+            {formType === "add" ? "Add Doctor" : "Update Doctor"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const PatientForm = () => (
+    <Dialog open={showForm} onOpenChange={setShowForm}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{formType === "add" ? "Add New Patient" : "Edit Patient"}</DialogTitle>
+          <DialogDescription>
+            {formType === "add" ? "Register a new patient" : "Update patient information"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="patientName">Full Name</Label>
+            <Input id="patientName" placeholder="John Smith" />
+          </div>
+          <div>
+            <Label htmlFor="age">Age</Label>
+            <Input id="age" type="number" placeholder="35" />
+          </div>
+          <div>
+            <Label htmlFor="patientEmail">Email</Label>
+            <Input id="patientEmail" type="email" placeholder="patient@email.com" />
+          </div>
+          <div>
+            <Label htmlFor="patientPhone">Phone</Label>
+            <Input id="patientPhone" placeholder="+1 (555) 123-4567" />
+          </div>
+          <div>
+            <Label htmlFor="condition">Primary Condition</Label>
+            <Input id="condition" placeholder="Hypertension" />
+          </div>
+          <div>
+            <Label htmlFor="doctor">Assigned Doctor</Label>
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select doctor" />
+              </SelectTrigger>
+              <SelectContent>
+                {sampleData.doctors.map(doctor => (
+                  <SelectItem key={doctor.id} value={doctor.name}>{doctor.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2">
+            <Label htmlFor="address">Address</Label>
+            <Textarea id="address" placeholder="123 Main St, City, State" />
+          </div>
+        </div>
+        <div className="flex justify-end space-x-2 mt-6">
+          <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+          <Button onClick={() => setShowForm(false)}>
+            <Save className="h-4 w-4 mr-2" />
+            {formType === "add" ? "Add Patient" : "Update Patient"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  // Billing Component
+  const renderBilling = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Billing & Subscription</h2>
+          <p className="text-gray-600">Manage your subscription and billing information</p>
+        </div>
+      </div>
+
+      {/* Current Plan */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Current Plan</CardTitle>
+          <CardDescription>Your active subscription details</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-semibold text-blue-600">Professional Plan</h3>
+              <p className="text-gray-600">$199/month • Up to 1000 patients</p>
+              <p className="text-sm text-gray-500">Next billing: February 25, 2025</p>
+            </div>
+            <Badge className="bg-green-100 text-green-800">Active</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Upgrade Options */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-gray-200">
+          <CardHeader>
+            <CardTitle>Basic</CardTitle>
+            <CardDescription>Perfect for small clinics</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">$99<span className="text-lg text-gray-500">/mo</span></div>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li>• Up to 500 patients</li>
+              <li>• Basic chatbot</li>
+              <li>• Email support</li>
+              <li>• Standard analytics</li>
+            </ul>
+            <Button variant="outline" className="w-full mt-4">Current Plan</Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-500 ring-2 ring-blue-200">
+          <CardHeader>
+            <CardTitle className="text-blue-600">Professional</CardTitle>
+            <CardDescription>Most popular choice</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-blue-600">$199<span className="text-lg text-gray-500">/mo</span></div>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li>• Up to 1000 patients</li>
+              <li>• Advanced AI chatbot</li>
+              <li>• Priority support</li>
+              <li>• Advanced analytics</li>
+              <li>• Custom branding</li>
+            </ul>
+            <Button className="w-full mt-4 bg-blue-600">
+              <ArrowUpCircle className="h-4 w-4 mr-2" />
+              Upgrade Now
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-500">
+          <CardHeader>
+            <CardTitle className="text-purple-600">Enterprise</CardTitle>
+            <CardDescription>For large hospitals</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-purple-600">$499<span className="text-lg text-gray-500">/mo</span></div>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li>• Unlimited patients</li>
+              <li>• Custom AI training</li>
+              <li>• 24/7 phone support</li>
+              <li>• Custom integrations</li>
+              <li>• Dedicated account manager</li>
+            </ul>
+            <Button variant="outline" className="w-full mt-4 border-purple-500 text-purple-600">
+              <ArrowUpCircle className="h-4 w-4 mr-2" />
+              Upgrade
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Analytics Component
+  const renderAnalytics = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Analytics Dashboard</h2>
+          <p className="text-gray-600">Comprehensive insights and reporting</p>
+        </div>
+        <Button onClick={() => exportToCSV([
+          {metric: "Total Chats", value: 1250},
+          {metric: "Patient Satisfaction", value: "94%"},
+          {metric: "Response Time", value: "2.3s"}
+        ], "analytics-report.csv")}>
+          <Download className="h-4 w-4 mr-2" />
+          Export Report
+        </Button>
+      </div>
+
+      {/* Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Conversations</CardTitle>
+            <MessageSquare className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">1,250</div>
+            <p className="text-xs text-muted-foreground">+18% from last month</p>
+            <Progress value={75} className="mt-2" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Patient Satisfaction</CardTitle>
+            <Heart className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">94%</div>
+            <p className="text-xs text-muted-foreground">+5% from last month</p>
+            <Progress value={94} className="mt-2" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
+            <Clock className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">2.3s</div>
+            <p className="text-xs text-muted-foreground">-0.5s from last month</p>
+            <Progress value={85} className="mt-2" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenue Growth</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">+24%</div>
+            <p className="text-xs text-muted-foreground">Monthly growth rate</p>
+            <Progress value={90} className="mt-2" />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Analytics Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Chat Volume Trends</CardTitle>
+            <CardDescription>Daily conversation volume over the last 30 days</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg flex items-center justify-center">
+              <div className="text-center">
+                <BarChart3 className="h-16 w-16 mx-auto text-blue-400 mb-4" />
+                <p className="text-gray-600">Interactive chart component</p>
+                <p className="text-sm text-gray-500">Real-time data visualization</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Patient Demographics</CardTitle>
+            <CardDescription>Age and condition distribution</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg flex items-center justify-center">
+              <div className="text-center">
+                <Users className="h-16 w-16 mx-auto text-green-400 mb-4" />
+                <p className="text-gray-600">Demographic breakdown</p>
+                <p className="text-sm text-gray-500">Patient insights and trends</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Medical Records Component
+  const renderMedicalRecords = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Medical Records</h2>
+          <p className="text-gray-600">Centralized patient medical records management</p>
+        </div>
+        <div className="flex space-x-2">
+          <Button onClick={() => exportToCSV(sampleData.patients, "medical-records.csv")}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button>
+            <Upload className="h-4 w-4 mr-2" />
+            Import Records
+          </Button>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Records</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">2,847</div>
+            <p className="text-xs text-gray-500">Active patient records</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">This Month</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">156</div>
+            <p className="text-xs text-gray-500">New records added</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">23</div>
+            <p className="text-xs text-gray-500">Require attention</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">78%</div>
+            <Progress value={78} className="mt-2" />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Records Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Medical Records</CardTitle>
+          <CardDescription>Latest patient medical records and documents</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              {name: "John Smith", type: "Lab Results", date: "2024-07-23", status: "Complete"},
+              {name: "Maria Garcia", type: "X-Ray Report", date: "2024-07-22", status: "Pending"},
+              {name: "David Wilson", type: "Blood Test", date: "2024-07-21", status: "Complete"},
+              {name: "Sarah Johnson", type: "MRI Scan", date: "2024-07-20", status: "Review"}
+            ].map((record, index) => (
+              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <FileText className="h-8 w-8 text-blue-600" />
+                  <div>
+                    <p className="font-medium">{record.name}</p>
+                    <p className="text-sm text-gray-500">{record.type} • {record.date}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant={record.status === "Complete" ? "default" : "secondary"}>
+                    {record.status}
+                  </Badge>
+                  <Button variant="ghost" size="sm">
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Chatbot Settings Component
+  const renderChatbotSettings = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Chatbot Configuration</h2>
+          <p className="text-gray-600">Customize your AI chatbot settings and behavior</p>
+        </div>
+        <Button>
+          <Save className="h-4 w-4 mr-2" />
+          Save Changes
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* General Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>General Settings</CardTitle>
+            <CardDescription>Basic chatbot configuration</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="botName">Bot Name</Label>
+              <Input id="botName" defaultValue="MedCor Assistant" />
+            </div>
+            <div>
+              <Label htmlFor="greeting">Welcome Message</Label>
+              <Textarea id="greeting" defaultValue="Hello! I'm your AI medical assistant. How can I help you today?" />
+            </div>
+            <div>
+              <Label htmlFor="language">Primary Language</Label>
+              <Select defaultValue="english">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="english">English</SelectItem>
+                  <SelectItem value="spanish">Spanish</SelectItem>
+                  <SelectItem value="french">French</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Model Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Model Configuration</CardTitle>
+            <CardDescription>Advanced AI behavior settings</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="model">AI Model</Label>
+              <Select defaultValue="gpt4">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt4">GPT-4 (Recommended)</SelectItem>
+                  <SelectItem value="gpt3.5">GPT-3.5 Turbo</SelectItem>
+                  <SelectItem value="claude">Claude 3 Sonnet</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Response Style</Label>
+              <div className="flex space-x-2 mt-2">
+                <Button variant="outline" size="sm">Professional</Button>
+                <Button variant="default" size="sm">Friendly</Button>
+                <Button variant="outline" size="sm">Concise</Button>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="temperature">Creativity Level</Label>
+              <Progress value={30} className="mt-2" />
+              <p className="text-xs text-gray-500 mt-1">Conservative responses for medical accuracy</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Knowledge Base */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Knowledge Base</CardTitle>
+            <CardDescription>Manage chatbot's medical knowledge</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <p className="font-medium">General Medicine</p>
+                  <p className="text-sm text-gray-500">1,247 medical topics</p>
+                </div>
+                <Badge className="bg-green-100 text-green-800">Active</Badge>
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <p className="font-medium">Cardiology Specialist</p>
+                  <p className="text-sm text-gray-500">456 cardiology topics</p>
+                </div>
+                <Badge>Active</Badge>
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <p className="font-medium">Emergency Procedures</p>
+                  <p className="text-sm text-gray-500">89 emergency protocols</p>
+                </div>
+                <Badge variant="outline">Inactive</Badge>
+              </div>
+            </div>
+            <Button variant="outline" className="w-full">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Knowledge Base
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Performance Metrics */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance Metrics</CardTitle>
+            <CardDescription>Real-time chatbot performance</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm">Response Accuracy</span>
+                <span className="text-sm font-medium">94%</span>
+              </div>
+              <Progress value={94} />
+              
+              <div className="flex justify-between">
+                <span className="text-sm">User Satisfaction</span>
+                <span className="text-sm font-medium">4.8/5</span>
+              </div>
+              <Progress value={96} />
+              
+              <div className="flex justify-between">
+                <span className="text-sm">Response Speed</span>
+                <span className="text-sm font-medium">1.2s avg</span>
+              </div>
+              <Progress value={88} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Updated renderContent function
   const renderContent = () => {
     switch (activeTab) {
       case "overview":
         return renderOverview();
       case "doctors":
-        return renderDoctors();
+        return (
+          <>
+            {renderDoctors()}
+            <DoctorForm />
+          </>
+        );
       case "patients":
-        return renderPatients();
+        return (
+          <>
+            {renderPatients()}
+            <PatientForm />
+          </>
+        );
       case "appointments":
         return (
           <div className="text-center py-12">
             <Calendar className="h-16 w-16 mx-auto text-gray-300 mb-4" />
             <h3 className="text-lg font-medium text-gray-600">Appointments Management</h3>
-            <p className="text-gray-500">Coming soon - Schedule and manage appointments</p>
+            <p className="text-gray-500">Schedule and manage patient appointments</p>
           </div>
         );
+      case "records":
+        return renderMedicalRecords();
       case "analytics":
-        return (
-          <div className="text-center py-12">
-            <BarChart3 className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-600">Analytics Dashboard</h3>
-            <p className="text-gray-500">Coming soon - Detailed analytics and reporting</p>
-          </div>
-        );
+        return renderAnalytics();
+      case "billing":
+        return renderBilling();
       case "chatbot":
-        return (
-          <div className="text-center py-12">
-            <MessageSquare className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-600">Chatbot Configuration</h3>
-            <p className="text-gray-500">Coming soon - Customize your AI chatbot settings</p>
-          </div>
-        );
+        return renderChatbotSettings();
       case "settings":
         return (
           <div className="text-center py-12">
             <Settings className="h-16 w-16 mx-auto text-gray-300 mb-4" />
             <h3 className="text-lg font-medium text-gray-600">System Settings</h3>
-            <p className="text-gray-500">Coming soon - Platform configuration and preferences</p>
+            <p className="text-gray-500">Platform configuration and preferences</p>
           </div>
         );
       default:
@@ -556,31 +1178,11 @@ export default function Dashboard() {
           })}
         </nav>
 
-        {/* Role Switcher */}
-        {!sidebarCollapsed && (
-          <div className="absolute bottom-4 left-4 right-4">
-            <div className="bg-gray-100 p-3 rounded-lg">
-              <Label className="text-xs text-gray-500">Switch Role</Label>
-              <div className="flex space-x-1 mt-1">
-                {['admin', 'doctor', 'patient'].map((role) => (
-                  <Button
-                    key={role}
-                    variant={userRole === role ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setUserRole(role)}
-                    className="text-xs flex-1"
-                  >
-                    {role}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
         {/* Header */}
         <header className="bg-white shadow-sm border-b px-6 py-4">
           <div className="flex items-center justify-between">
