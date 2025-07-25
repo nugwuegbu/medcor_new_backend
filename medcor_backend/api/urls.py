@@ -1,27 +1,32 @@
+"""
+API URL configuration for medcor_backend.
+"""
+
 from django.urls import path
-from . import views
+from django.http import JsonResponse
+
+def health_check(request):
+    """Simple health check endpoint"""
+    return JsonResponse({
+        'status': 'ok',
+        'message': 'Django backend is running',
+        'environment': 'development'
+    })
+
+def api_root(request):
+    """API root endpoint with available endpoints"""
+    return JsonResponse({
+        'message': 'MedCor Django API',
+        'version': '1.0',
+        'endpoints': {
+            'health': '/api/health/',
+            'admin': '/admin/',
+            'treatments': '/api/treatments/',
+            'appointments': '/api/appointments/'
+        }
+    })
 
 urlpatterns = [
-    # Doctor endpoints
-    path('doctors/', views.DoctorListView.as_view(), name='doctor-list'),
-    
-    # Appointment endpoints
-    path('appointments/', views.AppointmentListView.as_view(), name='appointment-list'),
-    path('appointments/create/', views.CreateAppointmentView.as_view(), name='create-appointment'),
-    
-    # Chat endpoints
-    path('chat/messages/', views.ChatMessageListView.as_view(), name='chat-messages'),
-    path('chat/messages/create/', views.CreateChatMessageView.as_view(), name='create-chat-message'),
-    
-    # Analysis endpoints
-    path('hair-analysis/', views.HairAnalysisView.as_view(), name='hair-analysis'),
-    path('skin-analysis/', views.SkinAnalysisView.as_view(), name='skin-analysis'),
-    path('lips-analysis/', views.LipsAnalysisView.as_view(), name='lips-analysis'),
-    
-    # Utility endpoints
-    path('location-weather/', views.location_weather_view, name='location-weather'),
-    
-    # Admin endpoints
-    path('admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'),
-    path('admin/users/', views.AdminUsersView.as_view(), name='admin-users'),
+    path('', api_root, name='api_root'),
+    path('health/', health_check, name='health_check'),
 ]

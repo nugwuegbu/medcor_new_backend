@@ -85,7 +85,55 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
   });
 
-  // Create Django-like backend server on port 8000
+  // Start Django backend server on port 8000
+  const startDjangoServer = () => {
+    const djangoProcess = spawn('python', ['manage.py', 'runserver', '0.0.0.0:8000', '--noreload'], {
+      cwd: './medcor_backend',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      detached: false
+    });
+
+    log('🏥 Django backend serving on port 8000');
+    log('📋 Admin Interface: http://localhost:8000/admin/');
+    log('🔑 Login: admin / admin123');
+
+    djangoProcess.stdout?.on('data', (data) => {
+      const output = data.toString().trim();
+      if (output && !output.includes('Watching for file changes')) {
+        console.log('[django]', output);
+      }
+    });
+
+    djangoProcess.stderr?.on('data', (data) => {
+      const error = data.toString().trim();
+      if (error && !error.includes('CKEditor') && !error.includes('Watching for file changes')) {
+        console.error('[django-error]', error);
+      }
+    });
+
+    djangoProcess.on('close', (code) => {
+      console.log(`[django] Django backend process exited with code ${code}`);
+      if (code !== 0) {
+        // Restart Django if it crashes
+        setTimeout(startDjangoServer, 5000);
+      }
+    });
+
+    // Keep the process alive
+    process.on('SIGTERM', () => {
+      djangoProcess.kill('SIGTERM');
+    });
+    process.on('SIGINT', () => {
+      djangoProcess.kill('SIGINT');
+    });
+
+    return djangoProcess;
+  };
+
+  // Start Django server
+  const djangoProcess = startDjangoServer();
+
+  // Create minimal backend proxy for testing
   const backendApp = express();
   backendApp.use(express.json());
   backendApp.use(express.urlencoded({ extended: false }));
@@ -311,27 +359,6 @@ app.use((req, res, next) => {
     });
   });
 
-  // Start real Django admin backend on port 8000
-  const djangoProcess = spawn('python', ['medcor_backend/ultimate_admin.py'], {
-    cwd: process.cwd(),
-    stdio: ['pipe', 'pipe', 'pipe'],
-    env: { ...process.env }
-  });
-  
-  log(`🏥 Django backend serving on port 8000`);
-  log(`📋 Admin Interface: http://localhost:8000/admin/`);
-  log(`🔑 Login: admin / admin123`);
-  
-  djangoProcess.stdout?.on('data', (data) => {
-    console.log(`[django] ${data.toString().trim()}`);
-  });
-  
-  djangoProcess.stderr?.on('data', (data) => {
-    console.error(`[django] ${data.toString().trim()}`);
-  });
-  
-  djangoProcess.on('exit', (code) => {
-    console.log(`Django backend process exited with code ${code}`);
-  });
+  // Backend server is handled by the Django process started above
 
 })();
