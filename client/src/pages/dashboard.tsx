@@ -167,6 +167,14 @@ export default function Dashboard({ userRole: propUserRole }: DashboardProps) {
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState<"add" | "edit">("add");
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showKnowledgeBaseForm, setShowKnowledgeBaseForm] = useState(false);
+  const [knowledgeBases, setKnowledgeBases] = useState([
+    { id: 1, name: "General Medicine", topics: 1247, status: "Active" },
+    { id: 2, name: "Cardiology Specialist", topics: 456, status: "Active" },
+    { id: 3, name: "Emergency Procedures", topics: 89, status: "Inactive" }
+  ]);
+  const [kbName, setKbName] = useState("");
+  const [kbDescription, setKbDescription] = useState("");
 
   // Load data from localStorage or use sample data
   useEffect(() => {
@@ -231,6 +239,17 @@ export default function Dashboard({ userRole: propUserRole }: DashboardProps) {
       case "monitoring": return "bg-yellow-500";
       default: return "bg-gray-500";
     }
+  };
+
+  const handleAddKnowledgeBase = (name: string, description: string) => {
+    const newKnowledgeBase = {
+      id: knowledgeBases.length + 1,
+      name: name,
+      topics: 0,
+      status: "Active"
+    };
+    setKnowledgeBases([...knowledgeBases, newKnowledgeBase]);
+    setShowKnowledgeBaseForm(false);
   };
 
   const renderOverview = () => (
@@ -1026,32 +1045,67 @@ export default function Dashboard({ userRole: propUserRole }: DashboardProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-medium">General Medicine</p>
-                  <p className="text-sm text-gray-500">1,247 medical topics</p>
+              {knowledgeBases.map((kb) => (
+                <div key={kb.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{kb.name}</p>
+                    <p className="text-sm text-gray-500">{kb.topics.toLocaleString()} medical topics</p>
+                  </div>
+                  <Badge className={kb.status === "Active" ? "bg-green-100 text-green-800" : ""}
+                         variant={kb.status === "Active" ? "default" : "outline"}>
+                    {kb.status}
+                  </Badge>
                 </div>
-                <Badge className="bg-green-100 text-green-800">Active</Badge>
-              </div>
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-medium">Cardiology Specialist</p>
-                  <p className="text-sm text-gray-500">456 cardiology topics</p>
-                </div>
-                <Badge>Active</Badge>
-              </div>
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-medium">Emergency Procedures</p>
-                  <p className="text-sm text-gray-500">89 emergency protocols</p>
-                </div>
-                <Badge variant="outline">Inactive</Badge>
-              </div>
+              ))}
             </div>
-            <Button variant="outline" className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Knowledge Base
-            </Button>
+            <Dialog open={showKnowledgeBaseForm} onOpenChange={setShowKnowledgeBaseForm}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Knowledge Base
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Knowledge Base</DialogTitle>
+                  <DialogDescription>
+                    Create a new medical knowledge base for your chatbot
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="kb-name">Knowledge Base Name</Label>
+                    <Input
+                      id="kb-name"
+                      placeholder="e.g., Pediatric Medicine"
+                      onChange={(e) => setKbName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="kb-description">Description</Label>
+                    <Textarea
+                      id="kb-description"
+                      placeholder="Describe the medical topics this knowledge base will cover..."
+                      onChange={(e) => setKbDescription(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setShowKnowledgeBaseForm(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => {
+                      if (kbName.trim()) {
+                        handleAddKnowledgeBase(kbName, kbDescription);
+                        setKbName('');
+                        setKbDescription('');
+                      }
+                    }}>
+                      Add Knowledge Base
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
 
