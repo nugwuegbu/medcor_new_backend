@@ -22,7 +22,8 @@ import {
   CreditCard, 
   CheckCircle,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  Zap
 } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
 import { useMutation } from "@tanstack/react-query";
@@ -559,64 +560,163 @@ export default function Signup() {
               {/* Step 5: Terms & Agreement */}
               {currentStep === 5 && (
                 <div className="space-y-6">
-                  <div className="bg-gray-50 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4">Registration Summary</h3>
-                    <div className="grid md:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p><strong>Clinic:</strong> {form.watch("clinicName")}</p>
-                        <p><strong>Type:</strong> {form.watch("clinicType")}</p>
-                        <p><strong>Contact:</strong> {form.watch("contactPersonName")}</p>
-                        <p><strong>Email:</strong> {form.watch("email")}</p>
+                  {/* Enhanced Registration Summary */}
+                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200 shadow-lg">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Building2 className="h-5 w-5 text-blue-600" />
+                      <h3 className="text-xl font-bold text-gray-800">Registration Summary</h3>
+                    </div>
+                    
+                    {/* Interactive Summary Cards */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Clinic Information Card */}
+                      <div className="bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
+                        <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                          <Building2 className="h-4 w-4 mr-2 text-blue-600" />
+                          Clinic Details
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Name:</span>
+                            <span className="font-medium text-gray-800">{form.watch("clinicName") || "Not provided"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Type:</span>
+                            <span className="font-medium text-gray-800">{form.watch("clinicType") || "Not selected"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Contact:</span>
+                            <span className="font-medium text-gray-800">{form.watch("contactPersonName") || "Not provided"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Email:</span>
+                            <span className="font-medium text-blue-600">{form.watch("email") || "Not provided"}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p><strong>City:</strong> {form.watch("city")}</p>
-                        <p><strong>Doctors:</strong> {form.watch("numberOfDoctors")}</p>
-                        <p><strong>Staff:</strong> {form.watch("numberOfStaff")}</p>
-                        <p><strong>Plan:</strong> {pricingPlans[selectedPlan as keyof typeof pricingPlans]?.name}</p>
+
+                      {/* Practice Information Card */}
+                      <div className="bg-white p-4 rounded-lg shadow-md border-l-4 border-purple-500 hover:shadow-lg transition-shadow">
+                        <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                          <Users className="h-4 w-4 mr-2 text-purple-600" />
+                          Practice Info
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Location:</span>
+                            <span className="font-medium text-gray-800">{form.watch("city") || "Not provided"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Doctors:</span>
+                            <span className="font-medium text-gray-800">{form.watch("numberOfDoctors") || "Not selected"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Staff:</span>
+                            <span className="font-medium text-gray-800">{form.watch("numberOfStaff") || "Not selected"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Plan:</span>
+                            <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
+                              {pricingPlans[selectedPlan as keyof typeof pricingPlans]?.name}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Selected Plan Highlight */}
+                    <div className="mt-6 bg-gradient-to-r from-green-500 to-blue-600 p-4 rounded-lg text-white">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Zap className="h-5 w-5" />
+                          <span className="font-semibold text-lg">
+                            {pricingPlans[selectedPlan as keyof typeof pricingPlans]?.name} Plan Selected
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold">
+                            ${pricingPlans[selectedPlan as keyof typeof pricingPlans]?.price}/month
+                          </div>
+                          <div className="text-sm opacity-90">
+                            Save ${pricingPlans[selectedPlan as keyof typeof pricingPlans]?.originalPrice - pricingPlans[selectedPlan as keyof typeof pricingPlans]?.price} monthly
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        id="agreeToTerms"
-                        checked={form.watch("agreeToTerms")}
-                        onCheckedChange={(checked) => form.setValue("agreeToTerms", checked as boolean)}
-                      />
-                      <Label htmlFor="agreeToTerms" className="text-sm leading-relaxed">
-                        I agree to the <a href="/terms" className="text-blue-600 hover:underline">Terms of Service</a> and 
-                        understand that this is a binding agreement for healthcare AI services.
-                      </Label>
+                  {/* Enhanced Agreement Section */}
+                  <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-md">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Shield className="h-5 w-5 text-green-600" />
+                      <h4 className="text-lg font-semibold text-gray-800">Legal Agreements</h4>
                     </div>
-                    {form.formState.errors.agreeToTerms && form.formState.isSubmitted && (
-                      <p className="text-sm text-red-500">{form.formState.errors.agreeToTerms.message}</p>
-                    )}
+                    
+                    <div className="space-y-4">
+                      {/* Terms Agreement */}
+                      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
+                        <div className="flex items-start space-x-3">
+                          <Checkbox
+                            id="agreeToTerms"
+                            checked={form.watch("agreeToTerms")}
+                            onCheckedChange={(checked) => form.setValue("agreeToTerms", checked as boolean)}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <Label htmlFor="agreeToTerms" className="text-sm leading-relaxed font-medium cursor-pointer">
+                              I agree to the <a href="/terms" className="text-blue-600 hover:underline font-semibold">Terms of Service</a> and 
+                              understand that this is a binding agreement for healthcare AI services.
+                            </Label>
+                            {form.formState.errors.agreeToTerms && form.formState.submitCount > 0 && (
+                              <p className="text-sm text-red-500 mt-2 flex items-center">
+                                <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                {form.formState.errors.agreeToTerms.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        id="agreeToPrivacy"
-                        checked={form.watch("agreeToPrivacy")}
-                        onCheckedChange={(checked) => form.setValue("agreeToPrivacy", checked as boolean)}
-                      />
-                      <Label htmlFor="agreeToPrivacy" className="text-sm leading-relaxed">
-                        I acknowledge the <a href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</a> and 
-                        consent to data processing for healthcare services in compliance with HIPAA regulations.
-                      </Label>
-                    </div>
-                    {form.formState.errors.agreeToPrivacy && form.formState.isSubmitted && (
-                      <p className="text-sm text-red-500">{form.formState.errors.agreeToPrivacy.message}</p>
-                    )}
+                      {/* Privacy Agreement */}
+                      <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 hover:bg-purple-100 transition-colors">
+                        <div className="flex items-start space-x-3">
+                          <Checkbox
+                            id="agreeToPrivacy"
+                            checked={form.watch("agreeToPrivacy")}
+                            onCheckedChange={(checked) => form.setValue("agreeToPrivacy", checked as boolean)}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <Label htmlFor="agreeToPrivacy" className="text-sm leading-relaxed font-medium cursor-pointer">
+                              I acknowledge the <a href="/privacy" className="text-purple-600 hover:underline font-semibold">Privacy Policy</a> and 
+                              consent to data processing for healthcare services in compliance with HIPAA regulations.
+                            </Label>
+                            {form.formState.errors.agreeToPrivacy && form.formState.submitCount > 0 && (
+                              <p className="text-sm text-red-500 mt-2 flex items-center">
+                                <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                {form.formState.errors.agreeToPrivacy.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        id="subscribeToUpdates"
-                        checked={form.watch("subscribeToUpdates")}
-                        onCheckedChange={(checked) => form.setValue("subscribeToUpdates", checked as boolean)}
-                      />
-                      <Label htmlFor="subscribeToUpdates" className="text-sm leading-relaxed">
-                        Send me product updates, healthcare industry insights, and special offers via email.
-                      </Label>
+                      {/* Optional Updates */}
+                      <div className="p-4 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 transition-colors">
+                        <div className="flex items-start space-x-3">
+                          <Checkbox
+                            id="subscribeToUpdates"
+                            checked={form.watch("subscribeToUpdates")}
+                            onCheckedChange={(checked) => form.setValue("subscribeToUpdates", checked as boolean)}
+                            className="mt-1"
+                          />
+                          <Label htmlFor="subscribeToUpdates" className="text-sm leading-relaxed font-medium cursor-pointer">
+                            <Mail className="inline h-4 w-4 mr-1" />
+                            Send me product updates, healthcare industry insights, and special offers via email.
+                            <span className="text-green-600 text-xs block mt-1">(Optional - you can unsubscribe anytime)</span>
+                          </Label>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
