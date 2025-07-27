@@ -62,7 +62,7 @@ class AdminLoginAPIView(APIView):
                                 'role': 'admin',
                                 'is_active': True,
                                 'is_staff': True,
-                                'date_joined': '2025-07-23T05:00:00Z',
+                                'created_at': '2025-07-23T05:00:00Z',
                                 'last_login': '2025-07-23T06:00:00Z'
                             }
                         }
@@ -116,7 +116,7 @@ class AdminLoginAPIView(APIView):
                         'is_active': user.is_active,
                         'is_staff': user.is_staff,
                         'is_superuser': user.is_superuser,
-                        'date_joined': user.date_joined,
+                        'created_at': user.created_at,
                         'last_login': user.last_login
                     }
                 }, status=status.HTTP_200_OK)
@@ -199,7 +199,7 @@ class AdminProfileAPIView(APIView):
                                 'is_staff': True,
                                 'is_superuser': True,
                                 'last_login': '2025-07-23T06:00:00Z',
-                                'date_joined': '2025-07-23T05:00:00Z'
+                                'created_at': '2025-07-23T05:00:00Z'
                             }
                         }
                     )
@@ -227,7 +227,7 @@ class AdminProfileAPIView(APIView):
                 'is_staff': user.is_staff,
                 'is_superuser': user.is_superuser,
                 'last_login': user.last_login,
-                'date_joined': user.date_joined
+                'created_at': user.created_at
             }
         }, status=status.HTTP_200_OK)
 
@@ -281,7 +281,7 @@ class AdminStatsAPIView(APIView):
             active_users = User.objects.filter(is_active=True).count()
             staff_users = User.objects.filter(is_staff=True).count()
             super_users = User.objects.filter(is_superuser=True).count()
-            recent_registrations = User.objects.filter(date_joined__gte=last_month).count()
+            recent_registrations = User.objects.filter(created_at__gte=last_month).count()
             
             return Response({
                 'totalUsers': total_users,
@@ -322,7 +322,7 @@ class AdminUsersAPIView(APIView):
                                 'is_active': True,
                                 'is_staff': True,
                                 'is_superuser': True,
-                                'date_joined': '2025-07-23T05:00:00Z',
+                                'created_at': '2025-07-23T05:00:00Z',
                                 'last_login': '2025-07-23T06:00:00Z'
                             },
                             {
@@ -332,7 +332,7 @@ class AdminUsersAPIView(APIView):
                                 'is_active': True,
                                 'is_staff': False,
                                 'is_superuser': False,
-                                'date_joined': '2025-07-23T05:30:00Z',
+                                'created_at': '2025-07-23T05:30:00Z',
                                 'last_login': '2025-07-23T05:45:00Z'
                             }
                         ]
@@ -353,7 +353,7 @@ class AdminUsersAPIView(APIView):
             }, status=status.HTTP_403_FORBIDDEN)
         
         try:
-            users = User.objects.all().order_by('-date_joined')
+            users = User.objects.all().order_by('-created_at')
             user_data = []
             
             for u in users:
@@ -366,7 +366,7 @@ class AdminUsersAPIView(APIView):
                     'is_active': u.is_active,
                     'is_staff': u.is_staff,
                     'is_superuser': u.is_superuser,
-                    'date_joined': u.date_joined,
+                    'created_at': u.created_at,
                     'last_login': u.last_login
                 })
             
@@ -441,7 +441,7 @@ class UserListAPIView(APIView):
             queryset = queryset.filter(is_staff=is_staff.lower() == 'true')
         
         # Serialize data
-        users = queryset.order_by('-date_joined')
+        users = queryset.order_by('-created_at')
         user_data = []
         
         for user in users:
@@ -454,7 +454,7 @@ class UserListAPIView(APIView):
                 'is_active': user.is_active,
                 'is_staff': user.is_staff,
                 'is_superuser': user.is_superuser,
-                'date_joined': user.date_joined,
+                'created_at': user.created_at,
                 'last_login': user.last_login
             })
         
@@ -498,7 +498,7 @@ class UserDetailAPIView(APIView):
                 'is_active': user.is_active,
                 'is_staff': user.is_staff,
                 'is_superuser': user.is_superuser,
-                'date_joined': user.date_joined,
+                'created_at': user.created_at,
                 'last_login': user.last_login
             }, status=status.HTTP_200_OK)
         except User.DoesNotExist:

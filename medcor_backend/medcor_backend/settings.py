@@ -230,12 +230,16 @@ SIMPLE_JWT = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = os.getenv(
-    'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://localhost:5000,http://127.0.0.1:3000,http://127.0.0.1:5000'
-).split(',')
-CORS_ALLOW_CREDENTIALS = os.getenv('CORS_ALLOW_CREDENTIALS',
-                                   'True').lower() == 'true'
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://localhost:5000', 
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5000',
+    'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000',
+    'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev',
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
 
 # DRF Spectacular settings
 SPECTACULAR_SETTINGS = {
@@ -264,8 +268,8 @@ SPECTACULAR_SETTINGS = {
         'url': 'http://localhost:8000',
         'description': 'Development Server'
     }, {
-        'url': 'https://your-production-domain.com',
-        'description': 'Production Server'
+        'url': 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000',
+        'description': 'Replit Production Server'
     }],
     'TAGS': [
         {
