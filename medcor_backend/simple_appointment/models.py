@@ -1,17 +1,17 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from simple_treatment.models import Treatment
 
 class Doctor(models.Model):
     """Doctor model for appointments"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     specialization = models.CharField(max_length=100)
     license_number = models.CharField(max_length=50, unique=True)
     experience_years = models.PositiveIntegerField()
     is_available = models.BooleanField(default=True)
     
     def __str__(self):
-        return f"Dr. {self.user.get_full_name()} - {self.specialization}"
+        return f"Dr. {self.user.first_name} {self.user.last_name} - {self.specialization}"
     
     class Meta:
         verbose_name = 'Doctor'
@@ -43,4 +43,4 @@ class Appointment(models.Model):
         verbose_name_plural = 'Patient Appointments'
     
     def __str__(self):
-        return f"{self.patient_name} - {self.doctor} on {self.appointment_date.strftime('%Y-%m-%d %H:%M')}"
+        return f"{self.patient_name} - {self.doctor} on {self.appointment_date}"

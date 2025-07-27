@@ -62,6 +62,7 @@ SHARED_APPS = [
     'ckeditor',  # Rich text editor
     'django_filters',  # Advanced filtering for DRF
     'core',  # Move core to shared to avoid User model conflicts
+    'subscription_plan',  # Subscription and payment management
 ]
 
 TENANT_APPS = [
@@ -80,6 +81,8 @@ TENANT_APPS = [
     'api',
     'treatment',
     'appointment',
+    # 'simple_treatment',  # Temporarily disabled - dependency issues
+    # 'simple_appointment',  # Temporarily disabled - dependency issues
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [
