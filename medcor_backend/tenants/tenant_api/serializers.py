@@ -81,9 +81,9 @@ class TenantPatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'full_name',
-                 'is_active', 'date_joined', 'last_login', 'appointment_count', 
+                 'is_active', 'created_at', 'last_login', 'appointment_count', 
                  'last_appointment']
-        read_only_fields = ['id', 'date_joined', 'last_login']
+        read_only_fields = ['id', 'created_at', 'last_login']
     
     @extend_schema_field(serializers.CharField())
     def get_full_name(self, obj):
@@ -140,7 +140,7 @@ class TenantDoctorSerializer(serializers.ModelSerializer):
             'name': f"Dr. {obj.user.get_full_name()}",
             'email': obj.user.email,
             'is_active': obj.user.is_active,
-            'date_joined': obj.user.date_joined
+            'created_at': obj.user.created_at
         }
     
     @extend_schema_field(serializers.IntegerField())
@@ -182,8 +182,8 @@ class TenantNurseSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'full_name',
-                 'is_active', 'date_joined', 'department', 'shift', 'certification']
-        read_only_fields = ['id', 'date_joined']
+                 'is_active', 'created_at']
+        read_only_fields = ['id', 'created_at']
     
     @extend_schema_field(serializers.CharField())
     def get_full_name(self, obj):
@@ -201,7 +201,7 @@ class TenantNurseCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'password', 
-                 'confirm_password', 'department', 'shift', 'certification']
+                 'confirm_password']
     
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:

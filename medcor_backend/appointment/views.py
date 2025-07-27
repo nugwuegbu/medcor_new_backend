@@ -39,7 +39,7 @@ class SlotViewSet(viewsets.ModelViewSet):
     serializer_class = SlotSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['doctor', 'day_of_week', 'doctor__specialization']
+    filterset_fields = ['doctor', 'day_of_week']
     search_fields = ['doctor__first_name', 'doctor__last_name', 'doctor__email']
     ordering_fields = ['day_of_week', 'start_time', 'end_time']
     ordering = ['day_of_week', 'start_time']
@@ -156,7 +156,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = [
         'appointment_status', 'doctor', 'patient', 'treatment',
-        'appointment_slot_date', 'doctor__specialization'
+        'appointment_slot_date'
     ]
     search_fields = [
         'patient__first_name', 'patient__last_name', 'patient__email',

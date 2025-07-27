@@ -49,9 +49,9 @@ class ClientViewSet(viewsets.ModelViewSet):
     serializer_class = ClientSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['on_trial', 'paid_until']
+    filterset_fields = ['name']
     search_fields = ['name', 'schema_name']
-    ordering_fields = ['name', 'created_at', 'paid_until']
+    ordering_fields = ['name', 'created_at']
     ordering = ['-created_at']
 
     @extend_schema(
@@ -63,12 +63,14 @@ class ClientViewSet(viewsets.ModelViewSet):
     def statistics(self, request, pk=None):
         client = self.get_object()
         stats = {
-            'total_users': User.objects.filter(tenants=client).count(),
-            'total_doctors': User.objects.filter(tenants=client, role='doctor').count(),
-            'total_patients': User.objects.filter(tenants=client, role='patient').count(),
-            'total_nurses': User.objects.filter(tenants=client, role='nurse').count(),
-            'is_on_trial': client.on_trial,
-            'paid_until': client.paid_until
+            'name': client.name,
+            'schema_name': client.schema_name,
+            'total_users': User.objects.count(),
+            'total_doctors': User.objects.filter(role='doctor').count(),
+            'total_patients': User.objects.filter(role='patient').count(),
+            'total_nurses': User.objects.filter(role='nurse').count(),
+            'created_at': client.created_at,
+            'updated_at': client.updated_at
         }
         return Response(stats)
 
@@ -121,9 +123,9 @@ class DoctorViewSet(viewsets.ModelViewSet):
     serializer_class = DoctorSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['is_active', 'specialization', 'experience_years']
-    search_fields = ['first_name', 'last_name', 'email', 'specialization']
-    ordering_fields = ['first_name', 'last_name', 'experience_years', 'date_joined']
+    filterset_fields = ['is_active', 'role']
+    search_fields = ['first_name', 'last_name', 'email']
+    ordering_fields = ['first_name', 'last_name', 'created_at']
     ordering = ['first_name']
 
     def get_queryset(self):
@@ -154,9 +156,9 @@ class PatientViewSet(viewsets.ModelViewSet):
     serializer_class = PatientSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['is_active', 'gender', 'blood_type']
+    filterset_fields = ['is_active', 'blood_type']
     search_fields = ['first_name', 'last_name', 'email', 'medical_record_number']
-    ordering_fields = ['first_name', 'last_name', 'date_joined']
+    ordering_fields = ['first_name', 'last_name', 'created_at']
     ordering = ['first_name']
 
     def get_queryset(self):
@@ -187,9 +189,9 @@ class NurseViewSet(viewsets.ModelViewSet):
     serializer_class = NurseSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['is_active', 'department', 'shift_schedule']
-    search_fields = ['first_name', 'last_name', 'email', 'department', 'license_number']
-    ordering_fields = ['first_name', 'last_name', 'department', 'date_joined']
+    filterset_fields = ['is_active']
+    search_fields = ['first_name', 'last_name', 'email']
+    ordering_fields = ['first_name', 'last_name', 'created_at']
     ordering = ['first_name']
 
     def get_queryset(self):
@@ -222,7 +224,7 @@ class AdminViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['is_active', 'is_staff', 'is_superuser']
     search_fields = ['first_name', 'last_name', 'email']
-    ordering_fields = ['first_name', 'last_name', 'date_joined']
+    ordering_fields = ['first_name', 'last_name', 'created_at']
     ordering = ['first_name']
 
     def get_queryset(self):

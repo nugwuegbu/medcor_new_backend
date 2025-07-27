@@ -16,8 +16,7 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = [
-            'id', 'schema_name', 'name', 'paid_until', 'on_trial',
-            'domains', 'created_at', 'updated_at'
+            'id', 'schema_name', 'name', 'domains', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
 
@@ -29,9 +28,9 @@ class UserBaseSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'email', 'first_name', 'last_name', 'full_name',
-            'role', 'phone_number', 'is_active', 'date_joined', 'last_login'
+            'role', 'phone_number', 'is_active', 'created_at', 'last_login'
         ]
-        read_only_fields = ['date_joined', 'last_login']
+        read_only_fields = ['created_at', 'last_login']
     
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}".strip()
@@ -39,30 +38,26 @@ class UserBaseSerializer(serializers.ModelSerializer):
 
 class DoctorSerializer(UserBaseSerializer):
     class Meta(UserBaseSerializer.Meta):
-        fields = UserBaseSerializer.Meta.fields + [
-            'specialization', 'experience_years', 'bio', 'consultation_fee'
-        ]
+        fields = UserBaseSerializer.Meta.fields
 
 
 class PatientSerializer(UserBaseSerializer):
     class Meta(UserBaseSerializer.Meta):
         fields = UserBaseSerializer.Meta.fields + [
-            'date_of_birth', 'gender', 'medical_record_number',
+            'date_of_birth', 'medical_record_number',
             'insurance_provider', 'blood_type', 'allergies', 'emergency_contact'
         ]
 
 
 class NurseSerializer(UserBaseSerializer):
     class Meta(UserBaseSerializer.Meta):
-        fields = UserBaseSerializer.Meta.fields + [
-            'department', 'shift_schedule', 'license_number'
-        ]
+        fields = UserBaseSerializer.Meta.fields
 
 
 class AdminSerializer(UserBaseSerializer):
     class Meta(UserBaseSerializer.Meta):
         fields = UserBaseSerializer.Meta.fields + [
-            'is_staff', 'is_superuser', 'permissions'
+            'is_staff', 'is_superuser'
         ]
 
 
@@ -74,8 +69,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'email', 'password', 'password_confirm', 'first_name', 'last_name',
-            'role', 'phone_number', 'specialization', 'experience_years',
-            'date_of_birth', 'gender', 'department', 'shift_schedule'
+            'role', 'phone_number', 'date_of_birth'
         ]
     
     def validate(self, attrs):

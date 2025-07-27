@@ -315,7 +315,7 @@ class TenantDoctorViewSet(viewsets.ModelViewSet):
     serializer_class = TenantDoctorSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['specialization', 'is_available']
+    filterset_fields = ['is_available']
     search_fields = ['user__first_name', 'user__last_name', 'specialization', 'license_number']
     ordering_fields = ['user__first_name', 'specialization', 'experience_years']
     ordering = ['user__first_name']

@@ -61,6 +61,7 @@ SHARED_APPS = [
     'corsheaders',
     'ckeditor',  # Rich text editor
     'django_filters',  # Advanced filtering for DRF
+    'drf_spectacular',  # OpenAPI 3 schema generation
     'core',  # Move core to shared to avoid User model conflicts
     'subscription_plan',  # Subscription and payment management
 ]
@@ -242,6 +243,10 @@ SPECTACULAR_SETTINGS = {
     'MedCor.ai Healthcare Platform API',
     'DESCRIPTION':
     'Comprehensive API documentation for the MedCor.ai healthcare platform featuring multi-tenant architecture, AI-powered chat, face recognition authentication, appointment management, treatment tracking, and medical analysis tools.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'AUTHENTICATION_WHITELIST': [],
+    'DISABLE_ERRORS_AND_WARNINGS': True,
     'VERSION':
     '1.0.0',
     'SERVE_INCLUDE_SCHEMA':
