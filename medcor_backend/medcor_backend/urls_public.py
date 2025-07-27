@@ -9,12 +9,25 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
 
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+
 def root_view(request):
     """Root view for public schema"""
     return JsonResponse({
         'message': 'MedCor Django Backend - Public Schema',
         'admin_url': '/admin/',
         'api_url': '/api/',
+        'documentation': {
+            'swagger_ui': '/api/docs/',
+            'redoc': '/api/redoc/',
+            'schema': '/api/schema/'
+        },
+        'endpoints': {
+            'tenants': '/api/tenants/',
+            'subscriptions': '/api/subscription/',
+            'appointments': '/api/appointments/',
+            'treatments': '/api/treatments/'
+        },
         'status': 'running'
     })
 
@@ -25,8 +38,23 @@ urlpatterns = [
     # Admin interface - accessible on public schema
     path('admin/', admin.site.urls),
     
+    # API Documentation
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='api-docs'),
+    
     # Public API endpoints
     path('api/', include('api.urls')),
+    
+    # Main API Endpoints (for public access)
+    path('', include('tenants.urls')),
+    path('', include('subscription_plan.urls')),
+    path('', include('appointment.urls')),
+    path('api/treatments/', include('treatment.urls')),
+    
+    # Authentication endpoints
+    path('api/auth/', include('user_auth.urls')),
     
     # Health check endpoint
     path('health/', lambda request: JsonResponse({'status': 'ok', 'schema': 'public'})),
