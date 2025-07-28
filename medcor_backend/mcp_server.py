@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-MedCor.ai MCP Server Implementation
-FastMCP server with tools for healthcare entity management
+MedCor.ai MCP Server Implementation - LEGACY VERSION
+This is the old implementation. Please use mcp_server_updated.py for current functionality.
 """
 
 import os
@@ -11,6 +11,10 @@ from typing import Dict, List, Any, Optional
 import json
 from datetime import datetime, date
 from decimal import Decimal
+
+print("⚠️  WARNING: You are using the legacy MCP server.")
+print("💡 Please use 'mcp_server_updated.py' for the latest functionality.")
+print("🔄 The updated server includes comprehensive API endpoints and multi-tenant support.")
 
 # Setup Django environment
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))

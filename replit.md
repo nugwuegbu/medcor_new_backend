@@ -174,6 +174,32 @@ The application uses a relational database with the following core entities:
 - GET /api/auth/user - Get current authenticated user
 - POST /api/auth/logout - Logout user
 
+## MCP Server Architecture
+
+### Enhanced MCP Server Implementation
+The MedCor AI platform now includes a comprehensive Model Context Protocol (MCP) server that provides programmatic access to all healthcare management functions.
+
+#### MCP Server Features
+- **33 Healthcare Tools**: Complete CRUD operations for tenants, users, appointments, treatments, and subscriptions
+- **3 Resource Endpoints**: API documentation, system status, and tenant information
+- **3 Guided Prompts**: Appointment scheduling, tenant setup, and system maintenance workflows
+- **Multi-tenant Support**: All tools support tenant-specific operations and data isolation
+- **Authentication Integration**: JWT-based authentication with role-based access control
+
+#### Tool Categories
+1. **Tenant Management**: `list_tenants`, `create_tenant`, `get_tenant_details`, `create_tenant_domain`
+2. **User Management**: `list_doctors`, `list_patients`, `list_nurses`, `create_doctor`, `create_patient` 
+3. **Appointment System**: `list_appointments`, `create_appointment`, `update_appointment_status`, `list_appointment_slots`
+4. **Treatment Management**: `list_treatments`, `create_treatment`, `update_treatment`, `get_treatment_stats`
+5. **Subscription Control**: `list_subscription_plans`, `create_subscription`, `list_subscriptions`
+6. **System Administration**: `admin_login`, `get_admin_profile`, `list_all_users`, `health_check`, `get_system_stats`
+
+#### MCP Server Access
+- **File Location**: `medcor_backend/mcp_server_updated.py`
+- **Runner Script**: `medcor_backend/run_mcp_server.py`
+- **API Integration**: Connects to Django backend on port 8000
+- **Enhanced Mock Mode**: Fallback implementation when FastMCP is unavailable
+
 ## Changelog
 
 Changelog:
@@ -321,6 +347,7 @@ Changelog:
 - July 27, 2025. MULTI-TENANT API REQUEST FUNCTIONALITY FULLY OPERATIONAL - Successfully demonstrated and tested multi-tenant API request capabilities. Created comprehensive testing tools (multi-tenant-api-demo.js, test-working-tenant-api.js, tenant-curl-examples.sh, tenant-api-examples.md) to showcase tenant isolation and API routing. Confirmed three tenant schemas working: Public (14b294fa...replit.dev), Hospital (medcorhospital.14b294fa...replit.dev), and Clinic (medcorclinic.14b294fa...replit.dev). Verified Host header-based tenant routing, JWT authentication, API documentation per tenant, and complete data isolation. System now provides practical examples for cURL requests, JavaScript fetch, and tenant-specific API access patterns. Multi-tenant API request functionality fully implemented and ready for production use.
 - July 28, 2025. TENANT-SPECIFIC SUBDOMAIN ACCESS COMPLETE - Implemented comprehensive tenant-specific subdomain routing for Django backend API documentation and admin panels. Updated ALLOWED_HOSTS and CSRF_TRUSTED_ORIGINS to support wildcard subdomains. Enhanced tenant URL configuration with dedicated root views showing tenant information. Each tenant now accessible via: {schema_name}.domain:8000/api/docs/ for API documentation and {schema_name}.domain:8000/admin/ for admin panels. Examples: medcorhospital.domain:8000/api/docs/, medcorclinic.domain:8000/admin/. Created comprehensive testing tools (test_tenant_subdomain_access.py, quick_tenant_test.py) and documentation (tenant_subdomain_guide.md). Django-tenants automatically routes requests to correct tenant schemas with complete data isolation. System supports future tenant additions with automatic subdomain routing.
 - July 28, 2025. SSL CERTIFICATE LIMITATION DOCUMENTED - Identified and documented SSL certificate issue preventing HTTPS access to tenant subdomains. Replit's SSL certificate covers main domain but not wildcard subdomains, causing ERR_CERT_COMMON_NAME_INVALID errors. Created comprehensive solution guide (SSL_CERTIFICATE_SOLUTION_GUIDE.md) with working alternatives: Host header method for development, HTTP access bypassing SSL, and custom domain recommendations for production. Added HTTP access testing script (test_http_access.py) demonstrating functional tenant routing without SSL. Tenant subdomain system works perfectly - only external HTTPS access limited by certificate coverage.
+- July 28, 2025. MCP SERVER COMPREHENSIVE UPDATE AND REFACTORING COMPLETE - Completely rebuilt MCP server with current Django API endpoints and enhanced architecture. Created mcp_server_updated.py with 33 comprehensive healthcare management tools covering tenant management, user operations, appointment scheduling, treatment control, subscription management, and system administration. Added 3 resource endpoints for API documentation, system status, and tenant information. Implemented 3 guided prompt workflows for appointment scheduling, tenant setup, and system maintenance. Enhanced mock MCP implementation with detailed logging and comprehensive tool registration. Integrated with all current Django REST API endpoints including multi-tenant support, JWT authentication, and role-based access control. Updated runner script to use new implementation. MCP server now provides complete programmatic access to entire healthcare platform with proper error handling, tenant isolation, and comprehensive functionality coverage.
 
 ## User Preferences
 

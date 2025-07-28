@@ -21,9 +21,9 @@ except Exception as e:
     print(f"❌ Failed to configure Django: {e}")
     sys.exit(1)
 
-# Import and run MCP server
+# Import and run UPDATED MCP server
 try:
-    from mcp_server import mcp, FASTMCP_AVAILABLE
+    from mcp_server_updated import mcp, FASTMCP_AVAILABLE
     
     if FASTMCP_AVAILABLE:
         print("🚀 Starting MedCor.ai MCP Server with FastMCP...")
