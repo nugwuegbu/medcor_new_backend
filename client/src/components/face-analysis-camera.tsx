@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, User as Face, Camera, Loader2, CheckCircle, Eye } from "lucide-react";
+import { ensureCameraReady, getCameraStream, videoStreamRef } from '@/utils/camera-manager';
 
 interface FaceAnalysisCameraProps {
   isOpen: boolean;
@@ -49,69 +50,38 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
     }
   }, [isOpen]);
 
-  // Use existing camera stream from widget if available
-  const connectToExistingCamera = useCallback(() => {
-    const existingVideo = document.querySelector('video') as HTMLVideoElement;
-    if (existingVideo && existingVideo.srcObject) {
-      console.log('Found existing camera stream');
-      const stream = existingVideo.srcObject as MediaStream;
-      setCameraStream(stream);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        setIsRecording(true);
-      }
-      return true;
-    }
-    return false;
-  }, []);
-
-  // Start new camera if no existing stream
-  const startNewCamera = useCallback(async () => {
+  // Use shared camera manager for consistency with other analysis components
+  const connectToSharedCamera = useCallback(async () => {
     try {
-      console.log('Starting new camera stream');
+      console.log('🔴 FACE: Connecting to shared camera system...');
       
-      // Check if getUserMedia is available
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('getUserMedia not supported in this browser');
-      }
+      // Get stream from shared camera manager
+      const stream = await ensureCameraReady();
+      console.log('🔴 FACE: Got shared camera stream:', stream);
       
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: 640, 
-          height: 480,
-          facingMode: 'user'
-        } 
-      });
-      
-      console.log('Camera stream obtained:', stream);
       setCameraStream(stream);
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setIsRecording(true);
-        console.log('Video playing successfully');
+        console.log('🔴 FACE: Video playing successfully');
       }
       
       setError(null);
     } catch (err) {
-      console.error('Camera error:', err);
-      setError(`Camera access failed: ${err.message}`);
+      console.error('🔴 FACE: Camera access failed:', err);
+      setError(`Camera access failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }, []);
 
   // Initialize camera when modal opens
   useEffect(() => {
     if (isOpen && !cameraStream) {
-      // Try to connect to existing camera first
-      if (!connectToExistingCamera()) {
-        // If no existing camera, start new one
-        startNewCamera();
-      }
+      console.log('🔴 FACE: Modal opened, initializing camera...');
+      connectToSharedCamera();
     }
-  }, [isOpen, cameraStream, connectToExistingCamera, startNewCamera]);
+  }, [isOpen, cameraStream, connectToSharedCamera]);
 
   const stopCamera = useCallback(() => {
     if (cameraStream) {
@@ -184,11 +154,9 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
     
     // Restart camera if needed
     if (!cameraStream) {
-      if (!connectToExistingCamera()) {
-        startNewCamera();
-      }
+      connectToSharedCamera();
     }
-  }, [cameraStream, connectToExistingCamera, startNewCamera]);
+  }, [cameraStream, connectToSharedCamera]);
 
   if (!isOpen) {
     console.log('❌ FaceAnalysisCamera NOT rendering - isOpen is false');
@@ -280,7 +248,7 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
               <Loader2 size={16} className="animate-spin" style={{ color: '#7c3aed' }} />
             )}
             <span style={{ fontSize: '14px', color: isRecording ? '#059669' : '#6b7280' }}>
-              Camera: {isRecording ? 'Live' : 'Connecting...'}
+              Camera: {isRecording ? 'Live & Ready' : 'Initializing...'}
             </span>
           </div>
         </div>
@@ -317,11 +285,12 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
                 color: 'white'
               }}>
                 <Camera size={48} style={{ marginBottom: '12px' }} />
-                <p style={{ fontSize: '16px', margin: 0 }}>Connecting to camera...</p>
+                <p style={{ fontSize: '16px', margin: 0 }}>Starting camera...</p>
+                <p style={{ fontSize: '12px', marginTop: '8px', opacity: 0.8 }}>Using shared camera system</p>
               </div>
             )}
           </div>
@@ -428,7 +397,7 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
                 <h4 style={{ color: '#374151', fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
                   Facial Features Analysis
                 </h4>
-                <div style={{ fontSize: '14px', space: '8px' }}>
+                <div style={{ fontSize: '14px' }}>
                   {result.features.eyes && (
                     <div style={{ marginBottom: '8px' }}>
                       <span style={{ color: '#6b7280' }}>Eyes: </span>
@@ -530,7 +499,7 @@ export default function FaceAnalysisCamera({ isOpen, onClose }: FaceAnalysisCame
                 <h4 style={{ color: '#374151', fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
                   Makeup Recommendations
                 </h4>
-                <div style={{ fontSize: '14px', space: '12px' }}>
+                <div style={{ fontSize: '14px' }}>
                   {result.makeup_recommendations.foundation && (
                     <div style={{ marginBottom: '12px' }}>
                       <div style={{ color: '#6b7280', fontSize: '13px', marginBottom: '4px' }}>Foundation</div>

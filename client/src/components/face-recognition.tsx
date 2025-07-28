@@ -39,9 +39,12 @@ export default function FaceRecognition({
   // Face recognition mutation
   const recognizeFaceMutation = useMutation({
     mutationFn: async (imageBase64: string) => {
-      const response = await apiRequest("POST", "/api/face/recognize", {
-        imageBase64,
-        sessionId,
+      const response = await apiRequest("/api/face/recognize", {
+        method: "POST",
+        body: JSON.stringify({
+          imageBase64,
+          sessionId,
+        })
       });
       return response.json();
     },
@@ -71,10 +74,13 @@ export default function FaceRecognition({
       userId: number; 
       preferredLanguage: string; 
     }) => {
-      const response = await apiRequest("POST", "/api/face/register", {
-        imageBase64,
-        userId,
-        preferredLanguage,
+      const response = await apiRequest("/api/face/register", {
+        method: "POST",
+        body: JSON.stringify({
+          imageBase64,
+          userId,
+          preferredLanguage,
+        })
       });
       return response.json();
     },

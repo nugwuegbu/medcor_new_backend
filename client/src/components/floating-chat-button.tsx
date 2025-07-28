@@ -25,10 +25,13 @@ export default function FloatingChatButton() {
         <MessageCircle className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
       </Button>
 
-      <AvatarChatWidget 
-        isOpen={isChatOpen} 
-        onClose={() => setIsChatOpen(false)} 
-      />
+      {/* Only render AvatarChatWidget when actually open to prevent floating avatar issues */}
+      {isChatOpen && (
+        <AvatarChatWidget 
+          isOpen={isChatOpen} 
+          onClose={() => setIsChatOpen(false)} 
+        />
+      )}
     </>
   );
 }
