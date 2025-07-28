@@ -52,6 +52,9 @@ urlpatterns = [
     # API root endpoint
     path('api/', include('api.urls')),
     
+    # Simple tenant access (SSL certificate workaround)
+    path('', include('simple_tenant_access')),
+    
     # Tenant-specific API Endpoints
     path('api/appointments/', include('appointment.urls')),
     path('api/treatments/', include('treatment.urls')),
