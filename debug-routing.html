@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Routing</title>
+</head>
+<body>
+    <h1>Debug Frontend Routing</h1>
+    <div id="debug-info"></div>
+    
+    <script>
+        // Debug hostname and subdomain detection
+        const hostname = window.location.hostname;
+        const fullUrl = window.location.href;
+        
+        console.log('Current hostname:', hostname);
+        console.log('Full URL:', fullUrl);
+        
+        // Extract subdomain logic from useSubdomain.ts
+        let subdomain = "";
+        
+        if (hostname.includes('.localhost')) {
+            subdomain = hostname.split('.localhost')[0];
+        } else if (hostname.includes('.medcor.ai')) {
+            subdomain = hostname.split('.medcor.ai')[0];
+        } else if (hostname.includes('.replit.dev')) {
+            const parts = hostname.split('.');
+            if (parts.length > 2) {
+                const possibleSubdomain = parts[0];
+                subdomain = possibleSubdomain;
+            }
+        }
+        
+        // If no specific subdomain found, default to public
+        if (!subdomain) {
+            subdomain = "public";
+        }
+        
+        const debugInfo = document.getElementById('debug-info');
+        debugInfo.innerHTML = `
+            <h2>Frontend Routing Debug</h2>
+            <p><strong>Hostname:</strong> ${hostname}</p>
+            <p><strong>Full URL:</strong> ${fullUrl}</p>
+            <p><strong>Detected Subdomain:</strong> ${subdomain}</p>
+            <p><strong>Is Multi-tenant:</strong> ${subdomain !== "public"}</p>
+            <p><strong>Should show:</strong> ${subdomain !== "public" ? "Dashboard" : "Home (with chatbot)"}</p>
+            
+            <h3>Links to test:</h3>
+            <ul>
+                <li><a href="/">Home (should show chatbot)</a></li>
+                <li><a href="/chat">Direct Chat Page</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+            </ul>
+        `;
+        
+        // Test direct access to home
+        console.log('Testing home component access...');
+        
+        setTimeout(() => {
+            fetch('/')
+                .then(response => response.text())
+                .then(html => {
+                    console.log('Home page response length:', html.length);
+                    console.log('Contains chat modal?', html.includes('chat') || html.includes('Chat'));
+                })
+                .catch(err => console.error('Error fetching home:', err));
+        }, 1000);
+    </script>
+</body>
+</html>

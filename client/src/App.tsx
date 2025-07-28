@@ -45,8 +45,11 @@ function Router() {
 
   // For tenant subdomains, show tenant-specific dashboard by default
   if (isMultiTenant && location === '/') {
+    console.log('Redirecting to Dashboard for tenant:', tenantInfo?.name);
     return <Dashboard tenantInfo={tenantInfo} />;
   }
+  
+  console.log('Current routing - Location:', location, 'isMultiTenant:', isMultiTenant, 'tenant:', tenantInfo?.name);
 
   return (
     <>
@@ -57,9 +60,15 @@ function Router() {
         <Route path="/test" component={TestPage} />
         <Route path="/">
           {isMultiTenant ? (
-            <Dashboard tenantInfo={tenantInfo} />
+            <>
+              {console.log('Rendering Dashboard for multi-tenant:', tenantInfo?.name)}
+              <Dashboard tenantInfo={tenantInfo} />
+            </>
           ) : (
-            <Home />
+            <>
+              {console.log('Rendering Home page for public tenant')}
+              <Home />
+            </>
           )}
         </Route>
         <Route path="/pricing" component={Pricing} />

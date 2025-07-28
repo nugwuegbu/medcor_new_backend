@@ -66,6 +66,8 @@ export function useSubdomain() {
       // Extract subdomain from hostname
       let subdomain = "";
       
+      console.log('Detecting subdomain for hostname:', hostname);
+      
       if (hostname.includes('.localhost')) {
         // Development: medcorhospital.localhost
         subdomain = hostname.split('.localhost')[0];
@@ -82,12 +84,20 @@ export function useSubdomain() {
             subdomain = possibleSubdomain;
           }
         }
+      } else if (hostname === 'localhost') {
+        // Direct localhost access - should be public
+        subdomain = "public";
+      } else {
+        // Any other hostname (including Replit main domain) - default to public
+        subdomain = "public";
       }
 
-      // If no specific subdomain found, default to public
+      // If no specific subdomain found or not in config, default to public
       if (!subdomain || !TENANT_CONFIG[subdomain]) {
         subdomain = "public";
       }
+      
+      console.log('Detected subdomain:', subdomain);
 
       const tenant = TENANT_CONFIG[subdomain];
       setTenantInfo(tenant);
@@ -147,6 +157,6 @@ export function useSubdomain() {
     switchTenant,
     getTenantUrl,
     getAllTenants,
-    isMultiTenant: tenantInfo?.subdomain !== "public"
+    isMultiTenant: tenantInfo?.subdomain !== "" && tenantInfo?.id !== "public"
   };
 }
