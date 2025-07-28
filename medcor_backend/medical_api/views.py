@@ -12,9 +12,10 @@ from datetime import timedelta
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample, OpenApiResponse
 from drf_spectacular.types import OpenApiTypes
 
-from core.models import Doctor as CoreDoctor, Appointment as CoreAppointment
-from simple_treatment.models import Treatment
-from simple_appointment.models import Doctor as SimpleDoctor, Appointment as SimpleAppointment
+# Temporarily commented out imports causing Django errors
+# from core.models import Doctor as CoreDoctor, Appointment as CoreAppointment  
+# from simple_treatment.models import Treatment
+# from simple_appointment.models import Doctor as SimpleDoctor, Appointment as SimpleAppointment
 
 from .serializers import (
     PatientSerializer, PatientCreateSerializer,

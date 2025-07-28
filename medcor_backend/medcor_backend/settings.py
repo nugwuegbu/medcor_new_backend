@@ -19,6 +19,9 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev',
+    '.14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev',  # Allow all subdomains
+    'medcorhospital.14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev',
+    'medcorclinic.14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev',
     '*'  # Allow all hosts for development
 ]
 
@@ -30,6 +33,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://127.0.0.1:8000',
     'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000',
     'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev',
+    'https://medcorhospital.14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000',
+    'https://medcorclinic.14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000',
+    'https://*.14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000',
+    'https://*.14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev',
 ]
 
 # Session and CSRF settings for admin
@@ -76,12 +83,14 @@ TENANT_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    # 'drf_spectacular',  # Temporarily disabled due to schema conflicts
+    'drf_spectacular',  # Re-enabled for tenant API documentation
     'corsheaders',
     'core',
     'api',
     'treatment',
     'appointment',
+    'medical_api',  # Add medical API for tenant documentation
+    'user_auth',    # Add user auth for tenant documentation
     # 'simple_treatment',  # Temporarily disabled - dependency issues
     # 'simple_appointment',  # Temporarily disabled - dependency issues
 ]
