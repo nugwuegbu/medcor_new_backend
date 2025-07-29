@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { ChevronLeft, Camera, Loader2, User as Face, FileText } from "lucide-react";
+import { useState, useRef, useEffect } from 'react';
+import { ChevronLeft, Camera, Loader2, User as Face, FileText, AlertCircle, RefreshCw, Shield } from "lucide-react";
 import FaceAnalysisReportForm from "./face-analysis-report-form";
 
 interface FaceAnalysisWidgetInlineProps {
@@ -12,25 +12,65 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraPermission, setCameraPermission] = useState<'granted' | 'denied' | 'prompt' | 'checking'>('checking');
   const [showReportForm, setShowReportForm] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // Check camera permission on component mount
+  useEffect(() => {
+    if (isOpen) {
+      checkCameraPermission();
+    }
+  }, [isOpen]);
+
+  const checkCameraPermission = async () => {
+    try {
+      setCameraPermission('checking');
+      
+      // Check if browser supports permissions API
+      if ('permissions' in navigator) {
+        const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+        setCameraPermission(permission.state as 'granted' | 'denied' | 'prompt');
+        
+        if (permission.state === 'granted') {
+          startCamera();
+        }
+      } else {
+        // Fallback: try to access camera directly
+        setCameraPermission('prompt');
+      }
+    } catch (err) {
+      console.error('Permission check failed:', err);
+      setCameraPermission('prompt');
+    }
+  };
+
   const startCamera = async () => {
     try {
+      setError(null);
+      setCameraPermission('checking');
+      
       // Stop any existing stream first
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
       
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 320, height: 240, facingMode: 'user' }
+        video: { 
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: 'user',
+          frameRate: { ideal: 30 }
+        }
       });
       
       streamRef.current = stream;
       setCameraActive(true);
-      setError(null);
+      setCameraPermission('granted');
+      setRetryCount(0);
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -38,9 +78,39 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
           // Ignore play errors during HMR
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Camera error:', err);
-      setError('Camera access denied. Please check your camera permissions.');
+      setCameraActive(false);
+      
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setCameraPermission('denied');
+        setError('Camera access denied. Please allow camera permissions and try again.');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setError('No camera found. Please ensure your device has a camera connected.');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        setError('Camera is already in use by another application. Please close other apps using your camera.');
+      } else if (err.name === 'OverconstrainedError') {
+        setError('Camera constraints not supported. Trying with default settings...');
+        // Retry with basic constraints
+        if (retryCount < 2) {
+          setRetryCount(prev => prev + 1);
+          setTimeout(() => {
+            navigator.mediaDevices.getUserMedia({ video: true })
+              .then(stream => {
+                streamRef.current = stream;
+                setCameraActive(true);
+                setCameraPermission('granted');
+                if (videoRef.current) {
+                  videoRef.current.srcObject = stream;
+                  videoRef.current.play();
+                }
+              })
+              .catch(() => setError('Unable to access camera with any settings.'));
+          }, 1000);
+        }
+      } else {
+        setError(`Camera error: ${err.message || 'Unknown error occurred'}`);
+      }
     }
   };
 
@@ -150,58 +220,122 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       <div className="flex-1 flex flex-col justify-center items-center p-6 pt-24">
         {!result ? (
           <div className="w-full max-w-sm">
-            {/* Camera View */}
-            <div className="relative bg-black rounded-lg overflow-hidden mb-4">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-48 object-cover"
-              />
-              <canvas ref={canvasRef} className="hidden" />
-              
-              {!cameraActive && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50">
-                  <div className="text-center text-white">
-                    <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Camera not ready</p>
-                  </div>
-                </div>
-              )}
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-purple-700 mb-2">MEDCOR Face Analysis</h2>
+              <p className="text-gray-600">Powered by YouCam API technology</p>
             </div>
 
-            {/* Error Display */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                <p className="text-red-600 text-sm">{error}</p>
+            {/* Camera Permission States */}
+            {cameraPermission === 'denied' ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <AlertCircle className="h-8 w-8 text-red-500" />
+                  <div>
+                    <h3 className="font-semibold text-red-800">Camera Access Denied</h3>
+                    <p className="text-red-600 text-sm">Please enable camera permissions to continue</p>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg p-3 mb-3">
+                  <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    How to Enable Camera:
+                  </h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Click the camera icon in your browser's address bar</li>
+                    <li>• Select "Always allow" for camera access</li>
+                    <li>• Refresh this page if needed</li>
+                    <li>• Make sure no other app is using your camera</li>
+                  </ul>
+                </div>
+                
                 <button 
-                  onClick={startCamera}
-                  className="mt-2 text-blue-600 hover:underline text-sm"
+                  onClick={checkCameraPermission}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all"
                 >
-                  Restart Camera
+                  <RefreshCw size={16} />
+                  Try Again
                 </button>
               </div>
-            )}
-
-            {/* Start/Analyze Buttons */}
-            {!cameraActive ? (
-              <button
-                onClick={startCamera}
-                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-all"
-              >
-                <Camera size={20} />
-                Start Camera
-              </button>
+            ) : cameraPermission === 'checking' ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
+                  <div>
+                    <h3 className="font-semibold text-blue-800">Checking Camera Access</h3>
+                    <p className="text-blue-600 text-sm">Please allow camera permissions when prompted</p>
+                  </div>
+                </div>
+              </div>
             ) : (
-              <button
-                onClick={analyzeImage}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
-              >
-                {loading ? <Loader2 size={20} className="animate-spin" /> : <Face size={20} />}
-                {loading ? 'Analyzing...' : 'Analyze My Face'}
-              </button>
+              <>
+                {/* Camera View */}
+                <div className="relative bg-black rounded-lg overflow-hidden mb-4">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-48 object-cover"
+                  />
+                  <canvas ref={canvasRef} className="hidden" />
+                  
+                  {!cameraActive && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50">
+                      <div className="text-center text-white">
+                        <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">
+                          {cameraPermission === 'prompt' ? 'Click Start Camera' : 'Initializing camera...'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                      <div>
+                        <p className="text-red-600 text-sm font-medium mb-1">Camera Error</p>
+                        <p className="text-red-600 text-sm">{error}</p>
+                        <button 
+                          onClick={startCamera}
+                          className="mt-2 text-blue-600 hover:underline text-sm font-medium"
+                        >
+                          Try Again
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Start/Analyze Buttons */}
+                {!cameraActive ? (
+                  <button
+                    onClick={startCamera}
+                    disabled={cameraPermission === 'checking'}
+                    className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
+                  >
+                    {cameraPermission === 'checking' ? (
+                      <Loader2 size={20} className="animate-spin" />
+                    ) : (
+                      <Camera size={20} />
+                    )}
+                    {cameraPermission === 'checking' ? 'Checking...' : 'Start Camera'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={analyzeImage}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
+                  >
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : <Face size={20} />}
+                    {loading ? 'Analyzing with YouCam API...' : 'Analyze My Face'}
+                  </button>
+                )}
+              </>
             )}
           </div>
         ) : (
