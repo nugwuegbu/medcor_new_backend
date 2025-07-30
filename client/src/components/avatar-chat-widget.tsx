@@ -30,7 +30,7 @@ import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
 import doctorEmilyPhoto from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751701299986.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
-import { videoStreamRef, ensureCameraReady } from "../utils/camera-manager";
+import { videoStreamRef as centralVideoStreamRef, ensureCameraReady } from "../utils/camera-manager";
 
 // Perfect Corp YCE SDK types
 declare global {
@@ -1504,7 +1504,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                         console.log("🔥 1 second later - checking if admin page is visible");
                       }, 1000);
                     } },
-                    { icon: Smile, label: "Face", angle: 200, action: () => { 
+                    { icon: Smile, label: "Face", angle: 200, action: async () => { 
                       console.log('🔴 Face button clicked - Setting states synchronously');
                       
                       // Set Face page state first
@@ -1521,12 +1521,23 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       setShowBookingCalendar(false);
                       setIsMinimized(false);
                       
-                      // Enable camera and streams for face analysis
-                      setStreamReady(true);
-                      setAnalysisStreamReady(true);
-                      console.log('🔴 Camera streams enabled for face analysis');
+                      // Ensure camera is ready using centralized camera manager
+                      try {
+                        const stream = await ensureCameraReady();
+                        videoStreamRef.current = stream;
+                        console.log('🔴 Camera stream acquired:', stream);
+                        setStreamReady(true);
+                        setAnalysisStreamReady(true);
+                      } catch (error) {
+                        console.error('🔴 Failed to get camera stream:', error);
+                        toast({
+                          title: "Camera Error",
+                          description: "Failed to access camera. Please check permissions.",
+                          variant: "destructive",
+                        });
+                      }
                       
-                      console.log('🔴 Face states set - showFacePage: true, showChatInterface: false, streams ready');
+                      console.log('🔴 Face states set - showFacePage: true, showChatInterface: false, camera ready');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
                       console.log("🎬 Hair Analysis button clicked (minimized menu)");
@@ -2681,7 +2692,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
             
             {/* Face Analysis Content - with proper padding for header */}
             <div className="flex-1 pt-[140px] pb-4 overflow-hidden">
-              {analysisStreamReady && (
+              {(analysisStreamReady && videoStreamRef.current && videoStreamRef.current.getTracks && videoStreamRef.current.getTracks().length > 0) ? (
                 <FaceAnalysisWidgetV2
                   isOpen={true}
                   onClose={() => {
@@ -2690,8 +2701,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                   }}
                   videoStream={videoStreamRef.current}
                 />
-              )}
-              {!analysisStreamReady && (
+              ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <Loader2 className="animate-spin h-8 w-8 text-purple-600 mx-auto mb-2" />
