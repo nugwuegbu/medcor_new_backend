@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown, Mail, Lock, Eye, EyeOff, Loader2, ScanFace as Face } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -565,14 +565,14 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
     if (faceKeywords.some(keyword => normalizedText.includes(keyword))) {
       setShowFacePage(true);
       setSelectedMenuItem("face");
-      setShowChatInterface(true);
+      setShowChatInterface(false);
       setShowDoctorList(false);
       setShowRecordsList(false);
       setShowAdminPage(false);
       setShowBookingCalendar(false);
       setIsMinimized(false);
-      setCameraEnabled(true);
-      setCameraPermissionRequested(true);
+      setStreamReady(true);
+      setAnalysisStreamReady(true);
       return true;
     }
     
@@ -1511,8 +1511,8 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       setShowFacePage(true); 
                       setSelectedMenuItem("face");
                       
-                      // Keep chat interface open for Face Analysis
-                      setShowChatInterface(true);
+                      // Hide chat interface like Hair/Lips
+                      setShowChatInterface(false);
                       
                       // Reset other conflicting states
                       setShowDoctorList(false);
@@ -1521,12 +1521,12 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       setShowBookingCalendar(false);
                       setIsMinimized(false);
                       
-                      // Enable camera for face analysis
-                      setCameraEnabled(true);
-                      setCameraPermissionRequested(true);
-                      console.log('🔴 Camera enabled for face analysis');
+                      // Enable camera and streams for face analysis
+                      setStreamReady(true);
+                      setAnalysisStreamReady(true);
+                      console.log('🔴 Camera streams enabled for face analysis');
                       
-                      console.log('🔴 Face states set - showFacePage: true, showChatInterface: true');
+                      console.log('🔴 Face states set - showFacePage: true, showChatInterface: false, streams ready');
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
                       console.log("🎬 Hair Analysis button clicked (minimized menu)");
@@ -2648,14 +2648,30 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
           </div>
         )}
         
-        {/* Face Analysis View - Separate container with higher z-index */}
+        {/* Face Analysis View - Full chat widget structure like Hair/Lips */}
         {showFacePage && (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+          <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
+            {/* Header - Face Analysis */}
+            <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
+              <div className="flex items-center gap-2">
+                <Face className="h-4 w-4 text-gray-600" />
+                <span className="text-gray-700 text-sm">Face Analysis</span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <span className="text-purple-600 font-bold text-lg">medcor</span>
+                <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+
             {/* Back Button */}
             <button
               onClick={() => {
                 setShowFacePage(false);
                 setSelectedMenuItem(null);
+                setAnalysisStreamReady(false); // Reset analysis stream state
               }}
               className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
             >
@@ -2663,13 +2679,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
               <span className="font-medium text-sm">Back</span>
             </button>
             
-            {/* Face Analysis Content */}
-            <div className="h-full flex flex-col justify-center items-center p-6 pt-24">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-purple-700 mb-4">MEDCOR Face Analysis</h2>
-                <p className="text-gray-600 mb-6">Powered by Perfect Corp technology</p>
-                
-                {/* Face Analysis Component */}
+            {/* Face Analysis Content - with proper padding for header */}
+            <div className="flex-1 pt-[140px] pb-4 overflow-hidden">
+              {analysisStreamReady && (
                 <FaceAnalysisWidgetV2
                   isOpen={true}
                   onClose={() => {
@@ -2678,7 +2690,15 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                   }}
                   videoStream={videoStreamRef.current}
                 />
-              </div>
+              )}
+              {!analysisStreamReady && (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <Loader2 className="animate-spin h-8 w-8 text-purple-600 mx-auto mb-2" />
+                    <p className="text-gray-600">Preparing camera...</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

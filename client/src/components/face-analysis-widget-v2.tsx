@@ -147,42 +147,43 @@ export default function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: F
   // Show error state if no video stream
   if (!videoStream) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-4xl mx-auto">
-        <div className="text-center">
+      <div className="w-full h-full flex items-center justify-center p-4">
+        <div className="text-center bg-white/90 backdrop-blur-sm rounded-lg p-6">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No Camera Access</h3>
-          <p className="text-gray-600">Face analysis requires camera access. Please ensure camera is enabled.</p>
-          <Button onClick={onClose} className="mt-4">Close</Button>
+          <p className="text-gray-600 text-sm">Face analysis requires camera access. Please ensure camera is enabled.</p>
+          <Button onClick={onClose} className="mt-4" size="sm">Close</Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-4 w-full max-w-4xl mx-auto">
-      {/* Video preview */}
-      <div className="mb-4">
+    <div className="w-full h-full flex flex-col">
+      {/* Video preview - contained within widget bounds */}
+      <div className="relative flex-1 flex items-center justify-center p-4">
         <video
           ref={videoRef}
-          className="w-full max-w-md mx-auto rounded-lg shadow-md"
-          style={{ height: '300px', objectFit: 'cover' }}
+          className="w-full h-full max-h-[250px] rounded-lg shadow-md object-cover"
         />
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
       {/* Camera status */}
-      {!cameraReady && (
-        <div className="text-center mb-4">
-          <Loader2 className="animate-spin h-8 w-8 text-purple-600 mx-auto mb-2" />
-          <p className="text-gray-600">Initializing camera...</p>
+      {!cameraReady && !result && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-lg">
+          <div className="text-center">
+            <Loader2 className="animate-spin h-8 w-8 text-purple-600 mx-auto mb-2" />
+            <p className="text-gray-600">Initializing camera...</p>
+          </div>
         </div>
       )}
 
       {/* Error display */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center gap-2 text-red-700">
-            <AlertCircle className="h-5 w-5" />
+        <div className="absolute bottom-4 left-4 right-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-2 text-red-700 text-sm">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <p>{error}</p>
           </div>
         </div>
@@ -190,11 +191,12 @@ export default function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: F
 
       {/* Control buttons */}
       {!result && (
-        <div className="flex gap-4 justify-center">
+        <div className="p-4 flex gap-3 justify-center bg-white/90 backdrop-blur-sm">
           <Button
             onClick={analyzeImage}
             disabled={!cameraReady || loading}
             className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+            size="sm"
           >
             {loading ? (
               <>
@@ -208,28 +210,28 @@ export default function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: F
               </>
             )}
           </Button>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} size="sm">
             Cancel
           </Button>
         </div>
       )}
 
-      {/* Results display */}
+      {/* Results display - scrollable container */}
       {result && !showReportForm && (
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white/90 backdrop-blur-sm">
           {/* Beauty Score */}
-          <div className="text-center">
-            <h3 className="text-2xl font-bold text-purple-700">
+          <div className="text-center py-2">
+            <h3 className="text-xl font-bold text-purple-700">
               Beauty Score: {result.beauty_score || 85}/100
             </h3>
-            <p className="text-gray-600">Face Shape: {result.face_shape || 'Oval'}</p>
+            <p className="text-sm text-gray-600">Face Shape: {result.face_shape || 'Oval'}</p>
           </div>
 
           {/* Skin Analysis */}
           {result.skin_analysis && (
-            <div className="bg-purple-50/80 backdrop-blur-sm p-4 rounded-lg">
-              <h4 className="font-semibold text-purple-900 mb-2">Skin Analysis</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="bg-purple-50/80 backdrop-blur-sm p-3 rounded-lg">
+              <h4 className="font-semibold text-purple-900 mb-2 text-sm">Skin Analysis</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>Texture: {result.skin_analysis.texture?.description || 'Normal'}</div>
                 <div>Hydration: {result.skin_analysis.hydration?.level || 'Balanced'}</div>
                 <div>Oiliness: {result.skin_analysis.oiliness?.overall || 'Normal'}</div>
@@ -240,36 +242,40 @@ export default function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: F
 
           {/* Recommendations */}
           {result.recommendations && (
-            <div className="bg-blue-50/80 backdrop-blur-sm p-4 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">Recommendations</h4>
-              <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+            <div className="bg-blue-50/80 backdrop-blur-sm p-3 rounded-lg">
+              <h4 className="font-semibold text-blue-900 mb-2 text-sm">Recommendations</h4>
+              <ul className="list-disc list-inside text-xs text-gray-700 space-y-1">
                 {result.recommendations.skincare_routine?.slice(0, 3).map((rec: string, idx: number) => (
                   <li key={idx}>{rec}</li>
                 ))}
               </ul>
             </div>
           )}
+        </div>
+      )}
 
-          {/* Action buttons */}
-          <div className="flex gap-4 justify-center pt-4">
-            <Button
-              onClick={() => setShowReportForm(true)}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white"
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              Get Report
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setResult(null);
-                setError(null);
-              }}
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              New Analysis
-            </Button>
-          </div>
+      {/* Action buttons for results */}
+      {result && !showReportForm && (
+        <div className="p-4 flex gap-3 justify-center bg-white/90 backdrop-blur-sm border-t">
+          <Button
+            onClick={() => setShowReportForm(true)}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white"
+            size="sm"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Get Report
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setResult(null);
+              setError(null);
+            }}
+            size="sm"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            New Analysis
+          </Button>
         </div>
       )}
 
