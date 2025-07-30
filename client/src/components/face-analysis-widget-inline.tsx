@@ -52,20 +52,25 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
     try {
       setError(null);
       setCameraPermission('checking');
+      console.log('Face Analysis: Starting camera...');
       
       // Stop any existing stream first
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
       
+      // Request camera access
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user',
-          frameRate: { ideal: 30 }
-        }
+          width: { ideal: 640, min: 320 },
+          height: { ideal: 480, min: 240 },
+          facingMode: 'user'
+        },
+        audio: false
       });
+      
+      console.log('Face Analysis: Camera stream obtained:', stream.getVideoTracks().length, 'video tracks');
       
       streamRef.current = stream;
       setCameraActive(true);
@@ -74,12 +79,26 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {
-          // Ignore play errors during HMR
-        });
+        
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          console.log('Face Analysis: Video metadata loaded');
+          videoRef.current?.play().catch(console.error);
+        };
+        
+        videoRef.current.oncanplay = () => {
+          console.log('Face Analysis: Video can play');
+        };
+        
+        // Force play
+        setTimeout(() => {
+          if (videoRef.current && videoRef.current.readyState >= 2) {
+            videoRef.current.play().catch(console.error);
+          }
+        }, 100);
       }
     } catch (err: any) {
-      console.error('Camera error:', err);
+      console.error('Face Analysis Camera error:', err);
       setCameraActive(false);
       
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
@@ -90,22 +109,23 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
         setError('Camera is already in use by another application. Please close other apps using your camera.');
       } else if (err.name === 'OverconstrainedError') {
-        setError('Camera constraints not supported. Trying with default settings...');
+        setError('Camera constraints not supported. Trying with basic settings...');
         // Retry with basic constraints
         if (retryCount < 2) {
           setRetryCount(prev => prev + 1);
-          setTimeout(() => {
-            navigator.mediaDevices.getUserMedia({ video: true })
-              .then(stream => {
-                streamRef.current = stream;
-                setCameraActive(true);
-                setCameraPermission('granted');
-                if (videoRef.current) {
-                  videoRef.current.srcObject = stream;
-                  videoRef.current.play();
-                }
-              })
-              .catch(() => setError('Unable to access camera with any settings.'));
+          setTimeout(async () => {
+            try {
+              const basicStream = await navigator.mediaDevices.getUserMedia({ video: true });
+              streamRef.current = basicStream;
+              setCameraActive(true);
+              setCameraPermission('granted');
+              if (videoRef.current) {
+                videoRef.current.srcObject = basicStream;
+                videoRef.current.play().catch(console.error);
+              }
+            } catch {
+              setError('Unable to access camera with any settings.');
+            }
           }, 1000);
         }
       } else {
@@ -115,35 +135,76 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
   };
 
   const stopCamera = () => {
+    console.log('Face Analysis: Stopping camera...');
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+        console.log('Face Analysis: Stopped track:', track.kind);
+      });
       streamRef.current = null;
     }
     setCameraActive(false);
     if (videoRef.current) {
       videoRef.current.srcObject = null;
+      videoRef.current.pause();
     }
   };
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
   const analyzeImage = async () => {
-    if (!videoRef.current || !canvasRef.current || !cameraActive) return;
+    if (!videoRef.current || !canvasRef.current || !cameraActive) {
+      setError('Camera not ready. Please start the camera first.');
+      return;
+    }
 
     setLoading(true);
     setError(null);
+    console.log('Face Analysis: Starting image capture...');
     
     try {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
       
-      if (!context) return;
+      if (!context) {
+        setError('Canvas not available');
+        return;
+      }
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0);
+      // Check if video is actually playing
+      if (video.readyState < 2) {
+        setError('Video not ready. Please wait for camera to initialize.');
+        setLoading(false);
+        return;
+      }
+
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
       
+      console.log('Face Analysis: Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+      console.log('Face Analysis: Canvas dimensions:', canvas.width, 'x', canvas.height);
+      
+      // Draw the current video frame to canvas
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert to base64
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
       const base64Data = imageData.split(',')[1];
+      
+      console.log('Face Analysis: Image captured, base64 length:', base64Data.length);
+      
+      if (!base64Data || base64Data.length < 100) {
+        setError('Failed to capture image. Please ensure camera is working.');
+        setLoading(false);
+        return;
+      }
       
       const response = await fetch('/api/face-analysis', {
         method: 'POST',
@@ -152,6 +213,7 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       });
       
       const data = await response.json();
+      console.log('Face Analysis: API response:', data);
       
       if (data.success) {
         setResult(data.result);
@@ -160,7 +222,7 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
         setError(data.error || 'Analysis failed');
       }
     } catch (err) {
-      console.error('Analysis error:', err);
+      console.error('Face Analysis error:', err);
       setError('An error occurred during analysis. Please try again.');
     } finally {
       setLoading(false);
