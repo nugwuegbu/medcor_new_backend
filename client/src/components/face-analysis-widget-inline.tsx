@@ -33,7 +33,7 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       // Check if browser supports permissions API
       if ('permissions' in navigator) {
         const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
-        setCameraPermission(permission.state as 'granted' | 'denied' | 'prompt');
+        setCameraPermission(permission.state as 'granted' | 'denied' | 'prompt' | 'checking');
         
         if (permission.state === 'granted') {
           startCamera();
@@ -80,22 +80,38 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         
-        // Wait for video to be ready
-        videoRef.current.onloadedmetadata = () => {
-          console.log('Face Analysis: Video metadata loaded');
-          videoRef.current?.play().catch(console.error);
+        // Set up video element properly
+        const video = videoRef.current;
+        
+        const handleVideoReady = () => {
+          console.log('Face Analysis: Video ready to play');
+          video.play().catch(console.error);
         };
         
-        videoRef.current.oncanplay = () => {
+        video.onloadedmetadata = () => {
+          console.log('Face Analysis: Video metadata loaded');
+          handleVideoReady();
+        };
+        
+        video.oncanplay = () => {
           console.log('Face Analysis: Video can play');
         };
         
-        // Force play
+        video.onplaying = () => {
+          console.log('Face Analysis: Video is playing');
+        };
+        
+        // Ensure autoplay
+        video.autoplay = true;
+        video.playsInline = true;
+        video.muted = true;
+        
+        // Force play after a short delay
         setTimeout(() => {
-          if (videoRef.current && videoRef.current.readyState >= 2) {
-            videoRef.current.play().catch(console.error);
+          if (video.readyState >= 1) { // HAVE_METADATA
+            video.play().catch(console.error);
           }
-        }, 100);
+        }, 200);
       }
     } catch (err: any) {
       console.error('Face Analysis Camera error:', err);
@@ -177,10 +193,20 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
         return;
       }
 
-      // Check if video is actually playing
-      if (video.readyState < 2) {
-        setError('Video not ready. Please wait for camera to initialize.');
-        setLoading(false);
+      // Check if video has valid dimensions and some data
+      if (video.readyState < 1 || video.videoWidth === 0 || video.videoHeight === 0) {
+        console.log('Face Analysis: Video readyState:', video.readyState, 'dimensions:', video.videoWidth, 'x', video.videoHeight);
+        
+        // Wait a bit and try again
+        setTimeout(() => {
+          if (video.readyState >= 1 && video.videoWidth > 0 && video.videoHeight > 0) {
+            console.log('Face Analysis: Retrying capture after video initialization');
+            analyzeImage();
+          } else {
+            setError('Video not ready. Please ensure camera is working and try again.');
+            setLoading(false);
+          }
+        }, 1000);
         return;
       }
 
@@ -388,14 +414,22 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
                     {cameraPermission === 'checking' ? 'Checking...' : 'Start Camera'}
                   </button>
                 ) : (
-                  <button
-                    onClick={analyzeImage}
-                    disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
-                  >
-                    {loading ? <Loader2 size={20} className="animate-spin" /> : <Face size={20} />}
-                    {loading ? 'Analyzing with YouCam API...' : 'Analyze My Face'}
-                  </button>
+                  <div>
+                    <div className="mb-2 text-sm text-center text-gray-600">
+                      {videoRef.current?.videoWidth && videoRef.current?.videoHeight 
+                        ? `Camera ready: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`
+                        : 'Waiting for camera...'
+                      }
+                    </div>
+                    <button
+                      onClick={analyzeImage}
+                      disabled={loading || !videoRef.current?.videoWidth}
+                      className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
+                    >
+                      {loading ? <Loader2 size={20} className="animate-spin" /> : <Face size={20} />}
+                      {loading ? 'Analyzing with YouCam API...' : 'Analyze My Face'}
+                    </button>
+                  </div>
                 )}
               </>
             )}
