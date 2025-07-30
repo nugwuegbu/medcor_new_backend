@@ -66,7 +66,10 @@ export function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: FaceAnaly
       videoEl.style.display = 'block';
       videoEl.style.visibility = 'visible';
       
-      console.log("🎬 FACE V2 DEBUG: Video element setup complete, waiting for ready state");
+      // Immediately set camera as ready since we have a valid stream
+      console.log("🎬 FACE V2 DEBUG: Video element setup complete, forcing camera ready state");
+      setCameraReady(true);
+      
       console.log("🎬 FACE V2 DEBUG: Video element display:", videoEl.style.display);
       console.log("🎬 FACE V2 DEBUG: Video element visibility:", videoEl.style.visibility);
       
