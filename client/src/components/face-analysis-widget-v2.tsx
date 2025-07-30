@@ -59,6 +59,11 @@ export default function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: F
       videoEl.playsInline = true;
       videoEl.muted = true;
       
+      // Force play the video
+      videoEl.play().catch(err => {
+        console.log("🎬 FACE V2 DEBUG: Play failed, retrying:", err);
+      });
+      
       console.log("🎬 FACE V2 DEBUG: Video element setup complete, waiting for ready state");
       
       // Multiple ways to detect when video is ready
@@ -221,14 +226,17 @@ export default function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: F
   return (
     <div className="w-full h-full flex flex-col">
       {/* Video preview - contained within widget bounds */}
-      <div className="relative flex-1 flex items-center justify-center p-4">
+      <div className="relative flex-1 flex items-center justify-center p-4 bg-black rounded-lg">
         <video
           ref={videoRef}
-          className="w-full h-full max-h-[250px] rounded-lg shadow-md object-cover bg-black"
-          autoPlay
-          playsInline
-          muted
+          className="w-full h-full max-h-[250px] rounded-lg shadow-md object-cover"
+          style={{ display: cameraReady ? 'block' : 'none' }}
         />
+        {!cameraReady && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-white text-sm">Preparing camera...</p>
+          </div>
+        )}
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
@@ -252,64 +260,76 @@ export default function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: F
         </div>
       )}
 
-      {/* Control buttons */}
+      {/* Control buttons - Larger */}
       {!result && (
-        <div className="p-4 flex gap-3 justify-center bg-white/90 backdrop-blur-sm">
+        <div className="p-6 flex gap-4 justify-center bg-white/90 backdrop-blur-sm">
           <Button
             onClick={analyzeImage}
             disabled={!cameraReady || loading}
             className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
-            size="sm"
+            size="lg"
           >
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Analyzing...
               </>
             ) : (
               <>
-                <Face className="mr-2 h-4 w-4" />
+                <Face className="mr-2 h-5 w-5" />
                 Analyze Face
               </>
             )}
           </Button>
-          <Button variant="outline" onClick={onClose} size="sm">
+          <Button variant="outline" onClick={onClose} size="lg">
             Cancel
           </Button>
         </div>
       )}
 
-      {/* Results display - scrollable container */}
+      {/* Results display - larger UI for easier viewing */}
       {result && !showReportForm && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white/90 backdrop-blur-sm">
-          {/* Beauty Score */}
-          <div className="text-center py-2">
-            <h3 className="text-xl font-bold text-purple-700">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white/90 backdrop-blur-sm">
+          {/* Beauty Score - Larger */}
+          <div className="text-center py-4">
+            <h3 className="text-3xl font-bold text-purple-700">
               Beauty Score: {result.beauty_score || 85}/100
             </h3>
-            <p className="text-sm text-gray-600">Face Shape: {result.face_shape || 'Oval'}</p>
+            <p className="text-lg text-gray-600 mt-2">Face Shape: {result.face_shape || 'Oval'}</p>
           </div>
 
-          {/* Skin Analysis */}
+          {/* Skin Analysis - Larger */}
           {result.skin_analysis && (
-            <div className="bg-purple-50/80 backdrop-blur-sm p-3 rounded-lg">
-              <h4 className="font-semibold text-purple-900 mb-2 text-sm">Skin Analysis</h4>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>Texture: {result.skin_analysis.texture?.description || 'Normal'}</div>
-                <div>Hydration: {result.skin_analysis.hydration?.level || 'Balanced'}</div>
-                <div>Oiliness: {result.skin_analysis.oiliness?.overall || 'Normal'}</div>
-                <div>Spots: {result.skin_analysis.spots?.score || 90}/100</div>
+            <div className="bg-purple-50/80 backdrop-blur-sm p-5 rounded-xl">
+              <h4 className="font-bold text-purple-900 mb-3 text-lg">Skin Analysis</h4>
+              <div className="grid grid-cols-1 gap-3 text-base">
+                <div className="flex justify-between p-2 bg-white/50 rounded">
+                  <span className="font-medium">Texture:</span>
+                  <span>{result.skin_analysis.texture?.description || 'Normal'}</span>
+                </div>
+                <div className="flex justify-between p-2 bg-white/50 rounded">
+                  <span className="font-medium">Hydration:</span>
+                  <span>{result.skin_analysis.hydration?.level || 'Balanced'}</span>
+                </div>
+                <div className="flex justify-between p-2 bg-white/50 rounded">
+                  <span className="font-medium">Oiliness:</span>
+                  <span>{result.skin_analysis.oiliness?.overall || 'Normal'}</span>
+                </div>
+                <div className="flex justify-between p-2 bg-white/50 rounded">
+                  <span className="font-medium">Spots Score:</span>
+                  <span>{result.skin_analysis.spots?.score || 90}/100</span>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Recommendations */}
+          {/* Recommendations - Larger */}
           {result.recommendations && (
-            <div className="bg-blue-50/80 backdrop-blur-sm p-3 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2 text-sm">Recommendations</h4>
-              <ul className="list-disc list-inside text-xs text-gray-700 space-y-1">
+            <div className="bg-blue-50/80 backdrop-blur-sm p-5 rounded-xl">
+              <h4 className="font-bold text-blue-900 mb-3 text-lg">Recommendations</h4>
+              <ul className="list-disc list-inside text-base text-gray-700 space-y-2">
                 {result.recommendations.skincare_routine?.slice(0, 3).map((rec: string, idx: number) => (
-                  <li key={idx}>{rec}</li>
+                  <li key={idx} className="leading-relaxed">{rec}</li>
                 ))}
               </ul>
             </div>
@@ -317,15 +337,15 @@ export default function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: F
         </div>
       )}
 
-      {/* Action buttons for results */}
+      {/* Action buttons for results - Larger */}
       {result && !showReportForm && (
-        <div className="p-4 flex gap-3 justify-center bg-white/90 backdrop-blur-sm border-t">
+        <div className="p-6 flex gap-4 justify-center bg-white/90 backdrop-blur-sm border-t">
           <Button
             onClick={() => setShowReportForm(true)}
             className="bg-gradient-to-r from-purple-600 to-blue-600 text-white"
-            size="sm"
+            size="lg"
           >
-            <FileText className="mr-2 h-4 w-4" />
+            <FileText className="mr-2 h-5 w-5" />
             Get Report
           </Button>
           <Button
