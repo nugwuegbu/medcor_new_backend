@@ -18,7 +18,7 @@ import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
 import InfoOverlay from "./info-overlay";
-import FaceAnalysisWidgetInline from "./face-analysis-widget-inline";
+import FaceAnalysisWidgetV2 from "./face-analysis-widget-v2";
 import HairAnalysisWidget from "./hair-analysis-widget";
 import SkinAnalysisWidget from "./skin-analysis-widget";
 import LipsAnalysisWidget from "./lips-analysis-widget";
@@ -2670,12 +2670,13 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                 <p className="text-gray-600 mb-6">Powered by Perfect Corp technology</p>
                 
                 {/* Face Analysis Component */}
-                <FaceAnalysisWidgetInline
+                <FaceAnalysisWidgetV2
                   isOpen={true}
                   onClose={() => {
                     setShowFacePage(false);
                     setSelectedMenuItem(null);
                   }}
+                  videoStream={videoStreamRef.current}
                 />
               </div>
             </div>

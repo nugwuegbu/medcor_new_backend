@@ -5,48 +5,64 @@ import FaceAnalysisReportForm from "./face-analysis-report-form";
 interface FaceAnalysisWidgetInlineProps {
   isOpen: boolean;
   onClose: () => void;
+  videoStream: MediaStream | null;
 }
 
-export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalysisWidgetInlineProps) {
+export default function FaceAnalysisWidgetInline({ isOpen, onClose, videoStream }: FaceAnalysisWidgetInlineProps) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [cameraPermission, setCameraPermission] = useState<'granted' | 'denied' | 'prompt' | 'checking'>('checking');
+  const [cameraReady, setCameraReady] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
-  // Check camera permission on component mount
+  // Setup video stream from parent
   useEffect(() => {
-    if (isOpen) {
-      checkCameraPermission();
+    if (!videoStream || !videoRef.current) {
+      console.log('Face Analysis: Waiting for video stream or video element');
+      return;
     }
-  }, [isOpen]);
 
-  const checkCameraPermission = async () => {
-    try {
-      setCameraPermission('checking');
-      
-      // Check if browser supports permissions API
-      if ('permissions' in navigator) {
-        const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
-        setCameraPermission(permission.state as 'granted' | 'denied' | 'prompt' | 'checking');
-        
-        if (permission.state === 'granted') {
-          startCamera();
-        }
-      } else {
-        // Fallback: try to access camera directly
-        setCameraPermission('prompt');
+    console.log('Face Analysis: Setting up video stream');
+    const video = videoRef.current;
+    
+    // Set up video element
+    video.srcObject = videoStream;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = true;
+
+    const handleVideoReady = () => {
+      console.log('Face Analysis: Video ready, dimensions:', video.videoWidth, 'x', video.videoHeight);
+      setCameraReady(true);
+    };
+
+    video.onloadedmetadata = () => {
+      console.log('Face Analysis: Video metadata loaded');
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        handleVideoReady();
       }
-    } catch (err) {
-      console.error('Permission check failed:', err);
-      setCameraPermission('prompt');
+    };
+
+    video.oncanplay = () => {
+      console.log('Face Analysis: Video can play');
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        handleVideoReady();
+      }
+    };
+
+    // Check if already ready
+    if (video.videoWidth > 0 && video.videoHeight > 0) {
+      handleVideoReady();
     }
-  };
+
+    // Cleanup
+    return () => {
+      console.log('Face Analysis: Cleanup');
+      setCameraReady(false);
+    };
+  }, [videoStream]);
 
   const startCamera = async () => {
     try {
