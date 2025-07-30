@@ -18,50 +18,150 @@ export function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: FaceAnaly
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Initialize video element when stream is available
+  // Setup camera stream - following hair widget pattern exactly
   useEffect(() => {
-    if (!isOpen || !videoStream || !videoRef.current) {
-      setCameraReady(false);
-      return;
-    }
-
-    const setupVideo = async () => {
+    let isMounted = true;
+    let retryCount = 0;
+    const maxRetries = 10;
+    
+    const setupVideoStream = () => {
+      console.log("🎬 FACE V2 DEBUG: Setting up video stream, retry count:", retryCount);
+      console.log("🎬 FACE V2 DEBUG: isOpen:", isOpen);
+      console.log("🎬 FACE V2 DEBUG: videoStream exists:", !!videoStream);
+      
+      if (!videoStream) {
+        console.log("🎬 FACE V2 DEBUG: No video stream provided yet");
+        if (retryCount < maxRetries && isMounted) {
+          retryCount++;
+          setTimeout(setupVideoStream, 500);
+        }
+        return;
+      }
+      
       const videoEl = videoRef.current;
-      if (!videoEl) return;
-
-      try {
-        console.log("🎬 FACE V2 DEBUG: Setting up video with stream");
+      if (!videoEl) {
+        console.log("🎬 FACE V2 DEBUG: Video element not ready");
+        console.log("🎬 FACE V2 DEBUG: videoRef.current:", videoRef.current);
+        if (retryCount < maxRetries && isMounted) {
+          retryCount++;
+          setTimeout(setupVideoStream, 200);
+        }
+        return;
+      }
+      
+      console.log("🎬 FACE V2 DEBUG: Both stream and video element are ready");
+      console.log("🎬 FACE V2 DEBUG: Video stream details:", {
+        id: videoStream.id,
+        active: videoStream.active,
+        tracks: videoStream.getTracks?.()?.length || 0
+      });
+      
+      // Set up the video element
+      videoEl.srcObject = videoStream;
+      videoEl.autoplay = true;
+      videoEl.playsInline = true;
+      videoEl.muted = true;
+      
+      // Force show the video element
+      videoEl.style.display = 'block';
+      videoEl.style.visibility = 'visible';
+      
+      console.log("🎬 FACE V2 DEBUG: Video element setup complete, waiting for ready state");
+      console.log("🎬 FACE V2 DEBUG: Video element display:", videoEl.style.display);
+      console.log("🎬 FACE V2 DEBUG: Video element visibility:", videoEl.style.visibility);
+      
+      // Multiple ways to detect when video is ready
+      let isReady = false;
+      
+      const markReady = () => {
+        if (isReady || !isMounted) return;
+        isReady = true;
         
-        // Set up the video element
-        videoEl.srcObject = videoStream;
+        console.log("🎬 FACE V2 DEBUG: Video is now ready!");
+        setCameraReady(true);
+      };
+      
+      // Check if already ready
+      if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+        console.log("🎬 FACE V2 DEBUG: Video already has dimensions:", videoEl.videoWidth, "x", videoEl.videoHeight);
+        markReady();
+        return;
+      }
+      
+      // Set up event listeners
+      const onLoadedMetadata = () => {
+        console.log("🎬 FACE V2 DEBUG: onloadedmetadata event fired, dimensions:", videoEl.videoWidth, "x", videoEl.videoHeight);
+        if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+          markReady();
+        }
+      };
+      
+      const onLoadedData = () => {
+        console.log("🎬 FACE V2 DEBUG: onloadeddata event fired");
+        if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+          markReady();
+        }
+      };
+      
+      const onCanPlay = () => {
+        console.log("🎬 FACE V2 DEBUG: oncanplay event fired");
+        if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+          markReady();
+        }
+      };
+      
+      videoEl.addEventListener('loadedmetadata', onLoadedMetadata);
+      videoEl.addEventListener('loadeddata', onLoadedData);
+      videoEl.addEventListener('canplay', onCanPlay);
+      
+      // Polling backup (in case events don't fire)
+      let pollCount = 0;
+      const pollForReady = () => {
+        if (isReady || !isMounted) return;
         
-        // Wait for video to be ready
-        videoEl.onloadedmetadata = () => {
-          console.log("🎬 FACE V2 DEBUG: Video metadata loaded");
-          // Add a small delay to ensure video is fully ready
-          setTimeout(() => {
-            if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
-              console.log("🎬 FACE V2 DEBUG: Video dimensions ready:", videoEl.videoWidth, 'x', videoEl.videoHeight);
-              setCameraReady(true);
-            }
-          }, 100);
-        };
+        pollCount++;
+        console.log("🎬 FACE V2 DEBUG: Polling for ready state, attempt:", pollCount);
         
-        // Also check if already ready
-        if (videoEl.readyState >= 2 && videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+        if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+          console.log("🎬 FACE V2 DEBUG: Polling detected ready state");
+          markReady();
+        } else if (pollCount < 20) {
+          setTimeout(pollForReady, 300);
+        } else {
+          console.log("🎬 FACE V2 DEBUG: Polling timeout, forcing ready state");
           setCameraReady(true);
         }
-        
-      } catch (err) {
-        console.error("🎬 FACE V2 DEBUG: Error setting up video:", err);
-        setError("Failed to initialize camera");
-      }
+      };
+      
+      // Start polling after a short delay
+      setTimeout(pollForReady, 500);
+      
+      // Try to play the video
+      videoEl.play().then(() => {
+        console.log("🎬 FACE V2 DEBUG: Video play succeeded");
+      }).catch(err => {
+        console.log("🎬 FACE V2 DEBUG: Video play failed but continuing:", err);
+      });
+      
+      // Cleanup function for event listeners
+      return () => {
+        videoEl.removeEventListener('loadedmetadata', onLoadedMetadata);
+        videoEl.removeEventListener('loadeddata', onLoadedData);
+        videoEl.removeEventListener('canplay', onCanPlay);
+      };
     };
-
-    setupVideo();
-
-    // Cleanup
+    
+    // Only setup if widget is open
+    if (isOpen) {
+      console.log("🎬 FACE V2 DEBUG: Widget is open, starting setup");
+      console.log("🎬 FACE V2 DEBUG: videoStream prop:", videoStream);
+      setupVideoStream();
+    } else {
+      console.log("🎬 FACE V2 DEBUG: Widget is not open, skipping setup");
+    }
+    
     return () => {
+      isMounted = false;
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
@@ -162,7 +262,7 @@ export function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: FaceAnaly
 
   return (
     <div className="flex flex-col h-full relative">
-      {/* Camera Video Background - Following Hair Analysis Pattern */}
+      {/* Camera Video Background - Exactly like Hair Analysis */}
       <div className="absolute inset-0 overflow-hidden">
         <video
           ref={videoRef}
@@ -354,8 +454,13 @@ export function FaceAnalysisWidgetV2({ isOpen, onClose, videoStream }: FaceAnaly
       {/* Report Form */}
       {showReportForm && result && (
         <FaceAnalysisReportForm
+          isOpen={showReportForm}
           onClose={() => setShowReportForm(false)}
           analysisResult={result}
+          onSubmit={(formData) => {
+            console.log('Face analysis report form submitted:', formData);
+            setShowReportForm(false);
+          }}
         />
       )}
     </div>
