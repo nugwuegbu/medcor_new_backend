@@ -8,6 +8,14 @@ interface HairExtensionWidgetProps {
   onClose: () => void;
 }
 
+interface HairManipulationOptions {
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  opacity: number;
+  blendMode: 'normal' | 'multiply' | 'screen' | 'overlay';
+}
+
 interface HairExtensionStyle {
   id: string;
   name: string;
@@ -36,9 +44,15 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<'upload' | 'select' | 'process' | 'result'>('upload');
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [showCamera, setShowCamera] = useState(false);
-  const [hasPermission, setHasPermission] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [manipulationOptions, setManipulationOptions] = useState<HairManipulationOptions>({
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    opacity: 100,
+    blendMode: 'normal'
+  });
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,22 +60,60 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
   // Initialize hair extension categories and styles
   useEffect(() => {
     if (isOpen) {
+      console.log('👑 Hair Extension: Widget opened, initializing...');
       loadHairExtensionStyles();
       setCurrentStep('upload');
       setSelectedImage(null);
       setProcessedImage(null);
       setError(null);
-      // Auto-start camera when widget opens
-      requestCameraPermission();
+      setCameraReady(false);
+      
+      // Start camera initialization immediately
+      const initCamera = async () => {
+        try {
+          console.log('👑 Hair Extension: Ensuring camera is ready...');
+          const stream = await ensureCameraReady();
+          
+          if (stream && videoRef.current) {
+            console.log('👑 Hair Extension: Stream obtained, setting up video element');
+            const video = videoRef.current;
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.playsInline = true;
+            video.muted = true;
+            
+            // Wait for video to be ready
+            video.onloadedmetadata = () => {
+              console.log('👑 Hair Extension: Video metadata loaded');
+              video.play().then(() => {
+                console.log('👑 Hair Extension: Video playing successfully');
+                setCameraReady(true);
+              }).catch(err => {
+                console.error('👑 Hair Extension: Play error:', err);
+              });
+            };
+            
+            video.oncanplay = () => {
+              console.log('👑 Hair Extension: Video can play');
+              setCameraReady(true);
+            };
+            
+            // Force play after short delay as backup
+            setTimeout(() => {
+              if (video.readyState >= 2) {
+                video.play().catch(console.error);
+                setCameraReady(true);
+              }
+            }, 100);
+          }
+        } catch (error) {
+          console.error('👑 Hair Extension: Camera initialization failed:', error);
+          setError('Camera access required. Please enable camera permissions.');
+        }
+      };
+      
+      initCamera();
     }
-    
-    // Cleanup camera when widget closes
-    return () => {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        setCameraStream(null);
-      }
-    };
   }, [isOpen]);
 
   const loadHairExtensionStyles = async () => {
@@ -79,57 +131,7 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
     }
   };
 
-  // Camera functions - Fixed initialization
-  const requestCameraPermission = async () => {
-    try {
-      console.log('📷 Hair Extension: Requesting camera permission...');
-      setError(null);
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: 640, 
-          height: 480,
-          facingMode: 'user'
-        } 
-      });
-      
-      console.log('📷 Hair Extension: Camera stream obtained');
-      setCameraStream(stream);
-      setHasPermission(true);
-      setShowCamera(true);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.autoplay = true;
-        videoRef.current.playsInline = true;
-        videoRef.current.muted = true;
-        
-        // Multiple event handlers for better compatibility
-        videoRef.current.onloadedmetadata = () => {
-          console.log('📷 Hair Extension: Video metadata loaded');
-          if (videoRef.current) {
-            videoRef.current.play().catch(console.error);
-          }
-        };
-        
-        videoRef.current.oncanplay = () => {
-          console.log('📷 Hair Extension: Video can play');
-        };
-        
-        // Force play after short delay
-        setTimeout(() => {
-          if (videoRef.current && videoRef.current.readyState >= 2) {
-            videoRef.current.play().catch(console.error);
-          }
-        }, 100);
-      }
-    } catch (error) {
-      console.error('📷 Hair Extension: Camera access denied:', error);
-      setError('Camera access is required for hair extension preview. Please enable camera permissions.');
-      setHasPermission(false);
-      setShowCamera(false);
-    }
-  };
+
 
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
@@ -145,15 +147,8 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
         const imageData = canvas.toDataURL('image/jpeg', 0.8);
         setSelectedImage(imageData);
         setCurrentStep('select');
-        setShowCamera(false);
         
-        // Stop camera stream after capture
-        if (cameraStream) {
-          cameraStream.getTracks().forEach(track => track.stop());
-          setCameraStream(null);
-        }
-        
-        console.log('📷 Hair Extension: Photo captured successfully');
+        console.log('👑 Hair Extension: Photo captured successfully');
       }
     }
   };
@@ -161,7 +156,20 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
   const retakePhoto = () => {
     setSelectedImage(null);
     setCurrentStep('upload');
-    requestCameraPermission();
+    setCameraReady(false);
+    
+    // Re-initialize camera
+    setTimeout(async () => {
+      try {
+        const stream = await ensureCameraReady();
+        if (stream && videoRef.current) {
+          videoRef.current.srcObject = stream;
+          setCameraReady(true);
+        }
+      } catch (error) {
+        console.error('👑 Hair Extension: Failed to restart camera:', error);
+      }
+    }, 100);
   };
 
   const getMockCategories = (): HairExtensionCategory[] => [
@@ -305,7 +313,7 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
         setAnalysisProgress(step.progress);
       }
 
-      // Process the hair extension
+      // Process the hair extension with manipulation options
       const response = await fetch('/api/hair-extension/process', {
         method: 'POST',
         headers: {
@@ -314,7 +322,14 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
         body: JSON.stringify({
           image: selectedImage,
           styleId: selectedStyle.id,
-          category: selectedStyle.category
+          category: selectedStyle.category,
+          manipulationOptions: {
+            brightness: manipulationOptions.brightness / 100,
+            contrast: manipulationOptions.contrast / 100,
+            saturation: manipulationOptions.saturation / 100,
+            opacity: manipulationOptions.opacity / 100,
+            blendMode: manipulationOptions.blendMode
+          }
         }),
       });
 
@@ -408,8 +423,8 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                 {/* Camera Capture */}
                 <div className="bg-gray-50 rounded-xl p-6 text-center">
                   <h4 className="font-semibold mb-4">Capture from Camera</h4>
-                  {showCamera && cameraStream ? (
-                    <div className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="relative">
                       <video
                         ref={videoRef}
                         autoPlay
@@ -417,42 +432,24 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                         muted
                         className="w-full h-48 object-cover rounded-lg bg-gray-200"
                       />
-                      <Button
-                        onClick={capturePhoto}
-                        className="w-full bg-purple-600 hover:bg-purple-700"
-                      >
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Capture Photo
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                        {hasPermission ? (
+                      {!cameraReady && (
+                        <div className="absolute inset-0 bg-gray-200 rounded-lg flex items-center justify-center">
                           <div className="text-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
-                            <p className="text-gray-500">Starting camera...</p>
+                            <p className="text-gray-500">Initializing camera...</p>
                           </div>
-                        ) : (
-                          <div className="text-center">
-                            <div className="h-12 w-12 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                              <Sparkles className="h-6 w-6 text-white" />
-                            </div>
-                            <p className="text-gray-500">Camera access required</p>
-                          </div>
-                        )}
-                      </div>
-                      {!hasPermission && (
-                        <Button
-                          onClick={requestCameraPermission}
-                          className="w-full bg-purple-600 hover:bg-purple-700"
-                        >
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Enable Camera
-                        </Button>
+                        </div>
                       )}
                     </div>
-                  )}
+                    <Button
+                      onClick={capturePhoto}
+                      disabled={!cameraReady}
+                      className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Capture Photo
+                    </Button>
+                  </div>
                 </div>
 
                 {/* File Upload */}
@@ -562,17 +559,129 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                 </div>
               </div>
 
-              {/* Apply Button */}
+              {/* Advanced Options */}
               {selectedStyle && (
-                <div className="flex justify-center">
+                <div className="space-y-4 mt-6">
                   <Button
-                    onClick={processHairExtension}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3"
-                    disabled={isProcessing}
+                    onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                    variant="outline"
+                    className="w-full flex items-center justify-between"
                   >
-                    <Crown className="h-5 w-5 mr-2" />
-                    Apply Hair Extension
+                    <span className="flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      Advanced Hair Manipulation
+                    </span>
+                    <ChevronRight className={`h-4 w-4 transition-transform ${showAdvancedOptions ? 'rotate-90' : ''}`} />
                   </Button>
+
+                  {showAdvancedOptions && (
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                      {/* Brightness */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Brightness: {manipulationOptions.brightness}%
+                        </label>
+                        <input
+                          type="range"
+                          min="50"
+                          max="150"
+                          value={manipulationOptions.brightness}
+                          onChange={(e) => setManipulationOptions(prev => ({ ...prev, brightness: parseInt(e.target.value) }))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Contrast */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Contrast: {manipulationOptions.contrast}%
+                        </label>
+                        <input
+                          type="range"
+                          min="50"
+                          max="150"
+                          value={manipulationOptions.contrast}
+                          onChange={(e) => setManipulationOptions(prev => ({ ...prev, contrast: parseInt(e.target.value) }))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Saturation */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Color Saturation: {manipulationOptions.saturation}%
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="200"
+                          value={manipulationOptions.saturation}
+                          onChange={(e) => setManipulationOptions(prev => ({ ...prev, saturation: parseInt(e.target.value) }))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Opacity */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Hair Opacity: {manipulationOptions.opacity}%
+                        </label>
+                        <input
+                          type="range"
+                          min="50"
+                          max="100"
+                          value={manipulationOptions.opacity}
+                          onChange={(e) => setManipulationOptions(prev => ({ ...prev, opacity: parseInt(e.target.value) }))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Blend Mode */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Blend Mode
+                        </label>
+                        <select
+                          value={manipulationOptions.blendMode}
+                          onChange={(e) => setManipulationOptions(prev => ({ ...prev, blendMode: e.target.value as any }))}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="multiply">Multiply (Natural)</option>
+                          <option value="screen">Screen (Light)</option>
+                          <option value="overlay">Overlay (Contrast)</option>
+                        </select>
+                      </div>
+
+                      {/* Reset Button */}
+                      <Button
+                        onClick={() => setManipulationOptions({
+                          brightness: 100,
+                          contrast: 100,
+                          saturation: 100,
+                          opacity: 100,
+                          blendMode: 'normal'
+                        })}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Reset to Default
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Apply Button */}
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={processHairExtension}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3"
+                      disabled={isProcessing}
+                    >
+                      <Crown className="h-5 w-5 mr-2" />
+                      Apply Hair Extension
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
