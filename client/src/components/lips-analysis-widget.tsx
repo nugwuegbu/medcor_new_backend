@@ -183,6 +183,7 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
     }
   }, [cameraReady, isAnalyzing, analysisResult]);
 
+  // Setup camera stream - working implementation restored
   useEffect(() => {
     if (videoStream && videoRef.current) {
       console.log('💋 LIPS DEBUG: Setting up video stream, retry count:', 0);
@@ -197,6 +198,10 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
           });
           
           videoRef.current.srcObject = videoStream;
+          videoRef.current.autoplay = true;
+          videoRef.current.playsInline = true;
+          videoRef.current.muted = true;
+          
           console.log('💋 LIPS DEBUG: Video element setup complete, waiting for ready state');
           
           videoRef.current.onloadedmetadata = () => {

@@ -85,17 +85,15 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
       console.log('📷 Hair Extension: Requesting camera permission...');
       setError(null);
       
-      // Use centralized camera manager
-      await ensureCameraReady();
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: 640, 
+          height: 480,
+          facingMode: 'user'
+        } 
+      });
       
-      // Get the centralized video stream
-      const stream = videoStreamRef.current;
-      
-      if (!stream) {
-        throw new Error('Failed to get camera stream from manager');
-      }
-      
-      console.log('📷 Hair Extension: Camera stream obtained from manager');
+      console.log('📷 Hair Extension: Camera stream obtained');
       setCameraStream(stream);
       setHasPermission(true);
       setShowCamera(true);

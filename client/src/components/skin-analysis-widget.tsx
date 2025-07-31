@@ -68,7 +68,7 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
   // Debug log for props
   console.log("🌟 SKIN WIDGET DEBUG: Props received:", { videoStream, hasVideoStream: !!videoStream });
 
-  // Setup camera stream - with improved timing and debugging
+  // Setup camera stream - working implementation restored
   useEffect(() => {
     let isMounted = true;
     let retryCount = 0;

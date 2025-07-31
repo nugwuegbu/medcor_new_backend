@@ -55,17 +55,23 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       setCameraPermission('checking');
       console.log('Face Analysis: Starting camera...');
       
-      // Use centralized camera manager
-      await ensureCameraReady();
-      
-      // Get the centralized video stream
-      const stream = videoStreamRef.current;
-      
-      if (!stream) {
-        throw new Error('Failed to get camera stream from manager');
+      // Stop any existing stream first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
       
-      console.log('Face Analysis: Camera stream obtained from manager:', stream.getVideoTracks().length, 'video tracks');
+      // Request camera access directly
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          width: { ideal: 640, min: 320 },
+          height: { ideal: 480, min: 240 },
+          facingMode: 'user'
+        },
+        audio: false
+      });
+      
+      console.log('Face Analysis: Camera stream obtained:', stream.getVideoTracks().length, 'video tracks');
       
       streamRef.current = stream;
       setCameraActive(true);
