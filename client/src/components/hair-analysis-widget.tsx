@@ -126,16 +126,16 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
         if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
           console.log("🎬 HAIR DEBUG: Polling detected ready state");
           markReady();
-        } else if (pollCount < 20) {
-          setTimeout(pollForReady, 300);
+        } else if (pollCount < 15) {
+          setTimeout(pollForReady, 100); // Reduced from 300ms to 100ms for faster polling
         } else {
           console.log("🎬 HAIR DEBUG: Polling timeout, forcing ready state");
           setCameraReady(true);
         }
       };
       
-      // Start polling after a short delay
-      setTimeout(pollForReady, 500);
+      // Start polling immediately - removed delay for faster initialization
+      pollForReady();
       
       // Try to play the video
       videoEl.play().then(() => {

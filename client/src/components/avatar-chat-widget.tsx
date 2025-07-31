@@ -998,13 +998,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
           <span className="font-medium text-sm">Back</span>
         </button>
         
-        {/* Simple Avatar Circle for doctor list - no HeyGen instance */}
-        <div 
-          className="absolute w-16 h-16 rounded-full overflow-hidden shadow-2xl z-[60] hover:scale-105 ring-2 ring-purple-600 bg-purple-600 flex items-center justify-center"
-          style={{ right: '16px', top: '16px' }}
-        >
-          <div className="text-white text-xs font-bold">AI</div>
-        </div>
+
         
         {/* Main Content Area - Shows doctors within chat bounds */}
         <div className="flex-1 pt-16 px-4 pb-4 overflow-y-auto">
