@@ -305,7 +305,7 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
         setAnalysisProgress(step.progress);
       }
 
-      // Call the YouCam API
+      // Process the hair extension
       const response = await fetch('/api/hair-extension/process', {
         method: 'POST',
         headers: {

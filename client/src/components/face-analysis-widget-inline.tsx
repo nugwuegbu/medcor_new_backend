@@ -389,7 +389,7 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
                   {loading ? (
                     <>
                       <Loader2 size={20} className="animate-spin" />
-                      Analyzing with YouCam API...
+                      Analyzing...
                     </>
                   ) : !cameraActive ? (
                     <>
@@ -434,8 +434,55 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
                     <span className="text-gray-600">Beauty:</span>
                     <span className="font-semibold ml-1 text-purple-600">{result.beauty_score}/100</span>
                   </div>
+                  <div className="bg-gray-50 p-2 rounded">
+                    <span className="text-gray-600">Face Shape:</span>
+                    <span className="font-semibold ml-1">{result.face_shape || 'Oval'}</span>
+                  </div>
+                  <div className="bg-gray-50 p-2 rounded">
+                    <span className="text-gray-600">Skin Tone:</span>
+                    <span className="font-semibold ml-1">{result.skin_tone || 'Medium'}</span>
+                  </div>
                 </div>
               </div>
+
+              {/* Facial Features */}
+              {result.features && (
+                <div className="mb-4">
+                  <h4 className="font-semibold text-gray-700 mb-2">Facial Features</h4>
+                  <div className="space-y-2 text-sm">
+                    {result.features.eyes && (
+                      <div className="bg-indigo-50 p-2 rounded">
+                        <span className="text-gray-600 font-medium">Eyes:</span>
+                        <div className="text-xs mt-1">
+                          <span className="text-gray-700">Shape: {result.features.eyes.shape}</span>
+                          {result.features.eyes.size && <span className="text-gray-700 ml-3">Size: {result.features.eyes.size}</span>}
+                          {result.features.eyes.distance && <span className="text-gray-700 ml-3">Distance: {result.features.eyes.distance}</span>}
+                          {result.features.eyes.dark_circles && <div className="text-gray-700">Dark Circles: {result.features.eyes.dark_circles}</div>}
+                          {result.features.eyes.puffiness && <div className="text-gray-700">Puffiness: {result.features.eyes.puffiness}</div>}
+                        </div>
+                      </div>
+                    )}
+                    {result.features.nose && (
+                      <div className="bg-purple-50 p-2 rounded">
+                        <span className="text-gray-600 font-medium">Nose:</span>
+                        <span className="ml-2 text-gray-700">Shape: {result.features.nose.shape}, Size: {result.features.nose.size}</span>
+                      </div>
+                    )}
+                    {result.features.lips && (
+                      <div className="bg-pink-50 p-2 rounded">
+                        <span className="text-gray-600 font-medium">Lips:</span>
+                        <span className="ml-2 text-gray-700">Shape: {result.features.lips.shape}, Fullness: {result.features.lips.fullness}</span>
+                      </div>
+                    )}
+                    {result.features.eyebrows && (
+                      <div className="bg-gray-50 p-2 rounded">
+                        <span className="text-gray-600 font-medium">Eyebrows:</span>
+                        <span className="ml-2 text-gray-700">Shape: {result.features.eyebrows.shape}, Thickness: {result.features.eyebrows.thickness}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Skin Analysis */}
               {result.skin_analysis && (
@@ -454,6 +501,30 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
                       <span className="text-gray-600">Skin Type:</span>
                       <span className="font-semibold ml-1">{result.skin_analysis.oiliness?.overall}</span>
                     </div>
+                    {result.skin_analysis.pores && (
+                      <div className="bg-orange-50 p-2 rounded">
+                        <span className="text-gray-600">Pores:</span>
+                        <span className="font-semibold ml-1">{result.skin_analysis.pores.visibility} ({result.skin_analysis.pores.score}/100)</span>
+                      </div>
+                    )}
+                    {result.skin_analysis.wrinkles && (
+                      <div className="bg-red-50 p-2 rounded">
+                        <span className="text-gray-600">Wrinkles:</span>
+                        <span className="font-semibold ml-1">Score: {result.skin_analysis.wrinkles.score}/100</span>
+                      </div>
+                    )}
+                    {result.skin_analysis.acne && (
+                      <div className="bg-purple-50 p-2 rounded">
+                        <span className="text-gray-600">Acne:</span>
+                        <span className="font-semibold ml-1">{result.skin_analysis.acne.severity}</span>
+                      </div>
+                    )}
+                    {result.skin_analysis.dark_spots && (
+                      <div className="bg-gray-50 p-2 rounded">
+                        <span className="text-gray-600">Dark Spots:</span>
+                        <span className="font-semibold ml-1">{result.skin_analysis.dark_spots.count} spots</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
