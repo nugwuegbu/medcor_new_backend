@@ -402,12 +402,7 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
                 </div>
               </div>
               
-              {/* Movement Detection Indicator */}
-              {lipsDetected && (
-                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center animate-pulse">
-                  <Eye className="h-3 w-3 text-white" />
-                </div>
-              )}
+              {/* Movement Detection Indicator - Removed purple circle per user request */}
             </div>
           </div>
 

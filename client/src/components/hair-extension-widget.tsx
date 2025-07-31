@@ -79,7 +79,7 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
     }
   };
 
-  // Camera functions
+  // Camera functions - Fixed initialization
   const requestCameraPermission = async () => {
     try {
       console.log('📷 Hair Extension: Requesting camera permission...');
@@ -100,11 +100,28 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.autoplay = true;
+        videoRef.current.playsInline = true;
+        videoRef.current.muted = true;
+        
+        // Multiple event handlers for better compatibility
         videoRef.current.onloadedmetadata = () => {
+          console.log('📷 Hair Extension: Video metadata loaded');
           if (videoRef.current) {
-            videoRef.current.play();
+            videoRef.current.play().catch(console.error);
           }
         };
+        
+        videoRef.current.oncanplay = () => {
+          console.log('📷 Hair Extension: Video can play');
+        };
+        
+        // Force play after short delay
+        setTimeout(() => {
+          if (videoRef.current && videoRef.current.readyState >= 2) {
+            videoRef.current.play().catch(console.error);
+          }
+        }, 100);
       }
     } catch (error) {
       console.error('📷 Hair Extension: Camera access denied:', error);
@@ -335,10 +352,19 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
     setAnalysisProgress(0);
   };
 
-  // Setup camera stream
+  // Setup camera stream - enhanced initialization
   useEffect(() => {
     if (isOpen && videoRef.current && videoStreamRef.current) {
-      videoRef.current.srcObject = videoStreamRef.current;
+      const video = videoRef.current;
+      video.srcObject = videoStreamRef.current;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.muted = true;
+      
+      video.onloadedmetadata = () => {
+        console.log('📷 Hair Extension: Shared video metadata loaded');
+        video.play().catch(console.error);
+      };
     }
   }, [isOpen]);
 
