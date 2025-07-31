@@ -20,10 +20,17 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Check camera permission on component mount
+  // Check camera permission and start camera on component mount
   useEffect(() => {
     if (isOpen) {
       checkCameraPermission();
+      // Automatically start camera after a short delay
+      setTimeout(() => {
+        startCamera();
+      }, 500);
+    } else {
+      // Clean up when closing
+      stopCamera();
     }
   }, [isOpen]);
 
@@ -55,48 +62,47 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       setCameraPermission('checking');
       console.log('Face Analysis: Starting camera...');
       
-      // Stop any existing stream first
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
+      // Use the shared camera stream from camera-manager
+      const sharedStream = await ensureCameraReady();
+      
+      if (!sharedStream || sharedStream.getTracks().length === 0) {
+        throw new Error('Failed to get camera stream');
       }
       
-      // Request camera access directly
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: { ideal: 640, min: 320 },
-          height: { ideal: 480, min: 240 },
-          facingMode: 'user'
-        },
-        audio: false
-      });
+      console.log('Face Analysis: Using shared camera stream:', sharedStream.getVideoTracks().length, 'video tracks');
       
-      console.log('Face Analysis: Camera stream obtained:', stream.getVideoTracks().length, 'video tracks');
-      
-      streamRef.current = stream;
+      streamRef.current = sharedStream;
       setCameraActive(true);
       setCameraPermission('granted');
       setRetryCount(0);
       
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+        // Clone the stream to avoid conflicts
+        const clonedStream = sharedStream.clone();
+        videoRef.current.srcObject = clonedStream;
         
-        // Wait for video to be ready
+        // Set up event handlers before play
         videoRef.current.onloadedmetadata = () => {
           console.log('Face Analysis: Video metadata loaded');
-          videoRef.current?.play().catch(console.error);
+          videoRef.current?.play().then(() => {
+            console.log('Face Analysis: Video playing successfully');
+          }).catch(err => {
+            console.error('Face Analysis: Error playing video:', err);
+          });
         };
         
         videoRef.current.oncanplay = () => {
           console.log('Face Analysis: Video can play');
         };
         
-        // Force play
-        setTimeout(() => {
-          if (videoRef.current && videoRef.current.readyState >= 2) {
-            videoRef.current.play().catch(console.error);
-          }
-        }, 100);
+        videoRef.current.onerror = (e) => {
+          console.error('Face Analysis: Video error:', e);
+        };
+        
+        // Try to play immediately if already loaded
+        if (videoRef.current.readyState >= 2) {
+          videoRef.current.play().catch(console.error);
+        }
       }
     } catch (err: any) {
       console.error('Face Analysis Camera error:', err);
@@ -137,18 +143,18 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
 
   const stopCamera = () => {
     console.log('Face Analysis: Stopping camera...');
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
+    // Stop the cloned stream from video element
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => {
         track.stop();
-        console.log('Face Analysis: Stopped track:', track.kind);
+        console.log('Face Analysis: Stopped cloned track:', track.kind);
       });
-      streamRef.current = null;
-    }
-    setCameraActive(false);
-    if (videoRef.current) {
       videoRef.current.srcObject = null;
       videoRef.current.pause();
     }
+    streamRef.current = null;
+    setCameraActive(false);
   };
 
   // Cleanup on unmount
@@ -273,14 +279,14 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       {/* Back Button */}
       <button
         onClick={onClose}
-        className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+        className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
       >
         <ChevronLeft className="h-4 w-4" />
         <span className="font-medium text-sm">Back</span>
       </button>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col justify-center items-center p-6 pt-24">
+      <div className="flex-1 flex flex-col justify-center items-center p-6 pt-16">
         {!result ? (
           <div className="w-full max-w-sm">
             <div className="text-center mb-6">
@@ -374,30 +380,29 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
                   </div>
                 )}
 
-                {/* Start/Analyze Buttons */}
-                {!cameraActive ? (
-                  <button
-                    onClick={startCamera}
-                    disabled={cameraPermission === 'checking'}
-                    className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
-                  >
-                    {cameraPermission === 'checking' ? (
+                {/* Analyze Button */}
+                <button
+                  onClick={analyzeImage}
+                  disabled={loading || !cameraActive || cameraPermission !== 'granted'}
+                  className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
                       <Loader2 size={20} className="animate-spin" />
-                    ) : (
-                      <Camera size={20} />
-                    )}
-                    {cameraPermission === 'checking' ? 'Checking...' : 'Start Camera'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={analyzeImage}
-                    disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
-                  >
-                    {loading ? <Loader2 size={20} className="animate-spin" /> : <Face size={20} />}
-                    {loading ? 'Analyzing with YouCam API...' : 'Analyze My Face'}
-                  </button>
-                )}
+                      Analyzing with YouCam API...
+                    </>
+                  ) : !cameraActive ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      Initializing Camera...
+                    </>
+                  ) : (
+                    <>
+                      <Face size={20} />
+                      Analyze My Face
+                    </>
+                  )}
+                </button>
               </>
             )}
           </div>
