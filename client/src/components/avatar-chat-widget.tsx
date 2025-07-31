@@ -189,6 +189,56 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const avatarContainerRef = useRef<HTMLDivElement>(null);
   const faceAnalysisCameraRef = useRef<HTMLVideoElement>(null);
 
+  // Fix for floating purple AI avatar bug (July 29, 2025)
+  // Remove any simple avatar circles that appear when the menu is open
+  useEffect(() => {
+    if (showChatInterface) {
+      // Use a MutationObserver to detect and remove any floating avatar elements
+      const observer = new MutationObserver((mutations) => {
+        // Look for any elements that might be floating purple AI avatars
+        const selectors = [
+          '.simple-avatar-circle',
+          '.floating-avatar',
+          '[class*="simple-avatar"]',
+          '[class*="floating-ai"]',
+          // Look for purple circular elements with AI text
+          'div[style*="purple"][style*="rounded-full"]:has-text("AI")',
+          'div[style*="gradient"]:has-text("AI")',
+          // Look for any element with specific styling patterns
+          'div.absolute.w-16.h-16.rounded-full.bg-purple-600',
+          'div.absolute.w-16.h-16.rounded-full.bg-gradient',
+        ];
+        
+        selectors.forEach(selector => {
+          try {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => {
+              // Check if element contains "AI" text and is not part of the main menu
+              if (el.textContent?.includes('AI') && 
+                  !el.closest('.chat-widget-container') &&
+                  el.classList.contains('rounded-full')) {
+                el.remove();
+                console.log('Removed floating purple AI avatar element');
+              }
+            });
+          } catch (e) {
+            // Ignore selector errors
+          }
+        });
+      });
+
+      // Start observing the document body for added nodes
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+
+      return () => {
+        observer.disconnect();
+      };
+    }
+  }, [showChatInterface]);
+
   // Login form setup
   const loginForm = useForm<ClinicLoginForm>({
     resolver: zodResolver(clinicLoginSchema),
