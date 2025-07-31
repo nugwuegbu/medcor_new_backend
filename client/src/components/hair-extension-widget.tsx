@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Crown, Upload, Sparkles, Palette, RefreshCw, Download, ChevronLeft, ChevronRight, Loader2, Camera } from 'lucide-react';
-import { videoStreamRef } from "../utils/camera-manager";
+import { videoStreamRef, ensureCameraReady } from "../utils/camera-manager";
 
 interface HairExtensionWidgetProps {
   isOpen: boolean;
@@ -82,25 +82,37 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
   // Camera functions
   const requestCameraPermission = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' },
-        audio: false 
-      });
+      console.log('📷 Hair Extension: Requesting camera permission...');
+      setError(null);
+      
+      // Use centralized camera manager
+      await ensureCameraReady();
+      
+      // Get the centralized video stream
+      const stream = videoStreamRef.current;
+      
+      if (!stream) {
+        throw new Error('Failed to get camera stream from manager');
+      }
+      
+      console.log('📷 Hair Extension: Camera stream obtained from manager');
       setCameraStream(stream);
       setHasPermission(true);
       setShowCamera(true);
       
-      // Set up video element
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play();
+          }
+        };
       }
-      
-      console.log('📷 Hair Extension: Camera access granted');
     } catch (error) {
       console.error('📷 Hair Extension: Camera access denied:', error);
+      setError('Camera access is required for hair extension preview. Please enable camera permissions.');
       setHasPermission(false);
       setShowCamera(false);
-      setError('Camera access is required to capture your photo for hair extension analysis');
     }
   };
 

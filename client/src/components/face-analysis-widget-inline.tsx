@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, Camera, Loader2, User as Face, FileText, AlertCircle, RefreshCw, Shield } from "lucide-react";
 import FaceAnalysisReportForm from "./face-analysis-report-form";
+import { videoStreamRef, ensureCameraReady } from "../utils/camera-manager";
 
 interface FaceAnalysisWidgetInlineProps {
   isOpen: boolean;
@@ -54,23 +55,17 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalys
       setCameraPermission('checking');
       console.log('Face Analysis: Starting camera...');
       
-      // Stop any existing stream first
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
+      // Use centralized camera manager
+      await ensureCameraReady();
+      
+      // Get the centralized video stream
+      const stream = videoStreamRef.current;
+      
+      if (!stream) {
+        throw new Error('Failed to get camera stream from manager');
       }
       
-      // Request camera access
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: { ideal: 640, min: 320 },
-          height: { ideal: 480, min: 240 },
-          facingMode: 'user'
-        },
-        audio: false
-      });
-      
-      console.log('Face Analysis: Camera stream obtained:', stream.getVideoTracks().length, 'video tracks');
+      console.log('Face Analysis: Camera stream obtained from manager:', stream.getVideoTracks().length, 'video tracks');
       
       streamRef.current = stream;
       setCameraActive(true);
