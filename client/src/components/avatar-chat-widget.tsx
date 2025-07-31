@@ -1570,6 +1570,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       console.log("💋 Lips Analysis button clicked (minimized menu)");
                       
                       try {
+                        // First ensure camera is ready before showing UI
+                        setAnalysisStreamReady(false); // Reset first
+                        
                         // Ensure camera is ready first
                         console.log("💋 Ensuring camera is ready for lips analysis...");
                         const stream = await ensureCameraReady();
@@ -1617,26 +1620,44 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       try {
                         console.log("🌟 Setting skin analysis states...");
                         
-                        // Update UI states immediately without camera dependency
-                        setShowSkinPage(true); 
-                        setSelectedMenuItem("skin"); 
-                        setIsMinimized(false); 
-                        setShowChatInterface(false);
-                        setStreamReady(true);
-                        setAnalysisStreamReady(true);
+                        // First ensure camera is ready before showing UI
+                        setAnalysisStreamReady(false); // Reset first
                         
-                        console.log("🌟 Skin Analysis page activated successfully");
-                        
-                        // Try to get camera in background
+                        // Try to get camera first
                         try {
                           const stream = await ensureCameraReady();
                           if (stream) {
                             videoStreamRef.current = stream;
                             console.log("🌟 Camera stream ready for skin analysis");
+                            
+                            // Only update UI states after camera is ready
+                            setShowSkinPage(true); 
+                            setSelectedMenuItem("skin"); 
+                            setIsMinimized(false); 
+                            setShowChatInterface(false);
+                            setStreamReady(true);
+                            
+                            // Small delay to ensure stream is properly set
+                            setTimeout(() => {
+                              setAnalysisStreamReady(true);
+                            }, 100);
+                          } else {
+                            throw new Error("Camera stream not available");
                           }
                         } catch (cameraErr) {
-                          console.log("🌟 Camera not available, continuing without it");
+                          console.error("🌟 Camera error:", cameraErr);
+                          // Show error message instead of broken UI
+                          const errorMessage = {
+                            id: Date.now().toString(),
+                            text: "Camera access is required for skin analysis. Please allow camera permissions and try again.",
+                            sender: 'bot' as const,
+                            timestamp: new Date()
+                          };
+                          setMessages(prev => [...prev, errorMessage]);
+                          return; // Don't proceed without camera
                         }
+                        
+                        console.log("🌟 Skin Analysis page activated successfully");
                         
                       } catch (err) {
                         console.error("🌟 Skin Analysis setup failed:", err);
