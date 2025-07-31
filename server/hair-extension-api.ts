@@ -322,15 +322,14 @@ router.post('/process', async (req, res) => {
   } catch (error) {
     console.error('👑 Hair extension processing error:', error);
     
-    // Return a mock processed image for development
-    const mockProcessedImage = generateMockProcessedImage();
-    
+    // Return the original image as a fallback when API fails
+    // This allows users to at least see their image instead of a black box
     res.json({
       success: true,
-      processedImage: mockProcessedImage,
+      processedImage: req.body.image, // Return the original image
       taskId: 'mock-task-id',
       styleId: req.body.styleId,
-      note: 'This is a development mock response. Configure YouCam API credentials for real processing.',
+      note: 'Hair extension processing unavailable. Showing original image.',
     });
   }
 });

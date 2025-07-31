@@ -502,7 +502,7 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                     <img
                       src={selectedImage}
                       alt="Selected"
-                      className="w-full h-48 object-cover rounded-lg"
+                      className="w-full h-auto max-h-96 object-contain rounded-lg"
                     />
                   )}
                 </div>
@@ -723,7 +723,7 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                     <img
                       src={selectedImage}
                       alt="Before"
-                      className="w-full h-64 object-cover rounded-lg"
+                      className="w-full h-auto max-h-[400px] object-contain rounded-lg bg-gray-100"
                     />
                   )}
                 </div>
@@ -731,12 +731,16 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                 {/* After */}
                 <div className="space-y-3">
                   <h4 className="font-semibold text-center">After</h4>
-                  {processedImage && (
+                  {processedImage ? (
                     <img
                       src={processedImage}
                       alt="After"
-                      className="w-full h-64 object-cover rounded-lg"
+                      className="w-full h-auto max-h-[400px] object-contain rounded-lg bg-gray-100"
                     />
+                  ) : (
+                    <div className="w-full h-auto min-h-[300px] max-h-[400px] bg-gray-100 rounded-lg flex items-center justify-center">
+                      <p className="text-gray-500">Processing result...</p>
+                    </div>
                   )}
                 </div>
               </div>
