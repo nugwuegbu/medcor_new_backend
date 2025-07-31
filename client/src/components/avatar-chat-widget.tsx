@@ -1298,7 +1298,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
       <div className="flex-1 relative">
         {/* Avatar Background - Always Active */}
         {/* Avatar Container - Adapts for chat, doctors view, and minimized state */}
-        {!showRecordsList && !showChatInterface && (
+        {!showRecordsList && !showChatInterface && !showFacePage && !showSkinPage && !showVoiceTipsPage && !showHairExtensionWidget && (
         <div 
           ref={avatarContainerRef}
           className={`absolute ${isDragging ? '' : 'transition-all duration-700 ease-in-out'} ${
@@ -1785,7 +1785,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                   </div>
                 )}
                 
-                {showDoctorList && (
+                {showDoctorList && !showChatInterface && (
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50">
                     {/* Back Button */}
                     <button
