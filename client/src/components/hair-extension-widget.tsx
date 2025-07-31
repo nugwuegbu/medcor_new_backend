@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { X, Crown, Upload, Sparkles, Palette, RefreshCw, Download, ChevronLeft, ChevronRight, Loader2, Camera } from 'lucide-react';
+import { X, Crown, Upload, Sparkles, Palette, RefreshCw, Download, ChevronLeft, ChevronRight, Loader2, Camera, AlertCircle } from 'lucide-react';
 import { videoStreamRef, ensureCameraReady } from "../utils/camera-manager";
 
 interface HairExtensionWidgetProps {
@@ -732,11 +732,26 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                 <div className="space-y-3">
                   <h4 className="font-semibold text-center">After</h4>
                   {processedImage ? (
-                    <img
-                      src={processedImage}
-                      alt="After"
-                      className="w-full h-auto max-h-[400px] object-contain rounded-lg bg-gray-100"
-                    />
+                    <div className="relative">
+                      <img
+                        src={processedImage}
+                        alt="After"
+                        className="w-full h-auto max-h-[400px] object-contain rounded-lg bg-gray-100"
+                      />
+                      {/* Show overlay if it's the same as original image */}
+                      {processedImage === selectedImage && (
+                        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center p-4">
+                          <div className="bg-white rounded-lg p-4 text-center max-w-xs">
+                            <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-2" />
+                            <p className="text-sm font-semibold mb-1">Hair Extension Preview Unavailable</p>
+                            <p className="text-xs text-gray-600">
+                              Hair extension processing requires API configuration. 
+                              The actual result would show your selected hair style applied to your photo.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div className="w-full h-auto min-h-[300px] max-h-[400px] bg-gray-100 rounded-lg flex items-center justify-center">
                       <p className="text-gray-500">Processing result...</p>
