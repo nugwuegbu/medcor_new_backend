@@ -5,64 +5,48 @@ import FaceAnalysisReportForm from "./face-analysis-report-form";
 interface FaceAnalysisWidgetInlineProps {
   isOpen: boolean;
   onClose: () => void;
-  videoStream: MediaStream | null;
 }
 
-export default function FaceAnalysisWidgetInline({ isOpen, onClose, videoStream }: FaceAnalysisWidgetInlineProps) {
+export default function FaceAnalysisWidgetInline({ isOpen, onClose }: FaceAnalysisWidgetInlineProps) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraPermission, setCameraPermission] = useState<'granted' | 'denied' | 'prompt' | 'checking'>('checking');
   const [showReportForm, setShowReportForm] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  // Setup video stream from parent
+  // Check camera permission on component mount
   useEffect(() => {
-    if (!videoStream || !videoRef.current) {
-      console.log('Face Analysis: Waiting for video stream or video element');
-      return;
+    if (isOpen) {
+      checkCameraPermission();
     }
+  }, [isOpen]);
 
-    console.log('Face Analysis: Setting up video stream');
-    const video = videoRef.current;
-    
-    // Set up video element
-    video.srcObject = videoStream;
-    video.autoplay = true;
-    video.playsInline = true;
-    video.muted = true;
-
-    const handleVideoReady = () => {
-      console.log('Face Analysis: Video ready, dimensions:', video.videoWidth, 'x', video.videoHeight);
-      setCameraReady(true);
-    };
-
-    video.onloadedmetadata = () => {
-      console.log('Face Analysis: Video metadata loaded');
-      if (video.videoWidth > 0 && video.videoHeight > 0) {
-        handleVideoReady();
+  const checkCameraPermission = async () => {
+    try {
+      setCameraPermission('checking');
+      
+      // Check if browser supports permissions API
+      if ('permissions' in navigator) {
+        const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+        setCameraPermission(permission.state as 'granted' | 'denied' | 'prompt');
+        
+        if (permission.state === 'granted') {
+          startCamera();
+        }
+      } else {
+        // Fallback: try to access camera directly
+        setCameraPermission('prompt');
       }
-    };
-
-    video.oncanplay = () => {
-      console.log('Face Analysis: Video can play');
-      if (video.videoWidth > 0 && video.videoHeight > 0) {
-        handleVideoReady();
-      }
-    };
-
-    // Check if already ready
-    if (video.videoWidth > 0 && video.videoHeight > 0) {
-      handleVideoReady();
+    } catch (err) {
+      console.error('Permission check failed:', err);
+      setCameraPermission('prompt');
     }
-
-    // Cleanup
-    return () => {
-      console.log('Face Analysis: Cleanup');
-      setCameraReady(false);
-    };
-  }, [videoStream]);
+  };
 
   const startCamera = async () => {
     try {
@@ -96,38 +80,22 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose, videoStream 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         
-        // Set up video element properly
-        const video = videoRef.current;
-        
-        const handleVideoReady = () => {
-          console.log('Face Analysis: Video ready to play');
-          video.play().catch(console.error);
-        };
-        
-        video.onloadedmetadata = () => {
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
           console.log('Face Analysis: Video metadata loaded');
-          handleVideoReady();
+          videoRef.current?.play().catch(console.error);
         };
         
-        video.oncanplay = () => {
+        videoRef.current.oncanplay = () => {
           console.log('Face Analysis: Video can play');
         };
         
-        video.onplaying = () => {
-          console.log('Face Analysis: Video is playing');
-        };
-        
-        // Ensure autoplay
-        video.autoplay = true;
-        video.playsInline = true;
-        video.muted = true;
-        
-        // Force play after a short delay
+        // Force play
         setTimeout(() => {
-          if (video.readyState >= 1) { // HAVE_METADATA
-            video.play().catch(console.error);
+          if (videoRef.current && videoRef.current.readyState >= 2) {
+            videoRef.current.play().catch(console.error);
           }
-        }, 200);
+        }, 100);
       }
     } catch (err: any) {
       console.error('Face Analysis Camera error:', err);
@@ -209,20 +177,10 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose, videoStream 
         return;
       }
 
-      // Check if video has valid dimensions and some data
-      if (video.readyState < 1 || video.videoWidth === 0 || video.videoHeight === 0) {
-        console.log('Face Analysis: Video readyState:', video.readyState, 'dimensions:', video.videoWidth, 'x', video.videoHeight);
-        
-        // Wait a bit and try again
-        setTimeout(() => {
-          if (video.readyState >= 1 && video.videoWidth > 0 && video.videoHeight > 0) {
-            console.log('Face Analysis: Retrying capture after video initialization');
-            analyzeImage();
-          } else {
-            setError('Video not ready. Please ensure camera is working and try again.');
-            setLoading(false);
-          }
-        }, 1000);
+      // Check if video is actually playing
+      if (video.readyState < 2) {
+        setError('Video not ready. Please wait for camera to initialize.');
+        setLoading(false);
         return;
       }
 
@@ -430,22 +388,14 @@ export default function FaceAnalysisWidgetInline({ isOpen, onClose, videoStream 
                     {cameraPermission === 'checking' ? 'Checking...' : 'Start Camera'}
                   </button>
                 ) : (
-                  <div>
-                    <div className="mb-2 text-sm text-center text-gray-600">
-                      {videoRef.current?.videoWidth && videoRef.current?.videoHeight 
-                        ? `Camera ready: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`
-                        : 'Waiting for camera...'
-                      }
-                    </div>
-                    <button
-                      onClick={analyzeImage}
-                      disabled={loading || !videoRef.current?.videoWidth}
-                      className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
-                    >
-                      {loading ? <Loader2 size={20} className="animate-spin" /> : <Face size={20} />}
-                      {loading ? 'Analyzing with YouCam API...' : 'Analyze My Face'}
-                    </button>
-                  </div>
+                  <button
+                    onClick={analyzeImage}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed"
+                  >
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : <Face size={20} />}
+                    {loading ? 'Analyzing with YouCam API...' : 'Analyze My Face'}
+                  </button>
                 )}
               </>
             )}
