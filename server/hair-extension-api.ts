@@ -402,121 +402,97 @@ async function generateDemoHairExtension(originalImage: string, styleId: string)
     
     console.log('👑 Applying demo transformation for style:', styleId);
     
-    // Get image metadata
-    const metadata = await sharp(imageBuffer).metadata();
-    console.log('📸 Image metadata:', { width: metadata.width, height: metadata.height, format: metadata.format });
-    
-    // Apply different transformations based on style with more dramatic effects
+    // Apply different transformations based on style
     let processedBuffer: Buffer;
     
     switch (styleId) {
       case 'classic-long':
-        console.log('🎨 Applying Classic Brown transformation');
-        // Classic brown - warm brown tones
+        // Classic brown - warm tones
         processedBuffer = await sharp(imageBuffer)
           .modulate({
-            brightness: 0.9,     // Slightly darker
-            saturation: 1.3,     // More saturated
-            hue: 30              // Shift toward brown/orange
+            brightness: 1.05,
+            saturation: 0.9,
+            hue: -5  // Slight brown shift
           })
-          .linear(0.8, 20)       // Adjust contrast
+          .gamma(1.1)
           .toBuffer();
         break;
         
       case 'silky-straight':
-        console.log('🎨 Applying Silky Blonde transformation');
-        // Blonde - bright and golden
+        // Blonde - brighten and desaturate
         processedBuffer = await sharp(imageBuffer)
           .modulate({
-            brightness: 1.4,     // Much brighter
-            saturation: 0.6,     // Less saturated for blonde effect
-            hue: 60              // Shift toward yellow
+            brightness: 1.25,
+            saturation: 0.7,
+            lightness: 15  // Lighter overall
           })
-          .linear(1.2, 30)       // Increase brightness/contrast
+          .gamma(1.2)
           .toBuffer();
         break;
         
       case 'beach-waves':
-        console.log('🎨 Applying Beach Caramel transformation');
-        // Caramel - warm golden-brown tones
+        // Caramel - warm golden tones
         processedBuffer = await sharp(imageBuffer)
           .modulate({
-            brightness: 1.2,     // Brighter
-            saturation: 1.5,     // More vibrant
-            hue: 45              // Golden-orange shift
+            brightness: 1.15,
+            saturation: 1.2,
+            hue: 15  // Golden shift
           })
-          .linear(1.1, 15)       // Enhance contrast
+          .gamma(1.05)
           .toBuffer();
         break;
         
       case 'spiral-curls':
-        console.log('🎨 Applying Dark Brown transformation');
-        // Dark brown - deep chocolate tones
+        // Dark brown - deepen colors
         processedBuffer = await sharp(imageBuffer)
           .modulate({
-            brightness: 0.7,     // Much darker
-            saturation: 1.2,     // Slightly more saturated
-            hue: 20              // Slight brown shift
+            brightness: 0.85,
+            saturation: 1.1,
+            hue: -10  // Brown shift
           })
-          .linear(0.7, -10)      // Darken overall
+          .gamma(0.9)
           .toBuffer();
         break;
         
       case 'rainbow-ombre':
-        console.log('🎨 Applying Rainbow transformation');
-        // Rainbow effect - dramatic color shift
+        // Rainbow effect - strong color shift
         processedBuffer = await sharp(imageBuffer)
           .modulate({
-            brightness: 1.3,     // Brighter
-            saturation: 2.5,     // Extremely saturated
-            hue: 270             // Major purple/pink shift
+            brightness: 1.2,
+            saturation: 1.8,  // Very saturated
+            hue: 180  // Major hue shift for rainbow effect
           })
-          .linear(1.3, 20)       // Enhance vibrancy
+          .gamma(1.15)
           .toBuffer();
         break;
         
       case 'pastel-pink':
-        console.log('🎨 Applying Pastel Pink transformation');
-        // Pastel pink - soft pink tones
+        // Pastel pink - light and soft
         processedBuffer = await sharp(imageBuffer)
           .modulate({
-            brightness: 1.5,     // Much lighter
-            saturation: 0.8,     // Soft pastel effect
-            hue: 320             // Pink shift
+            brightness: 1.3,
+            saturation: 0.6,
+            hue: -30  // Pink shift
           })
-          .linear(1.4, 40)       // Lighten significantly
+          .gamma(1.25)
           .toBuffer();
         break;
         
       default:
-        console.log('🎨 Applying default transformation');
-        // Default - noticeable enhancement
+        // Default - subtle enhancement
         processedBuffer = await sharp(imageBuffer)
           .modulate({
-            brightness: 1.2,
-            saturation: 1.3
+            brightness: 1.1,
+            saturation: 1.1
           })
           .toBuffer();
     }
     
-    // Log buffer sizes to verify transformation
-    console.log('📊 Original buffer size:', imageBuffer.length);
-    console.log('📊 Processed buffer size:', processedBuffer.length);
-    
     // Convert back to base64 data URL
     const processedBase64 = processedBuffer.toString('base64');
-    const resultImage = `data:image/jpeg;base64,${processedBase64}`;
-    
-    // Verify the image changed
-    if (processedBase64 === base64Data) {
-      console.warn('⚠️ WARNING: Processed image is identical to original!');
-    } else {
-      console.log('✅ Image successfully transformed');
-    }
-    
-    return resultImage;
+    return `data:image/jpeg;base64,${processedBase64}`;
   } catch (error) {
-    console.error('❌ Demo hair extension processing error:', error);
+    console.error('Demo hair extension processing error:', error);
     // If sharp processing fails, return original
     return originalImage;
   }
