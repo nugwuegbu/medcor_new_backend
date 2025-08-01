@@ -7,8 +7,8 @@ const router = express.Router();
 
 // YouCam API Configuration
 const YOUCAM_API_BASE = 'https://yce-api-01.perfectcorp.com';
-const YOUCAM_CLIENT_ID = process.env.YOUCAM_CLIENT_ID || process.env.YOUCAM_API_KEY;
-const YOUCAM_CLIENT_SECRET = process.env.YOUCAM_CLIENT_SECRET || process.env.YOUCAM_SECRET_KEY;
+const YOUCAM_CLIENT_ID = process.env.YOUCAM_API_KEY;
+const YOUCAM_CLIENT_SECRET = process.env.YOUCAM_API_SECRET;
 
 // RSA encryption for authentication - Disabled to avoid OpenSSL errors
 function encryptWithRSA(data: string, publicKey: string): string {
@@ -40,7 +40,7 @@ async function getYouCamAccessToken(): Promise<string> {
       throw new Error(`Authentication failed: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     return data.access_token;
   } catch (error) {
     console.error('YouCam authentication error:', error);
@@ -90,7 +90,7 @@ router.get('/styles', async (req, res) => {
       throw new Error(`Failed to fetch style groups: ${response.status}`);
     }
 
-    const styleGroups = await response.json();
+    const styleGroups = await response.json() as any[];
     
     // Format the response into categories
     const categories = await Promise.all(
@@ -101,7 +101,7 @@ router.get('/styles', async (req, res) => {
           },
         });
 
-        const styles = stylesResponse.ok ? await stylesResponse.json() : [];
+        const styles = stylesResponse.ok ? await stylesResponse.json() as any[] : [];
         
         return {
           id: group.id,
@@ -243,7 +243,7 @@ router.post('/process', async (req, res) => {
       throw new Error(`File creation failed: ${fileResponse.status}`);
     }
 
-    const fileData = await fileResponse.json();
+    const fileData = await fileResponse.json() as any;
     
     // Step 2: Upload image to S3
     const imageBuffer = Buffer.from(image.replace(/^data:image\/[a-z]+;base64,/, ''), 'base64');
@@ -277,7 +277,7 @@ router.post('/process', async (req, res) => {
       throw new Error(`Task creation failed: ${taskResponse.status}`);
     }
 
-    const taskData = await taskResponse.json();
+    const taskData = await taskResponse.json() as any;
     
     // Step 4: Poll for completion
     let taskStatus = 'running';
@@ -294,7 +294,7 @@ router.post('/process', async (req, res) => {
       });
 
       if (statusResponse.ok) {
-        const statusData = await statusResponse.json();
+        const statusData = await statusResponse.json() as any;
         taskStatus = statusData.status;
         
         if (taskStatus === 'success') {
