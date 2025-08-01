@@ -738,19 +738,11 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
                         alt="After"
                         className="w-full h-auto max-h-[400px] object-contain rounded-lg bg-gray-100"
                       />
-                      {/* Show overlay if it's the same as original image */}
-                      {processedImage === selectedImage && (
-                        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center p-4">
-                          <div className="bg-white rounded-lg p-4 text-center max-w-xs">
-                            <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-                            <p className="text-sm font-semibold mb-1">Hair Extension Preview Unavailable</p>
-                            <p className="text-xs text-gray-600">
-                              Hair extension processing requires API configuration. 
-                              The actual result would show your selected hair style applied to your photo.
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                      {/* Show style name overlay */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                        <p className="text-white text-sm font-semibold">Style Applied: {selectedStyle?.name}</p>
+                        <p className="text-white/80 text-xs">{selectedStyle?.description}</p>
+                      </div>
                     </div>
                   ) : (
                     <div className="w-full h-auto min-h-[300px] max-h-[400px] bg-gray-100 rounded-lg flex items-center justify-center">

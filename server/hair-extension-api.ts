@@ -400,33 +400,100 @@ async function generateDemoHairExtension(originalImage: string, styleId: string)
     const base64Data = originalImage.replace(/^data:image\/[a-z]+;base64,/, '');
     const imageBuffer = Buffer.from(base64Data, 'base64');
     
-    // Map style IDs to tint colors for demo
-    const styleTints: Record<string, { r: number, g: number, b: number }> = {
-      'classic-long': { r: 139, g: 90, b: 43 },      // Brown tint
-      'silky-straight': { r: 218, g: 185, b: 132 },  // Blonde tint
-      'beach-waves': { r: 184, g: 134, b: 11 },      // Caramel tint
-      'spiral-curls': { r: 101, g: 67, b: 33 },      // Dark brown tint
-      'rainbow-ombre': { r: 255, g: 182, b: 193 },   // Pink tint for rainbow effect
-      'pastel-pink': { r: 255, g: 192, b: 203 },     // Pastel pink tint
-    };
+    console.log('👑 Applying demo transformation for style:', styleId);
     
-    const tint = styleTints[styleId] || { r: 139, g: 90, b: 43 };
+    // Apply different transformations based on style
+    let processedBuffer: Buffer;
     
-    // Process the image with sharp to apply a hair-like transformation
-    const processedBuffer = await sharp(imageBuffer)
-      .tint(tint)  // Apply color tint to simulate hair color change
-      .modulate({
-        brightness: 1.1,  // Slightly brighten
-        saturation: 1.2,  // Increase saturation for vibrant hair
-      })
-      .toBuffer();
+    switch (styleId) {
+      case 'classic-long':
+        // Classic brown - warm tones
+        processedBuffer = await sharp(imageBuffer)
+          .modulate({
+            brightness: 1.05,
+            saturation: 0.9,
+            hue: -5  // Slight brown shift
+          })
+          .gamma(1.1)
+          .toBuffer();
+        break;
+        
+      case 'silky-straight':
+        // Blonde - brighten and desaturate
+        processedBuffer = await sharp(imageBuffer)
+          .modulate({
+            brightness: 1.25,
+            saturation: 0.7,
+            lightness: 15  // Lighter overall
+          })
+          .gamma(1.2)
+          .toBuffer();
+        break;
+        
+      case 'beach-waves':
+        // Caramel - warm golden tones
+        processedBuffer = await sharp(imageBuffer)
+          .modulate({
+            brightness: 1.15,
+            saturation: 1.2,
+            hue: 15  // Golden shift
+          })
+          .gamma(1.05)
+          .toBuffer();
+        break;
+        
+      case 'spiral-curls':
+        // Dark brown - deepen colors
+        processedBuffer = await sharp(imageBuffer)
+          .modulate({
+            brightness: 0.85,
+            saturation: 1.1,
+            hue: -10  // Brown shift
+          })
+          .gamma(0.9)
+          .toBuffer();
+        break;
+        
+      case 'rainbow-ombre':
+        // Rainbow effect - strong color shift
+        processedBuffer = await sharp(imageBuffer)
+          .modulate({
+            brightness: 1.2,
+            saturation: 1.8,  // Very saturated
+            hue: 180  // Major hue shift for rainbow effect
+          })
+          .gamma(1.15)
+          .toBuffer();
+        break;
+        
+      case 'pastel-pink':
+        // Pastel pink - light and soft
+        processedBuffer = await sharp(imageBuffer)
+          .modulate({
+            brightness: 1.3,
+            saturation: 0.6,
+            hue: -30  // Pink shift
+          })
+          .gamma(1.25)
+          .toBuffer();
+        break;
+        
+      default:
+        // Default - subtle enhancement
+        processedBuffer = await sharp(imageBuffer)
+          .modulate({
+            brightness: 1.1,
+            saturation: 1.1
+          })
+          .toBuffer();
+    }
     
     // Convert back to base64 data URL
     const processedBase64 = processedBuffer.toString('base64');
     return `data:image/jpeg;base64,${processedBase64}`;
   } catch (error) {
     console.error('Demo hair extension processing error:', error);
-    // If sharp processing fails, return original with a simple CSS filter encoded
+    // If sharp processing fails, return original
     return originalImage;
   }
 }
