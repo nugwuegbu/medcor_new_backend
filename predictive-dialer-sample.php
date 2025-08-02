@@ -13,10 +13,10 @@ class PredictiveDialer {
     
     public function __construct($config = []) {
         $this->config = array_merge([
-            'host' => '127.0.0.1',
+            'host' => '3.13.214.103',
             'port' => 5038,
             'username' => 'admin',
-            'secret' => 'mysecret',
+            'secret' => 'all0wm3n0t',
             'connect_timeout' => 10,
             'read_timeout' => 10,
             'agent_context' => 'from-internal',
@@ -53,7 +53,7 @@ class PredictiveDialer {
     /**
      * Get available agents from queue
      */
-    public function getAvailableAgents($queue = 'sales') {
+    public function getAvailableAgents($queue = 'iRechargeInboundCalls') {
         $response = $this->manager->command("queue show $queue");
         $agents = [];
         
@@ -81,10 +81,10 @@ class PredictiveDialer {
         // In production, this would query your database
         // For demo, returning sample numbers
         return [
-            ['id' => 1, 'number' => '15551234567', 'name' => 'John Doe', 'priority' => 1],
-            ['id' => 2, 'number' => '15551234568', 'name' => 'Jane Smith', 'priority' => 2],
-            ['id' => 3, 'number' => '15551234569', 'name' => 'Bob Johnson', 'priority' => 1],
-            ['id' => 4, 'number' => '15551234570', 'name' => 'Alice Brown', 'priority' => 3],
+            ['id' => 1, 'number' => '08035660292', 'name' => 'Nnamdi Ugwuegbu', 'priority' => 1],
+            ['id' => 2, 'number' => '08133642588', 'name' => 'Roseline igwe', 'priority' => 2],
+            ['id' => 3, 'number' => '07035058069', 'name' => 'Mamza', 'priority' => 1],
+            // ['id' => 4, 'number' => '15551234570', 'name' => 'Alice Brown', 'priority' => 3],
         ];
     }
     
@@ -301,9 +301,9 @@ exten => s,1,Answer()
 // Example usage
 try {
     $config = [
-        'host' => 'localhost',
+        'host' => '3.13.214.103',
         'username' => 'admin',
-        'secret' => 'amp111',
+        'secret' => 'all0wm3n0t',
         'campaign_id' => 'sales_campaign_001',
         'dial_ratio' => 1.3,
     ];
