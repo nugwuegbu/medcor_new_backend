@@ -21,7 +21,7 @@ class PredictiveDialer {
             'read_timeout' => 10,
             'agent_context' => 'from-internal',
             'outbound_context' => 'from-trunk',
-            'trunk' => 'SIP/GoIP1',
+            'trunk' => 'SIP/vezeti_line(02018883207)',
             'campaign_id' => 'campaign_001',
             'dial_ratio' => 1.5, // Dial 1.5 calls per available agent
             'answer_timeout' => 30000, // 30 seconds
@@ -319,21 +319,35 @@ try {
 
 // CLI control script example
 if (php_sapi_name() === 'cli' && isset($argv[1])) {
-    switch ($argv[1]) {
-        case 'start':
-            $dialer->startCampaign();
-            break;
-            
-        case 'stop':
-            $dialer->stopCampaign();
-            break;
-            
-        case 'stats':
-            print_r($dialer->getCampaignStats());
-            break;
-            
-        default:
-            echo "Usage: php predictive-dialer.php [start|stop|stats]\n";
+    try {
+        $config = [
+            'host' => '3.13.214.103',
+            'username' => 'admin',
+            'secret' => 'all0wm3n0t',
+            'campaign_id' => 'sales_campaign_001',
+            'dial_ratio' => 1.3,
+        ];
+        
+        $dialer = new PredictiveDialer($config);
+        
+        switch ($argv[1]) {
+            case 'start':
+                $dialer->startCampaign();
+                break;
+                
+            case 'stop':
+                $dialer->stopCampaign();
+                break;
+                
+            case 'stats':
+                print_r($dialer->getCampaignStats());
+                break;
+                
+            default:
+                echo "Usage: php predictive-dialer.php [start|stop|stats]\n";
+        }
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage() . "\n";
     }
 }
 ?>
