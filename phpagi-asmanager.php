@@ -1,16 +1,18 @@
 <?php
 /**
- * Mock AGI_AsteriskManager class for demonstration
- * In production, use the real phpagi-asmanager.php from the phpagi library
+ * Real AGI_AsteriskManager class implementation for Asterisk Manager Interface
+ * Handles socket connections and AMI protocol
  */
 
 class AGI_AsteriskManager {
+    private $socket = false;
     private $connected = false;
     private $host;
     private $username;
+    private $timeout = 10;
     
     public function __construct() {
-        echo "AGI_AsteriskManager initialized (Mock Mode)\n";
+        // Constructor
     }
     
     /**
@@ -20,25 +22,214 @@ class AGI_AsteriskManager {
         $this->host = $host;
         $this->username = $username;
         
-        echo "Attempting to connect to Asterisk Manager at $host...\n";
+        echo "Connecting to Asterisk Manager at $host...\n";
         
-        // In real implementation, this would establish socket connection
-        // For demo, we'll simulate connection failure
-        if ($host === 'localhost:5038' || $host === '127.0.0.1:5038') {
-            echo "ERROR: Cannot connect to Asterisk Manager Interface at $host\n";
-            echo "Please ensure:\n";
-            echo "1. Asterisk is running\n";
-            echo "2. Manager interface is enabled in manager.conf\n";
-            echo "3. Port 5038 is accessible\n";
-            echo "4. Credentials are correct\n\n";
+        // Parse host and port
+        $parts = explode(':', $host);
+        $ip = $parts[0];
+        $port = isset($parts[1]) ? $parts[1] : 5038;
+        
+        // Create socket connection
+        $this->socket = @fsockopen($ip, $port, $errno, $errstr, $this->timeout);
+        
+        if (!$this->socket) {
+            echo "ERROR: Cannot connect to Asterisk Manager at $host\n";
+            echo "Error: $errno - $errstr\n";
             return false;
         }
         
-        $this->connected = true;
-        return true;
+        // Set socket timeout
+        stream_set_timeout($this->socket, $this->timeout);
+        
+        // Read welcome message
+        $response = $this->readResponse();
+        echo "Server: " . trim($response[0]) . "\n";
+        
+        // Send login
+        $loginCmd = "Action: Login\r\n";
+        $loginCmd .= "Username: $username\r\n";
+        $loginCmd .= "Secret: $secret\r\n";
+        $loginCmd .= "Events: off\r\n\r\n";
+        
+        fwrite($this->socket, $loginCmd);
+        
+        // Read login response
+        $response = $this->readResponse();
+        
+        foreach ($response as $line) {
+            if (strpos($line, 'Response: Success') !== false) {
+                echo "Successfully connected to Asterisk Manager\n";
+                $this->connected = true;
+                return true;
+            }
+            if (strpos($line, 'Response: Error') !== false) {
+                echo "Login failed: " . implode("\n", $response) . "\n";
+                fclose($this->socket);
+                return false;
+            }
+        }
+        
+        return false;
     }
     
     /**
+     * Read response from socket
+     */
+    private function readResponse() {
+        $response = array();
+        
+        while ($line = fgets($this->socket, 4096)) {
+            if ($line == "\r\n") break; // End of response
+            $response[] = $line;
+        }
+        
+        return $response;
+    }
+    
+    /**
+     * Execute command
+     */
+    public function command($cmd) {
+        if (!$this->connected || !$this->socket) {
+            return ['Response' => 'Error', 'Message' => 'Not connected'];
+        }
+        
+        $action = "Action: Command\r\n";
+        $action .= "Command: $cmd\r\n\r\n";
+        
+        fwrite($this->socket, $action);
+        
+        $response = $this->readResponse();
+        $result = ['Response' => 'Error', 'data' => ''];
+        
+        foreach ($response as $line) {
+            if (strpos($line, 'Response: Success') !== false) {
+                $result['Response'] = 'Success';
+            } elseif (strpos($line, 'Output:') === 0) {
+                $result['data'] .= substr($line, 7);
+            }
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Originate a call
+     */
+    public function originate($channel, $exten, $context, $priority, $application, 
+                            $data, $timeout, $callerid, $variables, $account, 
+                            $async, $actionid) {
+        if (!$this->connected || !$this->socket) {
+            return ['Response' => 'Error', 'Message' => 'Not connected'];
+        }
+        
+        $action = "Action: Originate\r\n";
+        $action .= "Channel: $channel\r\n";
+        $action .= "Context: $context\r\n";
+        $action .= "Priority: 1\r\n";
+        $action .= "Timeout: $timeout\r\n";
+        $action .= "CallerID: $callerid\r\n";
+        $action .= "Async: " . ($async ? 'true' : 'false') . "\r\n";
+        
+        // Add variables
+        if (is_array($variables)) {
+            foreach ($variables as $key => $value) {
+                $action .= "Variable: $key=$value\r\n";
+            }
+        }
+        
+        $action .= "\r\n";
+        
+        fwrite($this->socket, $action);
+        
+        $response = $this->readResponse();
+        $result = ['Response' => 'Error', 'Message' => 'Unknown error'];
+        
+        foreach ($response as $line) {
+            if (strpos($line, 'Response: Success') !== false) {
+                $result['Response'] = 'Success';
+                $result['Message'] = 'Originate successfully queued';
+            } elseif (strpos($line, 'Response: Error') !== false) {
+                $result['Response'] = 'Error';
+            } elseif (strpos($line, 'Message:') !== false) {
+                $result['Message'] = trim(substr($line, 8));
+            }
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Redirect a channel
+     */
+    public function redirect($channel, $context, $exten, $priority) {
+        if (!$this->connected || !$this->socket) {
+            return ['Response' => 'Error', 'Message' => 'Not connected'];
+        }
+        
+        $action = "Action: Redirect\r\n";
+        $action .= "Channel: $channel\r\n";
+        $action .= "Context: $context\r\n";
+        $action .= "Exten: $exten\r\n";
+        $action .= "Priority: $priority\r\n\r\n";
+        
+        fwrite($this->socket, $action);
+        
+        $response = $this->readResponse();
+        return $this->parseResponse($response);
+    }
+    
+    /**
+     * Hangup a channel
+     */
+    public function hangup($channel) {
+        if (!$this->connected || !$this->socket) {
+            return ['Response' => 'Error', 'Message' => 'Not connected'];
+        }
+        
+        $action = "Action: Hangup\r\n";
+        $action .= "Channel: $channel\r\n\r\n";
+        
+        fwrite($this->socket, $action);
+        
+        $response = $this->readResponse();
+        return $this->parseResponse($response);
+    }
+    
+    /**
+     * Disconnect from manager
+     */
+    public function disconnect() {
+        if ($this->socket) {
+            $action = "Action: Logoff\r\n\r\n";
+            fwrite($this->socket, $action);
+            fclose($this->socket);
+            $this->socket = false;
+            $this->connected = false;
+            echo "Disconnected from Asterisk Manager\n";
+        }
+    }
+    
+    /**
+     * Parse response into array
+     */
+    private function parseResponse($response) {
+        $result = ['Response' => 'Error'];
+        
+        foreach ($response as $line) {
+            if (strpos($line, 'Response: Success') !== false) {
+                $result['Response'] = 'Success';
+            } elseif (strpos($line, 'Message:') !== false) {
+                $result['Message'] = trim(substr($line, 8));
+            }
+        }
+        
+        return $result;
+    }
+}
+
+// Remove demo notice since this is now a real implementation
+?>
      * Execute command
      */
     public function command($cmd) {
