@@ -125,8 +125,20 @@ class AGI_AsteriskManager {
         
         $action = "Action: Originate\r\n";
         $action .= "Channel: $channel\r\n";
-        $action .= "Context: $context\r\n";
-        $action .= "Priority: 1\r\n";
+        
+        // If using Application, don't send Context/Extension/Priority
+        if ($application) {
+            $action .= "Application: $application\r\n";
+            if ($data) {
+                $action .= "Data: $data\r\n";
+            }
+        } else {
+            // If using Context/Extension/Priority
+            if ($context) $action .= "Context: $context\r\n";
+            if ($exten) $action .= "Exten: $exten\r\n";
+            if ($priority) $action .= "Priority: $priority\r\n";
+        }
+        
         $action .= "Timeout: $timeout\r\n";
         $action .= "CallerID: $callerid\r\n";
         $action .= "Async: " . ($async ? 'true' : 'false') . "\r\n";

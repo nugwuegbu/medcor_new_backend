@@ -20,8 +20,8 @@ class PredictiveDialer {
             'connect_timeout' => 10,
             'read_timeout' => 10,
             'agent_context' => 'from-internal',
-            'outbound_context' => 'from-internal',
-            'trunk' => 'SIP/trunk',
+            'outbound_context' => 'from-trunk',
+            'trunk' => 'SIP/GoIP1',
             'campaign_id' => 'campaign_001',
             'dial_ratio' => 1.5, // Dial 1.5 calls per available agent
             'answer_timeout' => 30000, // 30 seconds
@@ -53,7 +53,7 @@ class PredictiveDialer {
     /**
      * Get available agents from queue
      */
-    public function getAvailableAgents($queue = 'iRechargeInboundCalls') {
+    public function getAvailableAgents($queue = '6001') {
         $response = $this->manager->command("queue show $queue");
         $agents = [];
         
@@ -138,13 +138,13 @@ class PredictiveDialer {
         
         $response = $this->manager->originate(
             $this->config['trunk'] . '/' . $contact['number'],
-            null, // No direct extension, will use Local channel
-            $this->config['outbound_context'],
-            'predictive-connect', // Priority label in dialplan
-            null, // No initial application
-            null, // No initial data
+            null, // No extension when using application
+            null, // No context when using application
+            null, // No priority when using application
+            'Queue', // Application - put call directly into queue
+            '6001,t', // Data - queue name with 't' option for transfer
             $this->config['answer_timeout'],
-            'Predictive Dialer Call to ' . $contact['name'],
+            'Predictive Dialer <' . $contact['number'] . '>',
             $variables,
             null, // Account
             true, // Async
