@@ -11,7 +11,8 @@ const verifyMedCorAdmin = async (req: any, res: any, next: any) => {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const jwtSecret = process.env.JWT_SECRET || 'medcor-admin-secret-dev-only';
+    const decoded = jwt.verify(token, jwtSecret) as any;
     
     // Check if user is a MedCor super admin
     if (decoded.role !== 'superadmin') {
@@ -152,13 +153,14 @@ router.post('/admin/superadmin/login', async (req, res) => {
     }
 
     // Create a super admin token
+    const jwtSecret = process.env.JWT_SECRET || 'medcor-admin-secret-dev-only';
     const token = jwt.sign(
       { 
         userId: 'superadmin',
         email: 'superadmin@medcor.ai',
         role: 'superadmin'
       },
-      process.env.JWT_SECRET!,
+      jwtSecret,
       { expiresIn: '24h' }
     );
 
