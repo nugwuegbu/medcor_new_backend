@@ -13,6 +13,8 @@ import SettingsPage from "@/pages/settings";
 import Login from "@/pages/login";
 import AdminLogin from "@/pages/admin-login";
 import AdminDashboard from "@/pages/admin-dashboard";
+import MedCorAdminDashboard from "@/pages/MedCorAdminDashboard";
+import MedCorAdminLogin from "@/pages/MedCorAdminLogin";
 import Pricing from "@/pages/pricing";
 import Signup from "@/pages/signup";
 import Payment from "@/pages/payment";
@@ -89,6 +91,10 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route path="/admin/login" component={AdminLogin} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
+        <Route path="/medcor-admin/login" component={MedCorAdminLogin} />
+        <Route path="/medcor-admin">
+          <MedCorAdminDashboard />
+        </Route>
         <Route path="/chat" component={Chat} />
         <Route path="/doctors">
           <ProtectedRoute onUnauthorized={() => setShowAuthModal(true)}>

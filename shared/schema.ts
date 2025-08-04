@@ -20,7 +20,8 @@ export const users = pgTable("users", {
   oauthProviderId: text("oauth_provider_id"),
   lastLogin: timestamp("last_login"),
   isNewUser: boolean("is_new_user").notNull().default(true),
-  role: text("role").notNull().default("patient"), // patient, doctor, admin, clinic
+  role: text("role").notNull().default("patient"), // patient, doctor, admin, clinic, superadmin
+  tenantId: integer("tenant_id").references(() => tenants.id),
   isActive: boolean("is_active").notNull().default(true),
   emailVerified: boolean("email_verified").notNull().default(false),
   resetPasswordToken: text("reset_password_token"),
@@ -136,6 +137,39 @@ export const clinics = pgTable("clinics", {
   agreeToPrivacy: boolean("agree_to_privacy").notNull().default(false),
   subscribeToUpdates: boolean("subscribe_to_updates").notNull().default(true),
   isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Multi-tenant tables
+export const tenants = pgTable("tenants", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  subdomain: text("subdomain").notNull().unique(),
+  domain: text("domain"),
+  status: text("status").notNull().default("active"), // active, inactive, suspended
+  settings: json("settings").notNull().default({}),
+  branding: json("branding").notNull().default({}),
+  features: json("features").notNull().default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").notNull().references(() => tenants.id),
+  plan: text("plan").notNull(), // basic, professional, enterprise
+  status: text("status").notNull().default("active"), // active, trial, cancelled, expired
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  trialEndsAt: timestamp("trial_ends_at"),
+  billingCycle: text("billing_cycle").notNull().default("monthly"), // monthly, yearly
+  amount: integer("amount").notNull(), // in cents
+  currency: text("currency").notNull().default("USD"),
+  lastPaymentDate: timestamp("last_payment_date"),
+  nextPaymentDate: timestamp("next_payment_date"),
+  cancelledAt: timestamp("cancelled_at"),
+  metadata: json("metadata").notNull().default({}),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
