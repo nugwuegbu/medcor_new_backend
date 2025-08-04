@@ -12,14 +12,25 @@ export async function apiRequest(
   url: string, 
   options: RequestInit = {}
 ): Promise<any> {
-  const { method = "GET", headers = {}, ...restOptions } = options;
+  const { method = "GET", headers: customHeaders = {}, ...restOptions } = options;
+  
+  // Check for admin token if accessing admin routes
+  const isAdminRoute = url.includes('/admin/');
+  const adminToken = localStorage.getItem('medcor_admin_token');
+  
+  const finalHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    ...(customHeaders as Record<string, string>),
+  };
+  
+  // Add admin token for admin routes
+  if (isAdminRoute && adminToken) {
+    (finalHeaders as Record<string, string>)['Authorization'] = `Bearer ${adminToken}`;
+  }
   
   const res = await fetch(url, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
+    headers: finalHeaders,
     credentials: "include",
     ...restOptions,
   });
@@ -51,8 +62,22 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const url = queryKey[0] as string;
+    
+    // Check for admin token if accessing admin routes
+    const isAdminRoute = url.includes('/admin/');
+    const adminToken = localStorage.getItem('medcor_admin_token');
+    
+    const headers: Record<string, string> = {};
+    
+    // Add admin token for admin routes
+    if (isAdminRoute && adminToken) {
+      headers['Authorization'] = `Bearer ${adminToken}`;
+    }
+    
+    const res = await fetch(url, {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
