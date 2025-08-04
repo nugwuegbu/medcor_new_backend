@@ -6,6 +6,7 @@ import { videoStreamRef, ensureCameraReady } from "../utils/camera-manager";
 interface HairExtensionWidgetProps {
   isOpen: boolean;
   onClose: () => void;
+  isEmbedded?: boolean;
 }
 
 interface HairManipulationOptions {
@@ -34,7 +35,7 @@ interface HairExtensionCategory {
   styles: HairExtensionStyle[];
 }
 
-const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClose }) => {
+const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClose, isEmbedded = false }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [categories, setCategories] = useState<HairExtensionCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -383,34 +384,36 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+  // Wrapper logic based on isEmbedded prop
+  if (!isOpen && !isEmbedded) return null;
+  
+  const content = (
+    <div className={isEmbedded ? "h-full bg-white/95 backdrop-blur-md overflow-hidden" : "bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"}>
         {/* Hidden canvas for photo capture */}
         <canvas ref={canvasRef} className="hidden" />
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Crown className="h-8 w-8" />
-              <div>
-                <h2 className="text-2xl font-bold">AI Hair Extension</h2>
-                <p className="text-purple-100">Transform your look with virtual hair extensions</p>
+        {/* Header - Only show when not embedded */}
+        {!isEmbedded && (
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Crown className="h-8 w-8" />
+                <div>
+                  <h2 className="text-2xl font-bold">AI Hair Extension</h2>
+                  <p className="text-purple-100">Transform your look with virtual hair extensions</p>
+                </div>
               </div>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
           </div>
-        </div>
+        )}
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+        <div className={`${isEmbedded ? 'p-4' : 'p-6'} overflow-y-auto ${isEmbedded ? 'h-full' : 'max-h-[calc(90vh-120px)]'}`}>
           {/* Step 1: Upload Image */}
           {currentStep === 'upload' && (
             <div className="space-y-6">
@@ -788,6 +791,17 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
           )}
         </div>
       </div>
+  );
+  
+  // Return content based on isEmbedded prop
+  if (isEmbedded) {
+    return content;
+  }
+  
+  // Wrap in overlay if not embedded
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      {content}
     </div>
   );
 };

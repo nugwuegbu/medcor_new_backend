@@ -1719,7 +1719,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                         setShowHairExtensionWidget(true);
                         setSelectedMenuItem("hair-extension"); 
                         setShowChatInterface(false);
-                        setIsMinimized(true);
+                        setIsMinimized(false);
                       } catch (error) {
                         console.error("Error opening Hair Extension:", error);
                       }
@@ -3758,14 +3758,49 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
           </div>
         )}
 
-        {/* Hair Extension Widget */}
-        <HairExtensionWidget 
-          isOpen={showHairExtensionWidget}
-          onClose={() => {
-            setShowHairExtensionWidget(false);
-            setSelectedMenuItem(null);
-          }}
-        />
+        {/* Hair Extension View - Full chat widget structure */}
+        {showHairExtensionWidget && (
+          <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-purple-100/95 to-pink-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
+            {/* Header - Hair Extension */}
+            <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
+              <div className="flex items-center gap-2">
+                <Crown className="h-4 w-4 text-purple-600" />
+                <span className="text-gray-700 text-sm">Hair Extension</span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <span className="text-purple-600 font-bold text-lg">medcor</span>
+                <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Back Button */}
+            <button
+              onClick={() => {
+                setShowHairExtensionWidget(false);
+                setSelectedMenuItem(null);
+              }}
+              className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="font-medium text-sm">Back</span>
+            </button>
+            
+            {/* Hair Extension Content */}
+            <div className="flex-1 pt-16 overflow-hidden">
+              <HairExtensionWidget 
+                isOpen={true}
+                onClose={() => {
+                  setShowHairExtensionWidget(false);
+                  setSelectedMenuItem(null);
+                }}
+                isEmbedded={true}
+              />
+            </div>
+          </div>
+        )}
     </div>
     </>
   );
