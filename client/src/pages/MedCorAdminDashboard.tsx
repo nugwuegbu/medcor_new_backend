@@ -98,20 +98,20 @@ const MedCorAdminDashboard: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedHospital, setSelectedHospital] = useState<string | null>(null);
 
-  // Fetch dashboard statistics
+  // Fetch dashboard statistics from superadmin API
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery<DashboardStats>({
-    queryKey: ['/api/admin/stats'],
+    queryKey: ['/api/superadmin/stats'],
   });
 
-  // Fetch tenants
+  // Fetch tenants from superadmin API
   const { data: tenants, isLoading: tenantsLoading, refetch: refetchTenants } = useQuery<TenantSummary[]>({
-    queryKey: ['/api/admin/tenants', searchTerm, statusFilter],
+    queryKey: ['/api/superadmin/tenants', searchTerm, statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       if (statusFilter !== 'all') params.append('status', statusFilter);
       
-      return apiRequest(`/api/admin/tenants?${params.toString()}`);
+      return apiRequest(`/api/superadmin/tenants?${params.toString()}`);
     },
   });
 

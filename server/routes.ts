@@ -30,6 +30,8 @@ import crypto from "crypto";
 import { sendSkinAnalysis } from "./skin-analysis.js";
 import hairExtensionRouter from "./hair-extension-api";
 import adminRouter from "./admin-routes-mock";
+import djangoAuthRouter from "./django-auth-routes";
+import superadminRouter from "./superadmin-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication
@@ -38,6 +40,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register admin routes
   app.use("/api", adminRouter);
+  
+  // Register Django backend proxy routes
+  app.use("/api", djangoAuthRouter);
+  
+  // Register MedCor superadmin routes
+  app.use("/api", superadminRouter);
 
   // Create default accounts on startup
   AuthService.createDefaultAccounts().catch(console.error);

@@ -15,6 +15,8 @@ import AdminLogin from "@/pages/admin-login";
 import AdminDashboard from "@/pages/admin-dashboard";
 import MedCorAdminDashboard from "@/pages/MedCorAdminDashboard";
 import MedCorAdminLogin from "@/pages/MedCorAdminLogin";
+import DoctorDashboard from "@/pages/DoctorDashboard";
+import StaffDashboard from "@/pages/StaffDashboard";
 import Pricing from "@/pages/pricing";
 import Signup from "@/pages/signup";
 import Payment from "@/pages/payment";
@@ -94,6 +96,12 @@ function Router() {
         <Route path="/medcor-admin/login" component={MedCorAdminLogin} />
         <Route path="/medcor-admin">
           <MedCorAdminDashboard />
+        </Route>
+        <Route path="/doctor/dashboard">
+          <DoctorDashboard />
+        </Route>
+        <Route path="/staff/dashboard">
+          <StaffDashboard />
         </Route>
         <Route path="/chat" component={Chat} />
         <Route path="/doctors">
