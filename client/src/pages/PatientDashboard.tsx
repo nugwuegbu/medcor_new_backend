@@ -263,9 +263,9 @@ const PatientDashboard: React.FC = () => {
   });
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('medcor_token');
     localStorage.removeItem('user');
-    setLocation('/login');
+    setLocation('/patient/login');
   };
 
   // Navigation items

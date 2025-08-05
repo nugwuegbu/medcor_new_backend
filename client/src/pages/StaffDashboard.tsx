@@ -197,9 +197,9 @@ const StaffDashboard: React.FC = () => {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('medcor_token');
     localStorage.removeItem('user');
-    setLocation('/login');
+    setLocation('/clinic/login');
   };
 
   const refreshData = () => {
