@@ -411,9 +411,9 @@ const EnhancedDoctorDashboard: React.FC = () => {
   });
 
   const handleLogout = () => {
-    localStorage.removeItem('medcor_token');
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setLocation('/doctor/login');
+    setLocation('/login');
   };
 
   const handleConfirmAction = () => {

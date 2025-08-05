@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LoginData, SignupData, loginSchema, signupSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +23,6 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
   
   // Auto-detect role from URL
   const detectRoleFromURL = () => {
@@ -33,21 +31,6 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
     if (path.includes('/clinic')) return 'clinic';
     if (path.includes('/admin')) return 'admin';
     return 'patient'; // Default to patient
-  };
-
-  // Get dashboard URL based on user role
-  const getDashboardURL = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return '/admin/dashboard';
-      case 'doctor':
-        return '/doctor/dashboard';
-      case 'clinic':
-        return '/clinic/dashboard';
-      case 'patient':
-      default:
-        return '/patient/dashboard';
-    }
   };
 
   const loginForm = useForm<LoginData>({
@@ -85,9 +68,6 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         onAuthSuccess(response.token, response.user);
         onClose();
         queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-        // Redirect to appropriate dashboard based on user role
-        const dashboardURL = getDashboardURL(response.user.role);
-        setLocation(dashboardURL);
       }
     },
     onError: (error: any) => {
@@ -111,9 +91,6 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         onAuthSuccess(response.token, response.user);
         onClose();
         queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-        // Redirect to appropriate dashboard based on user role
-        const dashboardURL = getDashboardURL(response.user.role);
-        setLocation(dashboardURL);
       }
     },
     onError: (error: any) => {
