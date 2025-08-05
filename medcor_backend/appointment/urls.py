@@ -7,6 +7,4 @@ router.register('slots', SlotViewSet, basename='slot')
 router.register('slot-exclusions', SlotExclusionViewSet, basename='slotexclusion')
 router.register('appointments', AppointmentViewSet, basename='appointment')
 
-urlpatterns = [
-    path('api/appointments/', include(router.urls)),
-]
+urlpatterns = router.urls

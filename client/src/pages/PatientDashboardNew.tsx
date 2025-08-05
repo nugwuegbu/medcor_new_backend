@@ -139,8 +139,9 @@ const PatientDashboard: React.FC = () => {
       });
       console.log('Fetched appointments:', data);
       console.log('Current user ID:', user?.id);
-      // Filter appointments for current patient
-      const filtered = Array.isArray(data) ? data : [];
+      // Handle paginated response structure
+      const appointmentsList = data?.results || data;
+      const filtered = Array.isArray(appointmentsList) ? appointmentsList : [];
       console.log('Filtered appointments:', filtered);
       return filtered;
     },
@@ -155,7 +156,9 @@ const PatientDashboard: React.FC = () => {
         headers: getAuthHeaders()
       });
       console.log('Upcoming appointments:', data);
-      return Array.isArray(data) ? data : [];
+      // Handle both array and paginated response
+      const appointmentsList = data?.results || data;
+      return Array.isArray(appointmentsList) ? appointmentsList : [];
     },
     enabled: !!user
   });
@@ -178,7 +181,10 @@ const PatientDashboard: React.FC = () => {
       const data = await apiRequest('/api/treatments/', {
         headers: getAuthHeaders()
       });
-      return Array.isArray(data) ? data : [];
+      console.log('Fetched treatments:', data);
+      // Handle paginated response structure
+      const treatmentsList = data?.results || data;
+      return Array.isArray(treatmentsList) ? treatmentsList : [];
     }
   });
 
@@ -382,7 +388,10 @@ const PatientDashboard: React.FC = () => {
           ))}
         </nav>
 
-        <div className="absolute bottom-4 left-4 right-4">
+        <div className={cn(
+          "absolute bottom-4 px-4",
+          sidebarOpen ? "left-0 right-0" : "left-2 right-2"
+        )}>
           {sidebarOpen ? (
             <Button
               variant="outline"
@@ -397,7 +406,7 @@ const PatientDashboard: React.FC = () => {
               variant="outline"
               size="icon"
               onClick={handleLogout}
-              className="w-full"
+              className="w-10 h-10"
             >
               <LogOut className="h-4 w-4" />
             </Button>
