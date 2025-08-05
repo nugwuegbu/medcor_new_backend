@@ -4,12 +4,12 @@ import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
-const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000';
+const DJANGO_API_URL = process.env.DJANGO_API_URL || 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
 
 // Login endpoint that proxies to Django
 router.post('/auth/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     // Forward request to Django backend
     const response = await fetch(`${DJANGO_API_URL}/api/auth/login/`, {
@@ -17,7 +17,7 @@ router.post('/auth/login', async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }),
     });
 
     const data: any = await response.json();
@@ -77,7 +77,7 @@ router.get('/auth/profile', async (req, res) => {
     }
 
     // Forward request to Django
-    const response = await fetch(`${DJANGO_API_URL}/api/auth/profile/`, {
+    const response = await fetch(`${DJANGO_API_URL}/api/auth/user/`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -106,7 +106,7 @@ router.get('/auth/me', async (req, res) => {
     }
 
     // Forward request to Django to get current user
-    const response = await fetch(`${DJANGO_API_URL}/api/auth/profile/`, {
+    const response = await fetch(`${DJANGO_API_URL}/api/auth/user/`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },

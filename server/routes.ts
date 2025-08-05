@@ -42,8 +42,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register admin routes
   app.use("/api", adminRouter);
   
-  // Register Django backend proxy routes
-  app.use("/api", djangoAuthRouter);
+  // Register Django backend proxy routes (temporarily disabled for login)
+  // app.use("/api", djangoAuthRouter);
   
   // Register MedCor superadmin routes
   app.use("/api", superadminRouter);

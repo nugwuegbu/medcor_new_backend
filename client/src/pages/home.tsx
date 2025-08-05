@@ -1,13 +1,22 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageCircle, Heart, Sparkles, Users, Calendar, BookOpen, User } from "lucide-react";
+import { MessageCircle, Heart, Sparkles, Users, Calendar, BookOpen, User, LogIn } from "lucide-react";
 import { Link } from "wouter";
 import FloatingChatButton from "@/components/floating-chat-button";
 import MedcorChatModal from "@/components/medcor-chat-modal";
+import { AuthModal } from "@/components/auth-modal";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { login } = useAuth();
+
+  const handleAuthSuccess = (token: string, user: any) => {
+    login(token, user);
+    setShowAuthModal(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -50,6 +59,15 @@ export default function Home() {
                   Book Appointment
                 </Button>
               </Link>
+              <Button 
+                onClick={() => setShowAuthModal(true)}
+                size="lg" 
+                variant="outline" 
+                className="border-purple-600 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg"
+              >
+                <LogIn className="h-5 w-5 mr-2" />
+                Login / Sign Up
+              </Button>
             </div>
           </div>
         </div>
@@ -145,6 +163,13 @@ export default function Home() {
       <MedcorChatModal 
         isOpen={showModal} 
         onClose={() => setShowModal(false)} 
+      />
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
       />
     </div>
   );
