@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageCircle, Heart, Sparkles, Users, Calendar, BookOpen, User, LogIn } from "lucide-react";
@@ -11,11 +11,28 @@ import { useAuth } from "@/hooks/useAuth";
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.role === 'patient') {
+        window.location.href = '/patient-dashboard';
+      } else if (user.role === 'doctor') {
+        window.location.href = '/doctor-dashboard';
+      }
+    }
+  }, [isAuthenticated, user]);
 
   const handleAuthSuccess = (token: string, user: any) => {
     login(token, user);
     setShowAuthModal(false);
+    // Redirect to appropriate dashboard based on role
+    if (user?.role === 'patient') {
+      window.location.href = '/patient-dashboard';
+    } else if (user?.role === 'doctor') {
+      window.location.href = '/doctor-dashboard';
+    }
   };
 
   return (
