@@ -143,7 +143,28 @@ function Router() {
       <AuthModal 
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={() => setShowAuthModal(false)}
+        onAuthSuccess={(token, user) => {
+          setShowAuthModal(false);
+          // Redirect based on user role
+          if (user) {
+            switch (user.role) {
+              case 'doctor':
+                window.location.href = '/doctor/dashboard';
+                break;
+              case 'patient':
+                window.location.href = '/patient/dashboard';
+                break;
+              case 'admin':
+                window.location.href = '/admin/dashboard';
+                break;
+              case 'clinic':
+                window.location.href = '/dashboard';
+                break;
+              default:
+                window.location.href = '/';
+            }
+          }
+        }}
       />
     </>
   );
