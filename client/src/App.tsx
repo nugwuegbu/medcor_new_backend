@@ -17,7 +17,7 @@ import MedCorAdminDashboard from "@/pages/MedCorAdminDashboard";
 import MedCorAdminLogin from "@/pages/MedCorAdminLogin";
 import DoctorDashboard from "@/pages/DoctorDashboard";
 import StaffDashboard from "@/pages/StaffDashboard";
-import PatientDashboard from "@/pages/PatientDashboard";
+import PatientDashboard from "@/pages/PatientDashboardNew";
 import EnhancedDoctorDashboard from "@/pages/EnhancedDoctorDashboard";
 import Pricing from "@/pages/pricing";
 import Signup from "@/pages/signup";
