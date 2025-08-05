@@ -36,6 +36,8 @@ Preferred communication style: Simple, everyday language.
 - **Multi-Tenant System**: Comprehensive management of tenants, domains, users (Patient, Doctor, Nurse roles), and customizable branding per tenant. Subdomain routing for tenant-specific access.
 - **Authentication System**: JWT-based authentication with role-based access control (Admin, Clinic, Doctor, Patient roles), secure password hashing, OAuth integration (Google, Apple, Microsoft).
 - **Subscription Management**: Subscription plans, payment tracking, and usage analytics.
+- **Patient Dashboard** (NEW - Jan 2025): Comprehensive patient portal with appointment management, medical records viewing, treatment history, prescription tracking, and real-time doctor availability. Full Django API integration for appointments, treatments, and medical records.
+- **Enhanced Doctor Dashboard** (NEW - Jan 2025): Advanced doctor portal featuring patient management, appointment scheduling with status tracking (scheduled/in-progress/completed), treatment recording, prescription issuance, analytics dashboard, and patient medical history access. Integrated with Django backend for real-time data synchronization.
 
 ## External Dependencies
 ### Core Services

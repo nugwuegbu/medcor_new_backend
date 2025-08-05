@@ -32,6 +32,7 @@ import hairExtensionRouter from "./hair-extension-api";
 import adminRouter from "./admin-routes-mock";
 import djangoAuthRouter from "./django-auth-routes";
 import superadminRouter from "./superadmin-routes";
+import doctorPatientRouter from "./doctor-patient-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication
@@ -46,6 +47,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register MedCor superadmin routes
   app.use("/api", superadminRouter);
+  
+  // Register doctor and patient specific routes
+  app.use("/api", doctorPatientRouter);
 
   // Create default accounts on startup
   AuthService.createDefaultAccounts().catch(console.error);

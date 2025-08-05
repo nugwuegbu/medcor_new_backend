@@ -96,6 +96,34 @@ router.get('/auth/profile', async (req, res) => {
   }
 });
 
+// Get current user (me) endpoint
+router.get('/auth/me', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    // Forward request to Django to get current user
+    const response = await fetch(`${DJANGO_API_URL}/api/auth/profile/`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      res.json(data);
+    } else {
+      res.status(401).json({ error: 'Invalid token', message: 'Authentication failed' });
+    }
+  } catch (error) {
+    console.error('Get current user error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Verify token endpoint
 router.get('/auth/verify', async (req, res) => {
   try {

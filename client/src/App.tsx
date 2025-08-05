@@ -17,6 +17,8 @@ import MedCorAdminDashboard from "@/pages/MedCorAdminDashboard";
 import MedCorAdminLogin from "@/pages/MedCorAdminLogin";
 import DoctorDashboard from "@/pages/DoctorDashboard";
 import StaffDashboard from "@/pages/StaffDashboard";
+import PatientDashboard from "@/pages/PatientDashboard";
+import EnhancedDoctorDashboard from "@/pages/EnhancedDoctorDashboard";
 import Pricing from "@/pages/pricing";
 import Signup from "@/pages/signup";
 import Payment from "@/pages/payment";
@@ -98,7 +100,20 @@ function Router() {
           <MedCorAdminDashboard />
         </Route>
         <Route path="/doctor/dashboard">
-          <DoctorDashboard />
+          <ProtectedRoute 
+            allowedRoles={["doctor"]}
+            onUnauthorized={() => setShowAuthModal(true)}
+          >
+            <EnhancedDoctorDashboard />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/patient/dashboard">
+          <ProtectedRoute 
+            allowedRoles={["patient"]}
+            onUnauthorized={() => setShowAuthModal(true)}
+          >
+            <PatientDashboard />
+          </ProtectedRoute>
         </Route>
         <Route path="/staff/dashboard">
           <StaffDashboard />
