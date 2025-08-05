@@ -23,14 +23,19 @@ router.post('/auth/login', async (req, res) => {
     const data: any = await response.json();
 
     if (response.ok) {
-      // Django returns the user data and token
+      // Format response to match frontend expectations
       res.json({
+        success: true,
+        message: 'Login successful',
         token: data.access,
         user: data.user,
         refresh: data.refresh
       });
     } else {
-      res.status(response.status).json(data);
+      res.status(response.status).json({
+        success: false,
+        error: data.detail || data.error || 'Login failed'
+      });
     }
   } catch (error) {
     console.error('Login error:', error);
@@ -114,7 +119,10 @@ router.get('/auth/me', async (req, res) => {
 
     if (response.ok) {
       const data = await response.json();
-      res.json(data);
+      res.json({
+        success: true,
+        user: data
+      });
     } else {
       res.status(401).json({ error: 'Invalid token', message: 'Authentication failed' });
     }

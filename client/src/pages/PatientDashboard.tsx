@@ -109,9 +109,9 @@ const PatientDashboard: React.FC = () => {
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [bookingReason, setBookingReason] = useState('');
 
-  // Get auth token
+  // Get auth token from correct storage location
   const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('medcor_token');
     const headers: Record<string, string> = {};
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -129,53 +129,69 @@ const PatientDashboard: React.FC = () => {
     }
   });
 
-  // Fetch upcoming appointments
-  const { data: upcomingAppointments, isLoading: appointmentsLoading, refetch: refetchAppointments } = useQuery<Appointment[]>({
-    queryKey: ['/api/appointments/appointments/upcoming'],
+  // Fetch all appointments
+  const { data: allAppointments = [], isLoading: appointmentsLoading, refetch: refetchAppointments } = useQuery<Appointment[]>({
+    queryKey: ['/api/appointments/appointments'],
     queryFn: async () => {
-      return apiRequest('/api/appointments/appointments/upcoming', {
+      return apiRequest('/api/appointments/appointments/', {
         headers: getAuthHeaders()
       });
     }
   });
 
-  // Fetch appointment history
-  const { data: appointmentHistory, isLoading: historyLoading } = useQuery<Appointment[]>({
-    queryKey: ['/api/appointments/appointments/history'],
-    queryFn: async () => {
-      return apiRequest('/api/appointments/appointments/history', {
-        headers: getAuthHeaders()
-      });
-    }
-  });
+  // Filter appointments for upcoming and history
+  const upcomingAppointments = allAppointments.filter(apt => 
+    apt.status === 'scheduled' && new Date(apt.appointment_date) >= new Date()
+  );
+  const appointmentHistory = allAppointments.filter(apt => 
+    apt.status === 'completed' || new Date(apt.appointment_date) < new Date()
+  );
+  const historyLoading = appointmentsLoading;
 
   // Fetch treatments
-  const { data: treatments, isLoading: treatmentsLoading } = useQuery<Treatment[]>({
-    queryKey: ['/api/treatments/my'],
+  const { data: treatments = [], isLoading: treatmentsLoading } = useQuery<Treatment[]>({
+    queryKey: ['/api/treatments'],
     queryFn: async () => {
-      return apiRequest('/api/treatments/my', {
+      return apiRequest('/api/treatments/', {
         headers: getAuthHeaders()
       });
     }
   });
 
-  // Fetch medical records
-  const { data: medicalRecords, isLoading: recordsLoading } = useQuery<MedicalRecord[]>({
-    queryKey: ['/api/medical-records/my'],
+  // Fetch medical records (using treatments as medical records)
+  const { data: medicalRecords = [], isLoading: recordsLoading } = useQuery<MedicalRecord[]>({
+    queryKey: ['/api/treatments', 'medical-records'],
     queryFn: async () => {
-      return apiRequest('/api/medical-records/my', {
+      // Using treatments endpoint as medical records
+      const treatmentData = await apiRequest('/api/treatments/', {
         headers: getAuthHeaders()
       });
+      // Transform treatments to medical records format
+      return treatmentData.map((t: any) => ({
+        id: t.id,
+        record_type: 'Treatment',
+        description: t.diagnosis,
+        created_at: t.created_at,
+        doctor: t.doctor
+      }));
     }
   });
 
   // Fetch available doctors
-  const { data: doctors, isLoading: doctorsLoading } = useQuery<Doctor[]>({
-    queryKey: ['/api/doctors/available'],
+  const { data: doctors = [], isLoading: doctorsLoading } = useQuery<Doctor[]>({
+    queryKey: ['/api/tenants/users/doctors'],
     queryFn: async () => {
-      return apiRequest('/api/doctors/available', {
+      const doctorData = await apiRequest('/api/tenants/users/doctors/', {
         headers: getAuthHeaders()
       });
+      // Transform to expected format
+      return doctorData.map((d: any) => ({
+        id: d.id,
+        first_name: d.first_name || d.username,
+        last_name: d.last_name || '',
+        specialization: d.specialization || 'General Practice',
+        is_available: true
+      }));
     }
   });
 
@@ -187,9 +203,12 @@ const PatientDashboard: React.FC = () => {
       appointment_time: string;
       reason: string;
     }) => {
-      return apiRequest('/api/appointments/appointments', {
+      return apiRequest('/api/appointments/appointments/', {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(data)
       });
     },
@@ -218,9 +237,13 @@ const PatientDashboard: React.FC = () => {
   // Cancel appointment mutation
   const cancelAppointment = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/appointments/appointments/${id}/cancel`, {
-        method: 'POST',
-        headers: getAuthHeaders()
+      return apiRequest(`/api/appointments/appointments/${id}/`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'cancelled' })
       });
     },
     onSuccess: () => {
@@ -323,12 +346,12 @@ const PatientDashboard: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start gap-2 hover:bg-gray-100">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={currentUser?.profile_image_url} />
-                  <AvatarFallback>{currentUser?.first_name?.[0]}{currentUser?.last_name?.[0]}</AvatarFallback>
+                  <AvatarImage src={currentUser?.user?.profile_image_url} />
+                  <AvatarFallback>{currentUser?.user?.username?.slice(0, 2).toUpperCase() || 'PA'}</AvatarFallback>
                 </Avatar>
                 {!sidebarCollapsed && (
                   <div className="text-left">
-                    <p className="text-sm font-medium">{currentUser?.first_name} {currentUser?.last_name}</p>
+                    <p className="text-sm font-medium">{currentUser?.user?.username || 'Patient'}</p>
                     <p className="text-xs text-gray-500">Patient</p>
                   </div>
                 )}
@@ -365,7 +388,7 @@ const PatientDashboard: React.FC = () => {
                 {navigationItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
               </h2>
               <p className="text-sm text-gray-500">
-                Welcome back, {currentUser?.first_name}!
+                Welcome back, {currentUser?.user?.username || 'User'}!
               </p>
             </div>
             <div className="flex items-center gap-4">

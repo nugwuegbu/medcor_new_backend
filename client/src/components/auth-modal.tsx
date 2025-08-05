@@ -23,6 +23,15 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const queryClient = useQueryClient();
+  
+  // Auto-detect role from URL
+  const detectRoleFromURL = () => {
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('/doctor')) return 'doctor';
+    if (path.includes('/clinic')) return 'clinic';
+    if (path.includes('/admin')) return 'admin';
+    return 'patient'; // Default to patient
+  };
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -41,7 +50,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
       confirmPassword: "",
       username: "",
       phoneNumber: "",
-      role: "patient",
+      role: detectRoleFromURL(),
     },
   });
 
@@ -61,6 +70,11 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       }
     },
+    onError: (error: any) => {
+      loginForm.setError("root", {
+        message: "Invalid email or password. Please try again."
+      });
+    },
   });
 
   const signupMutation = useMutation({
@@ -77,6 +91,22 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         onAuthSuccess(response.token, response.user);
         onClose();
         queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      }
+    },
+    onError: (error: any) => {
+      const errorMessage = error.message || "Signup failed";
+      if (errorMessage.includes("already exists")) {
+        signupForm.setError("email", {
+          message: "This email is already registered"
+        });
+      } else if (errorMessage.includes("Username already taken")) {
+        signupForm.setError("username", {
+          message: "This username is already taken"
+        });
+      } else {
+        signupForm.setError("root", {
+          message: errorMessage
+        });
       }
     },
   });
@@ -166,10 +196,10 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
                   )}
                 </div>
 
-                {loginMutation.error && (
+                {loginForm.formState.errors.root && (
                   <Alert variant="destructive">
                     <AlertDescription>
-                      {(loginMutation.error as any)?.error || "Login failed"}
+                      {loginForm.formState.errors.root.message}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -271,29 +301,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-role">Role</Label>
-                  <Select
-                    onValueChange={(value) => signupForm.setValue("role", value as any)}
-                    defaultValue="patient"
-                  >
-                    <SelectTrigger>
-                      <Building className="h-4 w-4 mr-2 text-gray-400" />
-                      <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="patient">Patient</SelectItem>
-                      <SelectItem value="doctor">Doctor</SelectItem>
-                      <SelectItem value="clinic">Clinic Staff</SelectItem>
-                      <SelectItem value="admin">Administrator</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {signupForm.formState.errors.role && (
-                    <p className="text-sm text-red-500">
-                      {signupForm.formState.errors.role.message}
-                    </p>
-                  )}
-                </div>
+
 
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
@@ -351,10 +359,10 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
                   )}
                 </div>
 
-                {signupMutation.error && (
+                {signupForm.formState.errors.root && (
                   <Alert variant="destructive">
                     <AlertDescription>
-                      {(signupMutation.error as any)?.error || "Signup failed"}
+                      {signupForm.formState.errors.root.message}
                     </AlertDescription>
                   </Alert>
                 )}
