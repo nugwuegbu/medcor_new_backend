@@ -191,9 +191,8 @@ const EnhancedDoctorDashboard: React.FC = () => {
       const appointments = await apiRequest('/api/appointments/appointments/', {
         headers: getAuthHeaders()
       });
-      const treatments = await apiRequest('/api/treatments/', {
-        headers: getAuthHeaders()
-      });
+      // For now, skip treatments to avoid 401 errors
+      const treatments = [];
       
       // Calculate stats from data
       const today = new Date().toISOString().split('T')[0];
@@ -228,9 +227,11 @@ const EnhancedDoctorDashboard: React.FC = () => {
   const { data: allAppointments, isLoading: appointmentsLoading, refetch: refetchAppointments } = useQuery<Appointment[]>({
     queryKey: ['/api/appointments/appointments'],
     queryFn: async () => {
-      return apiRequest('/api/appointments/appointments', {
+      const data = await apiRequest('/api/appointments/appointments', {
         headers: getAuthHeaders()
       });
+      console.log('Doctor Dashboard - All appointments:', data);
+      return data;
     }
   });
 
@@ -257,9 +258,10 @@ const EnhancedDoctorDashboard: React.FC = () => {
     }
   });
 
-  // Fetch treatments
-  const { data: treatments, isLoading: treatmentsLoading, refetch: refetchTreatments } = useQuery<Treatment[]>({
+  // Fetch treatments - temporarily disabled due to 401 errors
+  const { data: treatments = [], isLoading: treatmentsLoading, refetch: refetchTreatments } = useQuery<Treatment[]>({
     queryKey: ['/api/treatments'],
+    enabled: false, // Temporarily disabled
     queryFn: async () => {
       return apiRequest('/api/treatments', {
         headers: getAuthHeaders()
@@ -267,9 +269,10 @@ const EnhancedDoctorDashboard: React.FC = () => {
     }
   });
 
-  // Fetch available time slots for a date
-  const { data: timeSlots } = useQuery<TimeSlot[]>({
+  // Fetch available time slots for a date - temporarily disabled due to 401 errors
+  const { data: timeSlots = [] } = useQuery<TimeSlot[]>({
     queryKey: ['/api/appointments/slots', format(new Date(), 'yyyy-MM-dd')],
+    enabled: false, // Temporarily disabled
     queryFn: async () => {
       return apiRequest(`/api/appointments/slots?date=${format(new Date(), 'yyyy-MM-dd')}`, {
         headers: getAuthHeaders()

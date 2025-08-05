@@ -1,6 +1,8 @@
 import express from 'express';
 import fetch from 'node-fetch';
 import jwt from 'jsonwebtoken';
+import { AuthService } from './services/auth';
+import { storage } from './storage';
 
 const router = express.Router();
 
@@ -169,19 +171,45 @@ router.get('/appointments/appointments', async (req, res) => {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    const data: any = await response.json();
-
-    if (response.ok) {
-      res.json(data);
-    } else {
-      res.status(response.status).json(data);
+    // For now, return demo appointments data since Django integration has issues
+    const user = await AuthService.getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid token' });
     }
+
+    // Get appointments from storage
+    const appointments = await storage.getAppointmentsByUser(user.id, user.role);
+    
+    // Transform to expected format with populated doctor/patient data
+    const populatedAppointments = await Promise.all(appointments.map(async (apt) => {
+      const doctor = await storage.getUser(apt.doctorId);
+      const patient = await storage.getUser(apt.patientId);
+      
+      return {
+        id: apt.id,
+        appointment_date: apt.appointmentDate,
+        appointment_time: apt.appointmentTime,
+        reason: apt.reason,
+        status: apt.status,
+        notes: apt.notes,
+        doctor: doctor ? {
+          id: doctor.id,
+          first_name: doctor.name?.split(' ')[0] || doctor.username,
+          last_name: doctor.name?.split(' ')[1] || '',
+          specialization: 'General Practice'
+        } : null,
+        patient: patient ? {
+          id: patient.id,
+          first_name: patient.name?.split(' ')[0] || patient.username,
+          last_name: patient.name?.split(' ')[1] || '',
+          email: patient.email
+        } : null,
+        created_at: apt.createdAt,
+        updated_at: apt.updatedAt
+      };
+    }));
+    
+    res.json(populatedAppointments);
   } catch (error) {
     console.error('Appointments error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -197,19 +225,51 @@ router.get('/appointments/appointments/today', async (req, res) => {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/today/`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    const data: any = await response.json();
-
-    if (response.ok) {
-      res.json(data);
-    } else {
-      res.status(response.status).json(data);
+    // For now, return filtered demo appointments data
+    const user = await AuthService.getUserFromToken(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid token' });
     }
+
+    // Get appointments from storage
+    const appointments = await storage.getAppointmentsByUser(user.id, user.role);
+    
+    // Filter for today's appointments
+    const today = new Date().toISOString().split('T')[0];
+    const todayAppointments = appointments.filter(apt => 
+      apt.appointmentDate === today
+    );
+    
+    // Transform to expected format
+    const populatedAppointments = await Promise.all(todayAppointments.map(async (apt) => {
+      const doctor = await storage.getUser(apt.doctorId);
+      const patient = await storage.getUser(apt.patientId);
+      
+      return {
+        id: apt.id,
+        appointment_date: apt.appointmentDate,
+        appointment_time: apt.appointmentTime,
+        reason: apt.reason,
+        status: apt.status,
+        notes: apt.notes,
+        doctor: doctor ? {
+          id: doctor.id,
+          first_name: doctor.name?.split(' ')[0] || doctor.username,
+          last_name: doctor.name?.split(' ')[1] || '',
+          specialization: 'General Practice'
+        } : null,
+        patient: patient ? {
+          id: patient.id,
+          first_name: patient.name?.split(' ')[0] || patient.username,
+          last_name: patient.name?.split(' ')[1] || '',
+          email: patient.email
+        } : null,
+        created_at: apt.createdAt,
+        updated_at: apt.updatedAt
+      };
+    }));
+    
+    res.json(populatedAppointments);
   } catch (error) {
     console.error('Today appointments error:', error);
     res.status(500).json({ error: 'Internal server error' });

@@ -21,6 +21,7 @@ export interface IStorage {
   getAllAppointments(): Promise<Appointment[]>;
   getAppointment(id: number): Promise<Appointment | undefined>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
+  getAppointmentsByUser(userId: number, role: string): Promise<Appointment[]>;
   
   getChatMessages(sessionId: string): Promise<ChatMessage[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
@@ -405,6 +406,21 @@ export class MemStorage implements IStorage {
     };
     this.appointments.set(id, appointment);
     return appointment;
+  }
+
+  async getAppointmentsByUser(userId: number, role: string): Promise<Appointment[]> {
+    const allAppointments = Array.from(this.appointments.values());
+    
+    if (role === 'doctor') {
+      // Return appointments where the user is the doctor
+      return allAppointments.filter(apt => apt.doctorId === userId);
+    } else if (role === 'patient') {
+      // Return appointments where the user is the patient
+      return allAppointments.filter(apt => apt.patientId === userId);
+    } else {
+      // For admin/clinic roles, return all appointments
+      return allAppointments;
+    }
   }
 
   async getChatMessages(sessionId: string): Promise<ChatMessage[]> {

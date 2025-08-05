@@ -133,9 +133,11 @@ const PatientDashboard: React.FC = () => {
   const { data: allAppointments = [], isLoading: appointmentsLoading, refetch: refetchAppointments } = useQuery<Appointment[]>({
     queryKey: ['/api/appointments/appointments'],
     queryFn: async () => {
-      return apiRequest('/api/appointments/appointments/', {
+      const data = await apiRequest('/api/appointments/appointments/', {
         headers: getAuthHeaders()
       });
+      console.log('Patient Dashboard - All appointments:', data);
+      return data;
     }
   });
 
@@ -148,9 +150,10 @@ const PatientDashboard: React.FC = () => {
   );
   const historyLoading = appointmentsLoading;
 
-  // Fetch treatments
+  // Fetch treatments - temporarily disabled due to 401 errors
   const { data: treatments = [], isLoading: treatmentsLoading } = useQuery<Treatment[]>({
     queryKey: ['/api/treatments'],
+    enabled: false, // Temporarily disabled
     queryFn: async () => {
       return apiRequest('/api/treatments/', {
         headers: getAuthHeaders()
@@ -158,9 +161,10 @@ const PatientDashboard: React.FC = () => {
     }
   });
 
-  // Fetch medical records (using treatments as medical records)
+  // Fetch medical records - temporarily disabled due to 401 errors
   const { data: medicalRecords = [], isLoading: recordsLoading } = useQuery<MedicalRecord[]>({
     queryKey: ['/api/treatments', 'medical-records'],
+    enabled: false, // Temporarily disabled
     queryFn: async () => {
       // Using treatments endpoint as medical records
       const treatmentData = await apiRequest('/api/treatments/', {
