@@ -56,23 +56,27 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginData) => {
-      return apiRequest("/api/auth/login", {
+      return apiRequest("/api/auth/login/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
     },
     onSuccess: (response) => {
-      if (response.success) {
-        localStorage.setItem("medcor_token", response.token);
-        onAuthSuccess(response.token, response.user);
+      // Django returns JWT tokens
+      if (response.access) {
+        localStorage.setItem("medcor_token", response.access);
+        if (response.refresh) {
+          localStorage.setItem("medcor_refresh_token", response.refresh);
+        }
+        onAuthSuccess(response.access, response.user);
         onClose();
         queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       }
     },
     onError: (error: any) => {
       loginForm.setError("root", {
-        message: "Invalid email or password. Please try again."
+        message: error.message || "Invalid email or password. Please try again."
       });
     },
   });

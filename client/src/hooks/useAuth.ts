@@ -1,11 +1,21 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
-import type { User } from "@shared/schema";
+
+interface DjangoUser {
+  id: number;
+  email: string;
+  username: string;
+  role: string;
+  first_name?: string;
+  last_name?: string;
+  is_active: boolean;
+  is_staff: boolean;
+  is_superuser: boolean;
+}
 
 interface AuthResponse {
-  success: boolean;
-  user: User;
+  user: DjangoUser;
 }
 
 export function useAuth() {
@@ -24,7 +34,8 @@ export function useAuth() {
     queryFn: async () => {
       if (!token) throw new Error("No token");
       
-      return apiRequest("/api/auth/me", {
+      // Use Django's profile endpoint
+      return apiRequest("/api/auth/profile/", {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -34,19 +45,20 @@ export function useAuth() {
     },
   });
 
-  const login = (newToken: string, user: User) => {
+  const login = (newToken: string, user: DjangoUser) => {
     localStorage.setItem("medcor_token", newToken);
     setToken(newToken);
-    queryClient.setQueryData(["/api/auth/me"], { success: true, user });
+    queryClient.setQueryData(["/api/auth/me"], { user });
   };
 
   const logout = () => {
     localStorage.removeItem("medcor_token");
+    localStorage.removeItem("medcor_refresh_token");
     setToken(null);
     queryClient.clear();
   };
 
-  const isAuthenticated = !!token && !!authData?.success;
+  const isAuthenticated = !!token && !!authData?.user;
   const user = authData?.user;
 
   return {

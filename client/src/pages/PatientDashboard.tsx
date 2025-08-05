@@ -137,7 +137,7 @@ const PatientDashboard: React.FC = () => {
         headers: getAuthHeaders()
       });
       console.log('Patient Dashboard - All appointments:', data);
-      return data;
+      return Array.isArray(data) ? data : [];
     }
   });
 

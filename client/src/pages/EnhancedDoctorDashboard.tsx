@@ -227,11 +227,11 @@ const EnhancedDoctorDashboard: React.FC = () => {
   const { data: allAppointments, isLoading: appointmentsLoading, refetch: refetchAppointments } = useQuery<Appointment[]>({
     queryKey: ['/api/appointments/appointments'],
     queryFn: async () => {
-      const data = await apiRequest('/api/appointments/appointments', {
+      const data = await apiRequest('/api/appointments/appointments/', {
         headers: getAuthHeaders()
       });
       console.log('Doctor Dashboard - All appointments:', data);
-      return data;
+      return Array.isArray(data) ? data : [];
     }
   });
 

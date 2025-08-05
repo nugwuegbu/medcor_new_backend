@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { API_CONFIG } from "@/config/api";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -7,12 +8,15 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Updated to support custom options including headers
+// Updated to support custom options including headers and Django backend
 export async function apiRequest(
   url: string, 
   options: RequestInit = {}
 ): Promise<any> {
   const { method = "GET", headers: customHeaders = {}, ...restOptions } = options;
+  
+  // Construct full URL if it's a relative path
+  const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url}`;
   
   // Check for tokens
   const isAdminRoute = url.includes('/admin/');
@@ -32,7 +36,7 @@ export async function apiRequest(
     (finalHeaders as Record<string, string>)['Authorization'] = `Bearer ${authToken}`;
   }
   
-  const res = await fetch(url, {
+  const res = await fetch(fullUrl, {
     method,
     headers: finalHeaders,
     credentials: "include",
@@ -68,6 +72,9 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const url = queryKey[0] as string;
     
+    // Construct full URL if it's a relative path
+    const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url}`;
+    
     // Check for tokens
     const isAdminRoute = url.includes('/admin/');
     const adminToken = localStorage.getItem('medcor_admin_token');
@@ -83,7 +90,7 @@ export const getQueryFn: <T>(options: {
       headers['Authorization'] = `Bearer ${authToken}`;
     }
     
-    const res = await fetch(url, {
+    const res = await fetch(fullUrl, {
       credentials: "include",
       headers,
     });
