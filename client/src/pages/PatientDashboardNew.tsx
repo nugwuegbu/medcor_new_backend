@@ -137,8 +137,12 @@ const PatientDashboard: React.FC = () => {
       const data = await apiRequest('/api/appointments/appointments/', {
         headers: getAuthHeaders()
       });
+      console.log('Fetched appointments:', data);
+      console.log('Current user ID:', user?.id);
       // Filter appointments for current patient
-      return Array.isArray(data) ? data.filter((apt: DjangoAppointment) => apt.patient === user?.id) : [];
+      const filtered = Array.isArray(data) ? data : [];
+      console.log('Filtered appointments:', filtered);
+      return filtered;
     },
     enabled: !!user
   });
@@ -150,22 +154,20 @@ const PatientDashboard: React.FC = () => {
       const data = await apiRequest('/api/appointments/appointments/upcoming/', {
         headers: getAuthHeaders()
       });
-      return Array.isArray(data) ? data.filter((apt: DjangoAppointment) => apt.patient === user?.id) : [];
+      console.log('Upcoming appointments:', data);
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!user
   });
 
-  // Fetch all doctors (those with doctor role)
+  // Fetch all doctors
   const { data: doctors = [] } = useQuery<DjangoDoctor[]>({
-    queryKey: ['/api/auth/users/doctors'],
+    queryKey: ['/api/auth/doctors'],
     queryFn: async () => {
-      const data = await apiRequest('/api/auth/users/', {
+      const data = await apiRequest('/api/auth/doctors/', {
         headers: getAuthHeaders()
       });
-      // Filter only doctors
-      return Array.isArray(data) ? data.filter((user: DjangoDoctor) => 
-        user.email?.includes('doctor') || user.role === 'doctor'
-      ) : [];
+      return Array.isArray(data) ? data : [];
     }
   });
 
@@ -381,14 +383,25 @@ const PatientDashboard: React.FC = () => {
         </nav>
 
         <div className="absolute bottom-4 left-4 right-4">
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-4 w-4" />
-            {sidebarOpen && <span className="ml-2">Logout</span>}
-          </Button>
+          {sidebarOpen ? (
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleLogout}
+              className="w-full"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 

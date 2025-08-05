@@ -4,6 +4,7 @@ Simplified User Authentication URLs for Django Admin Backend
 from django.urls import path
 from . import views
 from . import general_views
+from . import doctor_views
 
 app_name = 'user_auth'
 
@@ -12,6 +13,9 @@ urlpatterns = [
     path('login/', general_views.GeneralLoginAPIView.as_view(), name='general_login'),
     path('me/', general_views.UserProfileAPIView.as_view(), name='user_me'),
     path('profile/', general_views.UserProfileAPIView.as_view(), name='user_profile'),
+    
+    # Doctor list endpoint
+    path('doctors/', doctor_views.doctor_list, name='doctor_list'),
     
     # Admin authentication endpoints
     path('admin/login/', views.AdminLoginAPIView.as_view(), name='admin_login'),
