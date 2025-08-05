@@ -171,9 +171,9 @@ const PatientDashboard: React.FC = () => {
 
   // Fetch treatments
   const { data: treatments = [] } = useQuery<DjangoTreatment[]>({
-    queryKey: ['/api/treatments/treatments'],
+    queryKey: ['/api/treatments'],
     queryFn: async () => {
-      const data = await apiRequest('/api/treatments/treatments/', {
+      const data = await apiRequest('/api/treatments/', {
         headers: getAuthHeaders()
       });
       return Array.isArray(data) ? data : [];
