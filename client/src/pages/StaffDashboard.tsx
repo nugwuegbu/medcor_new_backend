@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,14 @@ import {
   ChevronDown,
   UserPlus,
   Calendar,
-  ClipboardList
+  ClipboardList,
+  UserCog,
+  Grid,
+  List,
+  Edit,
+  Trash,
+  Eye,
+  Stethoscope
 } from 'lucide-react';
 import {
   Select,
@@ -65,6 +72,30 @@ interface Patient {
   date_joined: string;
 }
 
+interface Doctor {
+  id: number;
+  email: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  phone_number?: string;
+  address?: string;
+  role: string;
+  is_staff: boolean;
+  is_active: boolean;
+  is_verified: boolean;
+  created_at?: string;
+  medical_license?: string;
+  specialization?: string;
+  years_of_experience?: number;
+  consultation_fee?: number;
+  available_days?: string[];
+  working_hours?: {
+    start: string;
+    end: string;
+  };
+}
+
 interface Appointment {
   id: number;
   patient: Patient;
@@ -89,6 +120,12 @@ interface AppointmentStats {
   today_count: number;
 }
 
+interface Tenant {
+  id: number;
+  name: string;
+  schema_name: string;
+}
+
 const StaffDashboard: React.FC = () => {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -104,12 +141,54 @@ const StaffDashboard: React.FC = () => {
     appointment_time: '',
     reason: ''
   });
+  
+  // Doctor management states
+  const [doctorViewMode, setDoctorViewMode] = useState<'grid' | 'list'>('grid');
+  const [doctorDialogOpen, setDoctorDialogOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
+  const [doctorForm, setDoctorForm] = useState({
+    email: '',
+    password: '',
+    first_name: '',
+    last_name: '',
+    username: '',
+    phone_number: '',
+    address: '',
+    medical_license: '',
+    specialization: '',
+    years_of_experience: '',
+    consultation_fee: '',
+    emergency_contact: '',
+    emergency_phone: '',
+    blood_type: '',
+    date_of_birth: ''
+  });
 
   // Get auth token
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   };
+
+  // Get current user and tenant information
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        // Get tenant info from user data or make an API call
+        // For now, we'll use a default tenant ID
+        setCurrentTenant({
+          id: userData.tenant_id || 1,
+          name: userData.tenant_name || 'Current Hospital',
+          schema_name: userData.tenant_schema || 'public'
+        });
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
 
   // Fetch today's appointments
   const { data: todayAppointments, isLoading: todayLoading, refetch: refetchToday } = useQuery<Appointment[]>({
@@ -151,6 +230,27 @@ const StaffDashboard: React.FC = () => {
     }
   });
 
+  // Fetch doctors
+  const { data: doctors, isLoading: doctorsLoading, refetch: refetchDoctors } = useQuery<Doctor[]>({
+    queryKey: ['/api/auth/doctors'],
+    queryFn: async () => {
+      return apiRequest('/api/auth/doctors/', {
+        headers: getAuthHeaders()
+      });
+    }
+  });
+
+  // Fetch tenants (for doctor creation)
+  const { data: tenants } = useQuery<Tenant[]>({
+    queryKey: ['/api/auth/tenants/list'],
+    queryFn: async () => {
+      const response = await apiRequest('/api/auth/tenants/list/', {
+        headers: getAuthHeaders()
+      });
+      return response.tenants || [];
+    }
+  });
+
   // Create appointment mutation
   const createAppointment = useMutation({
     mutationFn: async (data: any) => {
@@ -186,10 +286,64 @@ const StaffDashboard: React.FC = () => {
     }
   });
 
+  // Create doctor mutation
+  const createDoctor = useMutation({
+    mutationFn: async (data: any) => {
+      // Add tenant_id based on current logged-in hospital
+      const doctorData = {
+        ...data,
+        role: 'doctor',
+        tenant_id: currentTenant?.id,
+        is_staff: true,
+        is_active: true,
+        is_verified: true
+      };
+      
+      return apiRequest('/api/auth/users/create/', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(doctorData)
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Doctor Created",
+        description: "The doctor has been added successfully.",
+      });
+      setDoctorDialogOpen(false);
+      setDoctorForm({
+        email: '',
+        password: '',
+        first_name: '',
+        last_name: '',
+        username: '',
+        phone_number: '',
+        address: '',
+        medical_license: '',
+        specialization: '',
+        years_of_experience: '',
+        consultation_fee: '',
+        emergency_contact: '',
+        emergency_phone: '',
+        blood_type: '',
+        date_of_birth: ''
+      });
+      refetchDoctors();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Creation Failed",
+        description: error.message || "Failed to create doctor.",
+        variant: "destructive"
+      });
+    }
+  });
+
   // Navigation items
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'appointments', label: 'Appointments', icon: CalendarCheck },
+    { id: 'doctors', label: 'Doctors', icon: Stethoscope },
     { id: 'patients', label: 'Patients', icon: Users },
     { id: 'checkin', label: 'Check-In', icon: ClipboardList },
     { id: 'reports', label: 'Reports', icon: FileText },
@@ -207,6 +361,7 @@ const StaffDashboard: React.FC = () => {
     refetchAppointments();
     refetchStats();
     refetchPatients();
+    refetchDoctors();
     toast({
       title: "Data Refreshed",
       description: "All data has been updated.",
@@ -507,6 +662,380 @@ const StaffDashboard: React.FC = () => {
     </div>
   );
 
+  const renderDoctors = () => (
+    <div className="space-y-6">
+      {/* Header with view toggle */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Doctor Management</h2>
+          <p className="text-muted-foreground">Manage healthcare providers</p>
+        </div>
+        <div className="flex gap-2">
+          <div className="flex items-center border rounded-lg">
+            <Button 
+              variant={doctorViewMode === 'grid' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setDoctorViewMode('grid')}
+              className="rounded-r-none"
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant={doctorViewMode === 'list' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setDoctorViewMode('list')}
+              className="rounded-l-none"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+          <Dialog open={doctorDialogOpen} onOpenChange={setDoctorDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Doctor
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Doctor</DialogTitle>
+                <DialogDescription>
+                  Enter the doctor's information. All fields marked with * are required.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="first_name">First Name *</Label>
+                    <Input
+                      id="first_name"
+                      value={doctorForm.first_name}
+                      onChange={(e) => setDoctorForm({...doctorForm, first_name: e.target.value})}
+                      placeholder="John"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="last_name">Last Name *</Label>
+                    <Input
+                      id="last_name"
+                      value={doctorForm.last_name}
+                      onChange={(e) => setDoctorForm({...doctorForm, last_name: e.target.value})}
+                      placeholder="Doe"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="email">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={doctorForm.email}
+                      onChange={(e) => setDoctorForm({...doctorForm, email: e.target.value})}
+                      placeholder="doctor@hospital.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password">Password *</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={doctorForm.password}
+                      onChange={(e) => setDoctorForm({...doctorForm, password: e.target.value})}
+                      placeholder="Min 8 characters"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      value={doctorForm.username}
+                      onChange={(e) => setDoctorForm({...doctorForm, username: e.target.value})}
+                      placeholder="dr.johndoe"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone_number">Phone Number</Label>
+                    <Input
+                      id="phone_number"
+                      value={doctorForm.phone_number}
+                      onChange={(e) => setDoctorForm({...doctorForm, phone_number: e.target.value})}
+                      placeholder="+1234567890"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    id="address"
+                    value={doctorForm.address}
+                    onChange={(e) => setDoctorForm({...doctorForm, address: e.target.value})}
+                    placeholder="123 Medical Street, City, State"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="medical_license">Medical License</Label>
+                    <Input
+                      id="medical_license"
+                      value={doctorForm.medical_license}
+                      onChange={(e) => setDoctorForm({...doctorForm, medical_license: e.target.value})}
+                      placeholder="MD123456"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="specialization">Specialization</Label>
+                    <Input
+                      id="specialization"
+                      value={doctorForm.specialization}
+                      onChange={(e) => setDoctorForm({...doctorForm, specialization: e.target.value})}
+                      placeholder="Cardiology"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="years_of_experience">Years of Experience</Label>
+                    <Input
+                      id="years_of_experience"
+                      type="number"
+                      value={doctorForm.years_of_experience}
+                      onChange={(e) => setDoctorForm({...doctorForm, years_of_experience: e.target.value})}
+                      placeholder="10"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="consultation_fee">Consultation Fee</Label>
+                    <Input
+                      id="consultation_fee"
+                      type="number"
+                      value={doctorForm.consultation_fee}
+                      onChange={(e) => setDoctorForm({...doctorForm, consultation_fee: e.target.value})}
+                      placeholder="150"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="date_of_birth">Date of Birth</Label>
+                    <Input
+                      id="date_of_birth"
+                      type="date"
+                      value={doctorForm.date_of_birth}
+                      onChange={(e) => setDoctorForm({...doctorForm, date_of_birth: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="blood_type">Blood Type</Label>
+                    <Select 
+                      value={doctorForm.blood_type}
+                      onValueChange={(value) => setDoctorForm({...doctorForm, blood_type: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select blood type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A+">A+</SelectItem>
+                        <SelectItem value="A-">A-</SelectItem>
+                        <SelectItem value="B+">B+</SelectItem>
+                        <SelectItem value="B-">B-</SelectItem>
+                        <SelectItem value="AB+">AB+</SelectItem>
+                        <SelectItem value="AB-">AB-</SelectItem>
+                        <SelectItem value="O+">O+</SelectItem>
+                        <SelectItem value="O-">O-</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="emergency_contact">Emergency Contact</Label>
+                    <Input
+                      id="emergency_contact"
+                      value={doctorForm.emergency_contact}
+                      onChange={(e) => setDoctorForm({...doctorForm, emergency_contact: e.target.value})}
+                      placeholder="Jane Doe"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="emergency_phone">Emergency Phone</Label>
+                    <Input
+                      id="emergency_phone"
+                      value={doctorForm.emergency_phone}
+                      onChange={(e) => setDoctorForm({...doctorForm, emergency_phone: e.target.value})}
+                      placeholder="+1234567891"
+                    />
+                  </div>
+                </div>
+                {currentTenant && (
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <strong>Hospital/Clinic:</strong> {currentTenant.name} (Auto-assigned)
+                    </p>
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDoctorDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    createDoctor.mutate(doctorForm);
+                  }}
+                  disabled={!doctorForm.email || !doctorForm.password || !doctorForm.first_name || !doctorForm.last_name}
+                >
+                  Create Doctor
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Input
+          placeholder="Search doctors..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {/* Grid View */}
+      {doctorViewMode === 'grid' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {doctors?.filter(doctor => 
+            doctor.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            doctor.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            doctor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
+          ).map((doctor) => (
+            <Card key={doctor.id}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <UserCircle className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Dr. {doctor.first_name} {doctor.last_name}</h3>
+                    <p className="text-sm text-gray-500">{doctor.specialization || 'General Practitioner'}</p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    <span className="truncate">{doctor.email}</span>
+                  </div>
+                  {doctor.phone_number && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <span>{doctor.phone_number}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Badge variant={doctor.is_active ? "default" : "secondary"}>
+                      {doctor.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                    <Badge variant={doctor.is_verified ? "default" : "secondary"}>
+                      {doctor.is_verified ? "Verified" : "Unverified"}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* List View */}
+      {doctorViewMode === 'list' && (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Specialization</TableHead>
+                  <TableHead>License</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {doctors?.filter(doctor => 
+                  doctor.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  doctor.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  doctor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
+                ).map((doctor) => (
+                  <TableRow key={doctor.id}>
+                    <TableCell className="font-medium">
+                      Dr. {doctor.first_name} {doctor.last_name}
+                    </TableCell>
+                    <TableCell>{doctor.email}</TableCell>
+                    <TableCell>{doctor.phone_number || 'N/A'}</TableCell>
+                    <TableCell>{doctor.specialization || 'General'}</TableCell>
+                    <TableCell>{doctor.medical_license || 'N/A'}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Badge variant={doctor.is_active ? "default" : "secondary"}>
+                          {doctor.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {(!doctors || doctors.length === 0) && !doctorsLoading && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <UserCog className="h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium mb-2">No Doctors Found</h3>
+            <p className="text-gray-500 text-center mb-4">
+              Start by adding your first doctor to the system.
+            </p>
+            <Button onClick={() => setDoctorDialogOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add First Doctor
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+
   const renderCheckIn = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -566,6 +1095,8 @@ const StaffDashboard: React.FC = () => {
         return renderDashboard();
       case 'appointments':
         return renderAppointments();
+      case 'doctors':
+        return renderDoctors();
       case 'patients':
         return renderPatients();
       case 'checkin':
