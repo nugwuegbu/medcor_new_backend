@@ -711,226 +711,239 @@ const StaffDashboard: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>Add New Doctor</DialogTitle>
                 <DialogDescription>
-                  Enter the doctor's information. All fields marked with * are required.
+                  Add a new doctor to your medical team
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="first_name">First Name *</Label>
-                    <Input
-                      id="first_name"
-                      value={doctorForm.first_name}
-                      onChange={(e) => setDoctorForm({...doctorForm, first_name: e.target.value})}
-                      placeholder="John"
-                    />
+                {/* Basic Information Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Basic Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <Label htmlFor="full_name">Full Name *</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          id="first_name"
+                          value={doctorForm.first_name}
+                          onChange={(e) => setDoctorForm({...doctorForm, first_name: e.target.value})}
+                          placeholder="First Name"
+                          required
+                        />
+                        <Input
+                          id="last_name"
+                          value={doctorForm.last_name}
+                          onChange={(e) => setDoctorForm({...doctorForm, last_name: e.target.value})}
+                          placeholder="Last Name"
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="last_name">Last Name *</Label>
-                    <Input
-                      id="last_name"
-                      value={doctorForm.last_name}
-                      onChange={(e) => setDoctorForm({...doctorForm, last_name: e.target.value})}
-                      placeholder="Doe"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={doctorForm.email}
-                      onChange={(e) => setDoctorForm({...doctorForm, email: e.target.value})}
-                      placeholder="doctor@hospital.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="password">Password *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={doctorForm.password}
-                      onChange={(e) => setDoctorForm({...doctorForm, password: e.target.value})}
-                      placeholder="Min 8 characters"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={doctorForm.username}
-                      onChange={(e) => setDoctorForm({...doctorForm, username: e.target.value})}
-                      placeholder="dr.johndoe"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone_number">Phone Number</Label>
-                    <Input
-                      id="phone_number"
-                      value={doctorForm.phone_number}
-                      onChange={(e) => setDoctorForm({...doctorForm, phone_number: e.target.value})}
-                      placeholder="+1234567890"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={doctorForm.email}
+                        onChange={(e) => setDoctorForm({...doctorForm, email: e.target.value})}
+                        placeholder="doctor@hospital.com"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone_number">Phone</Label>
+                      <Input
+                        id="phone_number"
+                        type="tel"
+                        value={doctorForm.phone_number}
+                        onChange={(e) => setDoctorForm({...doctorForm, phone_number: e.target.value})}
+                        placeholder="+1 (555) 123-4567"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    value={doctorForm.address}
-                    onChange={(e) => setDoctorForm({...doctorForm, address: e.target.value})}
-                    placeholder="123 Medical Street, City, State"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="medical_license">Medical License</Label>
-                    <Input
-                      id="medical_license"
-                      value={doctorForm.medical_license}
-                      onChange={(e) => setDoctorForm({...doctorForm, medical_license: e.target.value})}
-                      placeholder="MD123456"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="specialization">Specialization</Label>
-                    <Input
-                      id="specialization"
-                      value={doctorForm.specialization}
-                      onChange={(e) => setDoctorForm({...doctorForm, specialization: e.target.value})}
-                      placeholder="Cardiology"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="years_of_experience">Years of Experience</Label>
-                    <Input
-                      id="years_of_experience"
-                      type="number"
-                      value={doctorForm.years_of_experience}
-                      onChange={(e) => setDoctorForm({...doctorForm, years_of_experience: e.target.value})}
-                      placeholder="10"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="consultation_fee">Consultation Fee</Label>
-                    <Input
-                      id="consultation_fee"
-                      type="number"
-                      value={doctorForm.consultation_fee}
-                      onChange={(e) => setDoctorForm({...doctorForm, consultation_fee: e.target.value})}
-                      placeholder="150"
-                    />
+
+                {/* Account Security Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Account Security</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="password">Password *</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={doctorForm.password}
+                        onChange={(e) => setDoctorForm({...doctorForm, password: e.target.value})}
+                        placeholder="Minimum 8 characters"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="username">Username (Optional)</Label>
+                      <Input
+                        id="username"
+                        value={doctorForm.username}
+                        onChange={(e) => setDoctorForm({...doctorForm, username: e.target.value})}
+                        placeholder="dr.smith"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="date_of_birth">Date of Birth</Label>
-                    <Input
-                      id="date_of_birth"
-                      type="date"
-                      value={doctorForm.date_of_birth}
-                      onChange={(e) => setDoctorForm({...doctorForm, date_of_birth: e.target.value})}
-                    />
+                {/* Professional Information Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Professional Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="specialization">Specialty *</Label>
+                      <Select 
+                        value={doctorForm.specialization}
+                        onValueChange={(value) => setDoctorForm({...doctorForm, specialization: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select specialty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="General Practice">General Practice</SelectItem>
+                          <SelectItem value="Cardiology">Cardiology</SelectItem>
+                          <SelectItem value="Neurology">Neurology</SelectItem>
+                          <SelectItem value="Orthopedics">Orthopedics</SelectItem>
+                          <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                          <SelectItem value="Gynecology">Gynecology</SelectItem>
+                          <SelectItem value="Dermatology">Dermatology</SelectItem>
+                          <SelectItem value="Psychiatry">Psychiatry</SelectItem>
+                          <SelectItem value="Radiology">Radiology</SelectItem>
+                          <SelectItem value="Emergency Medicine">Emergency Medicine</SelectItem>
+                          <SelectItem value="Internal Medicine">Internal Medicine</SelectItem>
+                          <SelectItem value="Surgery">Surgery</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="years_of_experience">Years of Experience</Label>
+                      <Input
+                        id="years_of_experience"
+                        type="number"
+                        min="0"
+                        value={doctorForm.years_of_experience}
+                        onChange={(e) => setDoctorForm({...doctorForm, years_of_experience: e.target.value})}
+                        placeholder="10"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="blood_type">Blood Type</Label>
-                    <Select 
-                      value={doctorForm.blood_type}
-                      onValueChange={(value) => setDoctorForm({...doctorForm, blood_type: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select blood type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="A+">A+</SelectItem>
-                        <SelectItem value="A-">A-</SelectItem>
-                        <SelectItem value="B+">B+</SelectItem>
-                        <SelectItem value="B-">B-</SelectItem>
-                        <SelectItem value="AB+">AB+</SelectItem>
-                        <SelectItem value="AB-">AB-</SelectItem>
-                        <SelectItem value="O+">O+</SelectItem>
-                        <SelectItem value="O-">O-</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="medical_license">Medical License Number</Label>
+                      <Input
+                        id="medical_license"
+                        value={doctorForm.medical_license}
+                        onChange={(e) => setDoctorForm({...doctorForm, medical_license: e.target.value})}
+                        placeholder="MD123456"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="consultation_fee">Consultation Fee ($)</Label>
+                      <Input
+                        id="consultation_fee"
+                        type="number"
+                        min="0"
+                        value={doctorForm.consultation_fee}
+                        onChange={(e) => setDoctorForm({...doctorForm, consultation_fee: e.target.value})}
+                        placeholder="150"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="department">Department</Label>
+                      <Select 
+                        value={doctorForm.department}
+                        onValueChange={(value) => setDoctorForm({...doctorForm, department: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Emergency">Emergency</SelectItem>
+                          <SelectItem value="Outpatient">Outpatient</SelectItem>
+                          <SelectItem value="Inpatient">Inpatient</SelectItem>
+                          <SelectItem value="Surgery">Surgery</SelectItem>
+                          <SelectItem value="ICU">ICU</SelectItem>
+                          <SelectItem value="Laboratory">Laboratory</SelectItem>
+                          <SelectItem value="Radiology">Radiology</SelectItem>
+                          <SelectItem value="Pharmacy">Pharmacy</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="qualifications">Qualifications</Label>
+                      <Input
+                        id="qualifications"
+                        value={doctorForm.qualifications}
+                        onChange={(e) => setDoctorForm({...doctorForm, qualifications: e.target.value})}
+                        placeholder="MD, PhD, Board Certified"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                {/* Additional Information Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Additional Information</h3>
                   <div>
-                    <Label htmlFor="emergency_contact">Emergency Contact</Label>
+                    <Label htmlFor="address">Address</Label>
                     <Input
-                      id="emergency_contact"
-                      value={doctorForm.emergency_contact}
-                      onChange={(e) => setDoctorForm({...doctorForm, emergency_contact: e.target.value})}
-                      placeholder="Jane Doe"
+                      id="address"
+                      value={doctorForm.address}
+                      onChange={(e) => setDoctorForm({...doctorForm, address: e.target.value})}
+                      placeholder="123 Medical Street, City, State, ZIP"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="emergency_phone">Emergency Phone</Label>
-                    <Input
-                      id="emergency_phone"
-                      value={doctorForm.emergency_phone}
-                      onChange={(e) => setDoctorForm({...doctorForm, emergency_phone: e.target.value})}
-                      placeholder="+1234567891"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="date_of_birth">Date of Birth</Label>
+                      <Input
+                        id="date_of_birth"
+                        type="date"
+                        value={doctorForm.date_of_birth}
+                        onChange={(e) => setDoctorForm({...doctorForm, date_of_birth: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="languages_spoken">Languages Spoken</Label>
+                      <Input
+                        id="languages_spoken"
+                        value={doctorForm.languages_spoken}
+                        onChange={(e) => setDoctorForm({...doctorForm, languages_spoken: e.target.value})}
+                        placeholder="English, Spanish"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="department">Department</Label>
-                    <Select 
-                      value={doctorForm.department}
-                      onValueChange={(value) => setDoctorForm({...doctorForm, department: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="emergency">Emergency</SelectItem>
-                        <SelectItem value="cardiology">Cardiology</SelectItem>
-                        <SelectItem value="neurology">Neurology</SelectItem>
-                        <SelectItem value="orthopedics">Orthopedics</SelectItem>
-                        <SelectItem value="pediatrics">Pediatrics</SelectItem>
-                        <SelectItem value="gynecology">Gynecology</SelectItem>
-                        <SelectItem value="dermatology">Dermatology</SelectItem>
-                        <SelectItem value="psychiatry">Psychiatry</SelectItem>
-                        <SelectItem value="radiology">Radiology</SelectItem>
-                        <SelectItem value="general">General Medicine</SelectItem>
-                      </SelectContent>
-                    </Select>
+                {/* Emergency Contact Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Emergency Contact</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="emergency_contact">Contact Name</Label>
+                      <Input
+                        id="emergency_contact"
+                        value={doctorForm.emergency_contact}
+                        onChange={(e) => setDoctorForm({...doctorForm, emergency_contact: e.target.value})}
+                        placeholder="Jane Doe"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="emergency_phone">Contact Phone</Label>
+                      <Input
+                        id="emergency_phone"
+                        type="tel"
+                        value={doctorForm.emergency_phone}
+                        onChange={(e) => setDoctorForm({...doctorForm, emergency_phone: e.target.value})}
+                        placeholder="+1 (555) 987-6543"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="languages_spoken">Languages Spoken</Label>
-                    <Input
-                      id="languages_spoken"
-                      value={doctorForm.languages_spoken}
-                      onChange={(e) => setDoctorForm({...doctorForm, languages_spoken: e.target.value})}
-                      placeholder="English, Spanish, French"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="qualifications">Qualifications</Label>
-                  <Input
-                    id="qualifications"
-                    value={doctorForm.qualifications}
-                    onChange={(e) => setDoctorForm({...doctorForm, qualifications: e.target.value})}
-                    placeholder="MD, PhD, Board Certified"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="allergies">Known Allergies</Label>
-                  <Input
-                    id="allergies"
-                    value={doctorForm.allergies}
-                    onChange={(e) => setDoctorForm({...doctorForm, allergies: e.target.value})}
-                    placeholder="Penicillin, Latex, etc."
-                  />
                 </div>
                 {currentTenant && (
                   <div className="bg-blue-50 p-3 rounded-lg">
@@ -946,11 +959,30 @@ const StaffDashboard: React.FC = () => {
                 </Button>
                 <Button 
                   onClick={() => {
+                    // Validate required fields
+                    if (!doctorForm.email || !doctorForm.password || !doctorForm.first_name || !doctorForm.last_name || !doctorForm.specialization) {
+                      toast({
+                        title: "Missing Required Fields",
+                        description: "Please fill in all required fields marked with *",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    // Validate password length
+                    if (doctorForm.password.length < 8) {
+                      toast({
+                        title: "Password Too Short",
+                        description: "Password must be at least 8 characters long",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
                     createDoctor.mutate(doctorForm);
                   }}
-                  disabled={!doctorForm.email || !doctorForm.password || !doctorForm.first_name || !doctorForm.last_name}
+                  disabled={!doctorForm.email || !doctorForm.password || !doctorForm.first_name || !doctorForm.last_name || !doctorForm.specialization}
                 >
-                  Create Doctor
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Doctor
                 </Button>
               </DialogFooter>
             </DialogContent>
