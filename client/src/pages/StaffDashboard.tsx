@@ -148,25 +148,32 @@ const StaffDashboard: React.FC = () => {
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [doctorForm, setDoctorForm] = useState({
+    // Required fields
     email: '',
     password: '',
     first_name: '',
     last_name: '',
+    // Optional fields
     username: '',
     phone_number: '',
     address: '',
+    date_of_birth: '',
+    blood_type: '',
+    allergies: '',
+    emergency_contact: '',
+    emergency_phone: '',
+    // Doctor-specific fields
     medical_license: '',
     specialization: '',
     years_of_experience: '',
     consultation_fee: '',
-    emergency_contact: '',
-    emergency_phone: '',
-    blood_type: '',
-    date_of_birth: ''
+    department: '',
+    qualifications: '',
+    languages_spoken: ''
   });
 
   // Get auth token
-  const getAuthHeaders = () => {
+  const getAuthHeaders = (): Record<string, string> => {
     const token = localStorage.getItem('token');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   };
@@ -319,14 +326,18 @@ const StaffDashboard: React.FC = () => {
         username: '',
         phone_number: '',
         address: '',
+        date_of_birth: '',
+        blood_type: '',
+        allergies: '',
+        emergency_contact: '',
+        emergency_phone: '',
         medical_license: '',
         specialization: '',
         years_of_experience: '',
         consultation_fee: '',
-        emergency_contact: '',
-        emergency_phone: '',
-        blood_type: '',
-        date_of_birth: ''
+        department: '',
+        qualifications: '',
+        languages_spoken: ''
       });
       refetchDoctors();
     },
@@ -868,6 +879,58 @@ const StaffDashboard: React.FC = () => {
                       placeholder="+1234567891"
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="department">Department</Label>
+                    <Select 
+                      value={doctorForm.department}
+                      onValueChange={(value) => setDoctorForm({...doctorForm, department: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="emergency">Emergency</SelectItem>
+                        <SelectItem value="cardiology">Cardiology</SelectItem>
+                        <SelectItem value="neurology">Neurology</SelectItem>
+                        <SelectItem value="orthopedics">Orthopedics</SelectItem>
+                        <SelectItem value="pediatrics">Pediatrics</SelectItem>
+                        <SelectItem value="gynecology">Gynecology</SelectItem>
+                        <SelectItem value="dermatology">Dermatology</SelectItem>
+                        <SelectItem value="psychiatry">Psychiatry</SelectItem>
+                        <SelectItem value="radiology">Radiology</SelectItem>
+                        <SelectItem value="general">General Medicine</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="languages_spoken">Languages Spoken</Label>
+                    <Input
+                      id="languages_spoken"
+                      value={doctorForm.languages_spoken}
+                      onChange={(e) => setDoctorForm({...doctorForm, languages_spoken: e.target.value})}
+                      placeholder="English, Spanish, French"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="qualifications">Qualifications</Label>
+                  <Input
+                    id="qualifications"
+                    value={doctorForm.qualifications}
+                    onChange={(e) => setDoctorForm({...doctorForm, qualifications: e.target.value})}
+                    placeholder="MD, PhD, Board Certified"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="allergies">Known Allergies</Label>
+                  <Input
+                    id="allergies"
+                    value={doctorForm.allergies}
+                    onChange={(e) => setDoctorForm({...doctorForm, allergies: e.target.value})}
+                    placeholder="Penicillin, Latex, etc."
+                  />
                 </div>
                 {currentTenant && (
                   <div className="bg-blue-50 p-3 rounded-lg">
