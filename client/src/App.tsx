@@ -73,7 +73,7 @@ function Router() {
           ) : (
             <>
               {console.log('Rendering Home page for public tenant')}
-              <Home />
+              <Home onShowAuthModal={() => setShowAuthModal(true)} />
             </>
           )}
         </Route>

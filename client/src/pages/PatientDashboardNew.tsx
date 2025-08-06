@@ -132,9 +132,9 @@ const PatientDashboard: React.FC = () => {
 
   // Fetch appointments for the patient
   const { data: appointments = [], isLoading: appointmentsLoading, refetch: refetchAppointments } = useQuery<DjangoAppointment[]>({
-    queryKey: ['/api/appointments', user?.id],
+    queryKey: ['/api/appointments/appointments', user?.id],
     queryFn: async () => {
-      const data = await apiRequest('/api/appointments/', {
+      const data = await apiRequest('/api/appointments/appointments/', {
         headers: getAuthHeaders()
       });
       console.log('Fetched appointments:', data);
@@ -150,9 +150,9 @@ const PatientDashboard: React.FC = () => {
 
   // Fetch upcoming appointments
   const { data: upcomingAppointments = [] } = useQuery<DjangoAppointment[]>({
-    queryKey: ['/api/appointments/upcoming', user?.id],
+    queryKey: ['/api/appointments/appointments/upcoming', user?.id],
     queryFn: async () => {
-      const data = await apiRequest('/api/appointments/upcoming/', {
+      const data = await apiRequest('/api/appointments/appointments/upcoming/', {
         headers: getAuthHeaders()
       });
       console.log('Upcoming appointments:', data);
@@ -190,12 +190,12 @@ const PatientDashboard: React.FC = () => {
 
   // Fetch available slots for selected doctor and date
   const { data: availableSlots = [] } = useQuery<DjangoSlot[]>({
-    queryKey: ['/api/slots/available', appointmentForm.doctor, appointmentForm.date],
+    queryKey: ['/api/appointments/slots/available', appointmentForm.doctor, appointmentForm.date],
     queryFn: async () => {
       if (!appointmentForm.doctor || !appointmentForm.date) return [];
       
       const data = await apiRequest(
-        `/api/slots/available/?doctor_id=${appointmentForm.doctor}&date=${appointmentForm.date}`,
+        `/api/appointments/slots/available/?doctor_id=${appointmentForm.doctor}&date=${appointmentForm.date}`,
         { headers: getAuthHeaders() }
       );
       return Array.isArray(data) ? data : [];
@@ -220,7 +220,7 @@ const PatientDashboard: React.FC = () => {
         appointment_status: 'Pending'
       };
 
-      return apiRequest('/api/appointments/', {
+      return apiRequest('/api/appointments/appointments/', {
         method: 'POST',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -247,7 +247,7 @@ const PatientDashboard: React.FC = () => {
   // Update appointment mutation
   const updateAppointmentMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      return apiRequest(`/api/appointments/${id}/update_status/`, {
+      return apiRequest(`/api/appointments/appointments/${id}/update_status/`, {
         method: 'PATCH',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -272,7 +272,7 @@ const PatientDashboard: React.FC = () => {
   // Delete appointment mutation
   const deleteAppointmentMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/appointments/${id}/`, {
+      return apiRequest(`/api/appointments/appointments/${id}/`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });

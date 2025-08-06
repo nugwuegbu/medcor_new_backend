@@ -5,13 +5,11 @@ import { MessageCircle, Heart, Sparkles, Users, Calendar, BookOpen, User, LogIn 
 import { Link } from "wouter";
 import FloatingChatButton from "@/components/floating-chat-button";
 import MedcorChatModal from "@/components/medcor-chat-modal";
-import { AuthModal } from "@/components/auth-modal";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function Home() {
+export default function Home({ onShowAuthModal }: { onShowAuthModal?: () => void }) {
   const [showModal, setShowModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const { login, isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -24,19 +22,7 @@ export default function Home() {
     }
   }, [isAuthenticated, user]);
 
-  const handleAuthSuccess = (token: string, user: any) => {
-    login(token, user);
-    // Force close modal immediately
-    setShowAuthModal(false);
-    // Redirect to appropriate dashboard based on role after a small delay
-    setTimeout(() => {
-      if (user?.role === 'patient') {
-        window.location.href = '/patient-dashboard';
-      } else if (user?.role === 'doctor') {
-        window.location.href = '/doctor-dashboard';
-      }
-    }, 100);
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -80,7 +66,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Button 
-                onClick={() => setShowAuthModal(true)}
+                onClick={() => onShowAuthModal?.()}
                 size="lg" 
                 variant="outline" 
                 className="border-purple-600 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg"
@@ -185,12 +171,7 @@ export default function Home() {
         onClose={() => setShowModal(false)} 
       />
 
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={handleAuthSuccess}
-      />
+
     </div>
   );
 }
