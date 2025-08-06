@@ -132,9 +132,9 @@ const PatientDashboard: React.FC = () => {
 
   // Fetch appointments for the patient
   const { data: appointments = [], isLoading: appointmentsLoading, refetch: refetchAppointments } = useQuery<DjangoAppointment[]>({
-    queryKey: ['/api/appointments/appointments', user?.id],
+    queryKey: ['/api/appointments', user?.id],
     queryFn: async () => {
-      const data = await apiRequest('/api/appointments/appointments/', {
+      const data = await apiRequest('/api/appointments/', {
         headers: getAuthHeaders()
       });
       console.log('Fetched appointments:', data);
@@ -150,9 +150,9 @@ const PatientDashboard: React.FC = () => {
 
   // Fetch upcoming appointments
   const { data: upcomingAppointments = [] } = useQuery<DjangoAppointment[]>({
-    queryKey: ['/api/appointments/appointments/upcoming', user?.id],
+    queryKey: ['/api/appointments/upcoming', user?.id],
     queryFn: async () => {
-      const data = await apiRequest('/api/appointments/appointments/upcoming/', {
+      const data = await apiRequest('/api/appointments/upcoming/', {
         headers: getAuthHeaders()
       });
       console.log('Upcoming appointments:', data);
@@ -272,7 +272,7 @@ const PatientDashboard: React.FC = () => {
   // Delete appointment mutation
   const deleteAppointmentMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/appointments/appointments/${id}/`, {
+      return apiRequest(`/api/appointments/${id}/`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -354,7 +354,7 @@ const PatientDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <div className={cn(
-        "bg-white border-r transition-all duration-300",
+        "bg-white border-r transition-all duration-300 flex flex-col",
         sidebarOpen ? "w-64" : "w-16"
       )}>
         <div className="p-4">
@@ -372,7 +372,7 @@ const PatientDashboard: React.FC = () => {
           </div>
         </div>
         
-        <nav className="mt-8">
+        <nav className="mt-8 flex-1">
           {sidebarItems.map((item) => (
             <button
               key={item.id}
@@ -388,10 +388,7 @@ const PatientDashboard: React.FC = () => {
           ))}
         </nav>
 
-        <div className={cn(
-          "absolute bottom-4 px-4",
-          sidebarOpen ? "left-0 right-0" : "left-2 right-2"
-        )}>
+        <div className="p-4">
           {sidebarOpen ? (
             <Button
               variant="outline"
@@ -406,7 +403,7 @@ const PatientDashboard: React.FC = () => {
               variant="outline"
               size="icon"
               onClick={handleLogout}
-              className="w-10 h-10"
+              className="mx-auto block"
             >
               <LogOut className="h-4 w-4" />
             </Button>

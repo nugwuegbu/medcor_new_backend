@@ -69,9 +69,13 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         if (response.refresh) {
           localStorage.setItem("medcor_refresh_token", response.refresh);
         }
+        // Call onAuthSuccess first, then close the modal
         onAuthSuccess(response.access, response.user);
-        onClose();
         queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+        // Force close the modal after successful authentication
+        setTimeout(() => {
+          onClose();
+        }, 100);
       }
     },
     onError: (error: any) => {

@@ -601,26 +601,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create appointment
-  app.post("/api/appointments", async (req, res) => {
-    try {
-      const validatedData = insertAppointmentSchema.parse(req.body);
-      const appointment = await storage.createAppointment(validatedData);
-      res.status(201).json(appointment);
-    } catch (error) {
-      res.status(400).json({ message: "Invalid appointment data" });
-    }
-  });
+  // Create appointment - DISABLED: Using Django backend instead
+  // app.post("/api/appointments", async (req, res) => {
+  //   try {
+  //     const validatedData = insertAppointmentSchema.parse(req.body);
+  //     const appointment = await storage.createAppointment(validatedData);
+  //     res.status(201).json(appointment);
+  //   } catch (error) {
+  //     res.status(400).json({ message: "Invalid appointment data" });
+  //   }
+  // });
 
-  // Get all appointments
-  app.get("/api/appointments", async (req, res) => {
-    try {
-      const appointments = await storage.getAllAppointments();
-      res.json(appointments);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch appointments" });
-    }
-  });
+  // Get all appointments - DISABLED: Using Django backend instead
+  // app.get("/api/appointments", async (req, res) => {
+  //   try {
+  //     const appointments = await storage.getAllAppointments();
+  //     res.json(appointments);
+  //   } catch (error) {
+  //     res.status(500).json({ message: "Failed to fetch appointments" });
+  //   }
+  // });
 
   // Enhanced chat endpoint with HeyGen avatar support
   app.post("/api/chat", async (req, res) => {

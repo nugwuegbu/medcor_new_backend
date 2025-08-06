@@ -26,13 +26,16 @@ export default function Home() {
 
   const handleAuthSuccess = (token: string, user: any) => {
     login(token, user);
+    // Force close modal immediately
     setShowAuthModal(false);
-    // Redirect to appropriate dashboard based on role
-    if (user?.role === 'patient') {
-      window.location.href = '/patient-dashboard';
-    } else if (user?.role === 'doctor') {
-      window.location.href = '/doctor-dashboard';
-    }
+    // Redirect to appropriate dashboard based on role after a small delay
+    setTimeout(() => {
+      if (user?.role === 'patient') {
+        window.location.href = '/patient-dashboard';
+      } else if (user?.role === 'doctor') {
+        window.location.href = '/doctor-dashboard';
+      }
+    }, 100);
   };
 
   return (
