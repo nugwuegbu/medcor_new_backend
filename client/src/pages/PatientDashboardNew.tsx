@@ -132,9 +132,9 @@ const PatientDashboard: React.FC = () => {
 
   // Fetch appointments for the patient
   const { data: appointments = [], isLoading: appointmentsLoading, refetch: refetchAppointments } = useQuery<DjangoAppointment[]>({
-    queryKey: ['/api/appointments', user?.id],
+    queryKey: ['/api/appointments/appointments', user?.id],
     queryFn: async () => {
-      const data = await apiRequest('/api/appointments/', {
+      const data = await apiRequest('/api/appointments/appointments/', {
         headers: getAuthHeaders()
       });
       console.log('Fetched appointments:', data);
@@ -150,9 +150,9 @@ const PatientDashboard: React.FC = () => {
 
   // Fetch upcoming appointments
   const { data: upcomingAppointments = [] } = useQuery<DjangoAppointment[]>({
-    queryKey: ['/api/appointments/upcoming', user?.id],
+    queryKey: ['/api/appointments/appointments/upcoming', user?.id],
     queryFn: async () => {
-      const data = await apiRequest('/api/appointments/upcoming/', {
+      const data = await apiRequest('/api/appointments/appointments/upcoming/', {
         headers: getAuthHeaders()
       });
       console.log('Upcoming appointments:', data);
@@ -272,7 +272,7 @@ const PatientDashboard: React.FC = () => {
   // Delete appointment mutation
   const deleteAppointmentMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/appointments/${id}/`, {
+      return apiRequest(`/api/appointments/appointments/${id}/`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -506,8 +506,8 @@ const PatientDashboard: React.FC = () => {
             {/* Appointments Tab */}
             <TabsContent value="appointments">
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold">Appointments</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Medical Appointment Scheduling and Management</h2>
                   <Dialog open={showAppointmentForm} onOpenChange={setShowAppointmentForm}>
                     <DialogTrigger asChild>
                       <Button>
@@ -603,125 +603,128 @@ const PatientDashboard: React.FC = () => {
                   </Dialog>
                 </div>
 
-                {/* Calendar View */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Calendar</CardTitle>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentMonth(new Date())}
-                      >
-                        Today
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center mb-4">
-                      <h3 className="text-lg font-semibold">
-                        {format(currentMonth, 'MMMM yyyy')}
-                      </h3>
-                    </div>
-                    <div className="grid grid-cols-7 gap-1">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                        <div key={day} className="text-center text-sm font-medium text-gray-500 p-2">
-                          {day}
-                        </div>
-                      ))}
-                      {getDaysInMonth().map((day) => {
-                        const appointmentsForDay = getAppointmentsForDate(day);
-                        return (
-                          <div
-                            key={day.toString()}
-                            className={cn(
-                              "border rounded-lg p-2 min-h-[80px] cursor-pointer hover:bg-gray-50",
-                              !isSameMonth(day, currentMonth) && "text-gray-400",
-                              isToday(day) && "bg-blue-50 border-blue-500",
-                              isSameDay(day, selectedDate || new Date()) && "bg-blue-100"
-                            )}
-                            onClick={() => setSelectedDate(day)}
-                          >
-                            <div className="text-sm">{format(day, 'd')}</div>
-                            {appointmentsForDay.length > 0 && (
-                              <div className="mt-1">
-                                {appointmentsForDay.slice(0, 2).map((apt, idx) => (
-                                  <div key={idx} className="text-xs truncate text-blue-600">
-                                    {apt.appointment_slot_start_time}
-                                  </div>
-                                ))}
-                                {appointmentsForDay.length > 2 && (
-                                  <div className="text-xs text-gray-500">
-                                    +{appointmentsForDay.length - 2} more
-                                  </div>
-                                )}
-                              </div>
-                            )}
+                {/* Side-by-side Calendar and Appointments List */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Calendar View */}
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle>Calendar</CardTitle>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setCurrentMonth(new Date())}
+                        >
+                          Today
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-center mb-4">
+                        <h3 className="text-lg font-semibold">
+                          {format(currentMonth, 'MMMM yyyy')}
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-7 gap-1">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                          <div key={day} className="text-center text-sm font-medium text-gray-500 p-2">
+                            {day}
                           </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Appointments List */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>All Appointments</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {appointmentsLoading ? (
-                      <p>Loading appointments...</p>
-                    ) : appointments.length === 0 ? (
-                      <p className="text-gray-500">No appointments found</p>
-                    ) : (
-                      <ScrollArea className="h-[400px]">
-                        <div className="space-y-4">
-                          {appointments.map((appointment) => (
-                            <div key={appointment.id} className="border rounded-lg p-4">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h4 className="font-semibold">Dr. {appointment.doctor_name}</h4>
-                                  <p className="text-sm text-gray-600">{appointment.treatment_name}</p>
-                                  <p className="text-sm text-gray-500">
-                                    {format(parseISO(appointment.appointment_slot_date), 'PPP')} at {appointment.appointment_slot_start_time}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge className={getStatusColor(appointment.appointment_status)}>
-                                    {appointment.status_display}
-                                  </Badge>
-                                  {appointment.appointment_status === 'Pending' && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
-                                    >
-                                      Cancel
-                                    </Button>
+                        ))}
+                        {getDaysInMonth().map((day) => {
+                          const appointmentsForDay = getAppointmentsForDate(day);
+                          return (
+                            <div
+                              key={day.toString()}
+                              className={cn(
+                                "border rounded-lg p-2 min-h-[80px] cursor-pointer hover:bg-gray-50",
+                                !isSameMonth(day, currentMonth) && "text-gray-400",
+                                isToday(day) && "bg-blue-50 border-blue-500",
+                                isSameDay(day, selectedDate || new Date()) && "bg-blue-100"
+                              )}
+                              onClick={() => setSelectedDate(day)}
+                            >
+                              <div className="text-sm">{format(day, 'd')}</div>
+                              {appointmentsForDay.length > 0 && (
+                                <div className="mt-1">
+                                  {appointmentsForDay.slice(0, 2).map((apt, idx) => (
+                                    <div key={idx} className="text-xs truncate text-blue-600">
+                                      {apt.appointment_slot_start_time}
+                                    </div>
+                                  ))}
+                                  {appointmentsForDay.length > 2 && (
+                                    <div className="text-xs text-gray-500">
+                                      +{appointmentsForDay.length - 2} more
+                                    </div>
                                   )}
                                 </div>
-                              </div>
+                              )}
                             </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    )}
-                  </CardContent>
-                </Card>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Appointments List */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>All Appointments</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {appointmentsLoading ? (
+                        <p>Loading appointments...</p>
+                      ) : appointments.length === 0 ? (
+                        <p className="text-gray-500">No appointments found. Click 'Book Appointment' to schedule your first appointment.</p>
+                      ) : (
+                        <ScrollArea className="h-[500px]">
+                          <div className="space-y-4">
+                            {appointments.map((appointment) => (
+                              <div key={appointment.id} className="border rounded-lg p-4">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h4 className="font-semibold">Dr. {appointment.doctor_name}</h4>
+                                    <p className="text-sm text-gray-600">{appointment.treatment_name}</p>
+                                    <p className="text-sm text-gray-500">
+                                      {format(parseISO(appointment.appointment_slot_date), 'PPP')} at {appointment.appointment_slot_start_time}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Badge className={getStatusColor(appointment.appointment_status)}>
+                                      {appointment.status_display}
+                                    </Badge>
+                                    {appointment.appointment_status === 'Pending' && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </TabsContent>
 

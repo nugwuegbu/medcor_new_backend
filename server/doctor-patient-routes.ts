@@ -107,6 +107,100 @@ router.get('/appointments/slots', requireAuth, async (req, res) => {
   }
 });
 
+// Get all appointments
+router.get('/appointments/appointments', requireAuth, async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      res.json(data);
+    } else {
+      res.status(response.status).json(data);
+    }
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get upcoming appointments
+router.get('/appointments/appointments/upcoming', requireAuth, async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/upcoming/`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      res.json(data);
+    } else {
+      res.status(response.status).json(data);
+    }
+  } catch (error) {
+    console.error('Error fetching upcoming appointments:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create appointment
+router.post('/appointments/appointments', requireAuth, async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(req.body),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      res.json(data);
+    } else {
+      res.status(response.status).json(data);
+    }
+  } catch (error) {
+    console.error('Error creating appointment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete appointment
+router.delete('/appointments/appointments/:id', requireAuth, async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const { id } = req.params;
+    
+    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/${id}/`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      res.status(204).send();
+    } else {
+      const data = await response.json();
+      res.status(response.status).json(data);
+    }
+  } catch (error) {
+    console.error('Error deleting appointment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Start Appointment
 router.post('/appointments/appointments/:id/start', requireAuth, async (req, res) => {
   try {
