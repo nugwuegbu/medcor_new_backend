@@ -86,8 +86,8 @@ router.get('/appointments/slots', requireAuth, async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
     const { date } = req.query;
     const url = date 
-      ? `${DJANGO_API_URL}/api/appointments/slots/?date=${date}`
-      : `${DJANGO_API_URL}/api/appointments/slots/`;
+      ? `${DJANGO_API_URL}/slots/?date=${date}`
+      : `${DJANGO_API_URL}/slots/`;
     
     const response = await fetch(url, {
       headers: {
@@ -107,11 +107,40 @@ router.get('/appointments/slots', requireAuth, async (req, res) => {
   }
 });
 
-// Get all appointments
-router.get('/appointments/appointments', requireAuth, async (req, res) => {
+// Available Slots
+router.get('/slots/available', requireAuth, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/`, {
+    const { doctor_id, date } = req.query;
+    let url = `${DJANGO_API_URL}/slots/available/`;
+    const params = new URLSearchParams();
+    if (doctor_id) params.append('doctor_id', doctor_id as string);
+    if (date) params.append('date', date as string);
+    if (params.toString()) url += `?${params.toString()}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      res.json(data);
+    } else {
+      res.status(response.status).json(data);
+    }
+  } catch (error) {
+    console.error('Error fetching available slots:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get all appointments
+router.get('/appointments', requireAuth, async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const response = await fetch(`${DJANGO_API_URL}/appointments/`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -130,10 +159,10 @@ router.get('/appointments/appointments', requireAuth, async (req, res) => {
 });
 
 // Get upcoming appointments
-router.get('/appointments/appointments/upcoming', requireAuth, async (req, res) => {
+router.get('/appointments/upcoming', requireAuth, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/upcoming/`, {
+    const response = await fetch(`${DJANGO_API_URL}/appointments/upcoming/`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -152,10 +181,10 @@ router.get('/appointments/appointments/upcoming', requireAuth, async (req, res) 
 });
 
 // Create appointment
-router.post('/appointments/appointments', requireAuth, async (req, res) => {
+router.post('/appointments', requireAuth, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/`, {
+    const response = await fetch(`${DJANGO_API_URL}/appointments/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -177,12 +206,12 @@ router.post('/appointments/appointments', requireAuth, async (req, res) => {
 });
 
 // Delete appointment
-router.delete('/appointments/appointments/:id', requireAuth, async (req, res) => {
+router.delete('/appointments/:id', requireAuth, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     const { id } = req.params;
     
-    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/${id}/`, {
+    const response = await fetch(`${DJANGO_API_URL}/appointments/${id}/`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -202,12 +231,12 @@ router.delete('/appointments/appointments/:id', requireAuth, async (req, res) =>
 });
 
 // Start Appointment
-router.post('/appointments/appointments/:id/start', requireAuth, async (req, res) => {
+router.post('/appointments/:id/start', requireAuth, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     const { id } = req.params;
     
-    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/${id}/start/`, {
+    const response = await fetch(`${DJANGO_API_URL}/appointments/${id}/start/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -228,12 +257,12 @@ router.post('/appointments/appointments/:id/start', requireAuth, async (req, res
 });
 
 // Cancel Appointment
-router.post('/appointments/appointments/:id/cancel', requireAuth, async (req, res) => {
+router.post('/appointments/:id/cancel', requireAuth, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     const { id } = req.params;
     
-    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/${id}/cancel/`, {
+    const response = await fetch(`${DJANGO_API_URL}/appointments/${id}/cancel/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -254,10 +283,10 @@ router.post('/appointments/appointments/:id/cancel', requireAuth, async (req, re
 });
 
 // Patient's Appointments History
-router.get('/appointments/appointments/history', requireAuth, async (req, res) => {
+router.get('/appointments/history', requireAuth, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    const response = await fetch(`${DJANGO_API_URL}/api/appointments/appointments/history/`, {
+    const response = await fetch(`${DJANGO_API_URL}/appointments/history/`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },

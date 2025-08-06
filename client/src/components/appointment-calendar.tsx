@@ -105,7 +105,7 @@ export default function AppointmentCalendar({
     };
 
     bookAppointmentMutation.mutate(appointmentData);
-  };
+  }; 
 
   if (!isOpen) return null;
 
