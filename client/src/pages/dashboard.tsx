@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -708,9 +708,17 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
     document.body.removeChild(link);
   };
 
-  // Form Components
-  const DoctorForm = () => {
-    const handleSubmit = () => {
+  // Memoized handlers for form inputs to prevent re-renders
+  const updateDoctorField = useCallback((field: string, value: string) => {
+    setDoctorFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
+
+  // Form Components - Memoized to prevent unnecessary re-renders
+  const DoctorForm = memo(() => {
+    const handleSubmit = useCallback(() => {
       // Validate required fields
       if (!doctorFormData.firstName || !doctorFormData.lastName || !doctorFormData.email || 
           !doctorFormData.password || !doctorFormData.specialty) {
@@ -734,7 +742,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
 
       // Submit the form
       createDoctorMutation.mutate(doctorFormData);
-    };
+    }, [doctorFormData]);
 
     return (
       <Dialog open={showForm} onOpenChange={setShowForm}>
@@ -756,7 +764,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="firstName" 
                     placeholder="John" 
                     value={doctorFormData.firstName}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, firstName: e.target.value})}
+                    onChange={(e) => updateDoctorField('firstName', e.target.value)}
                     required 
                   />
                 </div>
@@ -766,7 +774,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="lastName" 
                     placeholder="Smith" 
                     value={doctorFormData.lastName}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, lastName: e.target.value})}
+                    onChange={(e) => updateDoctorField('lastName', e.target.value)}
                     required 
                   />
                 </div>
@@ -777,7 +785,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     type="email" 
                     placeholder="doctor@hospital.com" 
                     value={doctorFormData.email}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, email: e.target.value})}
+                    onChange={(e) => updateDoctorField('email', e.target.value)}
                     required 
                   />
                 </div>
@@ -787,7 +795,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="phone" 
                     placeholder="+1 (555) 123-4567" 
                     value={doctorFormData.phone}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, phone: e.target.value})}
+                    onChange={(e) => updateDoctorField('phone', e.target.value)}
                   />
                 </div>
               </div>
@@ -804,7 +812,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     type="password" 
                     placeholder="Minimum 8 characters" 
                     value={doctorFormData.password}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, password: e.target.value})}
+                    onChange={(e) => updateDoctorField('password', e.target.value)}
                     required 
                   />
                   <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
@@ -815,7 +823,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="username" 
                     placeholder="dr.smith" 
                     value={doctorFormData.username}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, username: e.target.value})}
+                    onChange={(e) => updateDoctorField('username', e.target.value)}
                   />
                 </div>
               </div>
@@ -829,7 +837,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                   <Label htmlFor="specialty">Specialty *</Label>
                   <Select 
                     value={doctorFormData.specialty}
-                    onValueChange={(value) => setDoctorFormData({...doctorFormData, specialty: value})}
+                    onValueChange={(value) => updateDoctorField('specialty', value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select specialty" />
@@ -858,7 +866,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     min="0" 
                     placeholder="10" 
                     value={doctorFormData.experience}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, experience: e.target.value})}
+                    onChange={(e) => updateDoctorField('experience', e.target.value)}
                   />
                 </div>
                 <div>
@@ -867,14 +875,14 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="medicalLicense" 
                     placeholder="MD123456" 
                     value={doctorFormData.medicalLicense}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, medicalLicense: e.target.value})}
+                    onChange={(e) => updateDoctorField('medicalLicense', e.target.value)}
                   />
                 </div>
                 <div>
                   <Label htmlFor="department">Department</Label>
                   <Select 
                     value={doctorFormData.department}
-                    onValueChange={(value) => setDoctorFormData({...doctorFormData, department: value})}
+                    onValueChange={(value) => updateDoctorField('department', value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select department" />
@@ -899,7 +907,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     min="0" 
                     placeholder="150" 
                     value={doctorFormData.consultationFee}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, consultationFee: e.target.value})}
+                    onChange={(e) => updateDoctorField('consultationFee', e.target.value)}
                   />
                 </div>
                 <div>
@@ -908,7 +916,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="qualifications" 
                     placeholder="MD, PhD, Board Certified" 
                     value={doctorFormData.qualifications}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, qualifications: e.target.value})}
+                    onChange={(e) => updateDoctorField('qualifications', e.target.value)}
                   />
                 </div>
               </div>
@@ -924,7 +932,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="address" 
                     placeholder="123 Medical Street, City, State, ZIP" 
                     value={doctorFormData.address}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, address: e.target.value})}
+                    onChange={(e) => updateDoctorField('address', e.target.value)}
                   />
                 </div>
                 <div>
@@ -933,14 +941,14 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="dateOfBirth" 
                     type="date" 
                     value={doctorFormData.dateOfBirth}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, dateOfBirth: e.target.value})}
+                    onChange={(e) => updateDoctorField('dateOfBirth', e.target.value)}
                   />
                 </div>
                 <div>
                   <Label htmlFor="bloodType">Blood Type</Label>
                   <Select 
                     value={doctorFormData.bloodType}
-                    onValueChange={(value) => setDoctorFormData({...doctorFormData, bloodType: value})}
+                    onValueChange={(value) => updateDoctorField('bloodType', value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select blood type" />
@@ -963,7 +971,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="languages" 
                     placeholder="English, Spanish" 
                     value={doctorFormData.languages}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, languages: e.target.value})}
+                    onChange={(e) => updateDoctorField('languages', e.target.value)}
                   />
                 </div>
                 <div>
@@ -972,7 +980,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="allergies" 
                     placeholder="Penicillin, Latex, etc." 
                     value={doctorFormData.allergies}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, allergies: e.target.value})}
+                    onChange={(e) => updateDoctorField('allergies', e.target.value)}
                   />
                 </div>
               </div>
@@ -988,7 +996,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     id="emergencyContact" 
                     placeholder="Jane Doe" 
                     value={doctorFormData.emergencyContact}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, emergencyContact: e.target.value})}
+                    onChange={(e) => updateDoctorField('emergencyContact', e.target.value)}
                   />
                 </div>
                 <div>
@@ -998,7 +1006,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                     type="tel" 
                     placeholder="+1 (555) 987-6543" 
                     value={doctorFormData.emergencyPhone}
-                    onChange={(e) => setDoctorFormData({...doctorFormData, emergencyPhone: e.target.value})}
+                    onChange={(e) => updateDoctorField('emergencyPhone', e.target.value)}
                   />
                 </div>
               </div>
@@ -1020,7 +1028,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
         </DialogContent>
       </Dialog>
     );
-  };
+  });
 
   const PatientForm = () => (
     <Dialog open={showForm} onOpenChange={setShowForm}>
