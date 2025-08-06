@@ -558,49 +558,182 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
   // Form Components
   const DoctorForm = () => (
     <Dialog open={showForm} onOpenChange={setShowForm}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{formType === "add" ? "Add New Doctor" : "Edit Doctor"}</DialogTitle>
           <DialogDescription>
             {formType === "add" ? "Add a new doctor to your medical team" : "Update doctor information"}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="name">Full Name</Label>
-            <Input id="name" placeholder="Dr. John Smith" />
+        <div className="space-y-6">
+          {/* Basic Information Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700">Basic Information</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input id="firstName" placeholder="John" required />
+              </div>
+              <div>
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input id="lastName" placeholder="Smith" required />
+              </div>
+              <div>
+                <Label htmlFor="email">Email *</Label>
+                <Input id="email" type="email" placeholder="doctor@hospital.com" required />
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input id="phone" placeholder="+1 (555) 123-4567" />
+              </div>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="specialty">Specialty</Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select specialty" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cardiology">Cardiology</SelectItem>
-                <SelectItem value="neurology">Neurology</SelectItem>
-                <SelectItem value="pediatrics">Pediatrics</SelectItem>
-                <SelectItem value="orthopedics">Orthopedics</SelectItem>
-              </SelectContent>
-            </Select>
+
+          {/* Account Security Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700">Account Security</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="password">Password *</Label>
+                <Input id="password" type="password" placeholder="Minimum 8 characters" required />
+                <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
+              </div>
+              <div>
+                <Label htmlFor="username">Username (Optional)</Label>
+                <Input id="username" placeholder="dr.smith" />
+              </div>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="doctor@hospital.com" />
+
+          {/* Professional Information Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700">Professional Information</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="specialty">Specialty *</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select specialty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="General Practice">General Practice</SelectItem>
+                    <SelectItem value="Cardiology">Cardiology</SelectItem>
+                    <SelectItem value="Neurology">Neurology</SelectItem>
+                    <SelectItem value="Orthopedics">Orthopedics</SelectItem>
+                    <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                    <SelectItem value="Gynecology">Gynecology</SelectItem>
+                    <SelectItem value="Dermatology">Dermatology</SelectItem>
+                    <SelectItem value="Psychiatry">Psychiatry</SelectItem>
+                    <SelectItem value="Radiology">Radiology</SelectItem>
+                    <SelectItem value="Emergency Medicine">Emergency Medicine</SelectItem>
+                    <SelectItem value="Internal Medicine">Internal Medicine</SelectItem>
+                    <SelectItem value="Surgery">Surgery</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="experience">Years of Experience</Label>
+                <Input id="experience" type="number" min="0" placeholder="10" />
+              </div>
+              <div>
+                <Label htmlFor="medicalLicense">Medical License Number</Label>
+                <Input id="medicalLicense" placeholder="MD123456" />
+              </div>
+              <div>
+                <Label htmlFor="department">Department</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Emergency">Emergency</SelectItem>
+                    <SelectItem value="Outpatient">Outpatient</SelectItem>
+                    <SelectItem value="Inpatient">Inpatient</SelectItem>
+                    <SelectItem value="Surgery">Surgery</SelectItem>
+                    <SelectItem value="ICU">ICU</SelectItem>
+                    <SelectItem value="Laboratory">Laboratory</SelectItem>
+                    <SelectItem value="Radiology">Radiology</SelectItem>
+                    <SelectItem value="Pharmacy">Pharmacy</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="consultationFee">Consultation Fee ($)</Label>
+                <Input id="consultationFee" type="number" min="0" placeholder="150" />
+              </div>
+              <div>
+                <Label htmlFor="qualifications">Qualifications</Label>
+                <Input id="qualifications" placeholder="MD, PhD, Board Certified" />
+              </div>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" placeholder="+1 (555) 123-4567" />
+
+          {/* Additional Information Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700">Additional Information</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label htmlFor="address">Address</Label>
+                <Input id="address" placeholder="123 Medical Street, City, State, ZIP" />
+              </div>
+              <div>
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input id="dateOfBirth" type="date" />
+              </div>
+              <div>
+                <Label htmlFor="bloodType">Blood Type</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select blood type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A+">A+</SelectItem>
+                    <SelectItem value="A-">A-</SelectItem>
+                    <SelectItem value="B+">B+</SelectItem>
+                    <SelectItem value="B-">B-</SelectItem>
+                    <SelectItem value="AB+">AB+</SelectItem>
+                    <SelectItem value="AB-">AB-</SelectItem>
+                    <SelectItem value="O+">O+</SelectItem>
+                    <SelectItem value="O-">O-</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="languages">Languages Spoken</Label>
+                <Input id="languages" placeholder="English, Spanish" />
+              </div>
+              <div>
+                <Label htmlFor="allergies">Known Allergies</Label>
+                <Input id="allergies" placeholder="Penicillin, Latex, etc." />
+              </div>
+            </div>
           </div>
-          <div className="col-span-2">
-            <Label htmlFor="experience">Years of Experience</Label>
-            <Input id="experience" placeholder="10" />
+
+          {/* Emergency Contact Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700">Emergency Contact</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="emergencyContact">Contact Name</Label>
+                <Input id="emergencyContact" placeholder="Jane Doe" />
+              </div>
+              <div>
+                <Label htmlFor="emergencyPhone">Contact Phone</Label>
+                <Input id="emergencyPhone" type="tel" placeholder="+1 (555) 987-6543" />
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex justify-end space-x-2 mt-6">
           <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-          <Button onClick={() => setShowForm(false)}>
-            <Save className="h-4 w-4 mr-2" />
+          <Button onClick={() => {
+            // TODO: Add form submission logic with validation
+            // Check required fields: firstName, lastName, email, password, specialty
+            // Validate password length (minimum 8 characters)
+            // Call API to create doctor with all fields
+            setShowForm(false);
+          }}>
+            <Plus className="h-4 w-4 mr-2" />
             {formType === "add" ? "Add Doctor" : "Update Doctor"}
           </Button>
         </div>
