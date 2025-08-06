@@ -88,6 +88,7 @@ class User(UserProfile):
     # Activity tracking
     last_login_ip = models.GenericIPAddressField(blank=True, null=True)
     is_new_user = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=True, help_text='Email verification status')
     consent_version = models.CharField(max_length=10, blank=True, null=True)
     consent_date = models.DateTimeField(blank=True, null=True)
     

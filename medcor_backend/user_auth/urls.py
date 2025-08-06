@@ -5,6 +5,7 @@ from django.urls import path
 from . import views
 from . import general_views
 from . import doctor_views
+from . import user_creation_views
 
 app_name = 'user_auth'
 
@@ -26,4 +27,8 @@ urlpatterns = [
     
     # User management endpoints 
     path('users/<int:pk>/', views.UserDetailAPIView.as_view(), name='user_detail'),
+    
+    # User creation endpoints
+    path('users/create/', user_creation_views.CreateUserAPIView.as_view(), name='create_user'),
+    path('tenants/list/', user_creation_views.ListTenantsAPIView.as_view(), name='list_tenants'),
 ]
