@@ -11,6 +11,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Progress } from "@/components/ui/progress";
 import { useSubdomain, type TenantInfo } from "@/hooks/useSubdomain";
 import { TenantSwitcher } from "@/components/tenant-switcher";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Building2, 
   Users, 
@@ -178,6 +181,140 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
   ]);
   const [kbName, setKbName] = useState("");
   const [kbDescription, setKbDescription] = useState("");
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Form state for doctor creation
+  const [doctorFormData, setDoctorFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    username: "",
+    phone: "",
+    specialty: "",
+    experience: "",
+    medicalLicense: "",
+    department: "",
+    consultationFee: "",
+    qualifications: "",
+    address: "",
+    dateOfBirth: "",
+    bloodType: "",
+    languages: "",
+    allergies: "",
+    emergencyContact: "",
+    emergencyPhone: ""
+  });
+
+  // Fetch doctors from Django backend
+  const { data: doctorsData, isLoading: doctorsLoading, refetch: refetchDoctors } = useQuery({
+    queryKey: ['/api/auth/doctors/'],
+    queryFn: async () => {
+      const token = localStorage.getItem('clinicToken') || localStorage.getItem('adminToken');
+      const baseUrl = 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
+      
+      const response = await fetch(`${baseUrl}/api/auth/doctors/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch doctors');
+      }
+      
+      return response.json();
+    },
+    retry: false,
+  });
+
+  // Create doctor mutation
+  const createDoctorMutation = useMutation({
+    mutationFn: async (formData: any) => {
+      const token = localStorage.getItem('clinicToken') || localStorage.getItem('adminToken');
+      const baseUrl = 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
+      
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        username: formData.username || undefined,
+        role: 'doctor',
+        phone_number: formData.phone,
+        address: formData.address,
+        date_of_birth: formData.dateOfBirth || undefined,
+        // Additional doctor fields
+        specialty: formData.specialty,
+        years_of_experience: parseInt(formData.experience) || 0,
+        medical_license: formData.medicalLicense,
+        department: formData.department,
+        consultation_fee: parseFloat(formData.consultationFee) || 0,
+        qualifications: formData.qualifications,
+        languages_spoken: formData.languages,
+        blood_type: formData.bloodType,
+        allergies: formData.allergies,
+        emergency_contact: formData.emergencyContact,
+        emergency_phone: formData.emergencyPhone
+      };
+
+      const response = await fetch(`${baseUrl}/api/auth/users/create/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create doctor');
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Doctor has been added successfully",
+      });
+      setShowForm(false);
+      refetchDoctors();
+      // Reset form
+      setDoctorFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        username: "",
+        phone: "",
+        specialty: "",
+        experience: "",
+        medicalLicense: "",
+        department: "",
+        consultationFee: "",
+        qualifications: "",
+        address: "",
+        dateOfBirth: "",
+        bloodType: "",
+        languages: "",
+        allergies: "",
+        emergencyContact: "",
+        emergencyPhone: ""
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create doctor",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Load data from localStorage or use sample data
   useEffect(() => {
@@ -230,10 +367,17 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
     ]
   };
 
-  const filteredDoctors = sampleData.doctors.filter(doctor =>
-    doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Use fetched doctors data or fall back to sample data
+  const doctorsToDisplay = doctorsData || sampleData.doctors;
+  
+  const filteredDoctors = doctorsToDisplay.filter((doctor: any) => {
+    const doctorName = doctor.name || `${doctor.first_name || ''} ${doctor.last_name || ''}`.trim();
+    const doctorSpecialty = doctor.specialty || '';
+    return (
+      doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctorSpecialty.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   const filteredPatients = sampleData.patients.filter(patient =>
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -387,65 +531,74 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
       </div>
 
       {/* Doctors Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDoctors.map((doctor) => (
-          <Card key={doctor.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-3">
-                <div className="relative">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={doctor.avatar} />
-                    <AvatarFallback>{doctor.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${getStatusColor(doctor.status)}`}></div>
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{doctor.name}</CardTitle>
-                  <CardDescription>{doctor.specialty}</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Experience:</span>
-                  <p className="font-medium">{doctor.experience}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Patients:</span>
-                  <p className="font-medium">{doctor.patients}</p>
-                </div>
-              </div>
-              
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center text-gray-600">
-                  <Mail className="h-3 w-3 mr-2" />
-                  {doctor.email}
-                </div>
-                <div className="flex items-center text-gray-600">
-                  <Phone className="h-3 w-3 mr-2" />
-                  {doctor.phone}
-                </div>
-              </div>
+      {doctorsLoading ? (
+        <div className="flex justify-center py-8">
+          <p>Loading doctors...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredDoctors.map((doctor: any) => {
+            const doctorName = doctor.name || `Dr. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim();
+            const initials = doctorName.split(' ').map((n: string) => n[0]).join('').toUpperCase();
+            
+            return (
+              <Card key={doctor.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                        {initials.slice(0, 3)}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{doctorName}</CardTitle>
+                      <CardDescription>{doctor.specialty || 'General Practice'}</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Experience:</span>
+                      <p className="font-medium">{doctor.years_of_experience || doctor.experience || '0'} years</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Patients:</span>
+                      <p className="font-medium">{doctor.patient_count || doctor.patients || '0'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center text-gray-600">
+                      <Mail className="h-3 w-3 mr-2" />
+                      {doctor.email}
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <Phone className="h-3 w-3 mr-2" />
+                      {doctor.phone_number || doctor.phone || 'Not provided'}
+                    </div>
+                  </div>
 
-              <div className="flex justify-between pt-3 border-t">
-                <Button variant="outline" size="sm">
-                  <Eye className="h-3 w-3 mr-1" />
-                  View
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Edit className="h-3 w-3 mr-1" />
-                  Edit
-                </Button>
-                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  <div className="flex justify-between pt-3 border-t">
+                    <Button variant="outline" size="sm">
+                      <Eye className="h-3 w-3 mr-1" />
+                      View
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 
@@ -556,190 +709,318 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
   };
 
   // Form Components
-  const DoctorForm = () => (
-    <Dialog open={showForm} onOpenChange={setShowForm}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{formType === "add" ? "Add New Doctor" : "Edit Doctor"}</DialogTitle>
-          <DialogDescription>
-            {formType === "add" ? "Add a new doctor to your medical team" : "Update doctor information"}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-6">
-          {/* Basic Information Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-700">Basic Information</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input id="firstName" placeholder="John" required />
-              </div>
-              <div>
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input id="lastName" placeholder="Smith" required />
-              </div>
-              <div>
-                <Label htmlFor="email">Email *</Label>
-                <Input id="email" type="email" placeholder="doctor@hospital.com" required />
-              </div>
-              <div>
-                <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" placeholder="+1 (555) 123-4567" />
-              </div>
-            </div>
-          </div>
+  const DoctorForm = () => {
+    const handleSubmit = () => {
+      // Validate required fields
+      if (!doctorFormData.firstName || !doctorFormData.lastName || !doctorFormData.email || 
+          !doctorFormData.password || !doctorFormData.specialty) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields",
+          variant: "destructive",
+        });
+        return;
+      }
 
-          {/* Account Security Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-700">Account Security</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="password">Password *</Label>
-                <Input id="password" type="password" placeholder="Minimum 8 characters" required />
-                <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
-              </div>
-              <div>
-                <Label htmlFor="username">Username (Optional)</Label>
-                <Input id="username" placeholder="dr.smith" />
-              </div>
-            </div>
-          </div>
+      // Validate password length
+      if (doctorFormData.password.length < 8) {
+        toast({
+          title: "Validation Error",
+          description: "Password must be at least 8 characters",
+          variant: "destructive",
+        });
+        return;
+      }
 
-          {/* Professional Information Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-700">Professional Information</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="specialty">Specialty *</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select specialty" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="General Practice">General Practice</SelectItem>
-                    <SelectItem value="Cardiology">Cardiology</SelectItem>
-                    <SelectItem value="Neurology">Neurology</SelectItem>
-                    <SelectItem value="Orthopedics">Orthopedics</SelectItem>
-                    <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-                    <SelectItem value="Gynecology">Gynecology</SelectItem>
-                    <SelectItem value="Dermatology">Dermatology</SelectItem>
-                    <SelectItem value="Psychiatry">Psychiatry</SelectItem>
-                    <SelectItem value="Radiology">Radiology</SelectItem>
-                    <SelectItem value="Emergency Medicine">Emergency Medicine</SelectItem>
-                    <SelectItem value="Internal Medicine">Internal Medicine</SelectItem>
-                    <SelectItem value="Surgery">Surgery</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="experience">Years of Experience</Label>
-                <Input id="experience" type="number" min="0" placeholder="10" />
-              </div>
-              <div>
-                <Label htmlFor="medicalLicense">Medical License Number</Label>
-                <Input id="medicalLicense" placeholder="MD123456" />
-              </div>
-              <div>
-                <Label htmlFor="department">Department</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Emergency">Emergency</SelectItem>
-                    <SelectItem value="Outpatient">Outpatient</SelectItem>
-                    <SelectItem value="Inpatient">Inpatient</SelectItem>
-                    <SelectItem value="Surgery">Surgery</SelectItem>
-                    <SelectItem value="ICU">ICU</SelectItem>
-                    <SelectItem value="Laboratory">Laboratory</SelectItem>
-                    <SelectItem value="Radiology">Radiology</SelectItem>
-                    <SelectItem value="Pharmacy">Pharmacy</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="consultationFee">Consultation Fee ($)</Label>
-                <Input id="consultationFee" type="number" min="0" placeholder="150" />
-              </div>
-              <div>
-                <Label htmlFor="qualifications">Qualifications</Label>
-                <Input id="qualifications" placeholder="MD, PhD, Board Certified" />
-              </div>
-            </div>
-          </div>
+      // Submit the form
+      createDoctorMutation.mutate(doctorFormData);
+    };
 
-          {/* Additional Information Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-700">Additional Information</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label htmlFor="address">Address</Label>
-                <Input id="address" placeholder="123 Medical Street, City, State, ZIP" />
-              </div>
-              <div>
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                <Input id="dateOfBirth" type="date" />
-              </div>
-              <div>
-                <Label htmlFor="bloodType">Blood Type</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select blood type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A+">A+</SelectItem>
-                    <SelectItem value="A-">A-</SelectItem>
-                    <SelectItem value="B+">B+</SelectItem>
-                    <SelectItem value="B-">B-</SelectItem>
-                    <SelectItem value="AB+">AB+</SelectItem>
-                    <SelectItem value="AB-">AB-</SelectItem>
-                    <SelectItem value="O+">O+</SelectItem>
-                    <SelectItem value="O-">O-</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="languages">Languages Spoken</Label>
-                <Input id="languages" placeholder="English, Spanish" />
-              </div>
-              <div>
-                <Label htmlFor="allergies">Known Allergies</Label>
-                <Input id="allergies" placeholder="Penicillin, Latex, etc." />
+    return (
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{formType === "add" ? "Add New Doctor" : "Edit Doctor"}</DialogTitle>
+            <DialogDescription>
+              {formType === "add" ? "Add a new doctor to your medical team" : "Update doctor information"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            {/* Basic Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input 
+                    id="firstName" 
+                    placeholder="John" 
+                    value={doctorFormData.firstName}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, firstName: e.target.value})}
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input 
+                    id="lastName" 
+                    placeholder="Smith" 
+                    value={doctorFormData.lastName}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, lastName: e.target.value})}
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email *</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="doctor@hospital.com" 
+                    value={doctorFormData.email}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, email: e.target.value})}
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input 
+                    id="phone" 
+                    placeholder="+1 (555) 123-4567" 
+                    value={doctorFormData.phone}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, phone: e.target.value})}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Emergency Contact Section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-700">Emergency Contact</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="emergencyContact">Contact Name</Label>
-                <Input id="emergencyContact" placeholder="Jane Doe" />
+            {/* Account Security Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">Account Security</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="password">Password *</Label>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    placeholder="Minimum 8 characters" 
+                    value={doctorFormData.password}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, password: e.target.value})}
+                    required 
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
+                </div>
+                <div>
+                  <Label htmlFor="username">Username (Optional)</Label>
+                  <Input 
+                    id="username" 
+                    placeholder="dr.smith" 
+                    value={doctorFormData.username}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, username: e.target.value})}
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="emergencyPhone">Contact Phone</Label>
-                <Input id="emergencyPhone" type="tel" placeholder="+1 (555) 987-6543" />
+            </div>
+
+            {/* Professional Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">Professional Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="specialty">Specialty *</Label>
+                  <Select 
+                    value={doctorFormData.specialty}
+                    onValueChange={(value) => setDoctorFormData({...doctorFormData, specialty: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select specialty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="General Practice">General Practice</SelectItem>
+                      <SelectItem value="Cardiology">Cardiology</SelectItem>
+                      <SelectItem value="Neurology">Neurology</SelectItem>
+                      <SelectItem value="Orthopedics">Orthopedics</SelectItem>
+                      <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                      <SelectItem value="Gynecology">Gynecology</SelectItem>
+                      <SelectItem value="Dermatology">Dermatology</SelectItem>
+                      <SelectItem value="Psychiatry">Psychiatry</SelectItem>
+                      <SelectItem value="Radiology">Radiology</SelectItem>
+                      <SelectItem value="Emergency Medicine">Emergency Medicine</SelectItem>
+                      <SelectItem value="Internal Medicine">Internal Medicine</SelectItem>
+                      <SelectItem value="Surgery">Surgery</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="experience">Years of Experience</Label>
+                  <Input 
+                    id="experience" 
+                    type="number" 
+                    min="0" 
+                    placeholder="10" 
+                    value={doctorFormData.experience}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, experience: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="medicalLicense">Medical License Number</Label>
+                  <Input 
+                    id="medicalLicense" 
+                    placeholder="MD123456" 
+                    value={doctorFormData.medicalLicense}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, medicalLicense: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="department">Department</Label>
+                  <Select 
+                    value={doctorFormData.department}
+                    onValueChange={(value) => setDoctorFormData({...doctorFormData, department: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Emergency">Emergency</SelectItem>
+                      <SelectItem value="Outpatient">Outpatient</SelectItem>
+                      <SelectItem value="Inpatient">Inpatient</SelectItem>
+                      <SelectItem value="Surgery">Surgery</SelectItem>
+                      <SelectItem value="ICU">ICU</SelectItem>
+                      <SelectItem value="Laboratory">Laboratory</SelectItem>
+                      <SelectItem value="Radiology">Radiology</SelectItem>
+                      <SelectItem value="Pharmacy">Pharmacy</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="consultationFee">Consultation Fee ($)</Label>
+                  <Input 
+                    id="consultationFee" 
+                    type="number" 
+                    min="0" 
+                    placeholder="150" 
+                    value={doctorFormData.consultationFee}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, consultationFee: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="qualifications">Qualifications</Label>
+                  <Input 
+                    id="qualifications" 
+                    placeholder="MD, PhD, Board Certified" 
+                    value={doctorFormData.qualifications}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, qualifications: e.target.value})}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">Additional Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Input 
+                    id="address" 
+                    placeholder="123 Medical Street, City, State, ZIP" 
+                    value={doctorFormData.address}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, address: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <Input 
+                    id="dateOfBirth" 
+                    type="date" 
+                    value={doctorFormData.dateOfBirth}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, dateOfBirth: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="bloodType">Blood Type</Label>
+                  <Select 
+                    value={doctorFormData.bloodType}
+                    onValueChange={(value) => setDoctorFormData({...doctorFormData, bloodType: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select blood type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A+">A+</SelectItem>
+                      <SelectItem value="A-">A-</SelectItem>
+                      <SelectItem value="B+">B+</SelectItem>
+                      <SelectItem value="B-">B-</SelectItem>
+                      <SelectItem value="AB+">AB+</SelectItem>
+                      <SelectItem value="AB-">AB-</SelectItem>
+                      <SelectItem value="O+">O+</SelectItem>
+                      <SelectItem value="O-">O-</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="languages">Languages Spoken</Label>
+                  <Input 
+                    id="languages" 
+                    placeholder="English, Spanish" 
+                    value={doctorFormData.languages}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, languages: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="allergies">Known Allergies</Label>
+                  <Input 
+                    id="allergies" 
+                    placeholder="Penicillin, Latex, etc." 
+                    value={doctorFormData.allergies}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, allergies: e.target.value})}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Emergency Contact Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700">Emergency Contact</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="emergencyContact">Contact Name</Label>
+                  <Input 
+                    id="emergencyContact" 
+                    placeholder="Jane Doe" 
+                    value={doctorFormData.emergencyContact}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, emergencyContact: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="emergencyPhone">Contact Phone</Label>
+                  <Input 
+                    id="emergencyPhone" 
+                    type="tel" 
+                    placeholder="+1 (555) 987-6543" 
+                    value={doctorFormData.emergencyPhone}
+                    onChange={(e) => setDoctorFormData({...doctorFormData, emergencyPhone: e.target.value})}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className="flex justify-end space-x-2 mt-6">
-          <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-          <Button onClick={() => {
-            // TODO: Add form submission logic with validation
-            // Check required fields: firstName, lastName, email, password, specialty
-            // Validate password length (minimum 8 characters)
-            // Call API to create doctor with all fields
-            setShowForm(false);
-          }}>
-            <Plus className="h-4 w-4 mr-2" />
-            {formType === "add" ? "Add Doctor" : "Update Doctor"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+          <div className="flex justify-end space-x-2 mt-6">
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button onClick={handleSubmit} disabled={createDoctorMutation.isPending}>
+              {createDoctorMutation.isPending ? (
+                <>Loading...</>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {formType === "add" ? "Add Doctor" : "Update Doctor"}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   const PatientForm = () => (
     <Dialog open={showForm} onOpenChange={setShowForm}>
