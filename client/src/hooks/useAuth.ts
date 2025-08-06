@@ -19,18 +19,24 @@ interface AuthResponse {
 }
 
 export function useAuth() {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => {
+    // Initialize token from localStorage immediately
+    return localStorage.getItem("medcor_token");
+  });
   const queryClient = useQueryClient();
 
   useEffect(() => {
     const storedToken = localStorage.getItem("medcor_token");
-    setToken(storedToken);
-  }, []);
+    if (storedToken !== token) {
+      setToken(storedToken);
+    }
+  }, [token]);
 
   const { data: authData, isLoading, error } = useQuery<AuthResponse>({
     queryKey: ["/api/auth/me"],
     enabled: !!token,
     retry: false,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     queryFn: async () => {
       if (!token) throw new Error("No token");
       

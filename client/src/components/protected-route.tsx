@@ -11,8 +11,17 @@ export function ProtectedRoute({ children, allowedRoles, onUnauthorized }: Prote
   const { isAuthenticated, user, isLoading } = useAuth();
 
   useEffect(() => {
+    // Only trigger unauthorized callback after loading is complete and user is not authenticated
+    // This prevents the modal from showing while authentication state is still being determined
     if (!isLoading && !isAuthenticated && onUnauthorized) {
-      onUnauthorized();
+      // Add a small delay to ensure the auth state has fully loaded
+      const timer = setTimeout(() => {
+        // Double-check authentication state before showing modal
+        if (!isAuthenticated) {
+          onUnauthorized();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, isLoading, onUnauthorized]);
 
