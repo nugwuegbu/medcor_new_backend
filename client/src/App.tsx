@@ -23,7 +23,6 @@ import Pricing from "@/pages/pricing";
 import Signup from "@/pages/signup";
 import Payment from "@/pages/payment";
 import Dashboard from "@/pages/dashboard";
-import OnboardingPage from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
 import { AuthModal } from "@/components/auth-modal";
 import { ProtectedRoute } from "@/components/protected-route";
@@ -138,11 +137,6 @@ function Router() {
             <SettingsPage />
           </ProtectedRoute>
         </Route>
-        <Route path="/onboarding">
-          <ProtectedRoute onUnauthorized={() => setShowAuthModal(true)}>
-            <OnboardingPage />
-          </ProtectedRoute>
-        </Route>
         <Route component={NotFound} />
       </Switch>
       
@@ -151,29 +145,23 @@ function Router() {
         onClose={() => setShowAuthModal(false)}
         onAuthSuccess={(token, user) => {
           setShowAuthModal(false);
-          // Check if onboarding is needed
+          // Redirect based on user role
           if (user) {
-            const onboardingCompleted = localStorage.getItem(`onboarding_completed_${user.id}`);
-            if (onboardingCompleted !== 'true') {
-              window.location.href = '/onboarding';
-            } else {
-              // Redirect based on user role
-              switch (user.role) {
-                case 'doctor':
-                  window.location.href = '/doctor/dashboard';
-                  break;
-                case 'patient':
-                  window.location.href = '/patient/dashboard';
-                  break;
-                case 'admin':
-                  window.location.href = '/admin/dashboard';
-                  break;
-                case 'clinic':
-                  window.location.href = '/dashboard';
-                  break;
-                default:
-                  window.location.href = '/';
-              }
+            switch (user.role) {
+              case 'doctor':
+                window.location.href = '/doctor/dashboard';
+                break;
+              case 'patient':
+                window.location.href = '/patient/dashboard';
+                break;
+              case 'admin':
+                window.location.href = '/admin/dashboard';
+                break;
+              case 'clinic':
+                window.location.href = '/dashboard';
+                break;
+              default:
+                window.location.href = '/';
             }
           }
         }}
