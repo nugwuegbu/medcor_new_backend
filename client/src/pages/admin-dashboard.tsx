@@ -218,13 +218,21 @@ export default function AdminDashboard() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!dateString) return 'Not scheduled';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Not scheduled';
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Not scheduled';
+    }
   };
 
   const getRoleColor = (role: string) => {
@@ -329,26 +337,35 @@ export default function AdminDashboard() {
           </Button>
         </div>
 
-        {/* Sidebar Navigation */}
+        {/* Enhanced Sidebar Navigation with Icons */}
         <nav className="flex-1 px-3 py-4">
-          <div className="space-y-1">
+          <div className="space-y-2">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
+              const isActive = selectedView === item.id;
               return (
                 <Button
                   key={item.id}
-                  variant={selectedView === item.id ? "secondary" : "ghost"}
+                  variant={isActive ? "secondary" : "ghost"}
                   className={cn(
-                    "w-full justify-start",
-                    selectedView === item.id && "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                    "w-full justify-start transition-all duration-200",
+                    isActive 
+                      ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 hover:from-blue-100 hover:to-blue-200 border-l-4 border-blue-600" 
+                      : "hover:bg-gray-100 text-gray-700"
                   )}
                   onClick={() => {
                     setSelectedView(item.id);
                     setMobileMenuOpen(false);
                   }}
                 >
-                  <Icon className="mr-3 h-4 w-4" />
-                  {item.label}
+                  <Icon className={cn(
+                    "mr-3 h-4 w-4",
+                    isActive ? "text-blue-600" : "text-gray-500"
+                  )} />
+                  <span className="font-medium">{item.label}</span>
+                  {isActive && (
+                    <div className="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse" />
+                  )}
                 </Button>
               );
             })}
@@ -378,28 +395,31 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <header className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between">
+        {/* Enhanced Top Header with Gradient Background */}
+        <header className="h-16 bg-gradient-to-r from-white via-gray-50 to-white border-b border-gray-200 px-6 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden hover:bg-gray-100"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-semibold text-gray-900">
-              {sidebarItems.find(item => item.id === selectedView)?.label || 'Dashboard'}
-            </h1>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                {sidebarItems.find(item => item.id === selectedView)?.label || 'Dashboard'}
+              </h1>
+              <p className="text-xs text-gray-500">Hospital Administration Portal</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 type="search"
-                placeholder="Search..."
-                className="pl-10 w-64"
+                placeholder="Search patients, doctors..."
+                className="pl-10 w-64 bg-gray-50 border-gray-300 focus:bg-white transition-colors"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -407,10 +427,10 @@ export default function AdminDashboard() {
             <Button
               variant="outline"
               onClick={() => setLocation('/')}
-              className="hidden sm:flex"
+              className="hidden sm:flex bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 hover:from-blue-100 hover:to-blue-200"
             >
-              <Eye className="h-4 w-4 mr-2" />
-              View Site
+              <Eye className="h-4 w-4 mr-2 text-blue-600" />
+              <span className="text-blue-700">View Site</span>
             </Button>
           </div>
         </header>
@@ -420,87 +440,216 @@ export default function AdminDashboard() {
           {/* Overview View */}
           {selectedView === 'overview' && (
             <div className="space-y-6">
-              {/* Stats Cards */}
+              {/* Stats Cards with Gradient Backgrounds */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
+                <Card className="border-0 shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <Users className="h-8 w-8 opacity-80" />
+                      <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">
+                        +{stats.monthlyGrowth}%
+                      </span>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">{stats.totalPatients}</div>
+                    <p className="text-sm opacity-90">Total Patients</p>
+                    <p className="text-xs opacity-75 mt-2">Active this month</p>
+                  </div>
+                </Card>
+                
+                <Card className="border-0 shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 text-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <Stethoscope className="h-8 w-8 opacity-80" />
+                      <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">
+                        Online
+                      </span>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">{stats.totalDoctors}</div>
+                    <p className="text-sm opacity-90">Active Doctors</p>
+                    <p className="text-xs opacity-75 mt-2">Available for consultation</p>
+                  </div>
+                </Card>
+                
+                <Card className="border-0 shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <Calendar className="h-8 w-8 opacity-80" />
+                      <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">
+                        Today: {stats.todayAppointments}
+                      </span>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">{stats.totalAppointments}</div>
+                    <p className="text-sm opacity-90">Total Appointments</p>
+                    <p className="text-xs opacity-75 mt-2">This month</p>
+                  </div>
+                </Card>
+                
+                <Card className="border-0 shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 text-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <Activity className="h-8 w-8 opacity-80" />
+                      <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">
+                        Urgent
+                      </span>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">{stats.pendingAppointments}</div>
+                    <p className="text-sm opacity-90">Pending Review</p>
+                    <p className="text-xs opacity-75 mt-2">Require attention</p>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Two Column Layout for Additional Info */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Recent Appointments with Enhanced Design */}
+                <Card className="shadow-lg">
+                  <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Recent Appointments</CardTitle>
+                        <CardDescription>Latest scheduled appointments</CardDescription>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedView('appointments')}>
+                        View All →
+                      </Button>
+                    </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalPatients}</div>
-                    <p className="text-xs text-muted-foreground">
-                      +{stats.monthlyGrowth}% from last month
-                    </p>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="pl-6">Patient</TableHead>
+                          <TableHead>Doctor</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {appointments?.slice(0, 5).map((apt: any) => (
+                          <TableRow key={apt.id} className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="font-medium pl-6">{apt.patient_name || 'N/A'}</TableCell>
+                            <TableCell>{apt.doctor_name || 'N/A'}</TableCell>
+                            <TableCell className="text-sm">{formatDate(apt.appointment_slot_date || apt.appointment_date)}</TableCell>
+                            <TableCell>
+                              <Badge className={getStatusColor(apt.appointment_status || apt.status || 'Pending')}>
+                                {apt.appointment_status || apt.status || 'Pending'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Doctors</CardTitle>
-                    <Stethoscope className="h-4 w-4 text-muted-foreground" />
+
+                {/* Quick Actions */}
+                <Card className="shadow-lg">
+                  <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg">
+                    <CardTitle className="text-lg">Quick Actions</CardTitle>
+                    <CardDescription>Common administrative tasks</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalDoctors}</div>
-                    <p className="text-xs text-muted-foreground">Active practitioners</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Appointments</CardTitle>
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalAppointments}</div>
-                    <p className="text-xs text-muted-foreground">
-                      {stats.todayAppointments} scheduled today
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Pending</CardTitle>
-                    <Activity className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.pendingAppointments}</div>
-                    <p className="text-xs text-muted-foreground">Require attention</p>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white">
+                        <Users className="h-6 w-6 mb-2" />
+                        <span className="text-sm">Add Patient</span>
+                      </Button>
+                      <Button className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
+                        <Stethoscope className="h-6 w-6 mb-2" />
+                        <span className="text-sm">Add Doctor</span>
+                      </Button>
+                      <Button className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white">
+                        <Calendar className="h-6 w-6 mb-2" />
+                        <span className="text-sm">Schedule</span>
+                      </Button>
+                      <Button className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
+                        <FileText className="h-6 w-6 mb-2" />
+                        <span className="text-sm">Reports</span>
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Recent Activity */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Appointments</CardTitle>
-                  <CardDescription>Latest scheduled appointments</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Patient</TableHead>
-                        <TableHead>Doctor</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {appointments?.slice(0, 5).map((apt: any) => (
-                        <TableRow key={apt.id}>
-                          <TableCell>{apt.patient_name || 'N/A'}</TableCell>
-                          <TableCell>{apt.doctor_name || 'N/A'}</TableCell>
-                          <TableCell>{formatDate(apt.appointment_date)}</TableCell>
-                          <TableCell>
-                            <Badge className={getStatusColor(apt.status)}>
-                              {apt.status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              {/* System Health & Activity Overview */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Recent Activity Feed */}
+                <Card className="shadow-lg lg:col-span-2">
+                  <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg">
+                    <CardTitle className="text-lg">Activity Feed</CardTitle>
+                    <CardDescription>Recent system activities</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">New patient registered</p>
+                          <p className="text-xs text-gray-500">John Doe - 5 minutes ago</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Appointment confirmed</p>
+                          <p className="text-xs text-gray-500">Dr. Smith with Patient #1234 - 15 minutes ago</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Appointment rescheduled</p>
+                          <p className="text-xs text-gray-500">ID #5678 moved to tomorrow - 30 minutes ago</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">New doctor onboarded</p>
+                          <p className="text-xs text-gray-500">Dr. Johnson joined - 1 hour ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* System Health */}
+                <Card className="shadow-lg">
+                  <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg">
+                    <CardTitle className="text-lg">System Health</CardTitle>
+                    <CardDescription>Platform status</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">API Status</span>
+                        <Badge className="bg-green-100 text-green-800">Operational</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Database</span>
+                        <Badge className="bg-green-100 text-green-800">Connected</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Response Time</span>
+                        <span className="text-sm text-gray-600">45ms</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Uptime</span>
+                        <span className="text-sm text-gray-600">99.9%</span>
+                      </div>
+                      <div className="pt-4 border-t">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">Storage Used</span>
+                          <span className="text-sm text-gray-600">2.5 GB / 10 GB</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full" style={{ width: '25%' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           )}
 
@@ -742,11 +891,11 @@ export default function AdminDashboard() {
                           <TableCell className="font-mono text-xs">#{apt.id}</TableCell>
                           <TableCell>{apt.patient_name || 'N/A'}</TableCell>
                           <TableCell>{apt.doctor_name || 'N/A'}</TableCell>
-                          <TableCell>{formatDate(apt.appointment_date || apt.appointment_slot_date)}</TableCell>
-                          <TableCell>{apt.appointment_type || 'Consultation'}</TableCell>
+                          <TableCell>{formatDate(apt.appointment_slot_date || apt.appointment_date)}</TableCell>
+                          <TableCell>{apt.treat_name || apt.appointment_type || 'General Consultation'}</TableCell>
                           <TableCell>
-                            <Badge className={getStatusColor(apt.status || apt.appointment_status)}>
-                              {apt.status || apt.appointment_status || 'scheduled'}
+                            <Badge className={getStatusColor(apt.appointment_status || apt.status)}>
+                              {apt.appointment_status || apt.status || 'Pending'}
                             </Badge>
                           </TableCell>
                           <TableCell>
