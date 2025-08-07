@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Navbar from "@/components/navbar";
-import TestPage from "./test-page";
 import Home from "@/pages/home";
 import Chat from "@/pages/chat";
 import Doctors from "@/pages/doctors";
@@ -15,13 +14,11 @@ import AdminLogin from "@/pages/admin-login";
 import AdminDashboard from "@/pages/admin-dashboard";
 import MedCorAdminDashboard from "@/pages/MedCorAdminDashboard";
 import MedCorAdminLogin from "@/pages/MedCorAdminLogin";
-import StaffDashboard from "@/pages/StaffDashboard";
 import PatientDashboard from "@/pages/PatientDashboardNew";
 import EnhancedDoctorDashboard from "@/pages/EnhancedDoctorDashboard";
 import Pricing from "@/pages/pricing";
 import Signup from "@/pages/signup";
 import Payment from "@/pages/payment";
-import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 import { AuthModal } from "@/components/auth-modal";
 import { ProtectedRoute } from "@/components/protected-route";
@@ -46,12 +43,6 @@ function Router() {
       </div>
     );
   }
-
-  // For tenant subdomains, show tenant-specific dashboard by default
-  if (isMultiTenant && location === '/') {
-    console.log('Redirecting to Dashboard for tenant:', tenantInfo?.name);
-    return <Dashboard tenantInfo={tenantInfo} />;
-  }
   
   console.log('Current routing - Location:', location, 'isMultiTenant:', isMultiTenant, 'tenant:', tenantInfo?.name);
 
@@ -65,12 +56,12 @@ function Router() {
         <Route path="/">
           {isMultiTenant ? (
             <>
-              {console.log('Rendering Dashboard for multi-tenant:', tenantInfo?.name)}
-              <Dashboard tenantInfo={tenantInfo} />
+              {console.log('Rendering login page for multi-tenant:', tenantInfo?.name)}
+              <Login />
             </>
           ) : (
             <>
-              {console.log('Rendering Home page for public tenant')}
+              {console.log('Rendering Home page for public')}
               <Home onShowAuthModal={() => setShowAuthModal(true)} />
             </>
           )}
@@ -79,20 +70,25 @@ function Router() {
         <Route path="/signup" component={Signup} />
         <Route path="/payment" component={Payment} />
         <Route path="/chat" component={Chat} />
-        <Route path="/test" component={TestPage} />
         
         {/* Authentication Routes */}
         <Route path="/login" component={Login} />
         <Route path="/admin/login" component={AdminLogin} />
-        <Route path="/medcor-admin/login" component={MedCorAdminLogin} />
+        <Route path="/superadmin/login" component={MedCorAdminLogin} />
         
-        {/* Dashboard Routes - Admin */}
-        <Route path="/admin/dashboard" component={AdminDashboard} />
-        <Route path="/medcor-admin">
+        {/* 4 Main Dashboard Routes */}
+        
+        {/* 1. Superadmin Dashboard - Multi-tenancy Management */}
+        <Route path="/superadmin/dashboard">
           <MedCorAdminDashboard />
         </Route>
         
-        {/* Dashboard Routes - Medical Staff */}
+        {/* 2. Admin Dashboard - Hospital/Clinic Management */}
+        <Route path="/admin/dashboard">
+          <AdminDashboard />
+        </Route>
+        
+        {/* 3. Doctor Dashboard - Hospital Tenant */}
         <Route path="/doctor/dashboard">
           <ProtectedRoute 
             allowedRoles={["doctor"]}
@@ -101,11 +97,8 @@ function Router() {
             <EnhancedDoctorDashboard />
           </ProtectedRoute>
         </Route>
-        <Route path="/staff/dashboard">
-          <StaffDashboard />
-        </Route>
         
-        {/* Dashboard Routes - Patients */}
+        {/* 4. Patient Dashboard - Hospital Tenant */}
         <Route path="/patient/dashboard">
           <ProtectedRoute 
             allowedRoles={["patient"]}
@@ -113,11 +106,6 @@ function Router() {
           >
             <PatientDashboard />
           </ProtectedRoute>
-        </Route>
-        
-        {/* General Dashboard Route */}
-        <Route path="/dashboard">
-          <Dashboard tenantInfo={tenantInfo} />
         </Route>
         
         {/* Protected Feature Routes */}
@@ -128,7 +116,7 @@ function Router() {
         </Route>
         <Route path="/appointments">
           <ProtectedRoute 
-            allowedRoles={["patient", "doctor", "clinic", "admin"]}
+            allowedRoles={["patient", "doctor", "admin"]}
             onUnauthorized={() => setShowAuthModal(true)}
           >
             <Appointments />
@@ -161,8 +149,8 @@ function Router() {
               case 'admin':
                 window.location.href = '/admin/dashboard';
                 break;
-              case 'clinic':
-                window.location.href = '/dashboard';
+              case 'superadmin':
+                window.location.href = '/superadmin/dashboard';
                 break;
               default:
                 window.location.href = '/';
@@ -210,12 +198,10 @@ function AppContent() {
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />
     </QueryClientProvider>
   );
 }
-
-export default App;

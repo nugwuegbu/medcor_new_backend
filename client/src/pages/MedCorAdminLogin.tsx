@@ -33,10 +33,10 @@ const MedCorAdminLogin: React.FC = () => {
         
         toast({
           title: "Login Successful",
-          description: "Welcome to MedCor Admin Dashboard",
+          description: "Welcome to Superadmin Dashboard",
         });
         
-        setLocation('/medcor-admin');
+        setLocation('/superadmin/dashboard');
       }
     } catch (error: any) {
       toast({
@@ -56,9 +56,9 @@ const MedCorAdminLogin: React.FC = () => {
           <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
             <Shield className="h-8 w-8 text-purple-600" />
           </div>
-          <CardTitle className="text-2xl font-bold">MedCor Admin Portal</CardTitle>
+          <CardTitle className="text-2xl font-bold">Superadmin Portal</CardTitle>
           <CardDescription>
-            Access the MedCor platform administration dashboard
+            Access the multi-tenancy management dashboard for MedCor platform
           </CardDescription>
         </CardHeader>
         <CardContent>

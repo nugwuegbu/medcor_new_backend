@@ -17,6 +17,13 @@ Preferred communication style: Simple, everyday language.
 - **Form Handling**: React Hook Form with Zod validation
 - **UI/UX Design**: Medical-themed color scheme, responsive design, component-based, dark mode support.
 
+### Dashboard Structure (Simplified - January 8, 2025)
+- **4 Main Dashboards Only**:
+  1. **Superadmin Dashboard** (`/superadmin/dashboard`) - Multi-tenancy management for MedCor platform
+  2. **Admin Dashboard** (`/admin/dashboard`) - Hospital/clinic administration within a tenant
+  3. **Doctor Dashboard** (`/doctor/dashboard`) - Doctor portal within hospital tenant
+  4. **Patient Dashboard** (`/patient/dashboard`) - Patient portal within hospital tenant
+
 ### Backend
 - **Runtime**: Python with Django framework
 - **Language**: Python 3.11+ (async support)
