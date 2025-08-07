@@ -132,11 +132,13 @@ const patientFormSchema = z.object({
 const doctorFormSchema = z.object({
   email: z.string().email('Invalid email address'),
   first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
+  last_name: z.string().optional(), // Made optional
   specialization: z.string().optional(),
   phone: z.string().optional(),
   license_number: z.string().optional(),
-  experience_years: z.string().optional(),
+  experience_years: z.union([z.string(), z.number()]).optional(), // Accept both string and number
+  username: z.string().optional(), // Added as optional
+  password: z.string().optional(), // Added as optional
 });
 
 const appointmentFormSchema = z.object({
@@ -2787,20 +2789,45 @@ function DoctorForm({
       specialization: initialData?.specialization || '',
       license_number: initialData?.license_number || '',
       phone: initialData?.phone || '',
-      experience_years: initialData?.experience_years || 0,
+      experience_years: initialData?.experience_years ? String(initialData.experience_years) : '', // Convert to string
       consultation_fee: initialData?.consultation_fee || 100,
     },
   });
 
   const handleFormSubmit = (data: any) => {
     console.log('DoctorForm submitting with data:', data);
-    // Don't send empty password when editing
-    if (initialData && (!data.password || data.password === '')) {
-      const { password, ...dataWithoutPassword } = data;
-      onSubmit(dataWithoutPassword);
-    } else {
-      onSubmit(data);
+    
+    // Clean the data - remove empty fields and convert types if needed
+    const cleanedData: any = {};
+    
+    // Required fields
+    cleanedData.email = data.email;
+    cleanedData.first_name = data.first_name;
+    
+    // Optional fields - only add if they have values
+    if (data.last_name) cleanedData.last_name = data.last_name;
+    if (data.username) cleanedData.username = data.username;
+    if (data.specialization) cleanedData.specialization = data.specialization;
+    if (data.phone) cleanedData.phone = data.phone;
+    if (data.license_number) cleanedData.license_number = data.license_number;
+    
+    // Convert experience_years to string if it's a number
+    if (data.experience_years !== undefined && data.experience_years !== null && data.experience_years !== 0) {
+      cleanedData.experience_years = String(data.experience_years);
     }
+    
+    // Handle consultation_fee if present
+    if (data.consultation_fee !== undefined && data.consultation_fee !== null && data.consultation_fee !== 0) {
+      cleanedData.consultation_fee = data.consultation_fee;
+    }
+    
+    // Don't send empty password when editing
+    if (!initialData || (data.password && data.password !== '')) {
+      cleanedData.password = data.password || 'TempPass123!';
+    }
+    
+    console.log('DoctorForm cleaned data:', cleanedData);
+    onSubmit(cleanedData);
   };
 
   return (
