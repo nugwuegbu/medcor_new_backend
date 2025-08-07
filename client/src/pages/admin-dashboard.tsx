@@ -2264,13 +2264,19 @@ export default function AdminDashboard() {
           <DoctorForm 
             onSubmit={async (data) => {
               try {
-                // Add role field for doctor creation
+                // Prepare doctor data with required fields
                 const doctorData = {
                   ...data,
-                  role: 'doctor'
+                  role: 'doctor',
+                  // Generate username from email if not provided
+                  username: data.username || data.email?.split('@')[0] || `doctor_${Date.now()}`,
+                  // Ensure password is included
+                  password: data.password || 'TempPass123!',
                 };
                 
-                await apiRequest('/api/auth/users/create/', {
+                console.log('Creating doctor with data:', doctorData);
+                
+                const response = await apiRequest('/api/auth/users/create/', {
                   method: 'POST',
                   headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
@@ -2278,6 +2284,9 @@ export default function AdminDashboard() {
                   },
                   body: JSON.stringify(doctorData),
                 });
+                
+                console.log('Doctor creation response:', response);
+                
                 toast({
                   title: 'Success',
                   description: 'Doctor created successfully',
@@ -2286,6 +2295,7 @@ export default function AdminDashboard() {
                 queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
                 setShowAddDoctorModal(false);
               } catch (error: any) {
+                console.error('Doctor creation error:', error);
                 toast({
                   title: 'Error',
                   description: error.message || 'Failed to create doctor',
@@ -2310,13 +2320,17 @@ export default function AdminDashboard() {
               initialData={selectedDoctor}
               onSubmit={async (data) => {
                 try {
-                  // Ensure role is set to doctor
+                  // Prepare doctor data with required fields
                   const doctorData = {
                     ...data,
-                    role: 'doctor'
+                    role: 'doctor',
+                    // Keep existing username or generate one
+                    username: selectedDoctor.username || data.username || data.email?.split('@')[0] || `doctor_${selectedDoctor.id}`,
                   };
                   
-                  await apiRequest(`/api/auth/users/${selectedDoctor.id}/`, {
+                  console.log('Updating doctor with data:', doctorData);
+                  
+                  const response = await apiRequest(`/api/auth/users/${selectedDoctor.id}/`, {
                     method: 'PATCH',
                     headers: {
                       'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
@@ -2324,6 +2338,9 @@ export default function AdminDashboard() {
                     },
                     body: JSON.stringify(doctorData),
                   });
+                  
+                  console.log('Doctor update response:', response);
+                  
                   toast({
                     title: 'Success',
                     description: 'Doctor updated successfully',
@@ -2333,6 +2350,7 @@ export default function AdminDashboard() {
                   setShowEditDoctorModal(false);
                   setSelectedDoctor(null);
                 } catch (error: any) {
+                  console.error('Doctor update error:', error);
                   toast({
                     title: 'Error',
                     description: error.message || 'Failed to update doctor',
