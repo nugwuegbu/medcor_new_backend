@@ -142,11 +142,17 @@ const doctorFormSchema = z.object({
 });
 
 const appointmentFormSchema = z.object({
-  patient_id: z.number().min(1, 'Patient is required'),
-  doctor_id: z.number().min(1, 'Doctor is required'),
+  patient_id: z.union([z.string(), z.number()]).transform((val) => {
+    return typeof val === 'string' ? parseInt(val, 10) : val;
+  }),
+  doctor_id: z.union([z.string(), z.number()]).transform((val) => {
+    return typeof val === 'string' ? parseInt(val, 10) : val;
+  }),
   appointment_date: z.string().min(1, 'Date is required'),
   appointment_time: z.string().min(1, 'Time is required'),
-  reason: z.string().min(1, 'Reason is required'),
+  reason: z.string().optional(),
+  appointment_type: z.string().optional(),
+  notes: z.string().optional(),
   status: z.enum(['Pending', 'Approved', 'Completed', 'Cancelled']),
 });
 
@@ -2559,13 +2565,19 @@ export default function AdminDashboard() {
             doctors={doctors}
             onSubmit={async (data) => {
               try {
+                // Transform data to match backend expectations
+                const appointmentData = {
+                  ...data,
+                  treat_name: data.appointment_type, // Add treat_name field
+                };
+                
                 await apiRequest('/appointments/', {
                   method: 'POST',
                   headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify(data),
+                  body: JSON.stringify(appointmentData),
                 });
                 toast({
                   title: 'Success',
@@ -2600,13 +2612,19 @@ export default function AdminDashboard() {
               doctors={doctors}
               onSubmit={async (data) => {
                 try {
+                  // Transform data to match backend expectations
+                  const appointmentData = {
+                    ...data,
+                    treat_name: data.appointment_type, // Add treat_name field
+                  };
+                  
                   await apiRequest(`/appointments/${selectedAppointment.id}/`, {
                     method: 'PATCH',
                     headers: {
                       'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
                       'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(data),
+                    body: JSON.stringify(appointmentData),
                   });
                   toast({
                     title: 'Success',
@@ -3110,6 +3128,7 @@ function AppointmentForm({
       appointment_date: initialData?.appointment_date || '',
       appointment_time: initialData?.appointment_time || '',
       appointment_type: initialData?.appointment_type || 'consultation',
+      reason: initialData?.reason || '',
       status: initialData?.status || 'Pending',
       notes: initialData?.notes || '',
     },
@@ -3213,6 +3232,19 @@ function AppointmentForm({
                   <SelectItem value="emergency">Emergency</SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="reason"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Reason for Visit</FormLabel>
+              <FormControl>
+                <Input placeholder="Reason for appointment..." {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
