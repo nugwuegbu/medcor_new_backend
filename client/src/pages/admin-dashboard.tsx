@@ -2054,7 +2054,7 @@ export default function AdminDashboard() {
                 };
                 
                 console.log('Creating user with data:', userData); // Debug log
-                await apiRequest('/api/auth/users/create/', {
+                const response = await apiRequest('/api/auth/users/create/', {
                   method: 'POST',
                   headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
@@ -2062,6 +2062,7 @@ export default function AdminDashboard() {
                   },
                   body: JSON.stringify(userData),
                 });
+                console.log('User created successfully:', response); // Debug log
                 toast({
                   title: 'Success',
                   description: 'User created successfully with default password: TempPass123!',
@@ -2363,6 +2364,7 @@ export default function AdminDashboard() {
                   role: 'patient' // Ensure role is set
                 };
                 
+                console.log('Creating patient with data:', patientData); // Debug log
                 // Use the correct user creation endpoint
                 await apiRequest('/api/auth/users/create/', {
                   method: 'POST',
@@ -2372,10 +2374,13 @@ export default function AdminDashboard() {
                   },
                   body: JSON.stringify(patientData),
                 });
+                console.log('Patient created successfully'); // Debug log
                 toast({
                   title: 'Success',
                   description: 'Patient created successfully with default password: TempPass123!',
                 });
+                // Invalidate both user and patient queries to ensure refresh
+                queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
                 queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/patients/'] });
                 setShowAddPatientModal(false);
               } catch (error: any) {
@@ -2403,6 +2408,7 @@ export default function AdminDashboard() {
               initialData={selectedPatient}
               onSubmit={async (data) => {
                 try {
+                  console.log('Updating patient with data:', data); // Debug log
                   // Use the correct user update endpoint
                   await apiRequest(`/api/auth/users/${selectedPatient.id}/`, {
                     method: 'PATCH',
@@ -2412,6 +2418,7 @@ export default function AdminDashboard() {
                     },
                     body: JSON.stringify(data),
                   });
+                  console.log('Patient updated successfully'); // Debug log
                   toast({
                     title: 'Success',
                     description: 'Patient updated successfully',
@@ -2421,6 +2428,7 @@ export default function AdminDashboard() {
                   setShowEditPatientModal(false);
                   setSelectedPatient(null);
                 } catch (error: any) {
+                  console.error('Update patient failed:', error); // Debug log
                   toast({
                     title: 'Error',
                     description: error.message || 'Failed to update patient',
@@ -2895,6 +2903,19 @@ function PatientForm({
               <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input placeholder="patient@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input placeholder="username" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
