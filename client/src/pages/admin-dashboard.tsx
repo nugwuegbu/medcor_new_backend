@@ -438,7 +438,7 @@ export default function AdminDashboard() {
       // Use correct endpoints for each type
       const endpoint = type === 'user' ? `/api/auth/users/${id}/` :
                        type === 'patient' ? `/api/auth/users/${id}/` : // Patients are users
-                       type === 'doctor' ? `/api/auth/admin/doctors/${id}/` :
+                       type === 'doctor' ? `/api/auth/users/${id}/` : // Doctors are also users
                        type === 'appointment' ? `/appointments/${id}/` :
                        `/appointments/${id}/`;
       
@@ -2264,19 +2264,26 @@ export default function AdminDashboard() {
           <DoctorForm 
             onSubmit={async (data) => {
               try {
-                await apiRequest('/api/auth/admin/doctors/', {
+                // Add role field for doctor creation
+                const doctorData = {
+                  ...data,
+                  role: 'doctor'
+                };
+                
+                await apiRequest('/api/auth/users/create/', {
                   method: 'POST',
                   headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify(data),
+                  body: JSON.stringify(doctorData),
                 });
                 toast({
                   title: 'Success',
                   description: 'Doctor created successfully',
                 });
                 queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/doctors/'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
                 setShowAddDoctorModal(false);
               } catch (error: any) {
                 toast({
@@ -2303,19 +2310,26 @@ export default function AdminDashboard() {
               initialData={selectedDoctor}
               onSubmit={async (data) => {
                 try {
-                  await apiRequest(`/api/auth/admin/doctors/${selectedDoctor.id}/`, {
+                  // Ensure role is set to doctor
+                  const doctorData = {
+                    ...data,
+                    role: 'doctor'
+                  };
+                  
+                  await apiRequest(`/api/auth/users/${selectedDoctor.id}/`, {
                     method: 'PATCH',
                     headers: {
                       'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
                       'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(data),
+                    body: JSON.stringify(doctorData),
                   });
                   toast({
                     title: 'Success',
                     description: 'Doctor updated successfully',
                   });
                   queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/doctors/'] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
                   setShowEditDoctorModal(false);
                   setSelectedDoctor(null);
                 } catch (error: any) {
