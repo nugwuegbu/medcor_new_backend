@@ -11,6 +11,4 @@ router.register('subscriptions', SubscriptionViewSet, basename='subscription')
 router.register('payments', PaymentViewSet, basename='payment')
 router.register('usage', UsageTrackingViewSet, basename='usagetracking')
 
-urlpatterns = [
-    path('api/subscription/', include(router.urls)),
-]
+urlpatterns = router.urls

@@ -60,6 +60,9 @@ urlpatterns = [
     path('api/treatments/', include('treatment.urls')),
     # path('api/medical/', include('medical_api.urls')),  # Temporarily disabled due to import errors
     
+    # Subscription Plan Management endpoints
+    path('api/subscription/', include('subscription_plan.urls')),  # This will add /api/subscription/ endpoints
+    
     # Tenants management endpoints
     path('', include('tenants.urls')),  # This will add /api/tenants/ endpoints
     
