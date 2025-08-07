@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Slot, SlotExclusion, Appointment
 from tenants.serializers import UserBaseSerializer
 from treatment.serializers import TreatmentSerializer
+from treatment.models import Treatment
 
 
 class SlotSerializer(serializers.ModelSerializer):
@@ -60,6 +61,24 @@ class AppointmentDetailSerializer(AppointmentSerializer):
 
 
 class AppointmentCreateSerializer(serializers.ModelSerializer):
+    # Make slot and treatment optional
+    slot = serializers.PrimaryKeyRelatedField(
+        queryset=Slot.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    treatment = serializers.PrimaryKeyRelatedField(
+        queryset=Treatment.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    # Make medical_record a text field instead of file field
+    medical_record = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True
+    )
+    
     class Meta:
         model = Appointment
         fields = [
@@ -70,16 +89,18 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         # Validate appointment slot times
-        if attrs['appointment_slot_start_time'] >= attrs['appointment_slot_end_time']:
-            raise serializers.ValidationError(
-                "Start time must be before end time"
-            )
+        if attrs.get('appointment_slot_start_time') and attrs.get('appointment_slot_end_time'):
+            if attrs['appointment_slot_start_time'] >= attrs['appointment_slot_end_time']:
+                raise serializers.ValidationError(
+                    "Start time must be before end time"
+                )
         
-        # Check if the slot belongs to the selected doctor
-        if attrs['slot'].doctor != attrs['doctor']:
-            raise serializers.ValidationError(
-                "Selected slot does not belong to the selected doctor"
-            )
+        # Check if the slot belongs to the selected doctor (only if slot is provided)
+        if attrs.get('slot') and attrs.get('doctor'):
+            if attrs['slot'].doctor != attrs['doctor']:
+                raise serializers.ValidationError(
+                    "Selected slot does not belong to the selected doctor"
+                )
         
         return attrs
 

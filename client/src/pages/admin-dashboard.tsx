@@ -2667,14 +2667,12 @@ export default function AdminDashboard() {
                   const appointmentData = {
                     patient: data.patient_id,  // Map patient_id to patient
                     doctor: data.doctor_id,    // Map doctor_id to doctor
-                    // Note: slot and treatment need to be IDs, not strings
-                    // Temporarily removing these fields to fix the error
-                    // slot: 1, // TODO: Need to fetch actual slot IDs
-                    // treatment: 1, // TODO: Need to fetch actual treatment IDs
+                    // Note: slot and treatment are now optional fields
+                    // They can be added later when we implement proper dropdowns
                     appointment_slot_date: data.appointment_date,
                     appointment_slot_start_time: startTime,
                     appointment_slot_end_time: endTime,
-                    medical_record: data.reason || data.notes || '', // Using medical_record field
+                    medical_record: data.reason || data.notes || '', // Text field for notes/reason
                     appointment_status: data.status || 'Pending',
                   };
                   

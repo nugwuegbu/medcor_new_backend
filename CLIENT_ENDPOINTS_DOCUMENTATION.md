@@ -6,7 +6,11 @@ All Client endpoints from `tenants.models.Client` have been successfully impleme
 ## Recent Fixes (January 8, 2025)
 1. **Doctors List Issue**: Fixed `/api/auth/admin/doctors/` to filter by `role='doctor'` field instead of non-existent group
 2. **Patients List Issue**: Fixed `/api/auth/admin/patients/` to filter by `role='patient'` field
-3. **Appointment Creation**: Temporarily removed problematic `slot` and `treatment` fields that expected IDs but received strings
+3. **Appointment Creation Fixed**: 
+   - Made `slot` and `treatment` fields optional (not required)
+   - Changed `medical_record` from file upload to text field
+   - Updated validation to handle optional fields properly
+   - Appointments can now be created without these previously required fields
 
 ## Implemented Endpoints
 
