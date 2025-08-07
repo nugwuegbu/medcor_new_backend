@@ -36,7 +36,11 @@ import {
   Stethoscope,
   Activity,
   Package,
-  DollarSign
+  DollarSign,
+  CreditCard,
+  Receipt,
+  Scan,
+  Heart
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -62,8 +66,12 @@ interface AdminStats {
 const sidebarItems = [
   { id: 'overview', label: 'Overview', icon: Home },
   { id: 'users', label: 'Users', icon: Users },
+  { id: 'patients', label: 'Patients', icon: UserCheck },
   { id: 'doctors', label: 'Doctors', icon: Stethoscope },
   { id: 'appointments', label: 'Appointments', icon: Calendar },
+  { id: 'medical-records', label: 'Medical Records', icon: FileText },
+  { id: 'subscriptions', label: 'Subscriptions', icon: DollarSign },
+  { id: 'analysis-tracking', label: 'Analysis Tracking', icon: Activity },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
@@ -256,6 +264,53 @@ export default function AdminDashboard() {
       case 'in_progress': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const downloadReceipt = (subscription: any) => {
+    import('jspdf').then(({ default: jsPDF }) => {
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(20);
+      doc.text('MedCor Healthcare', 105, 20, { align: 'center' });
+      doc.setFontSize(16);
+      doc.text('Payment Receipt', 105, 30, { align: 'center' });
+      
+      // Receipt details
+      doc.setFontSize(12);
+      doc.text(`Receipt ID: #RCP${Math.random().toString(36).substr(2, 9).toUpperCase()}`, 20, 50);
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 60);
+      
+      // Subscriber information
+      doc.setFontSize(14);
+      doc.text('Subscriber Information', 20, 80);
+      doc.setFontSize(12);
+      doc.text(`Name: ${subscription.name}`, 20, 90);
+      doc.text(`Plan: ${subscription.plan}`, 20, 100);
+      doc.text(`Payment Method: ${subscription.paymentMethod}`, 20, 110);
+      
+      // Payment details
+      doc.setFontSize(14);
+      doc.text('Payment Details', 20, 130);
+      doc.setFontSize(12);
+      doc.text(`Amount: ${subscription.amount}`, 20, 140);
+      doc.text(`Billing Period: Monthly`, 20, 150);
+      doc.text(`Next Billing Date: ${subscription.nextBilling}`, 20, 160);
+      doc.text(`Status: ${subscription.status}`, 20, 170);
+      
+      // Footer
+      doc.setFontSize(10);
+      doc.text('Thank you for choosing MedCor Healthcare', 105, 200, { align: 'center' });
+      doc.text('For questions, contact support@medcor.ai', 105, 210, { align: 'center' });
+      
+      // Save the PDF
+      doc.save(`receipt-${subscription.name}-${new Date().getTime()}.pdf`);
+      
+      toast({
+        title: 'Receipt Downloaded',
+        description: 'The receipt has been downloaded successfully.',
+      });
+    });
   };
 
   // Filter data based on search and filter options
@@ -685,51 +740,54 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Username</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedUsers?.map((user: any) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.email}</TableCell>
-                          <TableCell>{user.username}</TableCell>
-                          <TableCell>
-                            <Badge className={getRoleColor(user.role)}>
-                              {user.role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={user.is_active ? "success" : "secondary"}>
-                              {user.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{formatDate(user.created_at)}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="icon">
-                                <Edit3 className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleDeleteUser(user.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </div>
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead className="font-semibold">Email</TableHead>
+                          <TableHead className="font-semibold">Username</TableHead>
+                          <TableHead className="font-semibold">Role</TableHead>
+                          <TableHead className="font-semibold">Status</TableHead>
+                          <TableHead className="font-semibold">Created</TableHead>
+                          <TableHead className="font-semibold">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedUsers?.map((user: any) => (
+                          <TableRow key={user.id} className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="font-medium">{user.email}</TableCell>
+                            <TableCell>{user.username}</TableCell>
+                            <TableCell>
+                              <Badge className={getRoleColor(user.role)}>
+                                {user.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={user.is_active ? "success" : "secondary"}>
+                                {user.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">{formatDate(user.created_at)}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <Edit3 className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleDeleteUser(user.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                   
                   {/* Pagination Controls */}
                   {totalUserPages > 1 && (
@@ -792,45 +850,58 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Specialization</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Patients</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {doctors?.map((doctor: any) => (
-                        <TableRow key={doctor.id}>
-                          <TableCell className="font-medium">
-                            {doctor.first_name} {doctor.last_name}
-                          </TableCell>
-                          <TableCell>{doctor.email}</TableCell>
-                          <TableCell>{doctor.specialization || 'General'}</TableCell>
-                          <TableCell>
-                            <Badge variant="success">Active</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {appointments?.filter((a: any) => a.doctor_id === doctor.id).length || 0}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="icon">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon">
-                                <Edit3 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead className="font-semibold">Name</TableHead>
+                          <TableHead className="font-semibold">Email</TableHead>
+                          <TableHead className="font-semibold">Specialization</TableHead>
+                          <TableHead className="font-semibold">Status</TableHead>
+                          <TableHead className="font-semibold">Patients</TableHead>
+                          <TableHead className="font-semibold">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {doctors?.map((doctor: any) => (
+                          <TableRow key={doctor.id} className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center text-white text-sm">
+                                  {doctor.first_name?.[0] || 'D'}
+                                </div>
+                                <span>{doctor.first_name} {doctor.last_name}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm">{doctor.email}</TableCell>
+                            <TableCell>
+                              <Badge className="bg-teal-100 text-teal-800">
+                                {doctor.specialization || 'General'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className="bg-green-100 text-green-800">Active</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {appointments?.filter((a: any) => a.doctor_id === doctor.id).length || 0}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <Edit3 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -958,6 +1029,413 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Patients View */}
+          {selectedView === 'patients' && (
+            <div className="space-y-6">
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-t-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl font-bold">Patient Management</CardTitle>
+                      <CardDescription>Comprehensive patient directory and management</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Download className="h-4 w-4 mr-2" />
+                        Export List
+                      </Button>
+                      <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
+                        <UserCheck className="h-4 w-4 mr-2" />
+                        Add Patient
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead className="font-semibold">Patient ID</TableHead>
+                          <TableHead className="font-semibold">Name</TableHead>
+                          <TableHead className="font-semibold">Email</TableHead>
+                          <TableHead className="font-semibold">Phone</TableHead>
+                          <TableHead className="font-semibold">Last Visit</TableHead>
+                          <TableHead className="font-semibold">Status</TableHead>
+                          <TableHead className="font-semibold">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {patients?.map((patient: any) => (
+                          <TableRow key={patient.id} className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="font-mono text-sm">#{patient.id}</TableCell>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-sm">
+                                  {patient.first_name?.[0] || patient.username?.[0] || 'P'}
+                                </div>
+                                <span>{patient.first_name} {patient.last_name || patient.username}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm">{patient.email}</TableCell>
+                            <TableCell className="text-sm">{patient.phone || 'Not provided'}</TableCell>
+                            <TableCell className="text-sm">{formatDate(patient.last_visit || patient.created_at)}</TableCell>
+                            <TableCell>
+                              <Badge className="bg-green-100 text-green-800">Active</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <Edit3 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Subscription Management View */}
+          {selectedView === 'subscriptions' && (
+            <div className="space-y-6">
+              {/* Subscription Overview Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600">
+                  <CardContent className="p-6 text-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <CreditCard className="h-8 w-8 opacity-80" />
+                      <Badge className="bg-white/20 text-white">Active</Badge>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">247</div>
+                    <p className="text-sm opacity-90">Active Subscriptions</p>
+                    <p className="text-xs opacity-75 mt-2">$45,320 MRR</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-500 to-orange-600">
+                  <CardContent className="p-6 text-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <DollarSign className="h-8 w-8 opacity-80" />
+                      <Badge className="bg-white/20 text-white">Due</Badge>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">12</div>
+                    <p className="text-sm opacity-90">Pending Payments</p>
+                    <p className="text-xs opacity-75 mt-2">$2,450 pending</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-600">
+                  <CardContent className="p-6 text-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <Receipt className="h-8 w-8 opacity-80" />
+                      <Badge className="bg-white/20 text-white">Monthly</Badge>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">$52,480</div>
+                    <p className="text-sm opacity-90">Total Revenue</p>
+                    <p className="text-xs opacity-75 mt-2">+12% from last month</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Subscription List */}
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-lg">
+                  <CardTitle className="text-xl font-bold">Subscription Records</CardTitle>
+                  <CardDescription>Manage patient subscriptions and payment methods</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50">
+                        <TableHead className="font-semibold">Subscriber</TableHead>
+                        <TableHead className="font-semibold">Plan</TableHead>
+                        <TableHead className="font-semibold">Payment Method</TableHead>
+                        <TableHead className="font-semibold">Next Billing</TableHead>
+                        <TableHead className="font-semibold">Amount</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <TableRow key={i} className="hover:bg-gray-50 transition-colors">
+                          <TableCell className="font-medium">John Doe {i}</TableCell>
+                          <TableCell>
+                            <Badge className="bg-blue-100 text-blue-800">Premium</Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            <div className="flex items-center gap-2">
+                              <CreditCard className="h-4 w-4 text-gray-500" />
+                              <span>•••• 4242</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">{formatDate(new Date(Date.now() + i * 86400000).toISOString())}</TableCell>
+                          <TableCell className="font-semibold">$199/mo</TableCell>
+                          <TableCell>
+                            <Badge className="bg-green-100 text-green-800">Active</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title="View Details">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8" 
+                                title="Download Receipt"
+                                onClick={() => downloadReceipt({
+                                  name: `John Doe ${i}`,
+                                  plan: 'Premium',
+                                  paymentMethod: '•••• 4242',
+                                  amount: '$199/mo',
+                                  nextBilling: formatDate(new Date(Date.now() + i * 86400000).toISOString()),
+                                  status: 'Active'
+                                })}
+                              >
+                                <Receipt className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit">
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Analysis Tracking View */}
+          {selectedView === 'analysis-tracking' && (
+            <div className="space-y-6">
+              {/* Analysis Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <Scan className="h-8 w-8 text-purple-500" />
+                      <Badge className="bg-purple-100 text-purple-800">Face</Badge>
+                    </div>
+                    <div className="text-2xl font-bold mb-1">342</div>
+                    <p className="text-sm text-gray-600">Face Analyses</p>
+                    <p className="text-xs text-gray-500 mt-2">Last 30 days</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <Activity className="h-8 w-8 text-pink-500" />
+                      <Badge className="bg-pink-100 text-pink-800">Hair</Badge>
+                    </div>
+                    <div className="text-2xl font-bold mb-1">218</div>
+                    <p className="text-sm text-gray-600">Hair Analyses</p>
+                    <p className="text-xs text-gray-500 mt-2">Last 30 days</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <Heart className="h-8 w-8 text-red-500" />
+                      <Badge className="bg-red-100 text-red-800">Lips</Badge>
+                    </div>
+                    <div className="text-2xl font-bold mb-1">156</div>
+                    <p className="text-sm text-gray-600">Lips Analyses</p>
+                    <p className="text-xs text-gray-500 mt-2">Last 30 days</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <TrendingUp className="h-8 w-8 text-green-500" />
+                      <Badge className="bg-green-100 text-green-800">Growth</Badge>
+                    </div>
+                    <div className="text-2xl font-bold mb-1">+24%</div>
+                    <p className="text-sm text-gray-600">Usage Increase</p>
+                    <p className="text-xs text-gray-500 mt-2">vs last month</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Analysis Records */}
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl font-bold">Analysis History</CardTitle>
+                      <CardDescription>Track all face, hair, and lips analyses from chat widget</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <select className="px-3 py-1 border rounded-md text-sm">
+                        <option value="all">All Types</option>
+                        <option value="face">Face Analysis</option>
+                        <option value="hair">Hair Analysis</option>
+                        <option value="lips">Lips Analysis</option>
+                      </select>
+                      <Button variant="outline" size="sm">
+                        <Download className="h-4 w-4 mr-2" />
+                        Export Data
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50">
+                        <TableHead className="font-semibold">Date</TableHead>
+                        <TableHead className="font-semibold">Patient</TableHead>
+                        <TableHead className="font-semibold">Analysis Type</TableHead>
+                        <TableHead className="font-semibold">Results Summary</TableHead>
+                        <TableHead className="font-semibold">Recommendations</TableHead>
+                        <TableHead className="font-semibold">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[
+                        { type: 'face', result: 'Skin Type: Oily, Age: 28', recommendation: 'Use oil-free moisturizer' },
+                        { type: 'hair', result: 'Hair Type: Dry, Damage: Moderate', recommendation: 'Deep conditioning treatment' },
+                        { type: 'lips', result: 'Hydration: Low, Texture: Dry', recommendation: 'Apply lip balm regularly' },
+                        { type: 'face', result: 'Skin Type: Normal, Age: 35', recommendation: 'Maintain current routine' },
+                        { type: 'hair', result: 'Hair Type: Normal, Health: Good', recommendation: 'Regular trimming advised' },
+                      ].map((analysis, i) => (
+                        <TableRow key={i} className="hover:bg-gray-50 transition-colors">
+                          <TableCell className="text-sm">{formatDate(new Date(Date.now() - i * 86400000).toISOString())}</TableCell>
+                          <TableCell className="font-medium">Patient {i + 1}</TableCell>
+                          <TableCell>
+                            <Badge className={
+                              analysis.type === 'face' ? 'bg-purple-100 text-purple-800' :
+                              analysis.type === 'hair' ? 'bg-pink-100 text-pink-800' :
+                              'bg-red-100 text-red-800'
+                            }>
+                              {analysis.type.charAt(0).toUpperCase() + analysis.type.slice(1)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">{analysis.result}</TableCell>
+                          <TableCell className="text-sm">{analysis.recommendation}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Medical Records View */}
+          {selectedView === 'medical-records' && (
+            <div className="space-y-6">
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 rounded-t-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl font-bold">Medical Records Management</CardTitle>
+                      <CardDescription>Access and manage patient medical histories</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Search className="h-4 w-4 mr-2" />
+                        Search Records
+                      </Button>
+                      <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Add Record
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50">
+                        <TableHead className="font-semibold">Record ID</TableHead>
+                        <TableHead className="font-semibold">Patient</TableHead>
+                        <TableHead className="font-semibold">Date</TableHead>
+                        <TableHead className="font-semibold">Type</TableHead>
+                        <TableHead className="font-semibold">Doctor</TableHead>
+                        <TableHead className="font-semibold">Diagnosis</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[
+                        { type: 'Consultation', diagnosis: 'Routine Checkup', status: 'Completed' },
+                        { type: 'Lab Results', diagnosis: 'Blood Test - Normal', status: 'Reviewed' },
+                        { type: 'Prescription', diagnosis: 'Antibiotics Prescribed', status: 'Active' },
+                        { type: 'X-Ray', diagnosis: 'Chest X-Ray Clear', status: 'Completed' },
+                        { type: 'Follow-up', diagnosis: 'Post-Surgery Review', status: 'Scheduled' },
+                      ].map((record, i) => (
+                        <TableRow key={i} className="hover:bg-gray-50 transition-colors">
+                          <TableCell className="font-mono text-sm">#MR00{i + 1}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-sm">
+                                P{i + 1}
+                              </div>
+                              <span>Patient {i + 1}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">{formatDate(new Date(Date.now() - i * 172800000).toISOString())}</TableCell>
+                          <TableCell>
+                            <Badge className="bg-blue-100 text-blue-800">{record.type}</Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">Dr. Smith</TableCell>
+                          <TableCell className="text-sm">{record.diagnosis}</TableCell>
+                          <TableCell>
+                            <Badge className={
+                              record.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                              record.status === 'Active' ? 'bg-yellow-100 text-yellow-800' :
+                              record.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
+                              'bg-gray-100 text-gray-800'
+                            }>
+                              {record.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title="View Record">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Download">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit">
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </CardContent>
               </Card>
             </div>
