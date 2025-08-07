@@ -21,7 +21,7 @@ const MedCorAdminLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await apiRequest('/api/admin/superadmin/login', {
+      const response = await apiRequest('/api/auth/admin/login/', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });

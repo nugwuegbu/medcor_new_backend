@@ -111,14 +111,27 @@ export default function AdminDashboard() {
     }),
   });
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminUser');
-    toast({
-      title: 'Logged Out',
-      description: 'You have been successfully logged out',
-    });
-    setLocation('/admin/login');
+  const handleLogout = async () => {
+    try {
+      // Call logout endpoint
+      await apiRequest('/api/auth/logout/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Clear local storage regardless of API response
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      toast({
+        title: 'Logged Out',
+        description: 'You have been successfully logged out',
+      });
+      setLocation('/admin/login');
+    }
   };
 
   const formatDate = (dateString: string) => {

@@ -175,9 +175,9 @@ const EnhancedDoctorDashboard: React.FC = () => {
 
   // Fetch current user data
   const { data: currentUser } = useQuery({
-    queryKey: ['/api/auth/me'],
+    queryKey: ['/api/auth/profile/'],
     queryFn: async () => {
-      return apiRequest('/api/auth/me', {
+      return apiRequest('/api/auth/profile/', {
         headers: getAuthHeaders()
       });
     }
