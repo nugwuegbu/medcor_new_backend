@@ -20,6 +20,7 @@ import Pricing from "@/pages/pricing";
 import Signup from "@/pages/signup";
 import Payment from "@/pages/payment";
 import NotFound from "@/pages/not-found";
+import TenantOverview from "@/pages/tenant-overview";
 import { AuthModal } from "@/components/auth-modal";
 import { ProtectedRoute } from "@/components/protected-route";
 import { useSubdomain } from "@/hooks/useSubdomain";
@@ -82,6 +83,9 @@ function Router() {
         <Route path="/superadmin/dashboard">
           <MedCorAdminDashboard />
         </Route>
+        
+        {/* Tenant Overview - Shows all tenants and credentials */}
+        <Route path="/tenants" component={TenantOverview} />
         
         {/* 2. Admin Dashboard - Hospital/Clinic Management */}
         <Route path="/admin/dashboard">
