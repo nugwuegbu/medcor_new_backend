@@ -2357,9 +2357,19 @@ export default function AdminDashboard() {
           <PatientForm 
             onSubmit={async (data) => {
               try {
+                // Clean up empty fields - remove empty strings for optional fields
+                const cleanedData = Object.entries(data).reduce((acc, [key, value]) => {
+                  // Don't send empty strings for optional fields
+                  if (value === '' && ['date_of_birth', 'phone', 'blood_group', 'address'].includes(key)) {
+                    return acc; // Skip empty optional fields
+                  }
+                  acc[key] = value;
+                  return acc;
+                }, {} as any);
+
                 // Include default password for new patients
                 const patientData = {
-                  ...data,
+                  ...cleanedData,
                   password: 'TempPass123!', // Default password for all new patients
                   role: 'patient' // Ensure role is set
                 };
@@ -2408,7 +2418,17 @@ export default function AdminDashboard() {
               initialData={selectedPatient}
               onSubmit={async (data) => {
                 try {
-                  console.log('Updating patient with data:', data); // Debug log
+                  // Clean up empty fields - remove empty strings for optional fields
+                  const cleanedData = Object.entries(data).reduce((acc, [key, value]) => {
+                    // Don't send empty strings for optional fields
+                    if (value === '' && ['date_of_birth', 'phone', 'blood_group', 'address'].includes(key)) {
+                      return acc; // Skip empty optional fields
+                    }
+                    acc[key] = value;
+                    return acc;
+                  }, {} as any);
+
+                  console.log('Updating patient with data:', cleanedData); // Debug log
                   // Use the correct user update endpoint
                   await apiRequest(`/api/auth/users/${selectedPatient.id}/`, {
                     method: 'PATCH',
@@ -2416,7 +2436,7 @@ export default function AdminDashboard() {
                       'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
                       'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(data),
+                    body: JSON.stringify(cleanedData),
                   });
                   console.log('Patient updated successfully'); // Debug log
                   toast({
@@ -2609,9 +2629,22 @@ function UserForm({
     },
   });
 
+  const handleFormSubmit = (data: any) => {
+    console.log('UserForm submitting with data:', data);
+    // Don't send empty password when editing
+    if (initialData && (!data.password || data.password === '')) {
+      const { password, ...dataWithoutPassword } = data;
+      onSubmit(dataWithoutPassword);
+    } else {
+      onSubmit(data);
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit, (errors) => {
+        console.error('Form validation errors:', errors);
+      })} className="space-y-4">
         <FormField
           control={form.control}
           name="email"
