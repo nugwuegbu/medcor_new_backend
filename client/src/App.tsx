@@ -15,7 +15,6 @@ import AdminLogin from "@/pages/admin-login";
 import AdminDashboard from "@/pages/admin-dashboard";
 import MedCorAdminDashboard from "@/pages/MedCorAdminDashboard";
 import MedCorAdminLogin from "@/pages/MedCorAdminLogin";
-import DoctorDashboard from "@/pages/DoctorDashboard";
 import StaffDashboard from "@/pages/StaffDashboard";
 import PatientDashboard from "@/pages/PatientDashboardNew";
 import EnhancedDoctorDashboard from "@/pages/EnhancedDoctorDashboard";
@@ -26,7 +25,6 @@ import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 import { AuthModal } from "@/components/auth-modal";
 import { ProtectedRoute } from "@/components/protected-route";
-import { useAuth } from "@/hooks/useAuth";
 import { useSubdomain } from "@/hooks/useSubdomain";
 import { useEffect, useState } from "react";
 
@@ -63,7 +61,7 @@ function Router() {
       {!isDashboardRoute && !isMultiTenant && <Navbar onLoginClick={() => setShowAuthModal(true)} />}
       
       <Switch>
-        <Route path="/test" component={TestPage} />
+        {/* Public Routes */}
         <Route path="/">
           {isMultiTenant ? (
             <>
@@ -80,25 +78,21 @@ function Router() {
         <Route path="/pricing" component={Pricing} />
         <Route path="/signup" component={Signup} />
         <Route path="/payment" component={Payment} />
-        <Route path="/dashboard">
-          <Dashboard tenantInfo={tenantInfo} />
-        </Route>
-        <Route path="/admin/dashboard">
-          <Dashboard userRole="admin" tenantInfo={tenantInfo} />
-        </Route>
-        <Route path="/doctors/dashboard">
-          <Dashboard userRole="doctor" tenantInfo={tenantInfo} />
-        </Route>
-        <Route path="/patients/dashboard">
-          <Dashboard userRole="patient" tenantInfo={tenantInfo} />
-        </Route>
+        <Route path="/chat" component={Chat} />
+        <Route path="/test" component={TestPage} />
+        
+        {/* Authentication Routes */}
         <Route path="/login" component={Login} />
         <Route path="/admin/login" component={AdminLogin} />
-        <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route path="/medcor-admin/login" component={MedCorAdminLogin} />
+        
+        {/* Dashboard Routes - Admin */}
+        <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route path="/medcor-admin">
           <MedCorAdminDashboard />
         </Route>
+        
+        {/* Dashboard Routes - Medical Staff */}
         <Route path="/doctor/dashboard">
           <ProtectedRoute 
             allowedRoles={["doctor"]}
@@ -107,6 +101,11 @@ function Router() {
             <EnhancedDoctorDashboard />
           </ProtectedRoute>
         </Route>
+        <Route path="/staff/dashboard">
+          <StaffDashboard />
+        </Route>
+        
+        {/* Dashboard Routes - Patients */}
         <Route path="/patient/dashboard">
           <ProtectedRoute 
             allowedRoles={["patient"]}
@@ -115,10 +114,13 @@ function Router() {
             <PatientDashboard />
           </ProtectedRoute>
         </Route>
-        <Route path="/staff/dashboard">
-          <StaffDashboard />
+        
+        {/* General Dashboard Route */}
+        <Route path="/dashboard">
+          <Dashboard tenantInfo={tenantInfo} />
         </Route>
-        <Route path="/chat" component={Chat} />
+        
+        {/* Protected Feature Routes */}
         <Route path="/doctors">
           <ProtectedRoute onUnauthorized={() => setShowAuthModal(true)}>
             <Doctors />
@@ -137,6 +139,8 @@ function Router() {
             <SettingsPage />
           </ProtectedRoute>
         </Route>
+        
+        {/* 404 Fallback */}
         <Route component={NotFound} />
       </Switch>
       
@@ -172,8 +176,6 @@ function Router() {
 
 function AppContent() {
   console.log('App component rendering...');
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const { login } = useAuth();
   
   // Request location permission immediately on app load
   useEffect(() => {
@@ -198,20 +200,10 @@ function AppContent() {
     }
   }, []);
 
-  const handleAuthSuccess = (token: string, user: any) => {
-    login(token, user);
-    setShowAuthModal(false);
-  };
-
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background">
         <Router />
-        <AuthModal 
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          onAuthSuccess={handleAuthSuccess}
-        />
       </div>
       <Toaster />
     </TooltipProvider>
