@@ -28,12 +28,16 @@ export async function apiRequest(
     ...(customHeaders as Record<string, string>),
   };
   
-  // Add appropriate token
-  if (isAdminRoute && adminToken) {
-    (finalHeaders as Record<string, string>)['Authorization'] = `Bearer ${adminToken}`;
-  } else if (authToken && !url.includes('/auth/login') && !url.includes('/auth/signup')) {
-    // Add auth token for all authenticated routes except login/signup
-    (finalHeaders as Record<string, string>)['Authorization'] = `Bearer ${authToken}`;
+  // Add appropriate token (but not for login endpoints)
+  const isLoginEndpoint = url.includes('/auth/login') || url.includes('/auth/signup') || url.includes('/auth/admin/login');
+  
+  if (!isLoginEndpoint) {
+    if (isAdminRoute && adminToken) {
+      (finalHeaders as Record<string, string>)['Authorization'] = `Bearer ${adminToken}`;
+    } else if (authToken) {
+      // Add auth token for all authenticated routes except login/signup
+      (finalHeaders as Record<string, string>)['Authorization'] = `Bearer ${authToken}`;
+    }
   }
   
   const res = await fetch(fullUrl, {

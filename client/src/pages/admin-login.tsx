@@ -40,9 +40,20 @@ export default function AdminLogin() {
       });
     },
     onSuccess: (response) => {
-      // Store admin token
-      localStorage.setItem('adminToken', response.access_token);
-      localStorage.setItem('adminUser', JSON.stringify(response.user));
+      // Clear any old tokens first
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('medcor_admin_token');
+      
+      // Store admin token - Django returns 'access_token' for admin login
+      const token = response.access_token || response.access;
+      if (token) {
+        localStorage.setItem('adminToken', token);
+        localStorage.setItem('medcor_admin_token', token); // Store in both places for compatibility
+      }
+      
+      if (response.user) {
+        localStorage.setItem('adminUser', JSON.stringify(response.user));
+      }
       
       toast({
         title: 'Login Successful',

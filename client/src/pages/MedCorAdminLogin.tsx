@@ -26,18 +26,29 @@ const MedCorAdminLogin: React.FC = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      if (response.token) {
-        // Store the token
-        localStorage.setItem('medcor_admin_token', response.token);
-        localStorage.setItem('medcor_admin_user', JSON.stringify(response.user));
-        
-        toast({
-          title: "Login Successful",
-          description: "Welcome to Superadmin Dashboard",
-        });
-        
-        setLocation('/superadmin/dashboard');
+      // Clear any old tokens first
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('medcor_admin_token');
+      
+      // Django returns 'access_token' for admin login
+      const token = response.access_token || response.access || response.token;
+      if (token) {
+        // Store the token in both places for compatibility
+        localStorage.setItem('medcor_admin_token', token);
+        localStorage.setItem('adminToken', token);
       }
+      
+      if (response.user) {
+        localStorage.setItem('medcor_admin_user', JSON.stringify(response.user));
+        localStorage.setItem('adminUser', JSON.stringify(response.user));
+      }
+      
+      toast({
+        title: "Login Successful",
+        description: "Welcome to Superadmin Dashboard",
+      });
+      
+      setLocation('/superadmin/dashboard');
     } catch (error: any) {
       toast({
         title: "Login Failed",
