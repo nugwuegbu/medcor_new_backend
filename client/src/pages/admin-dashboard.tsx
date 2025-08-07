@@ -2580,9 +2580,22 @@ export default function AdminDashboard() {
             onSubmit={async (data) => {
               try {
                 // Transform data to match backend expectations
+                const startTime = data.appointment_time || '09:00';
+                const endTime = data.appointment_time ? 
+                  `${(parseInt(data.appointment_time.split(':')[0]) + 1).toString().padStart(2, '0')}:${data.appointment_time.split(':')[1]}` : 
+                  '10:00';
+                
                 const appointmentData = {
-                  ...data,
-                  treat_name: data.appointment_type, // Add treat_name field
+                  patient: data.patient_id,  // Map patient_id to patient
+                  doctor: data.doctor_id,    // Map doctor_id to doctor
+                  slot: data.appointment_date, // Map date to slot
+                  treatment: data.appointment_type || 'consultation', // Map appointment_type to treatment
+                  appointment_slot_date: data.appointment_date,
+                  appointment_slot_start_time: startTime,
+                  appointment_slot_end_time: endTime,
+                  reason: data.reason || '',
+                  notes: data.notes || '',
+                  appointment_status: data.status || 'Pending',
                 };
                 
                 await apiRequest('/appointments/', {
@@ -2627,9 +2640,22 @@ export default function AdminDashboard() {
               onSubmit={async (data) => {
                 try {
                   // Transform data to match backend expectations
+                  const startTime = data.appointment_time || '09:00';
+                  const endTime = data.appointment_time ? 
+                    `${(parseInt(data.appointment_time.split(':')[0]) + 1).toString().padStart(2, '0')}:${data.appointment_time.split(':')[1]}` : 
+                    '10:00';
+                  
                   const appointmentData = {
-                    ...data,
-                    treat_name: data.appointment_type, // Add treat_name field
+                    patient: data.patient_id,  // Map patient_id to patient
+                    doctor: data.doctor_id,    // Map doctor_id to doctor
+                    slot: data.appointment_date, // Map date to slot
+                    treatment: data.appointment_type || 'consultation', // Map appointment_type to treatment
+                    appointment_slot_date: data.appointment_date,
+                    appointment_slot_start_time: startTime,
+                    appointment_slot_end_time: endTime,
+                    reason: data.reason || '',
+                    notes: data.notes || '',
+                    appointment_status: data.status || 'Pending',
                   };
                   
                   await apiRequest(`/appointments/${selectedAppointment.id}/`, {
