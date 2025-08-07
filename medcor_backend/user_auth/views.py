@@ -6,12 +6,11 @@ from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from django.db import models
 
 User = get_user_model()
 
@@ -426,10 +425,10 @@ class UserListAPIView(APIView):
         search = request.query_params.get('search')
         if search:
             queryset = queryset.filter(
-                models.Q(username__icontains=search) |
-                models.Q(email__icontains=search) |
-                models.Q(first_name__icontains=search) |
-                models.Q(last_name__icontains=search)
+                Q(username__icontains=search) |
+                Q(email__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search)
             )
         
         is_active = request.query_params.get('is_active')
@@ -476,6 +475,7 @@ class UserDetailAPIView(APIView):
         description='Retrieve detailed information about a specific user',
         responses={
             200: OpenApiResponse(description='User details'),
+            403: OpenApiResponse(description='Access denied. Admin privileges required.'),
             404: OpenApiResponse(description='User not found'),
         },
         tags=['User Management']
@@ -499,8 +499,189 @@ class UserDetailAPIView(APIView):
                 'is_staff': user.is_staff,
                 'is_superuser': user.is_superuser,
                 'created_at': user.created_at,
-                'last_login': user.last_login
+                'last_login': user.last_login,
+                'phone_number': getattr(user, 'phone_number', None),
+                'address': getattr(user, 'address', None),
+                'department': getattr(user, 'department', None),
+                'specialty': getattr(user, 'specialty', None),
+                'medical_license': getattr(user, 'medical_license', None),
+                'years_of_experience': getattr(user, 'years_of_experience', None),
+                'consultation_fee': getattr(user, 'consultation_fee', None),
+                'qualifications': getattr(user, 'qualifications', None),
+                'avatar': getattr(user, 'avatar', None),
             }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @extend_schema(
+        operation_id='update_user',
+        summary='Update User Details',
+        description='Update user information (Admin only). Can update any user field including role and status.',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'first_name': {'type': 'string', 'example': 'John'},
+                    'last_name': {'type': 'string', 'example': 'Doe'},
+                    'email': {'type': 'string', 'format': 'email', 'example': 'john.doe@medcor.ai'},
+                    'username': {'type': 'string', 'example': 'johndoe'},
+                    'is_active': {'type': 'boolean', 'example': True},
+                    'is_staff': {'type': 'boolean', 'example': False},
+                    'phone_number': {'type': 'string', 'example': '+1234567890'},
+                    'address': {'type': 'string', 'example': '123 Medical St'},
+                    'department': {'type': 'string', 'example': 'Cardiology'},
+                    'specialty': {'type': 'string', 'example': 'Cardiologist'},
+                    'medical_license': {'type': 'string', 'example': 'ML123456'},
+                    'years_of_experience': {'type': 'integer', 'example': 10},
+                    'consultation_fee': {'type': 'number', 'example': 150.00},
+                    'qualifications': {'type': 'string', 'example': 'MD, PhD'},
+                }
+            }
+        },
+        responses={
+            200: OpenApiResponse(
+                description='User updated successfully',
+                examples=[
+                    OpenApiExample(
+                        'Success Response',
+                        value={
+                            'message': 'User updated successfully',
+                            'user': {
+                                'id': 2,
+                                'email': 'john.doe@medcor.ai',
+                                'first_name': 'John',
+                                'last_name': 'Doe',
+                                'is_active': True
+                            }
+                        }
+                    )
+                ]
+            ),
+            400: OpenApiResponse(description='Invalid data provided'),
+            403: OpenApiResponse(description='Access denied. Admin privileges required.'),
+            404: OpenApiResponse(description='User not found'),
+        },
+        tags=['User Management']
+    )
+    def patch(self, request, pk):
+        """Update user details (partial update)"""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response({
+                'error': 'Access denied. Admin privileges required.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            user = User.objects.get(pk=pk)
+            
+            # Update user fields
+            updateable_fields = [
+                'first_name', 'last_name', 'email', 'username', 
+                'is_active', 'is_staff', 'phone_number', 'address',
+                'department', 'specialty', 'medical_license',
+                'years_of_experience', 'consultation_fee', 'qualifications'
+            ]
+            
+            for field in updateable_fields:
+                if field in request.data:
+                    setattr(user, field, request.data[field])
+            
+            user.save()
+            
+            return Response({
+                'message': 'User updated successfully',
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'is_active': user.is_active,
+                    'is_staff': user.is_staff,
+                    'phone_number': getattr(user, 'phone_number', None),
+                    'department': getattr(user, 'department', None),
+                    'specialty': getattr(user, 'specialty', None),
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({
+                'error': 'User not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Failed to update user: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @extend_schema(
+        operation_id='delete_user',
+        summary='Delete User',
+        description='Deactivate a user from the system (Admin only). The user account will be disabled and cannot login.',
+        responses={
+            200: OpenApiResponse(
+                description='User deactivated successfully',
+                examples=[
+                    OpenApiExample(
+                        'Success Response',
+                        value={
+                            'message': 'User deactivated successfully',
+                            'deactivated_user': {
+                                'id': 2,
+                                'email': 'john.doe@medcor.ai',
+                                'name': 'John Doe',
+                                'is_active': False
+                            }
+                        }
+                    )
+                ]
+            ),
+            403: OpenApiResponse(description='Access denied. Admin privileges required.'),
+            404: OpenApiResponse(description='User not found'),
+            409: OpenApiResponse(description='Cannot deactivate yourself or superadmin'),
+        },
+        tags=['User Management']
+    )
+    def delete(self, request, pk):
+        """Deactivate a user (Admin only)"""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response({
+                'error': 'Access denied. Admin privileges required.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            user = User.objects.get(pk=pk)
+            
+            # Prevent self-deactivation
+            if user.id == request.user.id:
+                return Response({
+                    'error': 'You cannot deactivate your own account'
+                }, status=status.HTTP_409_CONFLICT)
+            
+            # Prevent deactivation of superadmin accounts (optional safeguard)
+            if user.is_superuser and not request.user.is_superuser:
+                return Response({
+                    'error': 'Only superadmin can deactivate other superadmin accounts'
+                }, status=status.HTTP_409_CONFLICT)
+            
+            # Store user info
+            deactivated_user_info = {
+                'id': user.id,
+                'email': user.email,
+                'name': f'{user.first_name} {user.last_name}'.strip() or user.username,
+                'is_active': False
+            }
+            
+            # Deactivate the user instead of deleting
+            # This is safer for multi-tenant systems
+            user.is_active = False
+            user.save()
+            
+            return Response({
+                'message': 'User deactivated successfully',
+                'deactivated_user': deactivated_user_info
+            }, status=status.HTTP_200_OK)
+            
         except User.DoesNotExist:
             return Response({
                 'error': 'User not found'

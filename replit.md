@@ -26,6 +26,7 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Django sessions (PostgreSQL backend)
 - **Core Entities**: Users, Doctors, Appointments, Chat Messages, Treatments, Tenants (multi-tenant architecture).
 - **Model Context Protocol (MCP) Server**: Provides programmatic access to healthcare management functions, including 33 tools for CRUD operations on tenants, users, appointments, treatments, and subscriptions, 3 resource endpoints, and 3 guided prompts. Supports multi-tenant operations and JWT-based authentication with role-based access control.
+- **User Management API** (Updated Jan 8, 2025): Complete CRUD operations for user management including GET (list/detail), PATCH (update), and DELETE (deactivate) endpoints with admin-only permissions and comprehensive Swagger documentation. Uses deactivation instead of deletion for data integrity in multi-tenant environment.
 
 ### Key Features & Technical Implementations
 - **AI Chat System**: HeyGen interactive avatars, OpenAI GPT-4o integration, multi-language support, automatic language detection, avatar transitions (nurse to doctor), session continuity.
