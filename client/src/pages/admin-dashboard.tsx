@@ -117,17 +117,39 @@ export default function AdminDashboard() {
       }
     }),
   });
+  
+  // Fetch doctors list - using dedicated doctors endpoint
+  const { data: doctorsList, isLoading: doctorsLoading } = useQuery({
+    queryKey: ['/api/auth/admin/doctors/'],
+    queryFn: () => apiRequest('/api/auth/admin/doctors/', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+      }
+    }),
+  });
+  
+  // Fetch patients list - using dedicated patients endpoint
+  const { data: patientsList, isLoading: patientsLoading } = useQuery({
+    queryKey: ['/api/auth/admin/patients/'],
+    queryFn: () => apiRequest('/api/auth/admin/patients/', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+      }
+    }),
+  });
 
   // Fetch appointments - using Django's appointments endpoint  
-  const { data: appointments, isLoading: appointmentsLoading } = useQuery({
+  const { data: appointmentsData, isLoading: appointmentsLoading } = useQuery({
     queryKey: ['/appointments/'],
     queryFn: async () => {
       try {
-        return await apiRequest('/appointments/', {
+        const response = await apiRequest('/appointments/', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
           }
         });
+        // Handle both array and paginated response structures
+        return Array.isArray(response) ? response : (response?.results || []);
       } catch (error: any) {
         // Handle 404 gracefully - endpoint might not exist yet
         if (error.message && error.message.includes('404')) {
@@ -139,23 +161,29 @@ export default function AdminDashboard() {
     },
     retry: false,
   });
+  
+  // Ensure appointments is always an array
+  const appointments = Array.isArray(appointmentsData) ? appointmentsData : [];
 
   // Calculate statistics from the fetched data
   const stats: AdminStats = {
-    totalPatients: users?.filter((u: any) => u.role === 'patient').length || 0,
-    totalDoctors: users?.filter((u: any) => u.role === 'doctor').length || 0,
+    totalPatients: patientsList?.length || 0,
+    totalDoctors: doctorsList?.length || 0,
     totalAppointments: appointments?.length || 0,
-    pendingAppointments: appointments?.filter((a: any) => a.status === 'scheduled').length || 0,
+    pendingAppointments: appointments?.filter((a: any) => 
+      a.appointment_status === 'Pending' || a.status === 'Pending'
+    ).length || 0,
     todayAppointments: appointments?.filter((a: any) => {
       const today = new Date().toISOString().split('T')[0];
-      return a.appointment_date === today;
+      return a.appointment_slot_date === today || a.appointment_date === today;
     }).length || 0,
     monthlyGrowth: 12.5 // Placeholder for now
   };
 
-  const doctors = users?.filter((u: any) => u.role === 'doctor') || [];
-  const patients = users?.filter((u: any) => u.role === 'patient') || [];
-  const statsLoading = usersLoading || appointmentsLoading;
+  // Use dedicated lists for doctors and patients
+  const doctors = doctorsList || [];
+  const patients = patientsList || [];
+  const statsLoading = usersLoading || appointmentsLoading || doctorsLoading || patientsLoading;
 
   const handleLogout = async () => {
     // Clear tokens first to prevent any queries from running

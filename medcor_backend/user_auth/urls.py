@@ -6,6 +6,7 @@ from . import views
 from . import general_views
 from . import doctor_views
 from . import user_creation_views
+from . import admin_views
 
 app_name = 'user_auth'
 
@@ -24,6 +25,10 @@ urlpatterns = [
     path('admin/profile/', views.AdminProfileAPIView.as_view(), name='admin_profile'),
     path('stats/', views.AdminStatsAPIView.as_view(), name='admin_stats'),
     path('users/', views.AdminUsersAPIView.as_view(), name='admin_users'),
+    
+    # Admin-specific lists
+    path('admin/doctors/', admin_views.DoctorsListAPIView.as_view(), name='admin_doctors_list'),
+    path('admin/patients/', admin_views.PatientsListAPIView.as_view(), name='admin_patients_list'),
     
     # User management endpoints 
     path('users/<int:pk>/', views.UserDetailAPIView.as_view(), name='user_detail'),
