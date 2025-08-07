@@ -112,7 +112,7 @@ const userFormSchema = z.object({
   email: z.string().email('Invalid email address'),
   username: z.string().min(3, 'Username must be at least 3 characters'),
   role: z.enum(['admin', 'doctor', 'patient', 'clinic']),
-  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
+  password: z.string().optional(), // Removed minimum length validation
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
 });
@@ -133,9 +133,9 @@ const doctorFormSchema = z.object({
   email: z.string().email('Invalid email address'),
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
-  specialization: z.string().min(1, 'Specialization is required'),
-  phone: z.string().min(10, 'Valid phone number required'),
-  license_number: z.string().min(1, 'License number is required'),
+  specialization: z.string().optional(),
+  phone: z.string().optional(),
+  license_number: z.string().optional(),
   experience_years: z.string().optional(),
 });
 
@@ -958,6 +958,11 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {usersLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1061,6 +1066,7 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  )}
                   
                   {/* Pagination Controls */}
                   {totalUserPages > 1 && (
@@ -1133,6 +1139,11 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {doctorsLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1241,6 +1252,7 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -1287,6 +1299,12 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {appointmentsLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
+                  <>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1428,6 +1446,8 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   )}
+                  </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -1463,6 +1483,11 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
+                  {patientsLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1565,6 +1590,7 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -2652,7 +2678,11 @@ function UserForm({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="user@example.com" {...field} />
+                <Input 
+                  placeholder="user@example.com" 
+                  {...field} 
+                  disabled={!!initialData} // Disable email field when editing
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -2762,9 +2792,22 @@ function DoctorForm({
     },
   });
 
+  const handleFormSubmit = (data: any) => {
+    console.log('DoctorForm submitting with data:', data);
+    // Don't send empty password when editing
+    if (initialData && (!data.password || data.password === '')) {
+      const { password, ...dataWithoutPassword } = data;
+      onSubmit(dataWithoutPassword);
+    } else {
+      onSubmit(data);
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit, (errors) => {
+        console.error('Doctor form validation errors:', errors);
+      })} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -2800,7 +2843,11 @@ function DoctorForm({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="doctor@example.com" {...field} />
+                <Input 
+                  placeholder="doctor@example.com" 
+                  {...field} 
+                  disabled={!!initialData} // Disable email field when editing
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -2935,7 +2982,11 @@ function PatientForm({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="patient@example.com" {...field} />
+                <Input 
+                  placeholder="patient@example.com" 
+                  {...field}
+                  disabled={!!initialData} // Disable email field when editing
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
