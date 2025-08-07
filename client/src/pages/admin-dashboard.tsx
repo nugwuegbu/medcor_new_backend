@@ -121,10 +121,12 @@ const patientFormSchema = z.object({
   email: z.string().email('Invalid email address'),
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
-  phone: z.string().min(10, 'Valid phone number required'),
-  date_of_birth: z.string().min(1, 'Date of birth is required'),
+  phone: z.string().optional(), // Made optional
+  date_of_birth: z.string().optional(), // Made optional
   address: z.string().optional(),
+  blood_group: z.string().optional(), // Added as optional
   medical_history: z.string().optional(),
+  username: z.string().min(3, 'Username must be at least 3 characters'),
 });
 
 const doctorFormSchema = z.object({
@@ -197,6 +199,19 @@ export default function AdminDashboard() {
   const [showAddAppointmentModal, setShowAddAppointmentModal] = useState(false);
   const [showEditAppointmentModal, setShowEditAppointmentModal] = useState(false);
   const [showViewAppointmentModal, setShowViewAppointmentModal] = useState(false);
+  
+  // Role mapping to handle backend/frontend mismatch
+  const mapBackendRole = (role: string): string => {
+    const roleMap: Record<string, string> = {
+      'user': 'patient',
+      'staff': 'doctor',
+      'admin': 'admin',
+      'clinic': 'clinic',
+      'patient': 'patient',
+      'doctor': 'doctor'
+    };
+    return roleMap[role?.toLowerCase()] || role;
+  };
 
   // Check admin authentication
   useEffect(() => {
@@ -960,12 +975,13 @@ export default function AdminDashboard() {
                             <TableCell className="font-medium">{user.email}</TableCell>
                             <TableCell>{user.username}</TableCell>
                             <TableCell>
-                              <Badge className={getRoleColor(user.role)}>
-                                {user.role}
+                              <Badge className={getRoleColor(mapBackendRole(user.role))}>
+                                {mapBackendRole(user.role)}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={user.is_active ? "success" : "secondary"}>
+                              <Badge variant={user.is_active ? "default" : "secondary"} 
+                                     className={user.is_active ? "bg-green-100 text-green-800" : ""}>
                                 {user.is_active ? 'Active' : 'Inactive'}
                               </Badge>
                             </TableCell>
@@ -1988,7 +2004,8 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-500">Status</Label>
-                  <Badge variant={selectedUser.is_active ? "success" : "secondary"} className="mt-1">
+                  <Badge variant={selectedUser.is_active ? "default" : "secondary"} 
+                         className={`mt-1 ${selectedUser.is_active ? "bg-green-100 text-green-800" : ""}`}>
                     {selectedUser.is_active ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
@@ -2071,7 +2088,10 @@ export default function AdminDashboard() {
           </DialogHeader>
           {selectedUser && (
             <UserForm 
-              initialData={selectedUser}
+              initialData={{
+                ...selectedUser,
+                role: mapBackendRole(selectedUser.role) // Map role for display
+              }}
               onSubmit={async (data) => {
                 try {
                   await apiRequest(`/api/auth/users/${selectedUser.id}/`, {
@@ -2330,17 +2350,24 @@ export default function AdminDashboard() {
           <PatientForm 
             onSubmit={async (data) => {
               try {
+                // Include default password for new patients
+                const patientData = {
+                  ...data,
+                  password: 'TempPass123!', // Default password for all new patients
+                  role: 'patient' // Ensure role is set
+                };
+                
                 await apiRequest('/api/auth/admin/patients/', {
                   method: 'POST',
                   headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify(data),
+                  body: JSON.stringify(patientData),
                 });
                 toast({
                   title: 'Success',
-                  description: 'Patient created successfully',
+                  description: 'Patient created successfully with default password: TempPass123!',
                 });
                 queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/patients/'] });
                 setShowAddPatientModal(false);
@@ -2811,7 +2838,6 @@ function PatientForm({
     defaultValues: {
       email: initialData?.email || '',
       username: initialData?.username || '',
-      password: '',
       first_name: initialData?.first_name || '',
       last_name: initialData?.last_name || '',
       phone: initialData?.phone || '',
@@ -2907,21 +2933,7 @@ function PatientForm({
             )}
           />
         </div>
-        {!initialData && (
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        {/* Password field removed - using default password 'TempPass123!' for all new patients */}
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
