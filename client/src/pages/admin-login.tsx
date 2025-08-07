@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { AlertCircle, Shield, Building, Users, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 const adminLoginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -54,6 +54,10 @@ export default function AdminLogin() {
       if (response.user) {
         localStorage.setItem('adminUser', JSON.stringify(response.user));
       }
+      
+      // Clear and invalidate all queries to force refresh with new token
+      queryClient.clear();
+      queryClient.invalidateQueries();
       
       toast({
         title: 'Login Successful',

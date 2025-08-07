@@ -18,9 +18,8 @@ export async function apiRequest(
   // Construct full URL if it's a relative path
   const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url}`;
   
-  // Check for tokens
-  const isAdminRoute = url.includes('/admin/');
-  const adminToken = localStorage.getItem('medcor_admin_token');
+  // Check for tokens - use adminToken as primary key for admin routes
+  const adminToken = localStorage.getItem('adminToken') || localStorage.getItem('medcor_admin_token');
   const authToken = localStorage.getItem('medcor_token');
   
   const finalHeaders: HeadersInit = {
@@ -28,14 +27,16 @@ export async function apiRequest(
     ...(customHeaders as Record<string, string>),
   };
   
-  // Add appropriate token (but not for login endpoints)
+  // Add appropriate token (but not for login/logout endpoints)
   const isLoginEndpoint = url.includes('/auth/login') || url.includes('/auth/signup') || url.includes('/auth/admin/login');
+  const isLogoutEndpoint = url.includes('/auth/logout');
   
-  if (!isLoginEndpoint) {
-    if (isAdminRoute && adminToken) {
+  if (!isLoginEndpoint && !isLogoutEndpoint) {
+    // Use admin token for admin routes or auth/users endpoint
+    if (adminToken && (url.includes('/admin/') || url.includes('/auth/users/') || url.includes('/appointments/'))) {
       (finalHeaders as Record<string, string>)['Authorization'] = `Bearer ${adminToken}`;
     } else if (authToken) {
-      // Add auth token for all authenticated routes except login/signup
+      // Add auth token for all other authenticated routes
       (finalHeaders as Record<string, string>)['Authorization'] = `Bearer ${authToken}`;
     }
   }
@@ -79,19 +80,23 @@ export const getQueryFn: <T>(options: {
     // Construct full URL if it's a relative path
     const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url}`;
     
-    // Check for tokens
-    const isAdminRoute = url.includes('/admin/');
-    const adminToken = localStorage.getItem('medcor_admin_token');
+    // Check for tokens - use consistent token key lookup
+    const adminToken = localStorage.getItem('adminToken') || localStorage.getItem('medcor_admin_token');
     const authToken = localStorage.getItem('medcor_token');
     
     const headers: Record<string, string> = {};
     
-    // Add appropriate token
-    if (isAdminRoute && adminToken) {
-      headers['Authorization'] = `Bearer ${adminToken}`;
-    } else if (authToken && !url.includes('/auth/login') && !url.includes('/auth/signup')) {
-      // Add auth token for all authenticated routes except login/signup
-      headers['Authorization'] = `Bearer ${authToken}`;
+    // Add appropriate token (skip for login/logout endpoints and profile during logout)
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/signup') || url.includes('/auth/logout');
+    
+    if (!isAuthEndpoint) {
+      // Use admin token for admin routes or protected endpoints
+      if (adminToken && (url.includes('/admin/') || url.includes('/auth/users/') || url.includes('/appointments/'))) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      } else if (authToken) {
+        // Add auth token for all other authenticated routes
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
     }
     
     const res = await fetch(fullUrl, {

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Lock, Eye, EyeOff } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 const MedCorAdminLogin: React.FC = () => {
   const { toast } = useToast();
@@ -42,6 +42,10 @@ const MedCorAdminLogin: React.FC = () => {
         localStorage.setItem('medcor_admin_user', JSON.stringify(response.user));
         localStorage.setItem('adminUser', JSON.stringify(response.user));
       }
+      
+      // Clear and invalidate all queries to force refresh with new token
+      queryClient.clear();
+      queryClient.invalidateQueries();
       
       toast({
         title: "Login Successful",

@@ -115,11 +115,23 @@ export default function AdminDashboard() {
   // Fetch appointments - using Django's appointments endpoint  
   const { data: appointments, isLoading: appointmentsLoading } = useQuery({
     queryKey: ['/api/appointments/appointments/'],
-    queryFn: () => apiRequest('/api/appointments/appointments/', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+    queryFn: async () => {
+      try {
+        return await apiRequest('/api/appointments/appointments/', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          }
+        });
+      } catch (error: any) {
+        // Handle 404 gracefully - endpoint might not exist yet
+        if (error.message && error.message.includes('404')) {
+          console.log('Appointments endpoint not available');
+          return [];
+        }
+        throw error;
       }
-    }),
+    },
+    retry: false,
   });
 
   // Calculate statistics from the fetched data
@@ -140,19 +152,29 @@ export default function AdminDashboard() {
   const statsLoading = usersLoading || appointmentsLoading;
 
   const handleLogout = async () => {
+    // Clear tokens first to prevent any queries from running
+    const token = localStorage.getItem('adminToken');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    localStorage.removeItem('medcor_admin_token');
+    localStorage.removeItem('medcor_token');
+    
+    // Clear query cache to prevent stale data
+    queryClient.clear();
+    
     try {
-      await apiRequest('/api/auth/logout/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
+      // Call logout endpoint with the token we had
+      if (token) {
+        await apiRequest('/api/auth/logout/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUser');
-      localStorage.removeItem('medcor_admin_token');
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out',
