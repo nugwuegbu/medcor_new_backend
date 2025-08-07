@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,13 +7,23 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { useSubdomain, type TenantInfo } from "@/hooks/useSubdomain";
 import { TenantSwitcher } from "@/components/tenant-switcher";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Building2, 
   Users, 
@@ -185,8 +195,14 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Form state for doctor creation
-  const [doctorFormData, setDoctorFormData] = useState({
+  // Modal states for doctor management
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [isLoadingDoctor, setIsLoadingDoctor] = useState(false);
+  
+  // Form state for doctor creation - using useRef to prevent flickering
+  const doctorFormRef = useRef({
     firstName: "",
     lastName: "",
     email: "",
@@ -207,6 +223,8 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
     emergencyContact: "",
     emergencyPhone: ""
   });
+  
+  const [doctorFormData, setDoctorFormData] = useState(doctorFormRef.current);
 
   // Fetch doctors from Django backend
   const { data: doctorsData, isLoading: doctorsLoading, refetch: refetchDoctors } = useQuery({
@@ -230,11 +248,134 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
     retry: false,
   });
 
+  // API Functions for Doctor Management
+  const baseUrl = 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
+  
+  // Get single doctor details
+  const fetchDoctorDetails = async (doctorId: number) => {
+    setIsLoadingDoctor(true);
+    const token = localStorage.getItem('clinicToken') || localStorage.getItem('adminToken');
+    
+    try {
+      const response = await fetch(`${baseUrl}/api/auth/users/${doctorId}/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch doctor details');
+      }
+      
+      const data = await response.json();
+      setSelectedDoctor(data);
+      return data;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch doctor details",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsLoadingDoctor(false);
+    }
+  };
+  
+  // Update doctor mutation
+  const updateDoctorMutation = useMutation({
+    mutationFn: async (formData: any) => {
+      const token = localStorage.getItem('clinicToken') || localStorage.getItem('adminToken');
+      
+      const payload = {
+        email: formData.email,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        username: formData.username,
+        phone_number: formData.phone,
+        address: formData.address,
+        date_of_birth: formData.dateOfBirth,
+        specialty: formData.specialty,
+        years_of_experience: parseInt(formData.experience) || 0,
+        medical_license: formData.medicalLicense,
+        department: formData.department,
+        consultation_fee: parseFloat(formData.consultationFee) || 0,
+        qualifications: formData.qualifications,
+      };
+      
+      const response = await fetch(`${baseUrl}/api/auth/users/${formData.id}/`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update doctor');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Doctor updated successfully",
+      });
+      setShowForm(false);
+      refetchDoctors();
+      resetDoctorForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update doctor",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Delete doctor mutation
+  const deleteDoctorMutation = useMutation({
+    mutationFn: async (doctorId: number) => {
+      const token = localStorage.getItem('clinicToken') || localStorage.getItem('adminToken');
+      
+      const response = await fetch(`${baseUrl}/api/auth/users/${doctorId}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete doctor');
+      }
+      
+      return true;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Doctor deleted successfully",
+      });
+      setShowDeleteDialog(false);
+      setSelectedDoctor(null);
+      refetchDoctors();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete doctor",
+        variant: "destructive",
+      });
+    },
+  });
+  
   // Create doctor mutation
   const createDoctorMutation = useMutation({
     mutationFn: async (formData: any) => {
       const token = localStorage.getItem('clinicToken') || localStorage.getItem('adminToken');
-      const baseUrl = 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
       
       const payload = {
         email: formData.email,
@@ -509,6 +650,7 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
             Export CSV
           </Button>
           <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => {
+            resetDoctorForm();
             setFormType("add");
             setSelectedItem(null);
             setShowForm(true);
@@ -580,15 +722,28 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
                   </div>
 
                   <div className="flex justify-between pt-3 border-t">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewDoctor(doctor)}
+                    >
                       <Eye className="h-3 w-3 mr-1" />
                       View
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEditDoctor(doctor)}
+                    >
                       <Edit className="h-3 w-3 mr-1" />
                       Edit
                     </Button>
-                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => handleDeleteDoctor(doctor)}
+                    >
                       <Trash2 className="h-3 w-3 mr-1" />
                       Delete
                     </Button>
@@ -708,20 +863,95 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
     document.body.removeChild(link);
   };
 
-  // Memoized handlers for form inputs to prevent re-renders
+  // Helper functions
+  const resetDoctorForm = useCallback(() => {
+    const emptyForm = {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      username: "",
+      phone: "",
+      specialty: "",
+      experience: "",
+      medicalLicense: "",
+      department: "",
+      consultationFee: "",
+      qualifications: "",
+      address: "",
+      dateOfBirth: "",
+      bloodType: "",
+      languages: "",
+      allergies: "",
+      emergencyContact: "",
+      emergencyPhone: ""
+    };
+    doctorFormRef.current = emptyForm;
+    setDoctorFormData(emptyForm);
+  }, []);
+  
+  // Optimized form field update to prevent flickering
   const updateDoctorField = useCallback((field: string, value: string) => {
-    setDoctorFormData(prev => ({
-      ...prev,
+    // Update the ref immediately to prevent flickering
+    doctorFormRef.current = {
+      ...doctorFormRef.current,
       [field]: value
-    }));
+    };
+    // Then update state for re-render
+    setDoctorFormData(doctorFormRef.current);
+  }, []);
+  
+  // Handlers for doctor actions
+  const handleViewDoctor = useCallback(async (doctor: any) => {
+    await fetchDoctorDetails(doctor.id);
+    setShowViewModal(true);
+  }, []);
+  
+  const handleEditDoctor = useCallback(async (doctor: any) => {
+    const details = await fetchDoctorDetails(doctor.id);
+    if (details) {
+      const formData = {
+        id: details.id,
+        firstName: details.first_name || "",
+        lastName: details.last_name || "",
+        email: details.email || "",
+        password: "",
+        username: details.username || "",
+        phone: details.phone_number || "",
+        specialty: details.specialty || "",
+        experience: details.years_of_experience?.toString() || "",
+        medicalLicense: details.medical_license || "",
+        department: details.department || "",
+        consultationFee: details.consultation_fee?.toString() || "",
+        qualifications: details.qualifications || "",
+        address: details.address || "",
+        dateOfBirth: details.date_of_birth || "",
+        bloodType: details.blood_type || "",
+        languages: details.languages || "",
+        allergies: details.allergies || "",
+        emergencyContact: details.emergency_contact || "",
+        emergencyPhone: details.emergency_phone || ""
+      };
+      doctorFormRef.current = formData;
+      setDoctorFormData(formData);
+      setFormType("edit");
+      setShowForm(true);
+    }
+  }, []);
+  
+  const handleDeleteDoctor = useCallback((doctor: any) => {
+    setSelectedDoctor(doctor);
+    setShowDeleteDialog(true);
   }, []);
 
   // Form Components - Memoized to prevent unnecessary re-renders
   const DoctorForm = memo(() => {
     const handleSubmit = useCallback(() => {
-      // Validate required fields
+      // Validate required fields based on form type
+      const isAddMode = formType === "add";
+      
       if (!doctorFormData.firstName || !doctorFormData.lastName || !doctorFormData.email || 
-          !doctorFormData.password || !doctorFormData.specialty) {
+          (isAddMode && !doctorFormData.password) || !doctorFormData.specialty) {
         toast({
           title: "Validation Error",
           description: "Please fill in all required fields",
@@ -730,8 +960,8 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
         return;
       }
 
-      // Validate password length
-      if (doctorFormData.password.length < 8) {
+      // Validate password length only in add mode
+      if (isAddMode && doctorFormData.password.length < 8) {
         toast({
           title: "Validation Error",
           description: "Password must be at least 8 characters",
@@ -740,9 +970,13 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
         return;
       }
 
-      // Submit the form
-      createDoctorMutation.mutate(doctorFormData);
-    }, [doctorFormData]);
+      // Submit the form based on mode
+      if (formType === "edit") {
+        updateDoctorMutation.mutate(doctorFormData);
+      } else {
+        createDoctorMutation.mutate(doctorFormData);
+      }
+    }, [doctorFormData, formType]);
 
     return (
       <Dialog open={showForm} onOpenChange={setShowForm}>
@@ -1622,8 +1856,127 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
     }
   };
 
+  // View Doctor Modal
+  const ViewDoctorModal = () => (
+    <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Doctor Details</DialogTitle>
+          <DialogDescription>Complete information about the doctor</DialogDescription>
+        </DialogHeader>
+        {isLoadingDoctor ? (
+          <div className="py-8 text-center">
+            <p className="text-gray-500">Loading doctor details...</p>
+          </div>
+        ) : selectedDoctor ? (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={selectedDoctor.avatar || "/api/placeholder/64/64"} />
+                <AvatarFallback>
+                  {selectedDoctor.first_name?.[0]}{selectedDoctor.last_name?.[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="text-xl font-semibold">
+                  Dr. {selectedDoctor.first_name} {selectedDoctor.last_name}
+                </h3>
+                <p className="text-gray-500">{selectedDoctor.specialty || "General Practitioner"}</p>
+                <Badge className="mt-2" variant={selectedDoctor.is_active ? "default" : "secondary"}>
+                  {selectedDoctor.is_active ? "Active" : "Inactive"}
+                </Badge>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-500">Email</Label>
+                <p className="font-medium">{selectedDoctor.email}</p>
+              </div>
+              <div>
+                <Label className="text-gray-500">Phone</Label>
+                <p className="font-medium">{selectedDoctor.phone_number || "Not provided"}</p>
+              </div>
+              <div>
+                <Label className="text-gray-500">Medical License</Label>
+                <p className="font-medium">{selectedDoctor.medical_license || "Not provided"}</p>
+              </div>
+              <div>
+                <Label className="text-gray-500">Department</Label>
+                <p className="font-medium">{selectedDoctor.department || "Not assigned"}</p>
+              </div>
+              <div>
+                <Label className="text-gray-500">Years of Experience</Label>
+                <p className="font-medium">{selectedDoctor.years_of_experience || 0} years</p>
+              </div>
+              <div>
+                <Label className="text-gray-500">Consultation Fee</Label>
+                <p className="font-medium">${selectedDoctor.consultation_fee || 0}</p>
+              </div>
+              <div className="col-span-2">
+                <Label className="text-gray-500">Address</Label>
+                <p className="font-medium">{selectedDoctor.address || "Not provided"}</p>
+              </div>
+              <div className="col-span-2">
+                <Label className="text-gray-500">Qualifications</Label>
+                <p className="font-medium">{selectedDoctor.qualifications || "Not provided"}</p>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowViewModal(false)}>
+                Close
+              </Button>
+              <Button onClick={() => {
+                setShowViewModal(false);
+                handleEditDoctor(selectedDoctor);
+              }}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Doctor
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <p className="text-center py-8 text-gray-500">No doctor selected</p>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+  
+  // Delete Confirmation Dialog
+  const DeleteDoctorDialog = () => (
+    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete{" "}
+            <span className="font-semibold">
+              Dr. {selectedDoctor?.first_name} {selectedDoctor?.last_name}
+            </span>
+            's account and remove all associated data from the system.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-red-600 hover:bg-red-700"
+            onClick={() => {
+              if (selectedDoctor?.id) {
+                deleteDoctorMutation.mutate(selectedDoctor.id);
+              }
+            }}
+          >
+            Delete Doctor
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <>
+      <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <div className={`bg-white shadow-lg transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
         <div className="p-4 border-b">
@@ -1718,6 +2071,11 @@ export default function Dashboard({ userRole: propUserRole, tenantInfo }: Dashbo
           {renderContent()}
         </main>
       </div>
+      
+      {/* Modals */}
+      <ViewDoctorModal />
+      <DeleteDoctorDialog />
     </div>
+    </>
   );
 }
