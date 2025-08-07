@@ -356,12 +356,16 @@ class AdminUsersAPIView(APIView):
             user_data = []
             
             for u in users:
+                # Determine user role based on flags
+                role = 'admin' if u.is_superuser else ('staff' if u.is_staff else 'user')
+                
                 user_data.append({
                     'id': u.id,
                     'username': u.username,
                     'email': u.email,
                     'first_name': u.first_name,
                     'last_name': u.last_name,
+                    'role': role,
                     'is_active': u.is_active,
                     'is_staff': u.is_staff,
                     'is_superuser': u.is_superuser,

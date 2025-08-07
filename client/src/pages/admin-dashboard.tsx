@@ -76,6 +76,12 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userPage, setUserPage] = useState(1);
+  const [appointmentPage, setAppointmentPage] = useState(1);
+  const [filterRole, setFilterRole] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const itemsPerPage = 10;
 
   // Check admin authentication
   useEffect(() => {
@@ -213,16 +219,59 @@ export default function AdminDashboard() {
     }
   };
 
-  // Filter data based on search
-  const filteredUsers = users?.filter((user: any) => 
-    user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.username?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter data based on search and filter options
+  const filteredUsers = users?.filter((user: any) => {
+    const matchesSearch = user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          user.username?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = filterRole === 'all' || user.role === filterRole;
+    return matchesSearch && matchesRole;
+  }) || [];
 
-  const filteredAppointments = appointments?.filter((apt: any) =>
-    apt.patient_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    apt.doctor_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAppointments = appointments?.filter((apt: any) => {
+    const matchesSearch = apt.patient_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         apt.doctor_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || apt.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  }) || [];
+
+  // Pagination logic
+  const paginatedUsers = filteredUsers.slice(
+    (userPage - 1) * itemsPerPage,
+    userPage * itemsPerPage
   );
+  const totalUserPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const paginatedAppointments = filteredAppointments.slice(
+    (appointmentPage - 1) * itemsPerPage,
+    appointmentPage * itemsPerPage
+  );
+  const totalAppointmentPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+
+  // Delete user handler
+  const handleDeleteUser = async (userId: number) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    
+    try {
+      await apiRequest(`/api/auth/users/${userId}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        }
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
+      toast({
+        title: 'User Deleted',
+        description: 'User has been successfully deleted',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Delete Failed',
+        description: error.message || 'Failed to delete user',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -435,10 +484,19 @@ export default function AdminDashboard() {
                       <CardDescription>Manage all platform users</CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Filter className="h-4 w-4 mr-2" />
-                        Filter
-                      </Button>
+                      <select
+                        className="px-3 py-1 border rounded-md text-sm"
+                        value={filterRole}
+                        onChange={(e) => {
+                          setFilterRole(e.target.value);
+                          setUserPage(1);
+                        }}
+                      >
+                        <option value="all">All Roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="staff">Staff</option>
+                        <option value="user">User</option>
+                      </select>
                       <Button variant="outline" size="sm">
                         <Download className="h-4 w-4 mr-2" />
                         Export
@@ -459,7 +517,7 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredUsers?.map((user: any) => (
+                      {paginatedUsers?.map((user: any) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">{user.email}</TableCell>
                           <TableCell>{user.username}</TableCell>
@@ -479,7 +537,11 @@ export default function AdminDashboard() {
                               <Button variant="ghost" size="icon">
                                 <Edit3 className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleDeleteUser(user.id)}
+                              >
                                 <Trash2 className="h-4 w-4 text-red-500" />
                               </Button>
                             </div>
@@ -488,6 +550,46 @@ export default function AdminDashboard() {
                       ))}
                     </TableBody>
                   </Table>
+                  
+                  {/* Pagination Controls */}
+                  {totalUserPages > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="text-sm text-gray-500">
+                        Showing {((userPage - 1) * itemsPerPage) + 1} to {Math.min(userPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} users
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setUserPage(Math.max(1, userPage - 1))}
+                          disabled={userPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="flex items-center gap-1">
+                          {[...Array(totalUserPages)].map((_, i) => (
+                            <Button
+                              key={i + 1}
+                              variant={userPage === i + 1 ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setUserPage(i + 1)}
+                              className="w-8 h-8 p-0"
+                            >
+                              {i + 1}
+                            </Button>
+                          ))}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setUserPage(Math.min(totalUserPages, userPage + 1))}
+                          disabled={userPage === totalUserPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -565,6 +667,20 @@ export default function AdminDashboard() {
                       <CardDescription>View and manage all appointments</CardDescription>
                     </div>
                     <div className="flex gap-2">
+                      <select
+                        className="px-3 py-1 border rounded-md text-sm"
+                        value={filterStatus}
+                        onChange={(e) => {
+                          setFilterStatus(e.target.value);
+                          setAppointmentPage(1);
+                        }}
+                      >
+                        <option value="all">All Status</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="in_progress">In Progress</option>
+                      </select>
                       <Button variant="outline" size="sm">
                         <Calendar className="h-4 w-4 mr-2" />
                         Calendar View
@@ -590,16 +706,16 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredAppointments?.map((apt: any) => (
+                      {paginatedAppointments?.map((apt: any) => (
                         <TableRow key={apt.id}>
                           <TableCell className="font-mono text-xs">#{apt.id}</TableCell>
                           <TableCell>{apt.patient_name || 'N/A'}</TableCell>
                           <TableCell>{apt.doctor_name || 'N/A'}</TableCell>
-                          <TableCell>{formatDate(apt.appointment_date)}</TableCell>
+                          <TableCell>{formatDate(apt.appointment_date || apt.appointment_slot_date)}</TableCell>
                           <TableCell>{apt.appointment_type || 'Consultation'}</TableCell>
                           <TableCell>
-                            <Badge className={getStatusColor(apt.status)}>
-                              {apt.status}
+                            <Badge className={getStatusColor(apt.status || apt.appointment_status)}>
+                              {apt.status || apt.appointment_status || 'scheduled'}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -616,6 +732,52 @@ export default function AdminDashboard() {
                       ))}
                     </TableBody>
                   </Table>
+                  
+                  {/* Pagination Controls */}
+                  {totalAppointmentPages > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="text-sm text-gray-500">
+                        Showing {((appointmentPage - 1) * itemsPerPage) + 1} to {Math.min(appointmentPage * itemsPerPage, filteredAppointments.length)} of {filteredAppointments.length} appointments
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAppointmentPage(Math.max(1, appointmentPage - 1))}
+                          disabled={appointmentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="flex items-center gap-1">
+                          {[...Array(Math.min(5, totalAppointmentPages))].map((_, i) => {
+                            const pageNumber = appointmentPage <= 3 ? i + 1 : appointmentPage + i - 2;
+                            if (pageNumber <= totalAppointmentPages) {
+                              return (
+                                <Button
+                                  key={pageNumber}
+                                  variant={appointmentPage === pageNumber ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => setAppointmentPage(pageNumber)}
+                                  className="w-8 h-8 p-0"
+                                >
+                                  {pageNumber}
+                                </Button>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAppointmentPage(Math.min(totalAppointmentPages, appointmentPage + 1))}
+                          disabled={appointmentPage === totalAppointmentPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
