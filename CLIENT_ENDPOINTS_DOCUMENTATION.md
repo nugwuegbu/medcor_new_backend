@@ -3,6 +3,11 @@
 ## Overview
 All Client endpoints from `tenants.models.Client` have been successfully implemented with comprehensive Swagger documentation.
 
+## Recent Fixes (January 8, 2025)
+1. **Doctors List Issue**: Fixed `/api/auth/admin/doctors/` to filter by `role='doctor'` field instead of non-existent group
+2. **Patients List Issue**: Fixed `/api/auth/admin/patients/` to filter by `role='patient'` field
+3. **Appointment Creation**: Temporarily removed problematic `slot` and `treatment` fields that expected IDs but received strings
+
 ## Implemented Endpoints
 
 ### Base URL

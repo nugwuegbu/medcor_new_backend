@@ -2606,13 +2606,14 @@ export default function AdminDashboard() {
                 const appointmentData = {
                   patient: data.patient_id,  // Map patient_id to patient
                   doctor: data.doctor_id,    // Map doctor_id to doctor
-                  slot: data.appointment_date, // Map date to slot
-                  treatment: data.appointment_type || 'consultation', // Map appointment_type to treatment
+                  // Note: slot and treatment need to be IDs, not strings
+                  // Temporarily removing these fields to fix the error
+                  // slot: 1, // TODO: Need to fetch actual slot IDs
+                  // treatment: 1, // TODO: Need to fetch actual treatment IDs
                   appointment_slot_date: data.appointment_date,
                   appointment_slot_start_time: startTime,
                   appointment_slot_end_time: endTime,
-                  reason: data.reason || '',
-                  notes: data.notes || '',
+                  medical_record: data.reason || data.notes || '', // Using medical_record field
                   appointment_status: data.status || 'Pending',
                 };
                 
@@ -2666,13 +2667,14 @@ export default function AdminDashboard() {
                   const appointmentData = {
                     patient: data.patient_id,  // Map patient_id to patient
                     doctor: data.doctor_id,    // Map doctor_id to doctor
-                    slot: data.appointment_date, // Map date to slot
-                    treatment: data.appointment_type || 'consultation', // Map appointment_type to treatment
+                    // Note: slot and treatment need to be IDs, not strings
+                    // Temporarily removing these fields to fix the error
+                    // slot: 1, // TODO: Need to fetch actual slot IDs
+                    // treatment: 1, // TODO: Need to fetch actual treatment IDs
                     appointment_slot_date: data.appointment_date,
                     appointment_slot_start_time: startTime,
                     appointment_slot_end_time: endTime,
-                    reason: data.reason || '',
-                    notes: data.notes || '',
+                    medical_record: data.reason || data.notes || '', // Using medical_record field
                     appointment_status: data.status || 'Pending',
                   };
                   

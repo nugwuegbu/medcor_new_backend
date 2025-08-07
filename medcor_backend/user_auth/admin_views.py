@@ -58,16 +58,11 @@ class DoctorsListAPIView(APIView):
         try:
             doctors = []
             
-            # Try to get doctors by group first
-            try:
-                doctor_group = Group.objects.get(name='Doctor')
-                doctor_users = User.objects.filter(groups=doctor_group, is_active=True).order_by('first_name', 'last_name')
-            except Group.DoesNotExist:
-                # Fallback: Look for users with doctor in email
-                doctor_users = User.objects.filter(
-                    email__icontains='doctor',
-                    is_active=True
-                ).order_by('first_name', 'last_name')
+            # Filter users by role field - this is the correct approach
+            doctor_users = User.objects.filter(
+                role='doctor',
+                is_active=True
+            ).order_by('first_name', 'last_name')
             
             for u in doctor_users:
                 doctors.append({
@@ -78,8 +73,11 @@ class DoctorsListAPIView(APIView):
                     'last_name': u.last_name,
                     'role': 'doctor',
                     'is_active': u.is_active,
-                    'created_at': u.created_at.isoformat() if u.created_at else None,
-                    'last_login': u.last_login.isoformat() if u.last_login else None
+                    'created_at': u.created_at.isoformat() if hasattr(u, 'created_at') and u.created_at else None,
+                    'last_login': u.last_login.isoformat() if u.last_login else None,
+                    'phone_number': getattr(u, 'phone_number', None),
+                    'specialty': getattr(u, 'specialty', None),
+                    'department': getattr(u, 'department', None),
                 })
             
             return Response(doctors, status=status.HTTP_200_OK)
@@ -137,16 +135,11 @@ class PatientsListAPIView(APIView):
         try:
             patients = []
             
-            # Try to get patients by group first
-            try:
-                patient_group = Group.objects.get(name='Patient')
-                patient_users = User.objects.filter(groups=patient_group, is_active=True).order_by('first_name', 'last_name')
-            except Group.DoesNotExist:
-                # Fallback: Look for users with patient in email
-                patient_users = User.objects.filter(
-                    email__icontains='patient',
-                    is_active=True
-                ).order_by('first_name', 'last_name')
+            # Filter users by role field - this is the correct approach
+            patient_users = User.objects.filter(
+                role='patient',
+                is_active=True
+            ).order_by('first_name', 'last_name')
             
             for u in patient_users:
                 patients.append({
@@ -157,8 +150,11 @@ class PatientsListAPIView(APIView):
                     'last_name': u.last_name,
                     'role': 'patient',
                     'is_active': u.is_active,
-                    'created_at': u.created_at.isoformat() if u.created_at else None,
-                    'last_login': u.last_login.isoformat() if u.last_login else None
+                    'created_at': u.created_at.isoformat() if hasattr(u, 'created_at') and u.created_at else None,
+                    'last_login': u.last_login.isoformat() if u.last_login else None,
+                    'phone_number': getattr(u, 'phone_number', None),
+                    'blood_type': getattr(u, 'blood_type', None),
+                    'medical_record_number': getattr(u, 'medical_record_number', None),
                 })
             
             return Response(patients, status=status.HTTP_200_OK)
