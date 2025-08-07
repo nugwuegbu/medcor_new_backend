@@ -427,8 +427,9 @@ export default function AdminDashboard() {
   // Delete mutation with proper cache invalidation
   const deleteMutation = useMutation({
     mutationFn: async ({ type, id }: { type: string; id: number }) => {
+      // Use correct endpoints for each type
       const endpoint = type === 'user' ? `/api/auth/users/${id}/` :
-                       type === 'patient' ? `/api/auth/admin/patients/${id}/` :
+                       type === 'patient' ? `/api/auth/users/${id}/` : // Patients are users
                        type === 'doctor' ? `/api/auth/admin/doctors/${id}/` :
                        type === 'appointment' ? `/appointments/${id}/` :
                        `/appointments/${id}/`;
@@ -2052,6 +2053,7 @@ export default function AdminDashboard() {
                   password: 'TempPass123!' // Default password for all new users
                 };
                 
+                console.log('Creating user with data:', userData); // Debug log
                 await apiRequest('/api/auth/users/create/', {
                   method: 'POST',
                   headers: {
@@ -2067,6 +2069,7 @@ export default function AdminDashboard() {
                 queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
                 setShowAddUserModal(false);
               } catch (error: any) {
+                console.error('Create user failed:', error); // Debug log
                 toast({
                   title: 'Error',
                   description: error.message || 'Failed to create user',
@@ -2094,7 +2097,8 @@ export default function AdminDashboard() {
               }}
               onSubmit={async (data) => {
                 try {
-                  await apiRequest(`/api/auth/users/${selectedUser.id}/`, {
+                  console.log('Updating user with data:', data); // Debug log
+                  const response = await apiRequest(`/api/auth/users/${selectedUser.id}/`, {
                     method: 'PATCH',
                     headers: {
                       'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
@@ -2102,6 +2106,7 @@ export default function AdminDashboard() {
                     },
                     body: JSON.stringify(data),
                   });
+                  console.log('Update response:', response); // Debug log
                   toast({
                     title: 'Success',
                     description: 'User updated successfully',
@@ -2110,6 +2115,7 @@ export default function AdminDashboard() {
                   setShowEditUserModal(false);
                   setSelectedUser(null);
                 } catch (error: any) {
+                  console.error('Update failed:', error); // Debug log
                   toast({
                     title: 'Error',
                     description: error.message || 'Failed to update user',
@@ -2357,7 +2363,8 @@ export default function AdminDashboard() {
                   role: 'patient' // Ensure role is set
                 };
                 
-                await apiRequest('/api/auth/admin/patients/', {
+                // Use the correct user creation endpoint
+                await apiRequest('/api/auth/users/create/', {
                   method: 'POST',
                   headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
@@ -2396,7 +2403,8 @@ export default function AdminDashboard() {
               initialData={selectedPatient}
               onSubmit={async (data) => {
                 try {
-                  await apiRequest(`/api/auth/admin/patients/${selectedPatient.id}/`, {
+                  // Use the correct user update endpoint
+                  await apiRequest(`/api/auth/users/${selectedPatient.id}/`, {
                     method: 'PATCH',
                     headers: {
                       'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
@@ -2409,6 +2417,7 @@ export default function AdminDashboard() {
                     description: 'Patient updated successfully',
                   });
                   queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/patients/'] });
+                  queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
                   setShowEditPatientModal(false);
                   setSelectedPatient(null);
                 } catch (error: any) {
