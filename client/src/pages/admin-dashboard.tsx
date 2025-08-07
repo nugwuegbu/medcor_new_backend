@@ -53,6 +53,50 @@ import {
 } from "@/components/ui/table";
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 interface AdminStats {
   totalPatients: number;
@@ -62,6 +106,45 @@ interface AdminStats {
   todayAppointments: number;
   monthlyGrowth: number;
 }
+
+// Form validation schemas
+const userFormSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  role: z.enum(['admin', 'doctor', 'patient', 'clinic']),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
+  first_name: z.string().min(1, 'First name is required'),
+  last_name: z.string().min(1, 'Last name is required'),
+});
+
+const patientFormSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  first_name: z.string().min(1, 'First name is required'),
+  last_name: z.string().min(1, 'Last name is required'),
+  phone: z.string().min(10, 'Valid phone number required'),
+  date_of_birth: z.string().min(1, 'Date of birth is required'),
+  address: z.string().optional(),
+  medical_history: z.string().optional(),
+});
+
+const doctorFormSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  first_name: z.string().min(1, 'First name is required'),
+  last_name: z.string().min(1, 'Last name is required'),
+  specialization: z.string().min(1, 'Specialization is required'),
+  phone: z.string().min(10, 'Valid phone number required'),
+  license_number: z.string().min(1, 'License number is required'),
+  experience_years: z.string().optional(),
+});
+
+const appointmentFormSchema = z.object({
+  patient_id: z.number().min(1, 'Patient is required'),
+  doctor_id: z.number().min(1, 'Doctor is required'),
+  appointment_date: z.string().min(1, 'Date is required'),
+  appointment_time: z.string().min(1, 'Time is required'),
+  reason: z.string().min(1, 'Reason is required'),
+  status: z.enum(['Pending', 'Approved', 'Completed', 'Cancelled']),
+});
 
 const sidebarItems = [
   { id: 'overview', label: 'Overview', icon: Home },
@@ -90,6 +173,30 @@ export default function AdminDashboard() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const itemsPerPage = 10;
+
+  // Modal states
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [showViewUserModal, setShowViewUserModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{type: string, id: number, name: string} | null>(null);
+  
+  // Form states for different entities
+  const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+  const [showEditPatientModal, setShowEditPatientModal] = useState(false);
+  const [showViewPatientModal, setShowViewPatientModal] = useState(false);
+  
+  const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
+  const [showEditDoctorModal, setShowEditDoctorModal] = useState(false);
+  const [showViewDoctorModal, setShowViewDoctorModal] = useState(false);
+  
+  const [showAddAppointmentModal, setShowAddAppointmentModal] = useState(false);
+  const [showEditAppointmentModal, setShowEditAppointmentModal] = useState(false);
+  const [showViewAppointmentModal, setShowViewAppointmentModal] = useState(false);
 
   // Check admin authentication
   useEffect(() => {
@@ -265,6 +372,75 @@ export default function AdminDashboard() {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Export functions
+  const exportToCSV = (data: any[], filename: string) => {
+    if (!data || data.length === 0) {
+      toast({
+        title: 'No Data',
+        description: 'No data available to export',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => 
+        headers.map(header => {
+          const value = row[header];
+          return typeof value === 'string' && value.includes(',') 
+            ? `"${value}"` 
+            : value || '';
+        }).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    toast({
+      title: 'Export Successful',
+      description: `Data exported to ${filename}.csv`,
+    });
+  };
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async ({ type, id }: { type: string; id: number }) => {
+      const endpoint = type === 'user' ? `/api/auth/users/${id}/` :
+                       type === 'patient' ? `/api/auth/admin/patients/${id}/` :
+                       type === 'doctor' ? `/api/auth/admin/doctors/${id}/` :
+                       `/api/appointments/${id}/`;
+      
+      return apiRequest(endpoint, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        }
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Item deleted successfully',
+      });
+      queryClient.invalidateQueries();
+      setShowDeleteDialog(false);
+      setDeleteTarget(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete item',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const downloadReceipt = (subscription: any) => {
     import('jspdf').then(({ default: jsPDF }) => {
@@ -732,9 +908,17 @@ export default function AdminDashboard() {
                         <option value="staff">Staff</option>
                         <option value="user">User</option>
                       </select>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => exportToCSV(users || [], 'users')}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Export
+                      </Button>
+                      <Button onClick={() => setShowAddUserModal(true)}>
+                        <Users className="h-4 w-4 mr-2" />
+                        Add User
                       </Button>
                     </div>
                   </div>
@@ -770,17 +954,68 @@ export default function AdminDashboard() {
                             <TableCell className="text-sm">{formatDate(user.created_at)}</TableCell>
                             <TableCell>
                               <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <Edit3 className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => handleDeleteUser(user.id)}
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          setSelectedUser(user);
+                                          setShowViewUserModal(true);
+                                        }}
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>View user details</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          setSelectedUser(user);
+                                          setShowEditUserModal(true);
+                                        }}
+                                      >
+                                        <Edit3 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Edit user information</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          setDeleteTarget({ type: 'user', id: user.id, name: user.email });
+                                          setShowDeleteDialog(true);
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Delete user</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -843,10 +1078,20 @@ export default function AdminDashboard() {
                       <CardTitle>Doctor Management</CardTitle>
                       <CardDescription>Manage healthcare providers</CardDescription>
                     </div>
-                    <Button>
-                      <Users className="h-4 w-4 mr-2" />
-                      Add Doctor
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => exportToCSV(doctors || [], 'doctors')}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                      <Button onClick={() => setShowAddDoctorModal(true)}>
+                        <Stethoscope className="h-4 w-4 mr-2" />
+                        Add Doctor
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -889,12 +1134,68 @@ export default function AdminDashboard() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <Edit3 className="h-4 w-4" />
-                                </Button>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          setSelectedDoctor(doctor);
+                                          setShowViewDoctorModal(true);
+                                        }}
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>View doctor details</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          setSelectedDoctor(doctor);
+                                          setShowEditDoctorModal(true);
+                                        }}
+                                      >
+                                        <Edit3 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Edit doctor information</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          setDeleteTarget({ type: 'doctor', id: doctor.id, name: `Dr. ${doctor.first_name} ${doctor.last_name}` });
+                                          setShowDeleteDialog(true);
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Delete doctor</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -932,11 +1233,15 @@ export default function AdminDashboard() {
                         <option value="Completed">Completed</option>
                         <option value="Cancelled">Cancelled</option>
                       </select>
-                      <Button variant="outline" size="sm">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Calendar View
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => exportToCSV(appointments || [], 'appointments')}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
                       </Button>
-                      <Button>
+                      <Button onClick={() => setShowAddAppointmentModal(true)}>
                         <Calendar className="h-4 w-4 mr-2" />
                         New Appointment
                       </Button>
@@ -970,13 +1275,69 @@ export default function AdminDashboard() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="icon">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon">
-                                <Edit3 className="h-4 w-4" />
-                              </Button>
+                            <div className="flex gap-1">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-8 w-8"
+                                      onClick={() => {
+                                        setSelectedAppointment(apt);
+                                        setShowViewAppointmentModal(true);
+                                      }}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>View appointment details</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-8 w-8"
+                                      onClick={() => {
+                                        setSelectedAppointment(apt);
+                                        setShowEditAppointmentModal(true);
+                                      }}
+                                    >
+                                      <Edit3 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Edit appointment</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => {
+                                        setDeleteTarget({ type: 'appointment', id: apt.id, name: `Appointment #${apt.id}` });
+                                        setShowDeleteDialog(true);
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4 text-red-500" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Cancel appointment</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1045,11 +1406,18 @@ export default function AdminDashboard() {
                       <CardDescription>Comprehensive patient directory and management</CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => exportToCSV(patients || [], 'patients')}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Export List
                       </Button>
-                      <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
+                      <Button 
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                        onClick={() => setShowAddPatientModal(true)}
+                      >
                         <UserCheck className="h-4 w-4 mr-2" />
                         Add Patient
                       </Button>
@@ -1090,15 +1458,68 @@ export default function AdminDashboard() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <FileText className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <Edit3 className="h-4 w-4" />
-                                </Button>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          setSelectedPatient(patient);
+                                          setShowViewPatientModal(true);
+                                        }}
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>View patient details</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          setSelectedPatient(patient);
+                                          setShowEditPatientModal(true);
+                                        }}
+                                      >
+                                        <Edit3 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Edit patient information</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          setDeleteTarget({ type: 'patient', id: patient.id, name: `${patient.first_name} ${patient.last_name || patient.username}` });
+                                          setShowDeleteDialog(true);
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Delete patient</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -1518,6 +1939,1154 @@ export default function AdminDashboard() {
           )}
         </main>
       </div>
+
+      {/* User Modals */}
+      {/* View User Modal */}
+      <Dialog open={showViewUserModal} onOpenChange={setShowViewUserModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>Complete information about the user</DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Email</Label>
+                  <p className="mt-1 text-sm">{selectedUser.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Username</Label>
+                  <p className="mt-1 text-sm">{selectedUser.username}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Role</Label>
+                  <Badge className={`mt-1 ${getRoleColor(selectedUser.role)}`}>
+                    {selectedUser.role}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Status</Label>
+                  <Badge variant={selectedUser.is_active ? "success" : "secondary"} className="mt-1">
+                    {selectedUser.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">First Name</Label>
+                  <p className="mt-1 text-sm">{selectedUser.first_name || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Last Name</Label>
+                  <p className="mt-1 text-sm">{selectedUser.last_name || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Created Date</Label>
+                  <p className="mt-1 text-sm">{formatDate(selectedUser.created_at)}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Last Login</Label>
+                  <p className="mt-1 text-sm">{selectedUser.last_login ? formatDate(selectedUser.last_login) : 'Never'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowViewUserModal(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add User Modal */}
+      <Dialog open={showAddUserModal} onOpenChange={setShowAddUserModal}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+            <DialogDescription>Create a new user account</DialogDescription>
+          </DialogHeader>
+          <UserForm 
+            onSubmit={async (data) => {
+              try {
+                await apiRequest('/api/auth/users/', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(data),
+                });
+                toast({
+                  title: 'Success',
+                  description: 'User created successfully',
+                });
+                queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
+                setShowAddUserModal(false);
+              } catch (error: any) {
+                toast({
+                  title: 'Error',
+                  description: error.message || 'Failed to create user',
+                  variant: 'destructive',
+                });
+              }
+            }}
+            onCancel={() => setShowAddUserModal(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Modal */}
+      <Dialog open={showEditUserModal} onOpenChange={setShowEditUserModal}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>Update user information</DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <UserForm 
+              initialData={selectedUser}
+              onSubmit={async (data) => {
+                try {
+                  await apiRequest(`/api/auth/users/${selectedUser.id}/`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                  });
+                  toast({
+                    title: 'Success',
+                    description: 'User updated successfully',
+                  });
+                  queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
+                  setShowEditUserModal(false);
+                  setSelectedUser(null);
+                } catch (error: any) {
+                  toast({
+                    title: 'Error',
+                    description: error.message || 'Failed to update user',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+              onCancel={() => {
+                setShowEditUserModal(false);
+                setSelectedUser(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete{' '}
+              <span className="font-semibold">{deleteTarget?.name}</span> from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowDeleteDialog(false);
+              setDeleteTarget(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteTarget) {
+                  deleteMutation.mutate({ type: deleteTarget.type, id: deleteTarget.id });
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Doctor Modals */}
+      {/* View Doctor Modal */}
+      <Dialog open={showViewDoctorModal} onOpenChange={setShowViewDoctorModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Doctor Details</DialogTitle>
+            <DialogDescription>Complete information about the doctor</DialogDescription>
+          </DialogHeader>
+          {selectedDoctor && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Name</Label>
+                  <p className="mt-1 text-sm">{selectedDoctor.first_name} {selectedDoctor.last_name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Email</Label>
+                  <p className="mt-1 text-sm">{selectedDoctor.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Specialization</Label>
+                  <Badge className="mt-1 bg-teal-100 text-teal-800">
+                    {selectedDoctor.specialization || 'General Practitioner'}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">License Number</Label>
+                  <p className="mt-1 text-sm">{selectedDoctor.license_number || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Phone</Label>
+                  <p className="mt-1 text-sm">{selectedDoctor.phone || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Experience</Label>
+                  <p className="mt-1 text-sm">{selectedDoctor.experience_years || 0} years</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Department</Label>
+                  <p className="mt-1 text-sm">{selectedDoctor.department || 'General'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Consultation Fee</Label>
+                  <p className="mt-1 text-sm">${selectedDoctor.consultation_fee || '100'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowViewDoctorModal(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Doctor Modal */}
+      <Dialog open={showAddDoctorModal} onOpenChange={setShowAddDoctorModal}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Add New Doctor</DialogTitle>
+            <DialogDescription>Register a new healthcare provider</DialogDescription>
+          </DialogHeader>
+          <DoctorForm 
+            onSubmit={async (data) => {
+              try {
+                await apiRequest('/api/auth/admin/doctors/', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(data),
+                });
+                toast({
+                  title: 'Success',
+                  description: 'Doctor created successfully',
+                });
+                queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/doctors/'] });
+                setShowAddDoctorModal(false);
+              } catch (error: any) {
+                toast({
+                  title: 'Error',
+                  description: error.message || 'Failed to create doctor',
+                  variant: 'destructive',
+                });
+              }
+            }}
+            onCancel={() => setShowAddDoctorModal(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Doctor Modal */}
+      <Dialog open={showEditDoctorModal} onOpenChange={setShowEditDoctorModal}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Edit Doctor</DialogTitle>
+            <DialogDescription>Update doctor information</DialogDescription>
+          </DialogHeader>
+          {selectedDoctor && (
+            <DoctorForm 
+              initialData={selectedDoctor}
+              onSubmit={async (data) => {
+                try {
+                  await apiRequest(`/api/auth/admin/doctors/${selectedDoctor.id}/`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                  });
+                  toast({
+                    title: 'Success',
+                    description: 'Doctor updated successfully',
+                  });
+                  queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/doctors/'] });
+                  setShowEditDoctorModal(false);
+                  setSelectedDoctor(null);
+                } catch (error: any) {
+                  toast({
+                    title: 'Error',
+                    description: error.message || 'Failed to update doctor',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+              onCancel={() => {
+                setShowEditDoctorModal(false);
+                setSelectedDoctor(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Patient Modals */}
+      {/* View Patient Modal */}
+      <Dialog open={showViewPatientModal} onOpenChange={setShowViewPatientModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Patient Details</DialogTitle>
+            <DialogDescription>Complete patient information and medical history</DialogDescription>
+          </DialogHeader>
+          {selectedPatient && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Name</Label>
+                  <p className="mt-1 text-sm">{selectedPatient.first_name} {selectedPatient.last_name || selectedPatient.username}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Email</Label>
+                  <p className="mt-1 text-sm">{selectedPatient.email}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Phone</Label>
+                  <p className="mt-1 text-sm">{selectedPatient.phone || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Date of Birth</Label>
+                  <p className="mt-1 text-sm">{selectedPatient.date_of_birth ? formatDate(selectedPatient.date_of_birth) : 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Blood Group</Label>
+                  <p className="mt-1 text-sm">{selectedPatient.blood_group || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Registration Date</Label>
+                  <p className="mt-1 text-sm">{formatDate(selectedPatient.created_at)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowViewPatientModal(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Patient Modal */}
+      <Dialog open={showAddPatientModal} onOpenChange={setShowAddPatientModal}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Add New Patient</DialogTitle>
+            <DialogDescription>Register a new patient</DialogDescription>
+          </DialogHeader>
+          <PatientForm 
+            onSubmit={async (data) => {
+              try {
+                await apiRequest('/api/auth/admin/patients/', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(data),
+                });
+                toast({
+                  title: 'Success',
+                  description: 'Patient created successfully',
+                });
+                queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/patients/'] });
+                setShowAddPatientModal(false);
+              } catch (error: any) {
+                toast({
+                  title: 'Error',
+                  description: error.message || 'Failed to create patient',
+                  variant: 'destructive',
+                });
+              }
+            }}
+            onCancel={() => setShowAddPatientModal(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Patient Modal */}
+      <Dialog open={showEditPatientModal} onOpenChange={setShowEditPatientModal}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Edit Patient</DialogTitle>
+            <DialogDescription>Update patient information</DialogDescription>
+          </DialogHeader>
+          {selectedPatient && (
+            <PatientForm 
+              initialData={selectedPatient}
+              onSubmit={async (data) => {
+                try {
+                  await apiRequest(`/api/auth/admin/patients/${selectedPatient.id}/`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                  });
+                  toast({
+                    title: 'Success',
+                    description: 'Patient updated successfully',
+                  });
+                  queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/patients/'] });
+                  setShowEditPatientModal(false);
+                  setSelectedPatient(null);
+                } catch (error: any) {
+                  toast({
+                    title: 'Error',
+                    description: error.message || 'Failed to update patient',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+              onCancel={() => {
+                setShowEditPatientModal(false);
+                setSelectedPatient(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Appointment Modals */}
+      {/* View Appointment Modal */}
+      <Dialog open={showViewAppointmentModal} onOpenChange={setShowViewAppointmentModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Appointment Details</DialogTitle>
+            <DialogDescription>Complete appointment information</DialogDescription>
+          </DialogHeader>
+          {selectedAppointment && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Appointment ID</Label>
+                  <p className="mt-1 text-sm font-mono">#{selectedAppointment.id}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Status</Label>
+                  <Badge className={`mt-1 ${getStatusColor(selectedAppointment.appointment_status || selectedAppointment.status)}`}>
+                    {selectedAppointment.appointment_status || selectedAppointment.status || 'Pending'}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Patient</Label>
+                  <p className="mt-1 text-sm">{selectedAppointment.patient_name || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Doctor</Label>
+                  <p className="mt-1 text-sm">{selectedAppointment.doctor_name || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Date & Time</Label>
+                  <p className="mt-1 text-sm">{formatDate(selectedAppointment.appointment_slot_date || selectedAppointment.appointment_date)}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Type</Label>
+                  <p className="mt-1 text-sm">{selectedAppointment.treat_name || selectedAppointment.appointment_type || 'General Consultation'}</p>
+                </div>
+              </div>
+              {selectedAppointment.notes && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Notes</Label>
+                  <p className="mt-1 text-sm">{selectedAppointment.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowViewAppointmentModal(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Appointment Modal */}
+      <Dialog open={showAddAppointmentModal} onOpenChange={setShowAddAppointmentModal}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Schedule New Appointment</DialogTitle>
+            <DialogDescription>Create a new appointment booking</DialogDescription>
+          </DialogHeader>
+          <AppointmentForm 
+            patients={patients}
+            doctors={doctors}
+            onSubmit={async (data) => {
+              try {
+                await apiRequest('/appointments/', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(data),
+                });
+                toast({
+                  title: 'Success',
+                  description: 'Appointment scheduled successfully',
+                });
+                queryClient.invalidateQueries({ queryKey: ['/appointments/'] });
+                setShowAddAppointmentModal(false);
+              } catch (error: any) {
+                toast({
+                  title: 'Error',
+                  description: error.message || 'Failed to schedule appointment',
+                  variant: 'destructive',
+                });
+              }
+            }}
+            onCancel={() => setShowAddAppointmentModal(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Appointment Modal */}
+      <Dialog open={showEditAppointmentModal} onOpenChange={setShowEditAppointmentModal}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Edit Appointment</DialogTitle>
+            <DialogDescription>Update appointment details</DialogDescription>
+          </DialogHeader>
+          {selectedAppointment && (
+            <AppointmentForm 
+              initialData={selectedAppointment}
+              patients={patients}
+              doctors={doctors}
+              onSubmit={async (data) => {
+                try {
+                  await apiRequest(`/appointments/${selectedAppointment.id}/`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                  });
+                  toast({
+                    title: 'Success',
+                    description: 'Appointment updated successfully',
+                  });
+                  queryClient.invalidateQueries({ queryKey: ['/appointments/'] });
+                  setShowEditAppointmentModal(false);
+                  setSelectedAppointment(null);
+                } catch (error: any) {
+                  toast({
+                    title: 'Error',
+                    description: error.message || 'Failed to update appointment',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+              onCancel={() => {
+                setShowEditAppointmentModal(false);
+                setSelectedAppointment(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+// User Form Component
+function UserForm({ 
+  initialData, 
+  onSubmit, 
+  onCancel 
+}: { 
+  initialData?: any; 
+  onSubmit: (data: any) => void; 
+  onCancel: () => void;
+}) {
+  const form = useForm({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      email: initialData?.email || '',
+      username: initialData?.username || '',
+      role: initialData?.role || 'patient',
+      password: '',
+      first_name: initialData?.first_name || '',
+      last_name: initialData?.last_name || '',
+    },
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="user@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input placeholder="username" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="first_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="John" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="last_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Role</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="doctor">Doctor</SelectItem>
+                  <SelectItem value="patient">Patient</SelectItem>
+                  <SelectItem value="clinic">Clinic</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {!initialData && (
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {initialData ? 'Update' : 'Create'} User
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+}
+
+// Doctor Form Component
+function DoctorForm({ 
+  initialData, 
+  onSubmit, 
+  onCancel 
+}: { 
+  initialData?: any; 
+  onSubmit: (data: any) => void; 
+  onCancel: () => void;
+}) {
+  const form = useForm({
+    resolver: zodResolver(doctorFormSchema),
+    defaultValues: {
+      email: initialData?.email || '',
+      username: initialData?.username || '',
+      password: '',
+      first_name: initialData?.first_name || '',
+      last_name: initialData?.last_name || '',
+      specialization: initialData?.specialization || '',
+      license_number: initialData?.license_number || '',
+      phone: initialData?.phone || '',
+      experience_years: initialData?.experience_years || 0,
+      consultation_fee: initialData?.consultation_fee || 100,
+    },
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="first_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="John" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="last_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="doctor@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="specialization"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Specialization</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select specialization" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="general">General Practitioner</SelectItem>
+                  <SelectItem value="cardiology">Cardiology</SelectItem>
+                  <SelectItem value="pediatrics">Pediatrics</SelectItem>
+                  <SelectItem value="orthopedics">Orthopedics</SelectItem>
+                  <SelectItem value="dermatology">Dermatology</SelectItem>
+                  <SelectItem value="neurology">Neurology</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="license_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>License Number</FormLabel>
+                <FormControl>
+                  <Input placeholder="MD12345" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone</FormLabel>
+                <FormControl>
+                  <Input placeholder="+1234567890" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        {!initialData && (
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {initialData ? 'Update' : 'Create'} Doctor
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+}
+
+// Patient Form Component
+function PatientForm({ 
+  initialData, 
+  onSubmit, 
+  onCancel 
+}: { 
+  initialData?: any; 
+  onSubmit: (data: any) => void; 
+  onCancel: () => void;
+}) {
+  const form = useForm({
+    resolver: zodResolver(patientFormSchema),
+    defaultValues: {
+      email: initialData?.email || '',
+      username: initialData?.username || '',
+      password: '',
+      first_name: initialData?.first_name || '',
+      last_name: initialData?.last_name || '',
+      phone: initialData?.phone || '',
+      date_of_birth: initialData?.date_of_birth || '',
+      blood_group: initialData?.blood_group || '',
+      address: initialData?.address || '',
+    },
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="first_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="John" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="last_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="patient@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone</FormLabel>
+                <FormControl>
+                  <Input placeholder="+1234567890" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="blood_group"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Blood Group</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select blood group" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="A+">A+</SelectItem>
+                    <SelectItem value="A-">A-</SelectItem>
+                    <SelectItem value="B+">B+</SelectItem>
+                    <SelectItem value="B-">B-</SelectItem>
+                    <SelectItem value="O+">O+</SelectItem>
+                    <SelectItem value="O-">O-</SelectItem>
+                    <SelectItem value="AB+">AB+</SelectItem>
+                    <SelectItem value="AB-">AB-</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        {!initialData && (
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {initialData ? 'Update' : 'Create'} Patient
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+}
+
+// Appointment Form Component
+function AppointmentForm({ 
+  initialData, 
+  patients,
+  doctors,
+  onSubmit, 
+  onCancel 
+}: { 
+  initialData?: any;
+  patients: any[];
+  doctors: any[];
+  onSubmit: (data: any) => void; 
+  onCancel: () => void;
+}) {
+  const form = useForm({
+    resolver: zodResolver(appointmentFormSchema),
+    defaultValues: {
+      patient_id: initialData?.patient_id || '',
+      doctor_id: initialData?.doctor_id || '',
+      appointment_date: initialData?.appointment_date || '',
+      appointment_time: initialData?.appointment_time || '',
+      appointment_type: initialData?.appointment_type || 'consultation',
+      status: initialData?.status || 'Pending',
+      notes: initialData?.notes || '',
+    },
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="patient_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Patient</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select patient" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {patients?.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id.toString()}>
+                      {patient.first_name} {patient.last_name || patient.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="doctor_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Doctor</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select doctor" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {doctors?.map((doctor) => (
+                    <SelectItem key={doctor.id} value={doctor.id.toString()}>
+                      Dr. {doctor.first_name} {doctor.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="appointment_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="appointment_time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Time</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="appointment_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="consultation">Consultation</SelectItem>
+                  <SelectItem value="followup">Follow-up</SelectItem>
+                  <SelectItem value="checkup">Check-up</SelectItem>
+                  <SelectItem value="emergency">Emergency</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Additional notes..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">
+            {initialData ? 'Update' : 'Schedule'} Appointment
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
   );
 }
