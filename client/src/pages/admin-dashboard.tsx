@@ -409,27 +409,44 @@ export default function AdminDashboard() {
     });
   };
 
-  // Delete mutation
+  // Delete mutation with proper cache invalidation
   const deleteMutation = useMutation({
     mutationFn: async ({ type, id }: { type: string; id: number }) => {
       const endpoint = type === 'user' ? `/api/auth/users/${id}/` :
                        type === 'patient' ? `/api/auth/admin/patients/${id}/` :
                        type === 'doctor' ? `/api/auth/admin/doctors/${id}/` :
-                       `/api/appointments/${id}/`;
+                       type === 'appointment' ? `/appointments/${id}/` :
+                       `/appointments/${id}/`;
       
-      return apiRequest(endpoint, {
+      const response = await apiRequest(endpoint, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
       });
+      
+      return { type, id, response };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: 'Success',
         description: 'Item deleted successfully',
       });
-      queryClient.invalidateQueries();
+      
+      // Specific cache invalidation based on type
+      if (data.type === 'user') {
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
+      } else if (data.type === 'patient') {
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/patients/'] });
+      } else if (data.type === 'doctor') {
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/admin/doctors/'] });
+      } else if (data.type === 'appointment') {
+        queryClient.invalidateQueries({ queryKey: ['/appointments/'] });
+      }
+      
+      // Force refetch all data
+      queryClient.refetchQueries();
+      
       setShowDeleteDialog(false);
       setDeleteTarget(null);
     },
@@ -439,6 +456,7 @@ export default function AdminDashboard() {
         description: error.message || 'Failed to delete item',
         variant: 'destructive',
       });
+      setShowDeleteDialog(false);
     },
   });
 
@@ -982,7 +1000,10 @@ export default function AdminDashboard() {
                                         variant="ghost" 
                                         size="icon" 
                                         className="h-8 w-8"
-                                        onClick={() => {
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          console.log('Edit user clicked:', user);
                                           setSelectedUser(user);
                                           setShowEditUserModal(true);
                                         }}
@@ -2008,17 +2029,23 @@ export default function AdminDashboard() {
           <UserForm 
             onSubmit={async (data) => {
               try {
-                await apiRequest('/api/auth/users/', {
+                // Include default password in the data being sent
+                const userData = {
+                  ...data,
+                  password: 'TempPass123!' // Default password for all new users
+                };
+                
+                await apiRequest('/api/auth/users/create/', {
                   method: 'POST',
                   headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify(data),
+                  body: JSON.stringify(userData),
                 });
                 toast({
                   title: 'Success',
-                  description: 'User created successfully',
+                  description: 'User created successfully with default password: TempPass123!',
                 });
                 queryClient.invalidateQueries({ queryKey: ['/api/auth/users/'] });
                 setShowAddUserModal(false);
@@ -2532,7 +2559,7 @@ function UserForm({
       email: initialData?.email || '',
       username: initialData?.username || '',
       role: initialData?.role || 'patient',
-      password: '',
+      password: initialData ? '' : 'TempPass123!', // Default password for new users
       first_name: initialData?.first_name || '',
       last_name: initialData?.last_name || '',
     },
@@ -2618,21 +2645,7 @@ function UserForm({
             </FormItem>
           )}
         />
-        {!initialData && (
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        {/* Password field removed - using default password 'TempPass123!' for all new users */}
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
@@ -2769,21 +2782,7 @@ function DoctorForm({
             )}
           />
         </div>
-        {!initialData && (
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        {/* Password field removed - using default password 'TempPass123!' for all new doctors */}
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
