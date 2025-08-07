@@ -1,0 +1,48 @@
+Page not found (404)
+Request Method:	GET
+Request URL:	http://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev/api/appointments/appointments/
+Using the URLconf defined in medcor_backend.urls_public, Django tried these URL patterns, in this order:
+
+[name='root']
+admin/
+api/schema/ [name='schema']
+api/swagger/ [name='swagger-ui']
+api/redoc/ [name='redoc']
+api/docs/ [name='api-docs']
+api/ [name='api_root']
+api/ health/ [name='health_check']
+api/tenants/
+api/subscription/
+^slots/$ [name='slot-list']
+^slots\.(?P<format>[a-z0-9]+)/?$ [name='slot-list']
+^slots/available/$ [name='slot-available']
+^slots/available\.(?P<format>[a-z0-9]+)/?$ [name='slot-available']
+^slots/(?P<pk>[^/.]+)/$ [name='slot-detail']
+^slots/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ [name='slot-detail']
+^slot-exclusions/$ [name='slotexclusion-list']
+^slot-exclusions\.(?P<format>[a-z0-9]+)/?$ [name='slotexclusion-list']
+^slot-exclusions/(?P<pk>[^/.]+)/$ [name='slotexclusion-detail']
+^slot-exclusions/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ [name='slotexclusion-detail']
+^appointments/$ [name='appointment-list']
+^appointments\.(?P<format>[a-z0-9]+)/?$ [name='appointment-list']
+^appointments/by_status/$ [name='appointment-by-status']
+^appointments/by_status\.(?P<format>[a-z0-9]+)/?$ [name='appointment-by-status']
+^appointments/statistics/$ [name='appointment-statistics']
+^appointments/statistics\.(?P<format>[a-z0-9]+)/?$ [name='appointment-statistics']
+^appointments/today/$ [name='appointment-today']
+^appointments/today\.(?P<format>[a-z0-9]+)/?$ [name='appointment-today']
+^appointments/upcoming/$ [name='appointment-upcoming']
+^appointments/upcoming\.(?P<format>[a-z0-9]+)/?$ [name='appointment-upcoming']
+^appointments/(?P<pk>[^/.]+)/$ [name='appointment-detail']
+^appointments/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ [name='appointment-detail']
+^appointments/(?P<pk>[^/.]+)/update_status/$ [name='appointment-update-status']
+^appointments/(?P<pk>[^/.]+)/update_status\.(?P<format>[a-z0-9]+)/?$ [name='appointment-update-status']
+^$ [name='api-root']
+^\.(?P<format>[a-z0-9]+)/?$ [name='api-root']
+api/treatments/
+api/auth/
+health/
+^media/(?P<path>.*)$
+The current path, api/appointments/appointments/, didn’t match any of these.
+
+You’re seeing this error because you have DEBUG = True in your Django settings file. Change that to False, and Django will display a standard 404 p

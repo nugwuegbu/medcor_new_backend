@@ -120,10 +120,10 @@ export default function AdminDashboard() {
 
   // Fetch appointments - using Django's appointments endpoint  
   const { data: appointments, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ['/api/appointments/appointments/'],
+    queryKey: ['/appointments/'],
     queryFn: async () => {
       try {
-        return await apiRequest('/api/appointments/appointments/', {
+        return await apiRequest('/appointments/', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
           }
@@ -210,9 +210,12 @@ export default function AdminDashboard() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    const statusLower = status?.toLowerCase();
+    switch (statusLower) {
       case 'completed': return 'bg-green-100 text-green-800';
+      case 'approved': return 'bg-blue-100 text-blue-800';
       case 'scheduled': return 'bg-blue-100 text-blue-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       case 'in_progress': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -676,10 +679,10 @@ export default function AdminDashboard() {
                         }}
                       >
                         <option value="all">All Status</option>
-                        <option value="scheduled">Scheduled</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="in_progress">In Progress</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
                       </select>
                       <Button variant="outline" size="sm">
                         <Calendar className="h-4 w-4 mr-2" />
