@@ -183,6 +183,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -275,10 +276,13 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
         login(data.token, data.user);
         setShowAuthOverlay(false);
         setLoginError(null);
+        // Just show success toast and close modal - no redirect
         toast({
           title: "Login Successful",
-          description: "Welcome to MedCare AI!",
+          description: `Welcome back, ${data.user?.first_name || 'User'}!`,
         });
+        // Reset auth tab to login for next time
+        setAuthTab('login');
       }
     },
     onError: (error: any) => {
@@ -1326,7 +1330,11 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-gray-600" />
-          <span className="text-gray-700 text-sm">AI Assistant</span>
+          <span className="text-gray-700 text-sm">
+            {isAuthenticated && user?.first_name 
+              ? `Welcome, ${user.first_name}!` 
+              : 'AI Assistant'}
+          </span>
         </div>
         
         {/* User Camera View in center - Hide when Face Analysis, Hair Analysis, or Lips Analysis is open */}
@@ -3762,28 +3770,72 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
 
       </div>
 
-      {/* Patient Login Overlay */}
+      {/* Patient Auth Overlay with Tabs */}
       {showAuthOverlay && (
         <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-2">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-xs mx-2 relative max-h-[90%] overflow-y-auto">
             <button
-              onClick={() => setShowAuthOverlay(false)}
+              onClick={() => {
+                setShowAuthOverlay(false);
+                setAuthTab('login');
+                loginForm.reset();
+                setLoginError(null);
+              }}
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-10"
             >
               <X className="h-5 w-5" />
             </button>
             
             <div className="p-5">
-              <div className="text-center mb-5">
+              <div className="text-center mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
                   <User className="h-6 w-6 text-white" />
                 </div>
-                <h2 className="text-lg font-bold text-gray-800 mb-1">Patient Login</h2>
-                <p className="text-sm text-gray-600">Access your health records</p>
+                <h2 className="text-lg font-bold text-gray-800 mb-1">
+                  {authTab === 'login' ? 'Patient Login' : 'Create Account'}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {authTab === 'login' ? 'Access your health records' : 'Register for MedCare AI'}
+                </p>
               </div>
 
-              {/* Login Form */}
-              <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4">
+              {/* Tab Buttons */}
+              <div className="flex mb-4 bg-gray-100 rounded-lg p-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthTab('login');
+                    loginForm.reset();
+                    setLoginError(null);
+                  }}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                    authTab === 'login'
+                      ? 'bg-white text-purple-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthTab('signup');
+                    loginForm.reset();
+                    setLoginError(null);
+                  }}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                    authTab === 'signup'
+                      ? 'bg-white text-purple-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Sign Up
+                </button>
+              </div>
+
+              {/* Login/Signup Form */}
+              {authTab === 'login' ? (
+                <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4">
                 {/* Email Field */}
                 <div className="space-y-1">
                   <Label htmlFor="email" className="text-xs font-medium text-gray-700">
@@ -3863,25 +3915,6 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                   </div>
                 </div>
 
-                {/* Signup Link */}
-                <div className="text-center pt-3 border-t mt-3">
-                  <p className="text-xs text-gray-600">
-                    Don't have an account?{' '}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        toast({
-                          title: "Sign Up",
-                          description: "Please contact your healthcare provider to register for an account.",
-                        });
-                      }}
-                      className="text-purple-600 hover:text-purple-700 font-medium underline"
-                    >
-                      Sign Up
-                    </button>
-                  </p>
-                </div>
-
                 {/* Google SSO */}
                 <Button
                   type="button"
@@ -3893,6 +3926,193 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                   <span className="text-gray-700 font-medium">Continue with Google</span>
                 </Button>
               </form>
+              ) : (
+                /* Signup Form */
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  // For now, show informational message
+                  toast({
+                    title: "Registration",
+                    description: "Please contact your healthcare provider or clinic administrator to register for an account. They will provide you with login credentials.",
+                    variant: "default"
+                  });
+                }} className="space-y-4">
+                  {/* Name Field */}
+                  <div className="space-y-1">
+                    <Label htmlFor="signup-name" className="text-xs font-medium text-gray-700">
+                      Full Name
+                    </Label>
+                    <div className="relative">
+                      <User className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        placeholder="Enter your full name"
+                        className="pl-8 h-9 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email Field */}
+                  <div className="space-y-1">
+                    <Label htmlFor="signup-email" className="text-xs font-medium text-gray-700">
+                      Email Address
+                    </Label>
+                    <div className="relative">
+                      <Mail className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        className="pl-8 h-9 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password Field */}
+                  <div className="space-y-1">
+                    <Label htmlFor="signup-password" className="text-xs font-medium text-gray-700">
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+                      <Input
+                        id="signup-password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Create a password"
+                        className="pl-8 pr-8 h-9 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Info Message */}
+                  <div className="p-2 bg-blue-50 border border-blue-200 rounded">
+                    <p className="text-xs text-blue-600">
+                      Note: Patient registration requires approval from your healthcare provider.
+                    </p>
+                  </div>
+
+                  {/* Signup Button */}
+                  <Button
+                    type="submit"
+                    className="w-full h-9 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-sm font-medium"
+                  >
+                    Request Account
+                  </Button>
+
+                  {/* Divider */}
+                  <div className="relative my-3">
+                    <div className="absolute inset-0 flex items-center">
+                      <Separator />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-gray-500">
+                        Or continue with
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Google SSO */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-9 border-gray-300 hover:bg-gray-50 text-sm"
+                    onClick={() => window.location.href = '/api/auth/google'}
+                  >
+                    <FaGoogle className="h-4 w-4 text-red-500 mr-2" />
+                    <span className="text-gray-700 font-medium">Continue with Google</span>
+                  </Button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Page View */}
+      {showProfilePage && (
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
+          {/* Back Button */}
+          <button
+            onClick={() => {
+              setShowProfilePage(false);
+              setShowChatInterface(true);
+              setSelectedMenuItem("");
+            }}
+            className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="font-medium text-sm">Back</span>
+          </button>
+          
+          {/* Profile Content */}
+          <div className="h-full flex flex-col items-center justify-center p-6">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+              {/* Profile Header */}
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <User className="h-10 w-10 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">Your Profile</h2>
+                <p className="text-sm text-gray-600 mt-1">Patient Account</p>
+              </div>
+              
+              {/* User Information */}
+              <div className="space-y-4">
+                <div className="border-b pb-3">
+                  <p className="text-xs text-gray-500 mb-1">Name</p>
+                  <p className="text-sm font-medium text-gray-800">
+                    {user?.first_name} {user?.last_name || ''}
+                  </p>
+                </div>
+                
+                <div className="border-b pb-3">
+                  <p className="text-xs text-gray-500 mb-1">Email</p>
+                  <p className="text-sm font-medium text-gray-800">
+                    {user?.email || 'Not provided'}
+                  </p>
+                </div>
+                
+                <div className="border-b pb-3">
+                  <p className="text-xs text-gray-500 mb-1">Role</p>
+                  <p className="text-sm font-medium text-gray-800 capitalize">
+                    {user?.role || 'Patient'}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Account Status</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <p className="text-sm font-medium text-gray-800">Active</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Logout Button */}
+              <Button
+                onClick={() => {
+                  logout();
+                  setShowProfilePage(false);
+                  setShowChatInterface(true);
+                  setSelectedMenuItem("");
+                  toast({
+                    title: "Logged Out",
+                    description: "You have been successfully logged out.",
+                  });
+                }}
+                className="w-full mt-6 bg-red-600 hover:bg-red-700 text-white"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>
