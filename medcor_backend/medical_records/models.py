@@ -7,7 +7,8 @@ def medical_record_upload_path(instance, filename):
     """Generate upload path for medical record files"""
     # Format: medical_records/patient_<id>/<year>/<month>/<filename>
     date = timezone.now()
-    return f'medical_records/patient_{instance.patient.id}/{date.year}/{date.month:02d}/{filename}'
+    # The instance here is a MedicalRecordFile, so we need to access patient through medical_record
+    return f'medical_records/patient_{instance.medical_record.patient.id}/{date.year}/{date.month:02d}/{filename}'
 
 class MedicalRecord(models.Model):
     """
