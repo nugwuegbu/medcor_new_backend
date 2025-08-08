@@ -91,6 +91,7 @@ TENANT_APPS = [
     'appointment',
     'medical_api',  # Add medical API for tenant documentation
     'user_auth',    # Add user auth for tenant documentation
+    'medical_records',  # Medical records management
     # 'simple_treatment',  # Temporarily disabled - dependency issues
     # 'simple_appointment',  # Temporarily disabled - dependency issues
 ]

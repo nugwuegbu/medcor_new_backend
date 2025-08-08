@@ -21,6 +21,7 @@ import Signup from "@/pages/signup";
 import Payment from "@/pages/payment";
 import NotFound from "@/pages/not-found";
 import TenantOverview from "@/pages/tenant-overview";
+import MedicalRecords from "@/pages/medical-records";
 import { AuthModal } from "@/components/auth-modal";
 import { ProtectedRoute } from "@/components/protected-route";
 import { useSubdomain } from "@/hooks/useSubdomain";
@@ -90,6 +91,11 @@ function Router() {
         {/* 2. Admin Dashboard - Hospital/Clinic Management */}
         <Route path="/admin/dashboard">
           <AdminDashboard />
+        </Route>
+        
+        {/* Medical Records Management */}
+        <Route path="/admin/medical-records">
+          <MedicalRecords />
         </Route>
         
         {/* 3. Doctor Dashboard - Hospital Tenant */}

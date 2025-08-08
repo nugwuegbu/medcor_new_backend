@@ -58,6 +58,7 @@ urlpatterns = [
     # Tenant-specific API Endpoints
     path('api/appointments/', include('appointment.urls')),
     path('api/treatments/', include('treatment.urls')),
+    path('api/', include('medical_records.urls')),  # Medical records management
     # path('api/medical/', include('medical_api.urls')),  # Temporarily disabled due to import errors
     
     # Subscription Plan Management endpoints
