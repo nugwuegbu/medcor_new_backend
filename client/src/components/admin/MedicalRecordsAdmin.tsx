@@ -128,19 +128,38 @@ const MedicalRecordsAdmin = () => {
   // Fetch medical records with proper auth
   const { data: recordsResponse, isLoading, error } = useQuery({
     queryKey: ['/api/medical-records/'],
+    queryFn: async () => {
+      // Use apiRequest with method to ensure proper Django backend URL and auth
+      return apiRequest('GET', '/api/medical-records/');
+    },
     retry: 2,
   });
 
-  // Ensure records is always an array
-  const records = Array.isArray(recordsResponse) ? recordsResponse : [];
+  // Debug log to see response structure
+  console.log('Medical Records Response:', recordsResponse);
+  console.log('Response type:', typeof recordsResponse);
+  console.log('Is Array?', Array.isArray(recordsResponse));
+  console.log('Has results?', recordsResponse?.results);
+  
+  // Ensure records is always an array - handle both direct array and paginated response
+  const records = Array.isArray(recordsResponse) 
+    ? recordsResponse 
+    : (recordsResponse?.results || recordsResponse || []);
 
   // Fetch patients for dropdown
   const { data: patientsResponse } = useQuery({
     queryKey: ['/api/auth/admin/patients/'],
+    queryFn: async () => {
+      // Use apiRequest with method to ensure proper Django backend URL and auth
+      return apiRequest('GET', '/api/auth/admin/patients/');
+    },
     retry: 2,
   });
 
-  const patients = Array.isArray(patientsResponse) ? patientsResponse : [];
+  // Ensure patients is always an array - handle both direct array and paginated response
+  const patients = Array.isArray(patientsResponse) 
+    ? patientsResponse 
+    : (patientsResponse?.results || patientsResponse || []);
 
   const form = useForm<RecordFormData>({
     resolver: zodResolver(recordSchema),
@@ -154,10 +173,7 @@ const MedicalRecordsAdmin = () => {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: RecordFormData) => {
-      return apiRequest('/api/medical-records/', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
+      return apiRequest('POST', '/api/medical-records/', data);
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record created successfully' });
@@ -177,10 +193,7 @@ const MedicalRecordsAdmin = () => {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<RecordFormData> }) => {
-      return apiRequest(`/api/medical-records/${id}/`, {
-        method: 'PATCH',
-        body: JSON.stringify(data)
-      });
+      return apiRequest('PATCH', `/api/medical-records/${id}/`, data);
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record updated successfully' });
@@ -201,9 +214,7 @@ const MedicalRecordsAdmin = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/medical-records/${id}/`, {
-        method: 'DELETE'
-      });
+      return apiRequest('DELETE', `/api/medical-records/${id}/`);
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record deleted successfully' });
@@ -232,6 +243,9 @@ const MedicalRecordsAdmin = () => {
       record.diagnosis?.toLowerCase().includes(searchLower)
     );
   });
+  
+  console.log('Records array:', records);
+  console.log('Filtered records:', filteredRecords);
 
   const handleEdit = (record: MedicalRecord) => {
     setSelectedRecord(record);
@@ -277,8 +291,9 @@ const MedicalRecordsAdmin = () => {
 
   const downloadFile = async (recordId: number, fileId: number, fileName: string) => {
     try {
+      // Use the apiRequest helper to get the proper Django URL and auth
       const token = localStorage.getItem('adminToken');
-      const djangoUrl = 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
+      const djangoUrl = import.meta.env.VITE_DJANGO_URL || 'http://localhost:8000';
       const response = await fetch(`${djangoUrl}/api/medical-records/${recordId}/files/${fileId}/download/`, {
         headers: {
           'Authorization': `Bearer ${token}`
