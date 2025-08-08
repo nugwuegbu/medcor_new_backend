@@ -1499,6 +1499,7 @@ export default function AdminDashboard() {
                                       size="icon" 
                                       className="h-8 w-8"
                                       onClick={() => {
+                                        console.log('Selected appointment data:', apt);
                                         setSelectedAppointment(apt);
                                         setShowEditAppointmentModal(true);
                                       }}
@@ -2786,8 +2787,8 @@ export default function AdminDashboard() {
               initialData={{
                 ...selectedAppointment,
                 // Map the API fields to form fields
-                patient_id: selectedAppointment.patient_id || selectedAppointment.patient,
-                doctor_id: selectedAppointment.doctor_id || selectedAppointment.doctor,
+                patient_id: selectedAppointment.patient || selectedAppointment.patient_id,
+                doctor_id: selectedAppointment.doctor || selectedAppointment.doctor_id,
                 appointment_date: selectedAppointment.appointment_slot_date || selectedAppointment.appointment_date,
                 appointment_time: selectedAppointment.appointment_slot_start_time || selectedAppointment.appointment_time,
                 appointment_type: selectedAppointment.appointment_type || 'consultation',
