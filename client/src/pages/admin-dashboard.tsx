@@ -367,7 +367,7 @@ export default function AdminDashboard() {
         }
         
         activities.push({
-          type,
+          type: type as string,
           message,
           description: `${doctorName} with ${patientName}`,
           time: getRelativeTime(timestamp),
@@ -387,7 +387,7 @@ export default function AdminDashboard() {
         const timestamp = patient.created_at || new Date().toISOString();
         
         activities.push({
-          type: 'green',
+          type: 'green' as string,
           message: 'New patient registered',
           description: name,
           time: getRelativeTime(timestamp),
@@ -408,7 +408,7 @@ export default function AdminDashboard() {
         const timestamp = doctor.created_at || new Date().toISOString();
         
         activities.push({
-          type: 'purple',
+          type: 'purple' as string,
           message: 'New doctor onboarded',
           description: `${name} - ${specialization}`,
           time: getRelativeTime(timestamp),
@@ -931,19 +931,30 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent className="pt-6">
                     <div className="grid grid-cols-2 gap-4">
-                      <Button className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white">
+                      <Button 
+                        onClick={() => setShowAddPatientModal(true)}
+                        className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white">
                         <Users className="h-6 w-6 mb-2" />
                         <span className="text-sm">Add Patient</span>
                       </Button>
-                      <Button className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
+                      <Button 
+                        onClick={() => setShowAddDoctorModal(true)}
+                        className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
                         <Stethoscope className="h-6 w-6 mb-2" />
                         <span className="text-sm">Add Doctor</span>
                       </Button>
-                      <Button className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white">
+                      <Button 
+                        onClick={() => setShowAddAppointmentModal(true)}
+                        className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white">
                         <Calendar className="h-6 w-6 mb-2" />
                         <span className="text-sm">Schedule</span>
                       </Button>
-                      <Button className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
+                      <Button 
+                        onClick={() => {
+                          // Navigate to analytics view which shows reports
+                          setSelectedView('analytics');
+                        }}
+                        className="flex flex-col items-center justify-center h-24 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
                         <FileText className="h-6 w-6 mb-2" />
                         <span className="text-sm">Reports</span>
                       </Button>
@@ -976,13 +987,14 @@ export default function AdminDashboard() {
                     ) : activityFeed.length > 0 ? (
                       <div className="space-y-4">
                         {activityFeed.map((activity, index) => {
-                          const colorClass = {
+                          const colorMap: Record<string, string> = {
                             green: 'bg-green-500',
                             blue: 'bg-blue-500',
                             yellow: 'bg-yellow-500',
                             purple: 'bg-purple-500',
                             red: 'bg-red-500'
-                          }[activity.type] || 'bg-gray-500';
+                          };
+                          const colorClass = colorMap[activity.type] || 'bg-gray-500';
                           
                           return (
                             <div key={index} className="flex items-start gap-3">
