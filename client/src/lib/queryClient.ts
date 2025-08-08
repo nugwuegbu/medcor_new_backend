@@ -13,7 +13,7 @@ export async function apiRequest(
   url: string, 
   options: RequestInit = {}
 ): Promise<any> {
-  const { method = "GET", headers: customHeaders = {}, ...restOptions } = options;
+  const { method = "GET", headers: customHeaders = {}, body, ...restOptions } = options;
   
   // Construct full URL if it's a relative path
   const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url}`;
@@ -22,18 +22,27 @@ export async function apiRequest(
   const adminToken = localStorage.getItem('adminToken') || localStorage.getItem('medcor_admin_token');
   const authToken = localStorage.getItem('medcor_token');
   
+  // Check if body is FormData - if so, don't set Content-Type (let browser set it)
+  const isFormData = body instanceof FormData;
+  
   const finalHeaders: HeadersInit = {
-    "Content-Type": "application/json",
+    // Only set Content-Type for non-FormData requests
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(customHeaders as Record<string, string>),
   };
+  
+  // Remove Content-Type if it was added by customHeaders for FormData
+  if (isFormData && finalHeaders['Content-Type']) {
+    delete finalHeaders['Content-Type'];
+  }
   
   // Add appropriate token (but not for login/logout endpoints)
   const isLoginEndpoint = url.includes('/auth/login') || url.includes('/auth/signup') || url.includes('/auth/admin/login');
   const isLogoutEndpoint = url.includes('/auth/logout');
   
   if (!isLoginEndpoint && !isLogoutEndpoint) {
-    // Use admin token for admin routes or auth/users endpoint
-    if (adminToken && (url.includes('/admin/') || url.includes('/auth/users/') || url.includes('/appointments/'))) {
+    // Use admin token for admin routes, medical records, or auth/users endpoint
+    if (adminToken && (url.includes('/admin/') || url.includes('/auth/users/') || url.includes('/appointments/') || url.includes('/medical-records/'))) {
       (finalHeaders as Record<string, string>)['Authorization'] = `Bearer ${adminToken}`;
     } else if (authToken) {
       // Add auth token for all other authenticated routes
@@ -44,6 +53,7 @@ export async function apiRequest(
   const res = await fetch(fullUrl, {
     method,
     headers: finalHeaders,
+    body,
     credentials: "include",
     ...restOptions,
   });
