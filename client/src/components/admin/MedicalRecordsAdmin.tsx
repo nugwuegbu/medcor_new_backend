@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -127,19 +128,6 @@ const MedicalRecordsAdmin = () => {
   // Fetch medical records with proper auth
   const { data: recordsResponse, isLoading, error } = useQuery({
     queryKey: ['/api/medical-records/'],
-    queryFn: async () => {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/medical-records/', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch records');
-      }
-      return response.json();
-    },
     retry: 2,
   });
 
@@ -149,19 +137,6 @@ const MedicalRecordsAdmin = () => {
   // Fetch patients for dropdown
   const { data: patientsResponse } = useQuery({
     queryKey: ['/api/auth/admin/patients/'],
-    queryFn: async () => {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/auth/admin/patients/', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch patients');
-      }
-      return response.json();
-    },
     retry: 2,
   });
 
@@ -179,20 +154,10 @@ const MedicalRecordsAdmin = () => {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: RecordFormData) => {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/medical-records/', {
+      return apiRequest('/api/medical-records/', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(data)
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create record');
-      }
-      return response.json();
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record created successfully' });
@@ -212,20 +177,10 @@ const MedicalRecordsAdmin = () => {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<RecordFormData> }) => {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/medical-records/${id}/`, {
+      return apiRequest(`/api/medical-records/${id}/`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(data)
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update record');
-      }
-      return response.json();
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record updated successfully' });
@@ -246,19 +201,9 @@ const MedicalRecordsAdmin = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/medical-records/${id}/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+      return apiRequest(`/api/medical-records/${id}/`, {
+        method: 'DELETE'
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete record');
-      }
-      return response.ok;
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record deleted successfully' });
@@ -333,7 +278,8 @@ const MedicalRecordsAdmin = () => {
   const downloadFile = async (recordId: number, fileId: number, fileName: string) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/medical-records/${recordId}/files/${fileId}/download/`, {
+      const djangoUrl = 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
+      const response = await fetch(`${djangoUrl}/api/medical-records/${recordId}/files/${fileId}/download/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
