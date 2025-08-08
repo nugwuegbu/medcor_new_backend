@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown, Mail, Lock, Eye, EyeOff, LogIn, LogOut } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -31,6 +31,7 @@ import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-
 import doctorEmilyPhoto from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751701299986.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
 import { videoStreamRef, ensureCameraReady } from "../utils/camera-manager";
+import { useAuth } from "@/hooks/useAuth";
 
 // Perfect Corp YCE SDK types
 declare global {
@@ -119,6 +120,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
 
   // Initialize toast hook
   const { toast } = useToast();
+  
+  // Authentication hook
+  const { user, isAuthenticated, login, logout } = useAuth();
 
   // State definitions
   const [messages, setMessages] = useState<Message[]>([]);
@@ -162,6 +166,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [hoveredDoctorId, setHoveredDoctorId] = useState<number | null>(null);
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
+  const [showProfilePage, setShowProfilePage] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [avatarPosition, setAvatarPosition] = useState({ x: null as number | null, y: null as number | null });
@@ -267,6 +272,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
     onSuccess: (data) => {
       if (data.success) {
         localStorage.setItem("medcor_token", data.token);
+        login(data.token, data.user);
         setShowAuthOverlay(false);
         setLoginError(null);
         toast({
@@ -1514,42 +1520,57 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       setIsMinimized(true);
                     } },
                     { icon: FileText, label: "Records", angle: 80, action: () => { 
+                      if (!isAuthenticated) {
+                        setShowAuthOverlay(true);
+                        toast({
+                          title: "Authentication Required",
+                          description: "Please login to access Medical Records",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
                       setShowRecordsList(true); 
                       setSelectedMenuItem("records"); 
                       setShowChatInterface(false);
                       setIsMinimized(true);
                     } },
                     { icon: Phone, label: "Call", angle: 120, action: () => setSelectedMenuItem("call") },
-                    { icon: UserCheck, label: "Admin", angle: 160, action: () => { 
-                      console.log("🔥 ADMIN BUTTON CLICKED - Starting admin process");
-                      console.log("🔥 Before state change - showAdminPage:", false);
-                      
-                      // Complete state reset for admin page
-                      setShowAdminPage(true);
-                      setSelectedMenuItem("admin");
-                      setShowChatInterface(false);
-                      setIsMinimized(false);
-                      
-                      // Reset ALL other conflicting states
-                      setShowDoctorList(false);
-                      setShowRecordsList(false);
-                      setShowBookingCalendar(false);
-                      setShowFacePage(false);
-                      setShowHairPage(false);
-                      setShowSkinPage(false);
-                      setShowLipsPage(false);
-                      setShowVoiceTipsPage(false);
-                      setShowBookingForm(false);
-                      
-                      console.log("🔥 After state change - showAdminPage should be true");
-                      
-                      // Debug timeout to check state
-                      setTimeout(() => {
-                        console.log("🔥 1 second later - checking if admin page is visible");
-                      }, 1000);
+                    { icon: isAuthenticated ? User : LogIn, label: isAuthenticated ? "Profile" : "Login", angle: 160, action: () => { 
+                      if (isAuthenticated) {
+                        // Show profile page for authenticated users
+                        setShowProfilePage(true);
+                        setSelectedMenuItem("profile");
+                        setShowChatInterface(false);
+                        setIsMinimized(false);
+                        
+                        // Reset ALL other conflicting states
+                        setShowDoctorList(false);
+                        setShowRecordsList(false);
+                        setShowBookingCalendar(false);
+                        setShowFacePage(false);
+                        setShowHairPage(false);
+                        setShowSkinPage(false);
+                        setShowLipsPage(false);
+                        setShowVoiceTipsPage(false);
+                        setShowBookingForm(false);
+                        setShowAdminPage(false);
+                      } else {
+                        // Show auth overlay for login
+                        setShowAuthOverlay(true);
+                      }
                     } },
                     { icon: Smile, label: "Face", angle: 200, action: () => { 
                       console.log('🔴 Face button clicked - Setting states synchronously');
+                      
+                      if (!isAuthenticated) {
+                        setShowAuthOverlay(true);
+                        toast({
+                          title: "Authentication Required",
+                          description: "Please login to access Face Analysis",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
                       
                       // Set Face page state first
                       setShowFacePage(true); 
@@ -1574,6 +1595,16 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     } },
                     { icon: Scissors, label: "Hair", angle: 240, action: async () => { 
                       console.log("🎬 Hair Analysis button clicked (minimized menu)");
+                      
+                      if (!isAuthenticated) {
+                        setShowAuthOverlay(true);
+                        toast({
+                          title: "Authentication Required",
+                          description: "Please login to access Hair Analysis",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
                       
                       try {
                         // Ensure camera is ready first
@@ -1618,6 +1649,16 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     } },
                     { icon: LipsIcon, label: "Lips", angle: 280, action: async () => { 
                       console.log("💋 Lips Analysis button clicked (minimized menu)");
+                      
+                      if (!isAuthenticated) {
+                        setShowAuthOverlay(true);
+                        toast({
+                          title: "Authentication Required",
+                          description: "Please login to access Lips Analysis",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
                       
                       try {
                         // First ensure camera is ready before showing UI
@@ -1666,6 +1707,16 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     } },
                     { icon: Heart, label: "Skin", angle: 320, action: async () => { 
                       console.log("🌟 Skin Analysis button clicked - DIRECT TEST");
+                      
+                      if (!isAuthenticated) {
+                        setShowAuthOverlay(true);
+                        toast({
+                          title: "Authentication Required",
+                          description: "Please login to access Skin Analysis",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
                       
                       try {
                         console.log("🌟 Setting skin analysis states...");
@@ -2308,6 +2359,103 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                   </div>
                 )}
                 
+        {/* Profile Page View - Chat Widget Container */}
+        {showProfilePage && user && (
+          <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-blue-900/95 via-purple-900/95 to-blue-900/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 bg-white/10 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-white" />
+                <span className="text-white text-sm font-medium">My Profile</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-purple-200 font-bold text-lg">medcor</span>
+                <Button
+                  onClick={() => {
+                    setShowProfilePage(false);
+                    setShowChatInterface(true);
+                    setSelectedMenuItem(null);
+                  }}
+                  size="sm"
+                  variant="ghost"
+                  className="text-white hover:bg-white/20 p-1 h-6 w-6"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Profile Content */}
+            <div className="flex-1 overflow-y-auto mt-16 p-6">
+              <div className="space-y-6">
+                {/* Profile Avatar */}
+                <div className="flex justify-center mb-6">
+                  <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                    {user.first_name?.[0]?.toUpperCase() || user.username?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                </div>
+                
+                {/* User Info */}
+                <div className="space-y-4">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <label className="text-purple-200 text-xs font-medium">Full Name</label>
+                    <p className="text-white mt-1">
+                      {user.first_name && user.last_name 
+                        ? `${user.first_name} ${user.last_name}`
+                        : user.username || 'N/A'}
+                    </p>
+                  </div>
+                  
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <label className="text-purple-200 text-xs font-medium">Email</label>
+                    <p className="text-white mt-1">{user.email || 'N/A'}</p>
+                  </div>
+                  
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <label className="text-purple-200 text-xs font-medium">Username</label>
+                    <p className="text-white mt-1">{user.username || 'N/A'}</p>
+                  </div>
+                  
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <label className="text-purple-200 text-xs font-medium">Role</label>
+                    <p className="text-white mt-1 capitalize">{user.role || 'Patient'}</p>
+                  </div>
+                  
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <label className="text-purple-200 text-xs font-medium">Account Status</label>
+                    <p className="text-white mt-1">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
+                        user.is_active ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
+                      }`}>
+                        {user.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Logout Button */}
+                <Button
+                  onClick={() => {
+                    logout();
+                    setShowProfilePage(false);
+                    setShowChatInterface(true);
+                    setSelectedMenuItem(null);
+                    toast({
+                      title: "Logged Out",
+                      description: "You have been successfully logged out",
+                    });
+                  }}
+                  className="w-full bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Admin Page View - Chat Widget Container */}
         {showAdminPage && (
           <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
