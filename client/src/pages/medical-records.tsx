@@ -660,7 +660,7 @@ export default function MedicalRecords() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="0">None</SelectItem>
                           {doctors.map((doctor: Doctor) => (
                             <SelectItem key={doctor.id} value={doctor.id.toString()}>
                               Dr. {doctor.first_name} {doctor.last_name}
@@ -793,7 +793,7 @@ export default function MedicalRecords() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="0">None</SelectItem>
                           {doctors.map((doctor: Doctor) => (
                             <SelectItem key={doctor.id} value={doctor.id.toString()}>
                               Dr. {doctor.first_name} {doctor.last_name}
