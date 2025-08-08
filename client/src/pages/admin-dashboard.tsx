@@ -2744,7 +2744,7 @@ export default function AdminDashboard() {
                   appointment_slot_start_time: startTime,
                   appointment_slot_end_time: endTime,
                   medical_record: data.reason || data.notes || '', // Using medical_record field
-                  appointment_status: data.status || 'Pending',
+                  appointment_status: 'Pending', // Always set to Pending for new appointments
                 };
                 
                 await apiRequest('/appointments/', {
@@ -2803,7 +2803,7 @@ export default function AdminDashboard() {
                     appointment_slot_start_time: startTime,
                     appointment_slot_end_time: endTime,
                     medical_record: data.reason || data.notes || '', // Text field for notes/reason
-                    appointment_status: data.status || 'Pending',
+                    appointment_status: data.status || selectedAppointment.appointment_status || selectedAppointment.status || 'Pending', // Use selected status when editing
                   };
                   
                   await apiRequest(`/appointments/${selectedAppointment.id}/`, {
@@ -3317,7 +3317,7 @@ function AppointmentForm({
       appointment_time: initialData?.appointment_time || '',
       appointment_type: initialData?.appointment_type || 'consultation',
       reason: initialData?.reason || '',
-      status: initialData?.status || 'Pending',
+      status: initialData?.status || initialData?.appointment_status || 'Pending',
       notes: initialData?.notes || '',
     },
   });
@@ -3450,6 +3450,32 @@ function AppointmentForm({
             </FormItem>
           )}
         />
+        {/* Show status field only when editing */}
+        {initialData && (
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Approved">Approved</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
