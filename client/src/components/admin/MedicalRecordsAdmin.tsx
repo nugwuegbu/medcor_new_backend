@@ -137,12 +137,6 @@ const MedicalRecordsAdmin = () => {
     retry: 2,
   });
 
-  // Debug log to see response structure
-  console.log('Medical Records Response:', recordsResponse);
-  console.log('Response type:', typeof recordsResponse);
-  console.log('Is Array?', Array.isArray(recordsResponse));
-  console.log('Has results?', recordsResponse?.results);
-  
   // Ensure records is always an array - handle both direct array and paginated response
   const records = Array.isArray(recordsResponse) 
     ? recordsResponse 
@@ -255,9 +249,6 @@ const MedicalRecordsAdmin = () => {
       record.diagnosis?.toLowerCase().includes(searchLower)
     );
   });
-  
-  console.log('Records array:', records);
-  console.log('Filtered records:', filteredRecords);
 
   const handleEdit = (record: MedicalRecord) => {
     setSelectedRecord(record);
@@ -474,24 +465,6 @@ const MedicalRecordsAdmin = () => {
                                 <TooltipContent>Edit Record</TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
-                            
-                            {record.files?.map((file) => (
-                              <TooltipProvider key={file.id}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="h-8 w-8"
-                                      onClick={() => downloadFile(record.id, file.id, file.file_name)}
-                                    >
-                                      <Download className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Download {file.file_name}</TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            ))}
                             
                             <TooltipProvider>
                               <Tooltip>
