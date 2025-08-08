@@ -225,11 +225,31 @@ const MedicalRecordsAdmin = () => {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<RecordFormData> }) => {
-      // Only update diagnosis, not date
-      return apiRequest(`/api/medical-records/${id}/`, {
-        method: 'PATCH',
-        body: JSON.stringify({ diagnosis: data.diagnosis })
+      const formData = new FormData();
+      formData.append('diagnosis', data.diagnosis || '');
+      
+      // Append any new uploaded files
+      uploadedFiles.forEach(file => {
+        formData.append('uploaded_files', file);
       });
+      
+      const token = localStorage.getItem('adminToken');
+      const djangoUrl = import.meta.env.VITE_DJANGO_URL || 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
+      
+      const response = await fetch(`${djangoUrl}/api/medical-records/${id}/`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update medical record');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record updated successfully' });
@@ -237,6 +257,7 @@ const MedicalRecordsAdmin = () => {
       setShowEditModal(false);
       setSelectedRecord(null);
       form.reset();
+      setUploadedFiles([]);
     },
     onError: (error: Error) => {
       toast({ 
@@ -250,9 +271,22 @@ const MedicalRecordsAdmin = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/medical-records/${id}/`, {
-        method: 'DELETE'
+      const token = localStorage.getItem('adminToken');
+      const djangoUrl = import.meta.env.VITE_DJANGO_URL || 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
+      
+      const response = await fetch(`${djangoUrl}/api/medical-records/${id}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+      
+      if (!response.ok && response.status !== 204) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete medical record');
+      }
+      
+      return response.ok;
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record deleted successfully' });
@@ -288,6 +322,7 @@ const MedicalRecordsAdmin = () => {
       patient: record.patient,
       diagnosis: record.diagnosis
     });
+    setUploadedFiles([]);
     setShowEditModal(true);
   };
 
@@ -679,6 +714,34 @@ const MedicalRecordsAdmin = () => {
             <form onSubmit={form.handleSubmit(handleUpdateSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
+                name="patient"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Patient</FormLabel>
+                    <Select 
+                      disabled
+                      value={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger disabled>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {patients.map((patient: Patient) => (
+                          <SelectItem key={patient.id} value={patient.id.toString()}>
+                            {patient.first_name} {patient.last_name} ({patient.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
                 name="diagnosis"
                 render={({ field }) => (
                   <FormItem>
@@ -695,6 +758,66 @@ const MedicalRecordsAdmin = () => {
                 )}
               />
               
+              {/* File Upload Section */}
+              <div className="space-y-2">
+                <Label>Add Medical Files (Optional)</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Additional Files
+                  </Button>
+                  
+                  {uploadedFiles.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm font-medium">New Files to Upload:</p>
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex items-center gap-2">
+                            <File className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm">{file.name}</span>
+                            <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(2)} KB)</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {selectedRecord?.files && selectedRecord.files.length > 0 && (
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="text-sm font-medium mb-2">Existing Files:</p>
+                      {selectedRecord.files.map((file: any) => (
+                        <div key={file.id} className="flex items-center gap-2 p-2 bg-blue-50 rounded mb-1">
+                          <File className="h-4 w-4 text-blue-500" />
+                          <span className="text-sm">{file.file_name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <DialogFooter>
                 <Button 
                   type="button" 
@@ -703,6 +826,7 @@ const MedicalRecordsAdmin = () => {
                     setShowEditModal(false);
                     setSelectedRecord(null);
                     form.reset();
+                    setUploadedFiles([]);
                   }}
                 >
                   Cancel
