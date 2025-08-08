@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import MedicalRecordsView from '@/components/MedicalRecordsView';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -1979,94 +1980,7 @@ export default function AdminDashboard() {
 
           {/* Medical Records View */}
           {selectedView === 'medical-records' && (
-            <div className="space-y-6">
-              <Card className="shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 rounded-t-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-xl font-bold">Medical Records Management</CardTitle>
-                      <CardDescription>Access and manage patient medical histories</CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Search className="h-4 w-4 mr-2" />
-                        Search Records
-                      </Button>
-                      <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Add Record
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="font-semibold">Record ID</TableHead>
-                        <TableHead className="font-semibold">Patient</TableHead>
-                        <TableHead className="font-semibold">Date</TableHead>
-                        <TableHead className="font-semibold">Type</TableHead>
-                        <TableHead className="font-semibold">Doctor</TableHead>
-                        <TableHead className="font-semibold">Diagnosis</TableHead>
-                        <TableHead className="font-semibold">Status</TableHead>
-                        <TableHead className="font-semibold">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {[
-                        { type: 'Consultation', diagnosis: 'Routine Checkup', status: 'Completed' },
-                        { type: 'Lab Results', diagnosis: 'Blood Test - Normal', status: 'Reviewed' },
-                        { type: 'Prescription', diagnosis: 'Antibiotics Prescribed', status: 'Active' },
-                        { type: 'X-Ray', diagnosis: 'Chest X-Ray Clear', status: 'Completed' },
-                        { type: 'Follow-up', diagnosis: 'Post-Surgery Review', status: 'Scheduled' },
-                      ].map((record, i) => (
-                        <TableRow key={i} className="hover:bg-gray-50 transition-colors">
-                          <TableCell className="font-mono text-sm">#MR00{i + 1}</TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-sm">
-                                P{i + 1}
-                              </div>
-                              <span>Patient {i + 1}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm">{formatDate(new Date(Date.now() - i * 172800000).toISOString())}</TableCell>
-                          <TableCell>
-                            <Badge className="bg-blue-100 text-blue-800">{record.type}</Badge>
-                          </TableCell>
-                          <TableCell className="text-sm">Dr. Smith</TableCell>
-                          <TableCell className="text-sm">{record.diagnosis}</TableCell>
-                          <TableCell>
-                            <Badge className={
-                              record.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                              record.status === 'Active' ? 'bg-yellow-100 text-yellow-800' :
-                              record.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-                              'bg-gray-100 text-gray-800'
-                            }>
-                              {record.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" title="View Record">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Download">
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit">
-                                <Edit3 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
+            <MedicalRecordsView />
           )}
 
           {/* Analytics View */}

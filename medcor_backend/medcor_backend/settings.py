@@ -71,6 +71,7 @@ SHARED_APPS = [
     'drf_spectacular',  # OpenAPI 3 schema generation
     'core',  # Move core to shared to avoid User model conflicts
     'subscription_plan',  # Subscription and payment management
+    'medical_records',  # Medical records management - moved to shared
 ]
 
 TENANT_APPS = [
@@ -91,7 +92,7 @@ TENANT_APPS = [
     'appointment',
     'medical_api',  # Add medical API for tenant documentation
     'user_auth',    # Add user auth for tenant documentation
-    'medical_records',  # Medical records management
+    # medical_records removed - now in SHARED_APPS
     # 'simple_treatment',  # Temporarily disabled - dependency issues
     # 'simple_appointment',  # Temporarily disabled - dependency issues
 ]

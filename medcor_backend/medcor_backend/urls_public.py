@@ -52,6 +52,7 @@ urlpatterns = [
     path('', include('subscription_plan.urls')),
     path('', include('appointment.urls')),
     path('api/treatments/', include('treatment.urls')),
+    path('api/', include('medical_records.urls')),  # Medical records management
     
     # Authentication endpoints
     path('api/auth/', include('user_auth.urls')),

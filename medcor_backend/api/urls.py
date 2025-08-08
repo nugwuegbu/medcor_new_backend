@@ -22,7 +22,11 @@ def api_root(request):
             'health': '/api/health/',
             'admin': '/admin/',
             'treatments': '/api/treatments/',
-            'appointments': '/api/appointments/'
+            'appointments': '/api/appointments/',
+            'medical_records': '/api/medical-records/',
+            'auth': '/api/auth/',
+            'tenants': '/api/tenants/',
+            'subscriptions': '/api/subscription/'
         }
     })
 

@@ -1,6 +1,13 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+import os
+
+def medical_record_upload_path(instance, filename):
+    """Generate upload path for medical record files"""
+    # Format: medical_records/patient_<id>/<year>/<month>/<filename>
+    date = timezone.now()
+    return f'medical_records/patient_{instance.patient.id}/{date.year}/{date.month:02d}/{filename}'
 
 class MedicalRecord(models.Model):
     """
@@ -20,30 +27,6 @@ class MedicalRecord(models.Model):
     diagnosis = models.TextField(
         help_text='Medical diagnosis description'
     )
-    type = models.CharField(
-        max_length=50,
-        default='Consultation',
-        help_text='Type of medical record (e.g., Consultation, Lab Results, Prescription, X-Ray, Follow-up)'
-    )
-    doctor = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='doctor_records',
-        help_text='Doctor who created this record'
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ('completed', 'Completed'),
-            ('reviewed', 'Reviewed'),
-            ('active', 'Active'),
-            ('scheduled', 'Scheduled'),
-        ],
-        default='completed',
-        help_text='Status of the medical record'
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -59,3 +42,38 @@ class MedicalRecord(models.Model):
     def record_id(self):
         """Generate formatted record ID"""
         return f"MR{self.id:05d}"
+
+class MedicalRecordFile(models.Model):
+    """File attachment for medical records"""
+    medical_record = models.ForeignKey(
+        MedicalRecord,
+        on_delete=models.CASCADE,
+        related_name='files',
+        help_text='Medical record this file belongs to'
+    )
+    file = models.FileField(
+        upload_to=medical_record_upload_path,
+        help_text='Upload medical record file (PDF, Image, etc.)'
+    )
+    file_name = models.CharField(
+        max_length=255,
+        help_text='Original file name'
+    )
+    file_size = models.PositiveIntegerField(
+        help_text='File size in bytes'
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = 'Medical Record File'
+        verbose_name_plural = 'Medical Record Files'
+    
+    def __str__(self):
+        return f"{self.file_name} - {self.medical_record.record_id}"
+    
+    def save(self, *args, **kwargs):
+        if self.file:
+            self.file_name = os.path.basename(self.file.name)
+            self.file_size = self.file.size
+        super().save(*args, **kwargs)
