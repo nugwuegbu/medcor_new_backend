@@ -1766,6 +1766,10 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     } },
                     { icon: Crown, label: "Hair Extension", angle: 360, action: () => { 
                       console.log("👑 Hair Extension button clicked");
+                      if (!isAuthenticated) {
+                        setShowAuthOverlay(true);
+                        return;
+                      }
                       try {
                         setShowHairExtensionWidget(true);
                         setSelectedMenuItem("hair-extension"); 
@@ -2672,12 +2676,23 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                               setBookingFormData(prev => ({ ...prev, selectedDate: null }));
                             } },
                             { icon: Users, label: "Doctors", angle: 51, action: () => { 
+                              if (!isAuthenticated) {
+                                setShowAuthOverlay(true);
+                                return;
+                              }
                               setShowDoctorList(true); 
                               setSelectedMenuItem("doctors");
                               setShowChatInterface(false);
                               setIsMinimized(true);
                             } },
-                            { icon: FileText, label: "Records", angle: 102, action: () => { setShowRecordsList(true); setSelectedMenuItem("records"); } },
+                            { icon: FileText, label: "Records", angle: 102, action: () => { 
+                              if (!isAuthenticated) {
+                                setShowAuthOverlay(true);
+                                return;
+                              }
+                              setShowRecordsList(true); 
+                              setSelectedMenuItem("records"); 
+                            } },
                             { icon: Phone, label: "Call", angle: 153, action: () => setSelectedMenuItem("call") },
                             { icon: UserCheck, label: "Admin", angle: 204, action: () => { 
                               console.log("🔥 ADMIN BUTTON CLICKED - Starting admin process");
@@ -3846,6 +3861,25 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       Or continue with
                     </span>
                   </div>
+                </div>
+
+                {/* Signup Link */}
+                <div className="text-center pt-3 border-t mt-3">
+                  <p className="text-xs text-gray-600">
+                    Don't have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toast({
+                          title: "Sign Up",
+                          description: "Please contact your healthcare provider to register for an account.",
+                        });
+                      }}
+                      className="text-purple-600 hover:text-purple-700 font-medium underline"
+                    >
+                      Sign Up
+                    </button>
+                  </p>
                 </div>
 
                 {/* Google SSO */}
