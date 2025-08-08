@@ -11,16 +11,9 @@ export default function Home({ onShowAuthModal }: { onShowAuthModal?: () => void
   const [showModal, setShowModal] = useState(false);
   const { isAuthenticated, user } = useAuth();
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      if (user.role === 'patient') {
-        window.location.href = '/patient-dashboard';
-      } else if (user.role === 'doctor') {
-        window.location.href = '/doctor-dashboard';
-      }
-    }
-  }, [isAuthenticated, user]);
+  // Don't auto-redirect - let users stay on the home page after login
+  // They can navigate to dashboard manually if they want
+  // This prevents unwanted redirects when logging in through the chat widget
 
 
 
