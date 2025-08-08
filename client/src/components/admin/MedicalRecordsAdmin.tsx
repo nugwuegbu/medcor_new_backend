@@ -129,8 +129,10 @@ const MedicalRecordsAdmin = () => {
   const { data: recordsResponse, isLoading, error } = useQuery({
     queryKey: ['/api/medical-records/'],
     queryFn: async () => {
-      // Use apiRequest with method to ensure proper Django backend URL and auth
-      return apiRequest('GET', '/api/medical-records/');
+      // Use apiRequest with correct signature (url, options)
+      return apiRequest('/api/medical-records/', {
+        method: 'GET'
+      });
     },
     retry: 2,
   });
@@ -150,8 +152,10 @@ const MedicalRecordsAdmin = () => {
   const { data: patientsResponse } = useQuery({
     queryKey: ['/api/auth/admin/patients/'],
     queryFn: async () => {
-      // Use apiRequest with method to ensure proper Django backend URL and auth
-      return apiRequest('GET', '/api/auth/admin/patients/');
+      // Use apiRequest with correct signature (url, options)
+      return apiRequest('/api/auth/admin/patients/', {
+        method: 'GET'
+      });
     },
     retry: 2,
   });
@@ -173,7 +177,10 @@ const MedicalRecordsAdmin = () => {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: RecordFormData) => {
-      return apiRequest('POST', '/api/medical-records/', data);
+      return apiRequest('/api/medical-records/', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record created successfully' });
@@ -193,7 +200,10 @@ const MedicalRecordsAdmin = () => {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<RecordFormData> }) => {
-      return apiRequest('PATCH', `/api/medical-records/${id}/`, data);
+      return apiRequest(`/api/medical-records/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      });
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record updated successfully' });
@@ -214,7 +224,9 @@ const MedicalRecordsAdmin = () => {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest('DELETE', `/api/medical-records/${id}/`);
+      return apiRequest(`/api/medical-records/${id}/`, {
+        method: 'DELETE'
+      });
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record deleted successfully' });

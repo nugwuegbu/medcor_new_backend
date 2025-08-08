@@ -104,7 +104,7 @@ export const getQueryFn: <T>(options: {
     
     if (!isAuthEndpoint) {
       // Use admin token for admin routes or protected endpoints
-      if (adminToken && (url.includes('/admin/') || url.includes('/auth/users/') || url.includes('/appointments/'))) {
+      if (adminToken && (url.includes('/admin/') || url.includes('/auth/users/') || url.includes('/appointments/') || url.includes('/medical-records/'))) {
         headers['Authorization'] = `Bearer ${adminToken}`;
       } else if (authToken) {
         // Add auth token for all other authenticated routes
