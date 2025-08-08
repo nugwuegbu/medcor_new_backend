@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import MedicalRecordsView from '@/components/MedicalRecordsView';
+import MedicalRecordsAdmin from '@/components/admin/MedicalRecordsAdmin';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -1980,7 +1980,7 @@ export default function AdminDashboard() {
 
           {/* Medical Records View */}
           {selectedView === 'medical-records' && (
-            <MedicalRecordsView />
+            <MedicalRecordsAdmin />
           )}
 
           {/* Analytics View */}
