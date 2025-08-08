@@ -184,6 +184,14 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
+  const [medicalRecords, setMedicalRecords] = useState<any[]>([]);
+  const [recordsLoading, setRecordsLoading] = useState(false);
+  const [recordFormData, setRecordFormData] = useState({
+    diagnosis: '',
+    files: [] as File[]
+  });
+  const [uploadingRecord, setUploadingRecord] = useState(false);
+  const fileInputRecordsRef = useRef<HTMLInputElement>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -2160,103 +2168,227 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                 {/* Records View */}
                 {showRecordsList && (
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
-                    {/* Back Button */}
-                    <button
-                      onClick={() => {
-                        setShowRecordsList(false);
-                      }}
-                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="font-medium text-sm">Back</span>
-                    </button>
+                    {/* Header with Back Button */}
+                    <div className="bg-white shadow-md p-4">
+                      <div className="flex items-center justify-between">
+                        <button
+                          onClick={() => {
+                            setShowRecordsList(false);
+                            setShowChatInterface(true);
+                            setRecordFormData({ diagnosis: '', files: [] });
+                          }}
+                          className="flex items-center gap-2 text-purple-600 hover:text-purple-700 transition-colors"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                          <span className="font-medium">Back</span>
+                        </button>
+                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          Medical Records
+                        </h2>
+                        <div className="w-20" />
+                      </div>
+                    </div>
                     
                     {/* Main Content Area */}
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                      {/* Messages Display */}
-                      {messages.length > 0 ? (
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                          {messages.map((msg, index) => (
-                            <div
-                              key={msg.id}
-                              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                            >
-                              <div
-                                className={`max-w-[80%] ${
-                                  msg.sender === 'user'
-                                    ? 'bg-purple-600 text-white'
-                                    : 'bg-white shadow-md'
-                                } rounded-2xl p-4`}
-                              >
-                                <p className={`text-sm ${msg.sender === 'user' ? 'text-white' : 'text-gray-800'}`}>
-                                  {msg.text.slice(0, 100)}
-                                  {msg.text.length > 100 && '...'}
-                                </p>
-                                {msg.text.length > 100 && (
-                                  <button className={`text-xs mt-2 ${msg.sender === 'user' ? 'text-purple-200' : 'text-purple-600'} hover:underline`}>
-                                    Click to read more
-                                  </button>
-                                )}
-                                <p className={`text-xs mt-2 ${msg.sender === 'user' ? 'text-purple-200' : 'text-gray-500'}`}>
-                                  {new Date(msg.timestamp).toLocaleTimeString('en-US', { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit',
-                                    hour12: true 
-                                  })}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex-1 flex items-center justify-center">
-                          <div className="text-center">
-                            <label htmlFor="records-file-upload" className="cursor-pointer">
-                              <div className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl transform hover:scale-105">
-                                <Upload size={18} />
-                                <span className="text-sm">Upload Medical Records</span>
-                              </div>
+                    <div className="flex-1 overflow-y-auto p-6">
+                      {/* Upload Form */}
+                      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Upload New Record</h3>
+                        
+                        <div className="space-y-4">
+                          {/* Diagnosis Field */}
+                          <div>
+                            <Label htmlFor="diagnosis" className="text-sm font-medium text-gray-700">
+                              Diagnosis / Medical Notes
+                            </Label>
+                            <Textarea
+                              id="diagnosis"
+                              value={recordFormData.diagnosis}
+                              onChange={(e) => setRecordFormData(prev => ({ ...prev, diagnosis: e.target.value }))}
+                              placeholder="Enter diagnosis or medical notes..."
+                              className="mt-1 w-full min-h-[100px] p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            />
+                          </div>
+                          
+                          {/* File Upload Area */}
+                          <div>
+                            <Label className="text-sm font-medium text-gray-700">Medical Files</Label>
+                            <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-purple-400 transition-colors">
                               <input
-                                id="records-file-upload"
+                                ref={fileInputRecordsRef}
                                 type="file"
-                                className="hidden"
+                                multiple
                                 accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    try {
-                                      // Show loading toast
-                                      const loadingToast = toast({
-                                        title: "Uploading Medical Record",
-                                        description: `Uploading ${file.name}...`,
-                                        variant: "default"
-                                      });
-
-                                      // Validate file size (5MB limit)
-                                      if (file.size > 5 * 1024 * 1024) {
-                                        loadingToast.dismiss();
+                                onChange={(e) => {
+                                  const files = Array.from(e.target.files || []);
+                                  setRecordFormData(prev => ({ ...prev, files: [...prev.files, ...files] }));
+                                }}
+                                className="hidden"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => fileInputRecordsRef.current?.click()}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
+                              >
+                                <Upload className="h-4 w-4" />
+                                <span>Choose Files</span>
+                              </button>
+                              <p className="text-xs text-gray-500 mt-2">PDF, JPG, PNG, DOC files up to 10MB</p>
+                            </div>
+                            
+                            {/* Display selected files */}
+                            {recordFormData.files.length > 0 && (
+                              <div className="mt-3 space-y-2">
+                                {recordFormData.files.map((file, index) => (
+                                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <div className="flex items-center gap-2">
+                                      <File className="h-4 w-4 text-gray-500" />
+                                      <span className="text-sm text-gray-700">{file.name}</span>
+                                      <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(2)} KB)</span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setRecordFormData(prev => ({
+                                          ...prev,
+                                          files: prev.files.filter((_, i) => i !== index)
+                                        }));
+                                      }}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Submit Button */}
+                          <Button
+                            onClick={async () => {
+                              if (!recordFormData.diagnosis.trim()) {
+                                toast({
+                                  title: "Missing Information",
+                                  description: "Please enter diagnosis or medical notes",
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
+                              
+                              setUploadingRecord(true);
+                              try {
+                                const formData = new FormData();
+                                formData.append('patient', user?.id?.toString() || '');
+                                formData.append('date', new Date().toISOString().split('T')[0]);
+                                formData.append('diagnosis', recordFormData.diagnosis);
+                                
+                                // Append files
+                                recordFormData.files.forEach(file => {
+                                  formData.append('uploaded_files', file);
+                                });
+                                
+                                const token = localStorage.getItem('medcor_token');
+                                const djangoUrl = import.meta.env.VITE_DJANGO_URL || 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
+                                
+                                const response = await fetch(`${djangoUrl}/api/medical-records/`, {
+                                  method: 'POST',
+                                  headers: {
+                                    'Authorization': `Bearer ${token}`
+                                  },
+                                  body: formData
+                                });
+                                
+                                if (response.ok) {
+                                  toast({
+                                    title: "Success",
+                                    description: "Medical record uploaded successfully"
+                                  });
+                                  setRecordFormData({ diagnosis: '', files: [] });
+                                  // Refresh records list
+                                  fetchMedicalRecords();
+                                } else {
+                                  throw new Error('Failed to upload record');
+                                }
+                              } catch (error) {
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to upload medical record",
+                                  variant: "destructive"
+                                });
+                              } finally {
+                                setUploadingRecord(false);
+                              }
+                            }}
+                            disabled={uploadingRecord || !recordFormData.diagnosis.trim()}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                          >
+                            {uploadingRecord ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                Uploading...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4 mr-2" />
+                                Upload Record
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Records List */}
+                      <div className="bg-white rounded-lg shadow-lg p-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Medical Records</h3>
+                        
+                        {recordsLoading ? (
+                          <div className="flex justify-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+                          </div>
+                        ) : medicalRecords.length > 0 ? (
+                          <div className="space-y-3">
+                            {medicalRecords.map((record) => (
+                              <div key={record.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <p className="text-sm font-semibold text-gray-800">Record ID: {record.record_id}</p>
+                                    <p className="text-sm text-gray-600 mt-1">Date: {new Date(record.date).toLocaleDateString()}</p>
+                                    <p className="text-sm text-gray-700 mt-2">{record.diagnosis}</p>
+                                    {record.files && record.files.length > 0 && (
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <Paperclip className="h-4 w-4 text-gray-500" />
+                                        <span className="text-sm text-gray-600">{record.files.length} file(s) attached</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {record.files && record.files.length > 0 && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={async () => {
+                                        // Download files logic
                                         toast({
-                                          title: "File Too Large ❌",
-                                          description: "Please select a file smaller than 5MB.",
-                                          variant: "destructive"
+                                          title: "Download",
+                                          description: "Downloading files..."
                                         });
-                                        return;
-                                      }
-
-                                      // Create FormData and upload
-                                      const formData = new FormData();
-                                      formData.append('file', file);
-                                      formData.append('recordType', 'medical_document');
-
-                                      const response = await fetch('/api/upload-medical-record', {
-                                        method: 'POST',
-                                        body: formData
-                                      });
-
-                                      loadingToast.dismiss();
-
-                                      if (response.ok) {
-                                        const uploadResult = await response.json();
+                                      }}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                            <p className="text-gray-600">No medical records found</p>
+                            <p className="text-sm text-gray-500 mt-1">Upload your first medical record above</p>
+                          </div>
+                        )}
                                         
                                         // Show success toast
                                         toast({
