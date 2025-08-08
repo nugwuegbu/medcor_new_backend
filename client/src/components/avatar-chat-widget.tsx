@@ -1530,11 +1530,6 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     { icon: FileText, label: "Records", angle: 80, action: () => { 
                       if (!isAuthenticated) {
                         setShowAuthOverlay(true);
-                        toast({
-                          title: "Authentication Required",
-                          description: "Please login to access Medical Records",
-                          variant: "destructive"
-                        });
                         return;
                       }
                       setShowRecordsList(true); 
@@ -1572,11 +1567,6 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       
                       if (!isAuthenticated) {
                         setShowAuthOverlay(true);
-                        toast({
-                          title: "Authentication Required",
-                          description: "Please login to access Face Analysis",
-                          variant: "destructive"
-                        });
                         return;
                       }
                       
@@ -1606,11 +1596,6 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       
                       if (!isAuthenticated) {
                         setShowAuthOverlay(true);
-                        toast({
-                          title: "Authentication Required",
-                          description: "Please login to access Hair Analysis",
-                          variant: "destructive"
-                        });
                         return;
                       }
                       
@@ -1660,11 +1645,6 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       
                       if (!isAuthenticated) {
                         setShowAuthOverlay(true);
-                        toast({
-                          title: "Authentication Required",
-                          description: "Please login to access Lips Analysis",
-                          variant: "destructive"
-                        });
                         return;
                       }
                       
@@ -1718,11 +1698,6 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       
                       if (!isAuthenticated) {
                         setShowAuthOverlay(true);
-                        toast({
-                          title: "Authentication Required",
-                          description: "Please login to access Skin Analysis",
-                          variant: "destructive"
-                        });
                         return;
                       }
                       
