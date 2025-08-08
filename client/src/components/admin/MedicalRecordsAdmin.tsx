@@ -159,10 +159,13 @@ const MedicalRecordsAdmin = () => {
     retry: 2,
   });
 
-  // Ensure patients is always an array - handle both direct array and paginated response
-  const patients = Array.isArray(patientsResponse) 
+  // Ensure patients is always an array and filter for patients only
+  const allUsers = Array.isArray(patientsResponse) 
     ? patientsResponse 
     : (patientsResponse?.results || patientsResponse || []);
+  
+  // Filter to show only users with patient role
+  const patients = allUsers.filter((user: Patient) => user.role === 'patient');
 
   const form = useForm<RecordFormData>({
     resolver: zodResolver(recordSchema),
@@ -186,7 +189,7 @@ const MedicalRecordsAdmin = () => {
       });
       
       const token = localStorage.getItem('adminToken');
-      const djangoUrl = import.meta.env.VITE_DJANGO_URL || 'http://localhost:8000';
+      const djangoUrl = import.meta.env.VITE_DJANGO_URL || 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
       
       const response = await fetch(`${djangoUrl}/api/medical-records/`, {
         method: 'POST',
@@ -329,7 +332,7 @@ const MedicalRecordsAdmin = () => {
     try {
       // Use the apiRequest helper to get the proper Django URL and auth
       const token = localStorage.getItem('adminToken');
-      const djangoUrl = import.meta.env.VITE_DJANGO_URL || 'http://localhost:8000';
+      const djangoUrl = import.meta.env.VITE_DJANGO_URL || 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
       const response = await fetch(`${djangoUrl}/api/medical-records/${recordId}/files/${fileId}/download/`, {
         headers: {
           'Authorization': `Bearer ${token}`
