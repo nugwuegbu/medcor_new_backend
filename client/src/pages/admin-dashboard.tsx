@@ -2783,7 +2783,18 @@ export default function AdminDashboard() {
           </DialogHeader>
           {selectedAppointment && (
             <AppointmentForm 
-              initialData={selectedAppointment}
+              initialData={{
+                ...selectedAppointment,
+                // Map the API fields to form fields
+                patient_id: selectedAppointment.patient_id || selectedAppointment.patient,
+                doctor_id: selectedAppointment.doctor_id || selectedAppointment.doctor,
+                appointment_date: selectedAppointment.appointment_slot_date || selectedAppointment.appointment_date,
+                appointment_time: selectedAppointment.appointment_slot_start_time || selectedAppointment.appointment_time,
+                appointment_type: selectedAppointment.appointment_type || 'consultation',
+                reason: selectedAppointment.medical_record || selectedAppointment.reason || '',
+                status: selectedAppointment.appointment_status || selectedAppointment.status || 'Pending',
+                notes: selectedAppointment.notes || selectedAppointment.medical_record || ''
+              }}
               patients={patients}
               doctors={doctors}
               onSubmit={async (data) => {
@@ -2943,7 +2954,7 @@ function UserForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a role" />
@@ -3092,7 +3103,7 @@ function DoctorForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Specialization</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select specialization" />
@@ -3258,7 +3269,7 @@ function PatientForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Blood Group</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select blood group" />
@@ -3311,13 +3322,13 @@ function AppointmentForm({
   const form = useForm({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
-      patient_id: initialData?.patient_id || '',
-      doctor_id: initialData?.doctor_id || '',
+      patient_id: String(initialData?.patient_id || ''),
+      doctor_id: String(initialData?.doctor_id || ''),
       appointment_date: initialData?.appointment_date || '',
       appointment_time: initialData?.appointment_time || '',
       appointment_type: initialData?.appointment_type || 'consultation',
       reason: initialData?.reason || '',
-      status: initialData?.status || initialData?.appointment_status || 'Pending',
+      status: initialData?.status || 'Pending',
       notes: initialData?.notes || '',
     },
   });
@@ -3331,7 +3342,7 @@ function AppointmentForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Patient</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select patient" />
@@ -3355,7 +3366,7 @@ function AppointmentForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Doctor</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select doctor" />
@@ -3407,7 +3418,7 @@ function AppointmentForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
@@ -3458,7 +3469,7 @@ function AppointmentForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
