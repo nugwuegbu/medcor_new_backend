@@ -318,6 +318,114 @@ export default function AdminDashboard() {
     monthlyGrowth: 12.5 // Placeholder for now
   };
 
+  // Generate activity feed from real data
+  const generateActivityFeed = () => {
+    const activities: any[] = [];
+    const now = new Date();
+
+    // Helper function to calculate relative time
+    const getRelativeTime = (dateStr: string) => {
+      const date = new Date(dateStr);
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      
+      if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+      if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+      if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+      return date.toLocaleDateString();
+    };
+
+    // Process recent appointments
+    if (appointments && appointments.length > 0) {
+      const recentAppointments = appointments
+        .filter((apt: any) => apt.created_at || apt.updated_at)
+        .slice(0, 5);
+      
+      recentAppointments.forEach((apt: any) => {
+        const patientName = apt.patient_name || `Patient #${apt.patient_id}`;
+        const doctorName = apt.doctor_name || `Doctor #${apt.doctor_id}`;
+        const status = apt.appointment_status || apt.status || 'Pending';
+        const timestamp = apt.updated_at || apt.created_at || new Date().toISOString();
+        
+        let type = 'blue';
+        let message = '';
+        
+        if (status === 'Completed') {
+          type = 'green';
+          message = 'Appointment completed';
+        } else if (status === 'Cancelled') {
+          type = 'red';
+          message = 'Appointment cancelled';
+        } else if (status === 'Approved' || status === 'Confirmed') {
+          type = 'blue';
+          message = 'Appointment confirmed';
+        } else {
+          type = 'yellow';
+          message = 'New appointment scheduled';
+        }
+        
+        activities.push({
+          type,
+          message,
+          description: `${doctorName} with ${patientName}`,
+          time: getRelativeTime(timestamp),
+          timestamp: new Date(timestamp).getTime()
+        });
+      });
+    }
+
+    // Process recently added patients
+    if (patientsList && patientsList.length > 0) {
+      const recentPatients = patientsList
+        .filter((patient: any) => patient.created_at)
+        .slice(0, 3);
+      
+      recentPatients.forEach((patient: any) => {
+        const name = `${patient.first_name || ''} ${patient.last_name || ''}`?.trim() || patient.email || `Patient #${patient.id}`;
+        const timestamp = patient.created_at || new Date().toISOString();
+        
+        activities.push({
+          type: 'green',
+          message: 'New patient registered',
+          description: name,
+          time: getRelativeTime(timestamp),
+          timestamp: new Date(timestamp).getTime()
+        });
+      });
+    }
+
+    // Process recently added doctors
+    if (doctorsList && doctorsList.length > 0) {
+      const recentDoctors = doctorsList
+        .filter((doctor: any) => doctor.created_at)
+        .slice(0, 2);
+      
+      recentDoctors.forEach((doctor: any) => {
+        const name = `Dr. ${doctor.first_name || ''} ${doctor.last_name || ''}`?.trim() || doctor.email || `Doctor #${doctor.id}`;
+        const specialization = doctor.specialization || 'General';
+        const timestamp = doctor.created_at || new Date().toISOString();
+        
+        activities.push({
+          type: 'purple',
+          message: 'New doctor onboarded',
+          description: `${name} - ${specialization}`,
+          time: getRelativeTime(timestamp),
+          timestamp: new Date(timestamp).getTime()
+        });
+      });
+    }
+
+    // Sort activities by timestamp (most recent first)
+    activities.sort((a, b) => b.timestamp - a.timestamp);
+    
+    // Return top 5 activities
+    return activities.slice(0, 5);
+  };
+
+  const activityFeed = generateActivityFeed();
+
   // Use dedicated lists for doctors and patients
   const doctors = doctorsList || [];
   const patients = patientsList || [];
@@ -853,36 +961,46 @@ export default function AdminDashboard() {
                     <CardDescription>Recent system activities</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">New patient registered</p>
-                          <p className="text-xs text-gray-500">John Doe - 5 minutes ago</p>
-                        </div>
+                    {statsLoading ? (
+                      <div className="space-y-4">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className="flex items-start gap-3 animate-pulse">
+                            <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                            <div className="flex-1 space-y-2">
+                              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                              <div className="h-3 bg-gray-100 rounded w-1/2"></div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">Appointment confirmed</p>
-                          <p className="text-xs text-gray-500">Dr. Smith with Patient #1234 - 15 minutes ago</p>
-                        </div>
+                    ) : activityFeed.length > 0 ? (
+                      <div className="space-y-4">
+                        {activityFeed.map((activity, index) => {
+                          const colorClass = {
+                            green: 'bg-green-500',
+                            blue: 'bg-blue-500',
+                            yellow: 'bg-yellow-500',
+                            purple: 'bg-purple-500',
+                            red: 'bg-red-500'
+                          }[activity.type] || 'bg-gray-500';
+                          
+                          return (
+                            <div key={index} className="flex items-start gap-3">
+                              <div className={`w-2 h-2 ${colorClass} rounded-full mt-2`}></div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{activity.message}</p>
+                                <p className="text-xs text-gray-500">{activity.description} - {activity.time}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">Appointment rescheduled</p>
-                          <p className="text-xs text-gray-500">ID #5678 moved to tomorrow - 30 minutes ago</p>
-                        </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-sm text-gray-500">No recent activities</p>
+                        <p className="text-xs text-gray-400 mt-2">Activities will appear here as they occur</p>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">New doctor onboarded</p>
-                          <p className="text-xs text-gray-500">Dr. Johnson joined - 1 hour ago</p>
-                        </div>
-                      </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
 
