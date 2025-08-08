@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -69,14 +70,16 @@ import {
   Trash2,
   Download,
   Plus,
-  Eye
+  Eye,
+  Upload,
+  X,
+  File
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 // Form schema for medical records
 const recordSchema = z.object({
   patient: z.number().min(1, 'Patient is required'),
-  date: z.string().min(1, 'Date is required'),
   diagnosis: z.string().min(1, 'Diagnosis is required')
 });
 
@@ -124,6 +127,8 @@ const MedicalRecordsAdmin = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Fetch medical records with proper auth
   const { data: recordsResponse, isLoading, error } = useQuery({
@@ -163,7 +168,6 @@ const MedicalRecordsAdmin = () => {
     resolver: zodResolver(recordSchema),
     defaultValues: {
       patient: 0,
-      date: new Date().toISOString().split('T')[0],
       diagnosis: ''
     }
   });
@@ -171,16 +175,40 @@ const MedicalRecordsAdmin = () => {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: RecordFormData) => {
-      return apiRequest('/api/medical-records/', {
-        method: 'POST',
-        body: JSON.stringify(data)
+      const formData = new FormData();
+      formData.append('patient', data.patient.toString());
+      formData.append('date', new Date().toISOString().split('T')[0]);
+      formData.append('diagnosis', data.diagnosis);
+      
+      // Append uploaded files
+      uploadedFiles.forEach(file => {
+        formData.append('uploaded_files', file);
       });
+      
+      const token = localStorage.getItem('adminToken');
+      const djangoUrl = import.meta.env.VITE_DJANGO_URL || 'http://localhost:8000';
+      
+      const response = await fetch(`${djangoUrl}/api/medical-records/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create medical record');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Medical record created successfully' });
       queryClient.invalidateQueries({ queryKey: ['/api/medical-records/'] });
       setShowAddModal(false);
       form.reset();
+      setUploadedFiles([]);
     },
     onError: (error: Error) => {
       toast({ 
@@ -194,9 +222,10 @@ const MedicalRecordsAdmin = () => {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<RecordFormData> }) => {
+      // Only update diagnosis, not date
       return apiRequest(`/api/medical-records/${id}/`, {
         method: 'PATCH',
-        body: JSON.stringify(data)
+        body: JSON.stringify({ diagnosis: data.diagnosis })
       });
     },
     onSuccess: () => {
@@ -254,10 +283,18 @@ const MedicalRecordsAdmin = () => {
     setSelectedRecord(record);
     form.reset({
       patient: record.patient,
-      date: record.date,
       diagnosis: record.diagnosis
     });
     setShowEditModal(true);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setUploadedFiles(prev => [...prev, ...files]);
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleView = (record: MedicalRecord) => {
@@ -276,13 +313,9 @@ const MedicalRecordsAdmin = () => {
 
   const handleUpdateSubmit = (data: RecordFormData) => {
     if (selectedRecord) {
-      // Only send changed fields
-      const updateData: Partial<RecordFormData> = {};
-      if (data.date !== selectedRecord.date) updateData.date = data.date;
-      if (data.diagnosis !== selectedRecord.diagnosis) updateData.diagnosis = data.diagnosis;
-      
-      if (Object.keys(updateData).length > 0) {
-        updateMutation.mutate({ id: selectedRecord.id, data: updateData });
+      // Only update diagnosis
+      if (data.diagnosis !== selectedRecord.diagnosis) {
+        updateMutation.mutate({ id: selectedRecord.id, data });
       } else {
         toast({ 
           title: 'Info', 
@@ -347,9 +380,9 @@ const MedicalRecordsAdmin = () => {
                 onClick={() => {
                   form.reset({
                     patient: 0,
-                    date: new Date().toISOString().split('T')[0],
                     diagnosis: ''
                   });
+                  setUploadedFiles([]);
                   setShowAddModal(true);
                 }}
               >
@@ -535,20 +568,6 @@ const MedicalRecordsAdmin = () => {
               
               <FormField
                 control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
                 name="diagnosis"
                 render={({ field }) => (
                   <FormItem>
@@ -565,6 +584,53 @@ const MedicalRecordsAdmin = () => {
                 )}
               />
               
+              {/* File Upload Section */}
+              <div className="space-y-2">
+                <Label>Medical Files (Optional)</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Files
+                  </Button>
+                  
+                  {uploadedFiles.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex items-center gap-2">
+                            <File className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm">{file.name}</span>
+                            <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(2)} KB)</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <DialogFooter>
                 <Button 
                   type="button" 
@@ -572,6 +638,7 @@ const MedicalRecordsAdmin = () => {
                   onClick={() => {
                     setShowAddModal(false);
                     form.reset();
+                    setUploadedFiles([]);
                   }}
                 >
                   Cancel
@@ -607,20 +674,6 @@ const MedicalRecordsAdmin = () => {
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleUpdateSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
               <FormField
                 control={form.control}
                 name="diagnosis"
