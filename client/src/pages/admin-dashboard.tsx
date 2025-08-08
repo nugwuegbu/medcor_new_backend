@@ -736,12 +736,8 @@ export default function AdminDashboard() {
                       : "hover:bg-gray-100 text-gray-700"
                   )}
                   onClick={() => {
-                    if (item.id === 'medical-records') {
-                      setLocation('/admin/medical-records');
-                    } else {
-                      setSelectedView(item.id);
-                      setMobileMenuOpen(false);
-                    }
+                    setSelectedView(item.id);
+                    setMobileMenuOpen(false);
                   }}
                 >
                   <Icon className={cn(
