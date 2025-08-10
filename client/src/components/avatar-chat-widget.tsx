@@ -1363,7 +1363,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
     <>
       {/* Main Chat Widget - only show when no specific analysis pages are active */}
       {!showFacePage && !showHairPage && !showLipsPage && !showBookingCalendar && !showAuthOverlay && !showProfilePage && !showMedicalRecordsPage && !showVoiceTipsPage && !showHairExtensionWidget && (
-      <div className="chat-widget-container fixed bottom-4 right-4 w-full max-w-[380px] h-full max-h-[600px] sm:w-[380px] sm:h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border mx-4 my-4 sm:mx-0 sm:my-0" style={{ right: '16px', left: 'auto' }}>
+        <div className="chat-widget-container fixed bottom-4 right-4 w-full max-w-[380px] h-full max-h-[600px] sm:w-[380px] sm:h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border mx-4 my-4 sm:mx-0 sm:my-0" style={{ right: '16px', left: 'auto' }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
@@ -2547,6 +2547,8 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     </div>
                   </div>
                 )}
+          </div>
+        )}
                 
       {/* Profile Page View - Chat Widget Container */}
       {showProfilePage && user && (
@@ -3058,6 +3060,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                 )}
           </div>
         )}
+      </div>
 
       {/* Face Analysis View - Separate container with higher z-index */}
       {showFacePage && (
@@ -3807,9 +3810,12 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
             </div>
           </div>
         )}
-        
-        {/* Animated Button on Chest Area */}
-        <div className={`absolute left-1/2 top-[68%] transform -translate-x-1/2 -translate-y-1/2 z-30 ${showChatInterface ? 'hidden' : ''}`}>
+
+        {/* Only show these elements when not in booking form */}
+        {!showBookingForm && (
+          <>
+            {/* Animated Button on Chest Area */}
+            <div className={`absolute left-1/2 top-[68%] transform -translate-x-1/2 -translate-y-1/2 z-30 ${showChatInterface ? 'hidden' : ''}`}>
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -3910,40 +3916,40 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
         </div>
       </div>
 
-      {/* Input Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm">
-        <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Send your message..."
-            className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
-            disabled={voiceChatMutation.isPending}
-          />
-          
-          <Button
-            size="sm"
-            onClick={() => handleSendMessage(inputText)}
-            disabled={!inputText.trim() || voiceChatMutation.isPending}
-            className="p-2 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
-            variant="ghost"
-          >
-            <Send className="h-5 w-5" />
-          </Button>
-          
-          <BrowserVoiceButton
-            onTranscript={(text) => {
-              handleSendMessage(text);
-            }}
-            disabled={voiceChatMutation.isPending}
-          />
+        {/* Input Section */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm">
+          <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Send your message..."
+              className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-500"
+              disabled={voiceChatMutation.isPending}
+            />
+            
+            <Button
+              size="sm"
+              onClick={() => handleSendMessage(inputText)}
+              disabled={!inputText.trim() || voiceChatMutation.isPending}
+              className="p-2 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
+              variant="ghost"
+            >
+              <Send className="h-5 w-5" />
+            </Button>
+            
+            <BrowserVoiceButton
+              onTranscript={(text) => {
+                handleSendMessage(text);
+              }}
+              disabled={voiceChatMutation.isPending}
+            />
+          </div>
         </div>
-        
-
-      </div>
+      </>
+        )}
 
       {/* Patient Auth Overlay with Tabs */}
       {showAuthOverlay && (
