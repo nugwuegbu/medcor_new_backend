@@ -130,8 +130,8 @@ app.use((req, res, next) => {
     return djangoProcess;
   };
 
-  // Start Django server
-  const djangoProcess = startDjangoServer();
+  // Start Django server - temporarily disabled for debugging
+  // const djangoProcess = startDjangoServer();
 
   // Create minimal backend proxy for testing
   const backendApp = express();

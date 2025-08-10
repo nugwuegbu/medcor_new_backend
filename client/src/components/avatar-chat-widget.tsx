@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown, Mail, Lock, Eye, EyeOff, LogIn, LogOut } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown, Mail, Lock, Eye, EyeOff, LogIn, LogOut, Paperclip, Download } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -592,6 +593,34 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
       }
     }
   });
+
+  // Fetch medical records function
+  const fetchMedicalRecords = useCallback(async () => {
+    setRecordsLoading(true);
+    try {
+      const token = localStorage.getItem('medcor_token');
+      const djangoUrl = import.meta.env.VITE_DJANGO_URL || 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
+      
+      const response = await fetch(`${djangoUrl}/api/medical-records/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMedicalRecords(data);
+      } else {
+        console.error('Failed to fetch medical records');
+        setMedicalRecords([]);
+      }
+    } catch (error) {
+      console.error('Error fetching medical records:', error);
+      setMedicalRecords([]);
+    } finally {
+      setRecordsLoading(false);
+    }
+  }, []);
 
   // Smart keyword detection function
   const detectIntentAndRedirect = (text: string) => {
@@ -1331,9 +1360,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
 
   return (
     <>
-      {/* Face Analysis now rendered inline within widget */}
-      
-    <div className="chat-widget-container fixed bottom-4 right-4 w-full max-w-[380px] h-full max-h-[600px] sm:w-[380px] sm:h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border mx-4 my-4 sm:mx-0 sm:my-0" style={{ right: '16px', left: 'auto' }}>
+      {/* Main Chat Widget - only show when no specific analysis pages are active */}
+      {!showFacePage && !showHairPage && !showLipsPage && !showBookingCalendar && !showAuthOverlay && !showProfilePage && !showMedicalRecordsPage && !showVoiceTipsPage && !showHairExtensionWidget && (
+      <div className="chat-widget-container fixed bottom-4 right-4 w-full max-w-[380px] h-full max-h-[600px] sm:w-[380px] sm:h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-glow-border mx-4 my-4 sm:mx-0 sm:my-0" style={{ right: '16px', left: 'auto' }}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
         <div className="flex items-center gap-2">
@@ -2243,7 +2272,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                                 {recordFormData.files.map((file, index) => (
                                   <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                                     <div className="flex items-center gap-2">
-                                      <File className="h-4 w-4 text-gray-500" />
+                                      <FileText className="h-4 w-4 text-gray-500" />
                                       <span className="text-sm text-gray-700">{file.name}</span>
                                       <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(2)} KB)</span>
                                     </div>
@@ -2389,43 +2418,83 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                             <p className="text-sm text-gray-500 mt-1">Upload your first medical record above</p>
                           </div>
                         )}
-                                        
-                                        // Show success toast
-                                        toast({
-                                          title: "Upload Successful! ✅",
-                                          description: `${file.name} has been uploaded to your medical records. Our AI will analyze it for insights.`,
-                                          variant: "default"
-                                        });
+                      </div>
+                      
+                      {/* Upload Section */}
+                      <div className="bg-white rounded-lg shadow-lg p-6 mt-4">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Upload New Record</h3>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                          <div className="space-y-3">
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
 
-                                        console.log('Medical record uploaded:', uploadResult);
-                                        
-                                        // Add a message to chat about the upload
-                                        const uploadMessage = {
-                                          id: Date.now().toString(),
-                                          text: `Medical record "${file.name}" uploaded successfully. The document is now part of your health profile.`,
-                                          sender: 'bot' as const,
-                                          timestamp: new Date()
-                                        };
-                                        setMessages(prev => [...prev, uploadMessage]);
+                                  setUploadingRecord(true);
+                                  
+                                  try {
+                                    const formData = new FormData();
+                                    formData.append('file', file);
+                                    formData.append('record_id', `MR${Date.now()}`);
+                                    formData.append('date', new Date().toISOString().split('T')[0]);
+                                    formData.append('diagnosis', 'Uploaded medical document');
 
-                                      } else {
-                                        const errorData = await response.json();
-                                        throw new Error(errorData.message || 'Upload failed');
-                                      }
+                                    const response = await fetch('/api/medical-records', {
+                                      method: 'POST',
+                                      body: formData,
+                                    });
 
-                                    } catch (error) {
-                                      console.error('File upload error:', error);
+                                    if (response.ok) {
+                                      const uploadResult = await response.json();
                                       
-                                      // Show error toast
+                                      // Refresh the records list
+                                      fetchMedicalRecords();
+                                      
+                                      // Show success toast
                                       toast({
-                                        title: "Upload Failed ❌",
-                                        description: error instanceof Error ? error.message : "Failed to upload the file. Please check your connection and try again.",
-                                        variant: "destructive"
+                                        title: "Upload Successful! ✅",
+                                        description: `${file.name} has been uploaded to your medical records. Our AI will analyze it for insights.`,
+                                        variant: "default"
                                       });
+
+                                      console.log('Medical record uploaded:', uploadResult);
+                                      
+                                      // Add a message to chat about the upload
+                                      const uploadMessage = {
+                                        id: Date.now().toString(),
+                                        text: `Medical record "${file.name}" uploaded successfully. The document is now part of your health profile.`,
+                                        sender: 'bot' as const,
+                                        timestamp: new Date()
+                                      };
+                                      setMessages(prev => [...prev, uploadMessage]);
+
+                                    } else {
+                                      const errorData = await response.json();
+                                      throw new Error(errorData.message || 'Upload failed');
                                     }
+
+                                  } catch (error) {
+                                    console.error('File upload error:', error);
+                                    
+                                    // Show error toast
+                                    toast({
+                                      title: "Upload Failed ❌",
+                                      description: error instanceof Error ? error.message : "Failed to upload the file. Please check your connection and try again.",
+                                      variant: "destructive"
+                                    });
+                                  } finally {
+                                    setUploadingRecord(false);
                                   }
                                 }}
                               />
+                              <div className="flex flex-col items-center">
+                                <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                                <p className="text-gray-600 font-medium">Click to upload</p>
+                              </div>
                             </label>
                             <p className="text-gray-600 mt-3 text-xs text-center">
                               Upload your medical documents or photos<br />
@@ -2478,8 +2547,8 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                   </div>
                 )}
                 
-        {/* Profile Page View - Chat Widget Container */}
-        {showProfilePage && user && (
+      {/* Profile Page View - Chat Widget Container */}
+      {showProfilePage && user && (
           <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-blue-900/95 via-purple-900/95 to-blue-900/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
             {/* Header */}
             <div className="flex items-center justify-between p-4 bg-white/10 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
@@ -2761,9 +2830,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
           </div>
         )}
                 
-                {/* Regular Chat Interface Content */}
-                {!showFacePage && !showAdminPage && !showDoctorList && !showRecordsList && !showBookingCalendar && !showSkinPage && !showLipsPage && !showHairPage && !showVoiceTipsPage && (
-                  <div className="h-full flex flex-col">
+{/* Regular Chat Interface Content */}
+{!showFacePage && !showAdminPage && !showDoctorList && !showRecordsList && !showBookingCalendar && !showSkinPage && !showLipsPage && !showHairPage && !showVoiceTipsPage && (
+  <div className="h-full flex flex-col">
                     {/* Menu Section - Centered */}
                     <div className="flex-1 flex items-center justify-center">
                       <div className="flex flex-col items-center gap-4">
@@ -2986,13 +3055,14 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             </div>
           </div>
         )}
-        
-        {/* Face Analysis View - Separate container with higher z-index */}
-        {showFacePage && (
+
+      {/* Face Analysis View - Separate container with higher z-index */}
+      {showFacePage && (
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
             {/* Back Button */}
             <button
@@ -3025,8 +3095,8 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
           </div>
         )}
 
-        {/* Hair Analysis View - Full chat widget structure */}
-        {showHairPage && (
+      {/* Hair Analysis View - Full chat widget structure */}
+      {showHairPage && (
           <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
             {/* Header - Hair Analysis (No User Camera) */}
             <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
@@ -3301,8 +3371,8 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
           </div>
         )}
         
-        {/* Booking Calendar View */}
-        {showBookingCalendar && (
+      {/* Booking Calendar View */}
+      {showBookingCalendar && (
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
             {/* Back Button */}
             <button
@@ -4225,8 +4295,8 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
         </div>
       )}
 
-        {/* Voice Skincare Tips View - Full chat widget structure */}
-        {showVoiceTipsPage && (
+      {/* Voice Skincare Tips View - Full chat widget structure */}
+      {showVoiceTipsPage && (
           <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-blue-100/95 to-green-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
             {/* Header - Voice Skincare Tips */}
             <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
@@ -4267,8 +4337,8 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
           </div>
         )}
 
-        {/* Hair Extension View - Full chat widget structure */}
-        {showHairExtensionWidget && (
+      {/* Hair Extension View - Full chat widget structure */}
+      {showHairExtensionWidget && (
           <div className="chat-widget-container fixed bottom-4 right-4 w-[380px] h-[600px] bg-gradient-to-br from-purple-100/95 to-pink-100/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50">
             {/* Header - Hair Extension */}
             <div className="flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm absolute top-0 left-0 right-0 z-50">
