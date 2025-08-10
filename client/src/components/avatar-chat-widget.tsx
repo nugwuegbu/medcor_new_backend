@@ -168,6 +168,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [hoveredDoctorId, setHoveredDoctorId] = useState<number | null>(null);
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
   const [showProfilePage, setShowProfilePage] = useState(false);
+  const [showMedicalRecordsPage, setShowMedicalRecordsPage] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [avatarPosition, setAvatarPosition] = useState({ x: null as number | null, y: null as number | null });
@@ -2830,9 +2831,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
           </div>
         )}
                 
-{/* Regular Chat Interface Content */}
-{!showFacePage && !showAdminPage && !showDoctorList && !showRecordsList && !showBookingCalendar && !showSkinPage && !showLipsPage && !showHairPage && !showVoiceTipsPage && (
-  <div className="h-full flex flex-col">
+        {/* Regular Chat Interface Content */}
+        {!showFacePage && !showAdminPage && !showDoctorList && !showRecordsList && !showBookingCalendar && !showSkinPage && !showLipsPage && !showHairPage && !showVoiceTipsPage && (
+          <div className="h-full flex flex-col">
                     {/* Menu Section - Centered */}
                     <div className="flex-1 flex items-center justify-center">
                       <div className="flex flex-col items-center gap-4">
@@ -3055,9 +3056,6 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     </div>
                   </div>
                 )}
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
@@ -4380,7 +4378,6 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
             </div>
           </div>
         )}
-    </div>
     </>
   );
 }
