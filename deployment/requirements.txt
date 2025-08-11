@@ -1,0 +1,43 @@
+# Django Core
+Django==5.0.1
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+
+# Database
+psycopg2-binary==2.9.9
+dj-database-url==2.1.0
+
+# Multi-tenancy
+django-tenants==3.5.0
+
+# Authentication & Security
+PyJWT==2.8.0
+bcrypt==4.1.2
+cryptography==41.0.7
+python-dotenv==1.0.0
+
+# API Documentation
+drf-spectacular==0.27.0
+
+# File Processing
+Pillow==10.2.0
+
+# HTTP Requests
+requests==2.31.0
+aiohttp==3.9.1
+
+# Application Server
+gunicorn==21.2.0
+
+# Utilities
+pytz==2023.3
+python-dateutil==2.8.2
+
+# Django Extensions
+django-filter==23.5
+djangorestframework-simplejwt==5.3.1
+
+# Production
+whitenoise==6.6.0
+redis==5.0.1
+celery==5.3.4
