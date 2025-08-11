@@ -53,7 +53,7 @@ class PredictiveDialer {
     /**
      * Get available agents from queue
      */
-    public function getAvailableAgents($queue = '6001') {
+    public function getAvailableAgents($queue = '6005') {
         $response = $this->manager->command("queue show $queue");
         $agents = [];
         

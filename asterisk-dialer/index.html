@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Dialer - Asterisk Integration</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    
+    <style>
+        /* Include all the CSS from the previous HTML file */
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #06b6d4;
+            --dark-color: #1e293b;
+            --light-bg: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-color);
+        }
+
+        .stats-card {
+            border: none;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary-color);
+            background-color: #f0f9ff;
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--primary-color);
+            background-color: #dbeafe;
+        }
+
+        .btn-primary-custom {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-new { background-color: #dbeafe; color: #1e40af; }
+        .status-scheduled { background-color: #fef3c7; color: #92400e; }
+        .status-completed { background-color: #d1fae5; color: #065f46; }
+        .status-failed { background-color: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    <i class="bi bi-telephone-fill"></i> Asterisk Predictive Dialer
+                </h1>
+            </div>
+        </div>
+
+        <!-- Stats Dashboard -->
+        <div class="row mb-4" id="statsContainer">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5>Total Contacts</h5>
+                    <h3 id="totalContacts">0</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5>Calls Today</h5>
+                    <h3 id="callsToday">0</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5>Scheduled Calls</h5>
+                    <h3 id="scheduledCalls">0</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5>Success Rate</h5>
+                    <h3 id="successRate">0%</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#contacts">Contacts</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#dialer">Dialer</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#campaigns">Campaigns</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#callRecords">Call Records</a>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Contacts Tab -->
+            <div class="tab-pane fade show active" id="contacts">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Contact Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Upload Zone -->
+                        <div class="upload-zone mb-4" id="uploadZone">
+                            <i class="bi bi-cloud-upload" style="font-size: 48px; color: var(--primary-color);"></i>
+                            <h4 class="mt-3">Upload Contacts CSV</h4>
+                            <p class="text-muted">Drag & drop or click to browse</p>
+                            <input type="file" id="fileInput" accept=".csv" style="display: none;">
+                        </div>
+
+                        <!-- Add Contact Form -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <input type="text" class="form-control" id="contactName" placeholder="Name">
+                            </div>
+                            <div class="col-md-3">
+                                <input type="email" class="form-control" id="contactEmail" placeholder="Email">
+                            </div>
+                            <div class="col-md-3">
+                                <input type="tel" class="form-control" id="contactPhone" placeholder="Phone">
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary-custom" onclick="addContact()">
+                                    <i class="bi bi-plus-circle"></i> Add Contact
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Contacts Table -->
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contactsTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dialer Tab -->
+            <div class="tab-pane fade" id="dialer">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Quick Dialer</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="dialNumber" placeholder="+1234567890">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Contact</label>
+                                    <select class="form-select" id="dialContact">
+                                        <option value="">Select Contact (Optional)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Campaign</label>
+                                    <select class="form-select" id="dialCampaign">
+                                        <option value="">Select Campaign (Optional)</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-success btn-lg w-100" onclick="makeCall()">
+                                    <i class="bi bi-telephone-fill"></i> Make Call
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h6>Active Channels</h6>
+                                    <div id="activeChannels">
+                                        No active calls
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaigns Tab -->
+            <div class="tab-pane fade" id="campaigns">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Campaigns</h5>
+                        <button class="btn btn-primary-custom" onclick="showNewCampaignModal()">
+                            <i class="bi bi-plus-circle"></i> New Campaign
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="campaignsList">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Call Records Tab -->
+            <div class="tab-pane fade" id="callRecords">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Call History</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <th>Contact</th>
+                                    <th>Phone</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Campaign</th>
+                                </tr>
+                            </thead>
+                            <tbody id="callRecordsTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Campaign Modal -->
+    <div class="modal fade" id="newCampaignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Campaign</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Campaign Name</label>
+                        <input type="text" class="form-control" id="campaignName">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="campaignDescription" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="campaignStartDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="campaignEndDate">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary-custom" onclick="createCampaign()">Create Campaign</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // API Configuration - Update this with your server URL
+        const API_URL = '/asterisk-dialer/api.php';  // Update with your actual path
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadContacts();
+            loadCampaigns();
+            loadCallRecords();
+            
+            // Refresh data every 30 seconds
+            setInterval(function() {
+                loadStats();
+                if (document.querySelector('#dialer').classList.contains('active')) {
+                    checkActiveChannels();
+                }
+            }, 30000);
+        });
+
+        // File Upload
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            handleFileUpload(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            handleFileUpload(e.target.files[0]);
+        });
+
+        function handleFileUpload(file) {
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch(API_URL + '?endpoint=upload-contacts', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Successfully imported ${data.imported} contacts`);
+                    loadContacts();
+                    loadStats();
+                } else {
+                    alert('Upload failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Upload failed');
+            });
+        }
+
+        // Load Statistics
+        function loadStats() {
+            fetch(API_URL + '?endpoint=stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalContacts').textContent = data.total_contacts || 0;
+                    document.getElementById('callsToday').textContent = data.calls_today || 0;
+                    document.getElementById('scheduledCalls').textContent = data.scheduled_calls || 0;
+                    document.getElementById('successRate').textContent = (data.success_rate || 0) + '%';
+                })
+                .catch(error => console.error('Error loading stats:', error));
+        }
+
+        // Load Contacts
+        function loadContacts() {
+            fetch(API_URL + '?endpoint=contacts')
+                .then(response => response.json())
+                .then(contacts => {
+                    const tbody = document.getElementById('contactsTableBody');
+                    const select = document.getElementById('dialContact');
+                    
+                    tbody.innerHTML = '';
+                    select.innerHTML = '<option value="">Select Contact (Optional)</option>';
+                    
+                    contacts.forEach(contact => {
+                        // Add to table
+                        const row = tbody.insertRow();
+                        row.innerHTML = `
+                            <td>${contact.name}</td>
+                            <td>${contact.email || '-'}</td>
+                            <td>${contact.phone}</td>
+                            <td><span class="status-badge status-${contact.status}">${contact.status}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-success" onclick="callContact('${contact.phone}', ${contact.id})">
+                                    <i class="bi bi-telephone"></i> Call
+                                </button>
+                                <button class="btn btn-sm btn-primary" onclick="scheduleCall(${contact.id})">
+                                    <i class="bi bi-calendar-plus"></i> Schedule
+                                </button>
+                            </td>
+                        `;
+                        
+                        // Add to select dropdown
+                        const option = document.createElement('option');
+                        option.value = contact.id;
+                        option.textContent = `${contact.name} - ${contact.phone}`;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading contacts:', error));
+        }
+
+        // Load Campaigns
+        function loadCampaigns() {
+            fetch(API_URL + '?endpoint=campaigns')
+                .then(response => response.json())
+                .then(campaigns => {
+                    const container = document.getElementById('campaignsList');
+                    const select = document.getElementById('dialCampaign');
+                    
+                    container.innerHTML = '';
+                    select.innerHTML = '<option value="">Select Campaign (Optional)</option>';
+                    
+                    campaigns.forEach(campaign => {
+                        // Add to campaigns list
+                        const card = document.createElement('div');
+                        card.className = 'card mb-3';
+                        card.innerHTML = `
+                            <div class="card-body">
+                                <h6>${campaign.name}</h6>
+                                <p class="text-muted">${campaign.description || 'No description'}</p>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar" style="width: ${(campaign.completed_contacts/campaign.total_contacts*100)||0}%"></div>
+                                </div>
+                                <small>${campaign.completed_contacts || 0}/${campaign.total_contacts || 0} contacts</small>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                        
+                        // Add to select dropdown
+                        const option = document.createElement('option');
+                        option.value = campaign.id;
+                        option.textContent = campaign.name;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading campaigns:', error));
+        }
+
+        // Load Call Records
+        function loadCallRecords() {
+            fetch(API_URL + '?endpoint=call-records')
+                .then(response => response.json())
+                .then(records => {
+                    const tbody = document.getElementById('callRecordsTableBody');
+                    tbody.innerHTML = '';
+                    
+                    records.forEach(record => {
+                        const row = tbody.insertRow();
+                        row.innerHTML = `
+                            <td>${new Date(record.call_date).toLocaleString()}</td>
+                            <td>${record.contact_name || '-'}</td>
+                            <td>${record.phone_number}</td>
+                            <td>${record.duration || 0}s</td>
+                            <td><span class="status-badge status-${record.status}">${record.status}</span></td>
+                            <td>${record.campaign_name || '-'}</td>
+                        `;
+                    });
+                })
+                .catch(error => console.error('Error loading call records:', error));
+        }
+
+        // Add Contact
+        function addContact() {
+            const name = document.getElementById('contactName').value;
+            const email = document.getElementById('contactEmail').value;
+            const phone = document.getElementById('contactPhone').value;
+            
+            if (!name || !phone) {
+                alert('Name and phone are required');
+                return;
+            }
+            
+            fetch(API_URL + '?endpoint=contacts', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, email, phone})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Contact added successfully');
+                    document.getElementById('contactName').value = '';
+                    document.getElementById('contactEmail').value = '';
+                    document.getElementById('contactPhone').value = '';
+                    loadContacts();
+                    loadStats();
+                } else {
+                    alert('Failed to add contact: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add contact');
+            });
+        }
+
+        // Make Call
+        function makeCall() {
+            const phone = document.getElementById('dialNumber').value;
+            const contact_id = document.getElementById('dialContact').value;
+            const campaign_id = document.getElementById('dialCampaign').value;
+            
+            if (!phone) {
+                alert('Please enter a phone number');
+                return;
+            }
+            
+            fetch(API_URL + '?endpoint=dial', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone, contact_id, campaign_id})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Call initiated successfully');
+                    setTimeout(checkActiveChannels, 2000);
+                } else {
+                    alert('Call failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to make call');
+            });
+        }
+
+        // Call Contact
+        function callContact(phone, contact_id) {
+            fetch(API_URL + '?endpoint=dial', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone, contact_id})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Call initiated to ' + phone);
+                } else {
+                    alert('Call failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to make call');
+            });
+        }
+
+        // Schedule Call
+        function scheduleCall(contact_id) {
+            const date = prompt('Enter date (YYYY-MM-DD):');
+            const time = prompt('Enter time (HH:MM):');
+            
+            if (!date || !time) return;
+            
+            fetch(API_URL + '?endpoint=schedule-call', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({contact_id, date, time: time + ':00'})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Call scheduled successfully');
+                    loadStats();
+                } else {
+                    alert('Failed to schedule call: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to schedule call');
+            });
+        }
+
+        // Create Campaign
+        function createCampaign() {
+            const name = document.getElementById('campaignName').value;
+            const description = document.getElementById('campaignDescription').value;
+            const start_date = document.getElementById('campaignStartDate').value;
+            const end_date = document.getElementById('campaignEndDate').value;
+            
+            if (!name) {
+                alert('Campaign name is required');
+                return;
+            }
+            
+            fetch(API_URL + '?endpoint=campaigns', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, description, start_date, end_date})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Campaign created successfully');
+                    bootstrap.Modal.getInstance(document.getElementById('newCampaignModal')).hide();
+                    loadCampaigns();
+                } else {
+                    alert('Failed to create campaign: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to create campaign');
+            });
+        }
+
+        // Show New Campaign Modal
+        function showNewCampaignModal() {
+            new bootstrap.Modal(document.getElementById('newCampaignModal')).show();
+        }
+
+        // Check Active Channels (placeholder - requires WebSocket for real-time updates)
+        function checkActiveChannels() {
+            // This would typically connect to a WebSocket for real-time channel status
+            document.getElementById('activeChannels').innerHTML = 'Checking...';
+        }
+    </script>
+</body>
+</html>
