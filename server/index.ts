@@ -87,15 +87,16 @@ app.use((req, res, next) => {
 
   // Start Django backend server on port 8000
   const startDjangoServer = () => {
-    const djangoProcess = spawn('python', ['manage.py', 'runserver', '0.0.0.0:8000', '--noreload', '--settings=medcor_backend.settings'], {
+    // Start simple server as fallback when Neon DB is disabled
+    const djangoProcess = spawn('python', ['simple_server.py'], {
       cwd: './medcor_backend',
       stdio: ['pipe', 'pipe', 'pipe'],
       detached: false
     });
 
-    log('🏥 Django backend serving on port 8000');
-    log('📋 Admin Interface: http://localhost:8000/admin/');
-    log('🔑 Login: admin / admin123');
+    log('🏥 Backend API serving on port 8000');
+    log('⚠️  NEON DATABASE IS DISABLED - Running in temporary mode');
+    log('📌 To restore full functionality: Enable your Neon database at https://console.neon.tech/');
 
     djangoProcess.stdout?.on('data', (data) => {
       const output = data.toString().trim();

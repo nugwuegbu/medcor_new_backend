@@ -1,5 +1,9 @@
 #!/bin/bash
-cd medcor_backend
+
+# Only change to medcor_backend if not already there
+if [ ! -f "manage.py" ]; then
+    cd medcor_backend
+fi
 
 # Check if Neon database is disabled by testing connection
 echo "Checking database connection..."
