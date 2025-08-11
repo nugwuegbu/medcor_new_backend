@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Dialer - Contact Management & Call Scheduling</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #06b6d4;
+            --dark-color: #1e293b;
+            --light-bg: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-color);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-color) !important;
+        }
+
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            padding: 20px 0;
+        }
+
+        .sidebar .nav-link {
+            color: var(--secondary-color);
+            padding: 12px 20px;
+            margin: 4px 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .content-area {
+            padding: 30px;
+        }
+
+        .stats-card {
+            border: none;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .stats-card .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary-color);
+            background-color: #f0f9ff;
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--primary-color);
+            background-color: #dbeafe;
+        }
+
+        .contact-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .contact-table thead {
+            background-color: var(--light-bg);
+        }
+
+        .contact-table th {
+            font-weight: 600;
+            color: var(--secondary-color);
+            border: none;
+            padding: 16px;
+        }
+
+        .contact-table td {
+            padding: 16px;
+            vertical-align: middle;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-new { background-color: #dbeafe; color: #1e40af; }
+        .status-scheduled { background-color: #fef3c7; color: #92400e; }
+        .status-completed { background-color: #d1fae5; color: #065f46; }
+        .status-failed { background-color: #fee2e2; color: #991b1b; }
+
+        .btn-primary-custom {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .campaign-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .campaign-card:hover {
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .progress-custom {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e2e8f0;
+        }
+
+        .progress-bar-custom {
+            background-color: var(--success-color);
+            border-radius: 4px;
+        }
+
+        .time-slot {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .time-slot:hover {
+            border-color: var(--primary-color);
+            background-color: #f0f9ff;
+        }
+
+        .time-slot.selected {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .dialer-interface {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .dial-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 300px;
+            margin: 20px auto;
+        }
+
+        .dial-btn {
+            padding: 20px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dial-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .dial-btn:active {
+            transform: scale(0.95);
+        }
+
+        .call-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .call-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .call-btn.answer {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .call-btn.end {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .call-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        .calling {
+            animation: pulse 2s infinite;
+        }
+
+        .tab-custom {
+            border: none;
+            padding: 12px 24px;
+            background-color: transparent;
+            color: var(--secondary-color);
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-custom:hover {
+            color: var(--primary-color);
+        }
+
+        .tab-custom.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-telephone-fill"></i> Predictive Dialer
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-bell"></i>
+                            <span class="badge bg-danger rounded-pill">3</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#dashboard" data-tab="dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contacts" data-tab="contacts">
+                            <i class="bi bi-people"></i> Contacts
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#campaigns" data-tab="campaigns">
+                            <i class="bi bi-megaphone"></i> Campaigns
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#scheduler" data-tab="scheduler">
+                            <i class="bi bi-calendar-check"></i> Scheduler
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#dialer" data-tab="dialer">
+                            <i class="bi bi-telephone"></i> Dialer
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#reports" data-tab="reports">
+                            <i class="bi bi-graph-up"></i> Reports
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 content-area">
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content active">
+                    <h2 class="mb-4">Dashboard Overview</h2>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stats-card">
+                                <div class="icon bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <h3 class="mb-2">1,245</h3>
+                                <p class="text-muted mb-0">Total Contacts</p>
+                                <small class="text-success"><i class="bi bi-arrow-up"></i> 12% from last month</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card">
+                                <div class="icon bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-telephone-outbound-fill"></i>
+                                </div>
+                                <h3 class="mb-2">842</h3>
+                                <p class="text-muted mb-0">Calls Made</p>
+                                <small class="text-success"><i class="bi bi-arrow-up"></i> 8% from last week</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card">
+                                <div class="icon bg-warning bg-opacity-10 text-warning">
+                                    <i class="bi bi-clock-history"></i>
+                                </div>
+                                <h3 class="mb-2">156</h3>
+                                <p class="text-muted mb-0">Scheduled Calls</p>
+                                <small class="text-danger"><i class="bi bi-arrow-down"></i> 3% from yesterday</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card">
+                                <div class="icon bg-info bg-opacity-10 text-info">
+                                    <i class="bi bi-graph-up-arrow"></i>
+                                </div>
+                                <h3 class="mb-2">68%</h3>
+                                <p class="text-muted mb-0">Success Rate</p>
+                                <small class="text-success"><i class="bi bi-arrow-up"></i> 5% improvement</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="row mt-4">
+                        <div class="col-md-8">
+                            <div class="card contact-table">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Recent Call Activity</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Contact</th>
+                                                <th>Phone</th>
+                                                <th>Duration</th>
+                                                <th>Status</th>
+                                                <th>Agent</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>John Smith</td>
+                                                <td>+1 234-567-8900</td>
+                                                <td>5:23</td>
+                                                <td><span class="status-badge status-completed">Completed</span></td>
+                                                <td>Agent 1</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Jane Doe</td>
+                                                <td>+1 234-567-8901</td>
+                                                <td>2:15</td>
+                                                <td><span class="status-badge status-completed">Completed</span></td>
+                                                <td>Agent 2</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Bob Johnson</td>
+                                                <td>+1 234-567-8902</td>
+                                                <td>-</td>
+                                                <td><span class="status-badge status-failed">No Answer</span></td>
+                                                <td>Agent 1</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Active Campaigns</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="campaign-card">
+                                        <h6>Holiday Promotion</h6>
+                                        <div class="progress progress-custom mt-2">
+                                            <div class="progress-bar progress-bar-custom" style="width: 75%"></div>
+                                        </div>
+                                        <small class="text-muted">750/1000 contacts reached</small>
+                                    </div>
+                                    <div class="campaign-card">
+                                        <h6>Customer Survey</h6>
+                                        <div class="progress progress-custom mt-2">
+                                            <div class="progress-bar progress-bar-custom" style="width: 45%"></div>
+                                        </div>
+                                        <small class="text-muted">225/500 contacts reached</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contacts Tab -->
+                <div id="contacts" class="tab-content" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Contact Management</h2>
+                        <div>
+                            <button class="btn btn-outline-primary me-2" onclick="downloadTemplate()">
+                                <i class="bi bi-download"></i> Download Template
+                            </button>
+                            <button class="btn btn-primary btn-primary-custom" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                <i class="bi bi-upload"></i> Upload Contacts
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Upload Zone -->
+                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                        <i class="bi bi-cloud-upload" style="font-size: 48px; color: var(--primary-color);"></i>
+                        <h4 class="mt-3">Drag & Drop your file here</h4>
+                        <p class="text-muted">or click to browse</p>
+                        <p class="text-muted small">Supported formats: CSV, XLSX (Max 10MB)</p>
+                        <input type="file" id="fileInput" accept=".csv,.xlsx" style="display: none;">
+                    </div>
+
+                    <!-- Contacts Table -->
+                    <div class="contact-table mt-4">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">All Contacts</h5>
+                            <div class="d-flex gap-2">
+                                <input type="text" class="form-control" placeholder="Search contacts..." id="searchContacts">
+                                <select class="form-select" style="width: auto;">
+                                    <option>All Status</option>
+                                    <option>New</option>
+                                    <option>Contacted</option>
+                                    <option>Scheduled</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" class="form-check-input"></th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Last Contact</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contactsTableBody">
+                                    <tr>
+                                        <td><input type="checkbox" class="form-check-input"></td>
+                                        <td>John Smith</td>
+                                        <td>john@example.com</td>
+                                        <td>+1 234-567-8900</td>
+                                        <td><span class="status-badge status-new">New</span></td>
+                                        <td>-</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="scheduleCall(this)">
+                                                <i class="bi bi-calendar-plus"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success" onclick="callNow(this)">
+                                                <i class="bi bi-telephone"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campaigns Tab -->
+                <div id="campaigns" class="tab-content" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Campaign Management</h2>
+                        <button class="btn btn-primary btn-primary-custom" data-bs-toggle="modal" data-bs-target="#newCampaignModal">
+                            <i class="bi bi-plus-circle"></i> New Campaign
+                        </button>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="campaign-card">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h5>Holiday Promotion</h5>
+                                        <span class="badge bg-success">Active</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#">Edit</a></li>
+                                            <li><a class="dropdown-item" href="#">Pause</a></li>
+                                            <li><a class="dropdown-item text-danger" href="#">Delete</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <p class="text-muted">Promotional calls for holiday season offers</p>
+                                <div class="progress progress-custom mb-2">
+                                    <div class="progress-bar progress-bar-custom" style="width: 75%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <span>750/1000 calls</span>
+                                    <span>75% complete</span>
+                                </div>
+                                <div class="mt-3">
+                                    <small class="text-muted">Schedule: Mon-Fri, 9AM-5PM</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scheduler Tab -->
+                <div id="scheduler" class="tab-content" style="display: none;">
+                    <h2 class="mb-4">Call Scheduler</h2>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Schedule New Calls</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="scheduleForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">Select Contacts</label>
+                                            <select class="form-select" multiple size="3">
+                                                <option>John Smith - +1 234-567-8900</option>
+                                                <option>Jane Doe - +1 234-567-8901</option>
+                                                <option>Bob Johnson - +1 234-567-8902</option>
+                                            </select>
+                                            <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Campaign</label>
+                                            <select class="form-select">
+                                                <option>Select Campaign</option>
+                                                <option>Holiday Promotion</option>
+                                                <option>Customer Survey</option>
+                                                <option>Product Launch</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Date</label>
+                                            <input type="date" class="form-control">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Time Slots</label>
+                                            <div class="d-flex flex-wrap">
+                                                <div class="time-slot">9:00 AM</div>
+                                                <div class="time-slot">10:00 AM</div>
+                                                <div class="time-slot">11:00 AM</div>
+                                                <div class="time-slot">2:00 PM</div>
+                                                <div class="time-slot">3:00 PM</div>
+                                                <div class="time-slot">4:00 PM</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Priority</label>
+                                            <select class="form-select">
+                                                <option>Normal</option>
+                                                <option>High</option>
+                                                <option>Low</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Notes</label>
+                                            <textarea class="form-control" rows="3" placeholder="Add any special instructions..."></textarea>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary btn-primary-custom">
+                                            <i class="bi bi-calendar-check"></i> Schedule Calls
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Upcoming Scheduled Calls</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="list-group">
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h6 class="mb-1">John Smith</h6>
+                                                    <small class="text-muted">Holiday Promotion</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <small class="text-primary">Today, 2:00 PM</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <h6 class="mb-1">Jane Doe</h6>
+                                                    <small class="text-muted">Customer Survey</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <small class="text-primary">Today, 3:00 PM</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dialer Tab -->
+                <div id="dialer" class="tab-content" style="display: none;">
+                    <h2 class="mb-4">Predictive Dialer Interface</h2>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="dialer-interface">
+                                <div class="text-center mb-4">
+                                    <h3>Active Call</h3>
+                                    <div class="display-4 my-3" id="phoneDisplay">+1 234-567-8900</div>
+                                    <div id="callStatus">
+                                        <span class="badge bg-success">Connected</span>
+                                        <div class="mt-2">Duration: <span id="callDuration">00:00</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="dial-pad">
+                                    <button class="dial-btn">1</button>
+                                    <button class="dial-btn">2</button>
+                                    <button class="dial-btn">3</button>
+                                    <button class="dial-btn">4</button>
+                                    <button class="dial-btn">5</button>
+                                    <button class="dial-btn">6</button>
+                                    <button class="dial-btn">7</button>
+                                    <button class="dial-btn">8</button>
+                                    <button class="dial-btn">9</button>
+                                    <button class="dial-btn">*</button>
+                                    <button class="dial-btn">0</button>
+                                    <button class="dial-btn">#</button>
+                                </div>
+
+                                <div class="call-controls">
+                                    <button class="call-btn" title="Mute">
+                                        <i class="bi bi-mic-mute fs-4"></i>
+                                    </button>
+                                    <button class="call-btn answer calling" title="Call">
+                                        <i class="bi bi-telephone-fill fs-4"></i>
+                                    </button>
+                                    <button class="call-btn end" title="End Call">
+                                        <i class="bi bi-telephone-x-fill fs-4"></i>
+                                    </button>
+                                    <button class="call-btn" title="Hold">
+                                        <i class="bi bi-pause-circle fs-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Contact Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Name:</strong> John Smith
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Email:</strong> john@example.com
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Campaign:</strong> Holiday Promotion
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Previous Calls:</strong> 2
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Last Contact:</strong> Nov 15, 2024
+                                    </div>
+                                    
+                                    <hr>
+                                    
+                                    <h6>Call Notes</h6>
+                                    <textarea class="form-control" rows="4" placeholder="Add notes about this call..."></textarea>
+                                    
+                                    <div class="mt-3">
+                                        <label class="form-label">Call Outcome</label>
+                                        <select class="form-select">
+                                            <option>Select Outcome</option>
+                                            <option>Interested</option>
+                                            <option>Not Interested</option>
+                                            <option>Callback Requested</option>
+                                            <option>Do Not Call</option>
+                                            <option>Wrong Number</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button class="btn btn-primary btn-primary-custom mt-3 w-100">
+                                        Save & Next Call
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Tab -->
+                <div id="reports" class="tab-content" style="display: none;">
+                    <h2 class="mb-4">Reports & Analytics</h2>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stats-card text-center">
+                                <h4>Call Volume</h4>
+                                <div class="display-4 text-primary">2,456</div>
+                                <small class="text-muted">This Month</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card text-center">
+                                <h4>Avg Call Duration</h4>
+                                <div class="display-4 text-success">4:32</div>
+                                <small class="text-muted">Minutes</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card text-center">
+                                <h4>Connection Rate</h4>
+                                <div class="display-4 text-warning">78%</div>
+                                <small class="text-muted">Successfully Connected</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-card text-center">
+                                <h4>Conversion Rate</h4>
+                                <div class="display-4 text-info">23%</div>
+                                <small class="text-muted">Lead to Customer</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload Contacts</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Please ensure your CSV/Excel file contains the following columns:
+                        <strong>Name, Email, Phone, Company (optional)</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select File</label>
+                        <input type="file" class="form-control" accept=".csv,.xlsx">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Assign to Campaign</label>
+                        <select class="form-select">
+                            <option>None</option>
+                            <option>Holiday Promotion</option>
+                            <option>Customer Survey</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="skipDuplicates">
+                        <label class="form-check-label" for="skipDuplicates">
+                            Skip duplicate contacts
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-primary-custom">
+                        <i class="bi bi-upload"></i> Upload Contacts
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Campaign Modal -->
+    <div class="modal fade" id="newCampaignModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Campaign</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label">Campaign Name</label>
+                            <input type="text" class="form-control" placeholder="Enter campaign name">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" rows="3" placeholder="Describe the campaign objectives"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">End Date</label>
+                                <input type="date" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Call Script</label>
+                            <textarea class="form-control" rows="5" placeholder="Enter the call script for agents"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Target Contacts</label>
+                            <select class="form-select">
+                                <option>All Contacts</option>
+                                <option>New Contacts Only</option>
+                                <option>Custom Selection</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-primary-custom">Create Campaign</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Tab Navigation
+        document.querySelectorAll('[data-tab]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs and links
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.style.display = 'none';
+                });
+                document.querySelectorAll('.nav-link').forEach(navLink => {
+                    navLink.classList.remove('active');
+                });
+                
+                // Show selected tab
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).style.display = 'block';
+                this.classList.add('active');
+            });
+        });
+
+        // File Upload Drag & Drop
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                
+                if (fileSize > 10) {
+                    alert('File size exceeds 10MB limit');
+                    return;
+                }
+                
+                // Process file
+                uploadZone.innerHTML = `
+                    <div class="text-success">
+                        <i class="bi bi-check-circle" style="font-size: 48px;"></i>
+                        <h4 class="mt-3">${file.name}</h4>
+                        <p>Size: ${fileSize}MB</p>
+                        <button class="btn btn-primary btn-primary-custom" onclick="processUpload()">Process File</button>
+                    </div>
+                `;
+            }
+        }
+
+        function processUpload() {
+            // Simulate upload processing
+            alert('Processing file upload...');
+            // Here you would implement actual file upload logic
+        }
+
+        // Time slot selection
+        document.querySelectorAll('.time-slot').forEach(slot => {
+            slot.addEventListener('click', function() {
+                this.classList.toggle('selected');
+            });
+        });
+
+        // Call Duration Timer
+        let callStartTime = Date.now();
+        let timerInterval;
+
+        function startCallTimer() {
+            timerInterval = setInterval(() => {
+                const elapsed = Date.now() - callStartTime;
+                const minutes = Math.floor(elapsed / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                document.getElementById('callDuration').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopCallTimer() {
+            clearInterval(timerInterval);
+        }
+
+        // Start timer on page load (for demo)
+        startCallTimer();
+
+        // Schedule Call Function
+        function scheduleCall(button) {
+            const row = button.closest('tr');
+            const name = row.cells[1].textContent;
+            alert(`Scheduling call for ${name}`);
+            // Implement scheduling logic
+        }
+
+        // Call Now Function
+        function callNow(button) {
+            const row = button.closest('tr');
+            const name = row.cells[1].textContent;
+            const phone = row.cells[3].textContent;
+            
+            // Switch to dialer tab
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            document.getElementById('dialer').style.display = 'block';
+            
+            // Update dialer with contact info
+            document.getElementById('phoneDisplay').textContent = phone;
+            
+            alert(`Initiating call to ${name}`);
+        }
+
+        // Download Template Function
+        function downloadTemplate() {
+            // Create CSV content
+            const csvContent = "Name,Email,Phone,Company\n" +
+                             "John Doe,john@example.com,+1234567890,ABC Corp\n" +
+                             "Jane Smith,jane@example.com,+1234567891,XYZ Inc";
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'contacts_template.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Search Contacts
+        document.getElementById('searchContacts').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#contactsTableBody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Sample data population
+        function populateContacts() {
+            const contacts = [
+                { name: 'Alice Johnson', email: 'alice@example.com', phone: '+1 234-567-8903', status: 'scheduled' },
+                { name: 'Bob Williams', email: 'bob@example.com', phone: '+1 234-567-8904', status: 'completed' },
+                { name: 'Carol Davis', email: 'carol@example.com', phone: '+1 234-567-8905', status: 'new' },
+                { name: 'David Brown', email: 'david@example.com', phone: '+1 234-567-8906', status: 'failed' }
+            ];
+
+            const tbody = document.getElementById('contactsTableBody');
+            
+            contacts.forEach(contact => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td><input type="checkbox" class="form-check-input"></td>
+                    <td>${contact.name}</td>
+                    <td>${contact.email}</td>
+                    <td>${contact.phone}</td>
+                    <td><span class="status-badge status-${contact.status}">${contact.status}</span></td>
+                    <td>${contact.status === 'new' ? '-' : 'Nov 20, 2024'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="scheduleCall(this)">
+                            <i class="bi bi-calendar-plus"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="callNow(this)">
+                            <i class="bi bi-telephone"></i>
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // Initialize sample data
+        populateContacts();
+    </script>
+</body>
+</html>
