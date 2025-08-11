@@ -2242,18 +2242,37 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                                 });
 
                                 if (response.ok) {
-                                  const newRecord = await response.json();
-                                  setMedicalRecords(prev => [newRecord, ...prev]);
-                                  
-                                  toast({
-                                    title: "Upload Successful",
-                                    description: `${file.name} has been uploaded to your medical records.`,
-                                  });
-                                  
-                                  // Refresh records
-                                  fetchMedicalRecords();
+                                  // Check if response is JSON before parsing
+                                  const contentType = response.headers.get("content-type");
+                                  if (contentType && contentType.includes("application/json")) {
+                                    const newRecord = await response.json();
+                                    setMedicalRecords(prev => [newRecord, ...prev]);
+                                    
+                                    toast({
+                                      title: "Upload Successful",
+                                      description: `${file.name} has been uploaded to your medical records.`,
+                                    });
+                                    
+                                    // Refresh records
+                                    fetchMedicalRecords();
+                                  } else {
+                                    throw new Error('Invalid response format from server');
+                                  }
                                 } else {
-                                  throw new Error('Upload failed');
+                                  // Try to get error message if possible
+                                  const contentType = response.headers.get("content-type");
+                                  let errorMessage = 'Upload failed';
+                                  
+                                  if (contentType && contentType.includes("application/json")) {
+                                    try {
+                                      const errorData = await response.json();
+                                      errorMessage = errorData.detail || errorData.message || errorMessage;
+                                    } catch {
+                                      // Ignore JSON parse errors
+                                    }
+                                  }
+                                  
+                                  throw new Error(errorMessage);
                                 }
                               } catch (error) {
                                 console.error('Upload error:', error);
@@ -2404,17 +2423,36 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                                     });
 
                                     if (response.ok) {
-                                      const newRecord = await response.json();
-                                      setMedicalRecords(prev => [newRecord, ...prev]);
-                                      
-                                      toast({
-                                        title: "Upload Successful",
-                                        description: `${file.name} has been uploaded to your medical records.`,
-                                      });
-                                      
-                                      fetchMedicalRecords();
+                                      // Check if response is JSON before parsing
+                                      const contentType = response.headers.get("content-type");
+                                      if (contentType && contentType.includes("application/json")) {
+                                        const newRecord = await response.json();
+                                        setMedicalRecords(prev => [newRecord, ...prev]);
+                                        
+                                        toast({
+                                          title: "Upload Successful",
+                                          description: `${file.name} has been uploaded to your medical records.`,
+                                        });
+                                        
+                                        fetchMedicalRecords();
+                                      } else {
+                                        throw new Error('Invalid response format from server');
+                                      }
                                     } else {
-                                      throw new Error('Upload failed');
+                                      // Try to get error message if possible
+                                      const contentType = response.headers.get("content-type");
+                                      let errorMessage = 'Upload failed';
+                                      
+                                      if (contentType && contentType.includes("application/json")) {
+                                        try {
+                                          const errorData = await response.json();
+                                          errorMessage = errorData.detail || errorData.message || errorMessage;
+                                        } catch {
+                                          // Ignore JSON parse errors
+                                        }
+                                      }
+                                      
+                                      throw new Error(errorMessage);
                                     }
                                   } catch (error) {
                                     console.error('Upload error:', error);

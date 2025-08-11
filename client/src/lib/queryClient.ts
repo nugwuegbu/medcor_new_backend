@@ -62,7 +62,17 @@ export async function apiRequest(
   const res = await fetch(fullUrl, requestOptions);
 
   await throwIfResNotOk(res);
-  return await res.json();
+  
+  // Check if response is JSON before parsing
+  const contentType = res.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return await res.json();
+  } else {
+    // If not JSON, likely an error page
+    const text = await res.text();
+    console.error("Non-JSON response received:", text.substring(0, 200));
+    throw new Error("Server error: Invalid response format");
+  }
 }
 
 // Legacy method support for backward compatibility
