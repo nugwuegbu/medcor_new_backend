@@ -2802,6 +2802,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                                 setShowAuthOverlay(true);
                                 return;
                               }
+                              setShowChatInterface(false);
                               setShowRecordsList(true); 
                               setSelectedMenuItem("records"); 
                             } },
