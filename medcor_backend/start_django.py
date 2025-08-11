@@ -1,28 +1,42 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+"""
+Django startup script for MedCor backend
+Handles database migrations and server startup
+"""
+
 import os
 import sys
 import django
 from django.core.management import execute_from_command_line
 
-if __name__ == '__main__':
+def main():
+    """Main startup function"""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'medcor_backend.settings')
     
+    # Setup Django
+    django.setup()
+    
+    # Apply migrations
+    print("📊 Applying database migrations...")
     try:
-        print("=== Starting Django Admin Server ===")
-        print("Setting up Django...")
-        django.setup()
-        print("✅ Django setup complete")
-        
-        from django.conf import settings
-        print(f"DEBUG: {settings.DEBUG}")
-        print(f"ALLOWED_HOSTS: {settings.ALLOWED_HOSTS}")
-        
-        print("Starting Django development server on 0.0.0.0:8000...")
-        sys.argv = ['manage.py', 'runserver', '0.0.0.0:8000', '--noreload']
-        execute_from_command_line(sys.argv)
-        
+        execute_from_command_line(['manage.py', 'migrate', '--noinput'])
+        print("✅ Database migrations completed")
     except Exception as e:
-        print(f"❌ Error starting Django: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+        print(f"⚠️  Migration warning: {e}")
+        print("Continuing with server startup...")
+    
+    # Create public schema if it doesn't exist
+    try:
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("CREATE SCHEMA IF NOT EXISTS public")
+        print("✅ Public schema ensured")
+    except Exception as e:
+        print(f"⚠️  Schema warning: {e}")
+    
+    # Start the development server
+    print("🚀 Starting Django development server on port 8000...")
+    execute_from_command_line(['manage.py', 'runserver', '0.0.0.0:8000', '--noreload'])
+
+if __name__ == '__main__':
+    main()

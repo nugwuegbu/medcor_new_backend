@@ -140,8 +140,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'medcor_backend.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': {
+import dj_database_url
+
+# Use DATABASE_URL from environment
+DATABASES = {}
+if os.getenv('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.parse(
+        os.getenv('DATABASE_URL'),
+        conn_max_age=600
+    )
+    DATABASES['default']['ENGINE'] = 'django_tenants.postgresql_backend'
+else:
+    # Fallback to individual environment variables
+    DATABASES['default'] = {
         'ENGINE': 'django_tenants.postgresql_backend',
         'NAME': os.getenv('PGDATABASE'),
         'USER': os.getenv('PGUSER'),
@@ -149,7 +160,6 @@ DATABASES = {
         'HOST': os.getenv('PGHOST'),
         'PORT': os.getenv('PGPORT', '5432'),
     }
-}
 
 DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )
 
