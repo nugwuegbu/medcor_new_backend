@@ -141,25 +141,59 @@ WSGI_APPLICATION = 'medcor_backend.wsgi.application'
 
 # Database
 import dj_database_url
+import psycopg2
+from urllib.parse import urlparse
 
-# Use DATABASE_URL from environment
+# Function to check if database is accessible
+def check_database_connection(db_config):
+    """Check if database is accessible"""
+    try:
+        if 'sqlite3' in db_config.get('ENGINE', ''):
+            return True
+        
+        conn = psycopg2.connect(
+            host=db_config.get('HOST'),
+            port=db_config.get('PORT', 5432),
+            database=db_config.get('NAME'),
+            user=db_config.get('USER'),
+            password=db_config.get('PASSWORD'),
+            connect_timeout=3
+        )
+        conn.close()
+        return True
+    except Exception as e:
+        if "endpoint has been disabled" in str(e):
+            print("⚠️  Neon database endpoint is disabled - switching to SQLite")
+        return False
+
+# Try to use DATABASE_URL from environment
 DATABASES = {}
-if os.getenv('DATABASE_URL'):
-    DATABASES['default'] = dj_database_url.parse(
-        os.getenv('DATABASE_URL'),
-        conn_max_age=600
-    )
-    DATABASES['default']['ENGINE'] = 'django_tenants.postgresql_backend'
+database_url = os.getenv('DATABASE_URL')
+
+if database_url:
+    # Parse DATABASE_URL
+    parsed_db = dj_database_url.parse(database_url, conn_max_age=600)
+    
+    # Check if the database is accessible
+    if check_database_connection(parsed_db):
+        DATABASES['default'] = parsed_db
+        DATABASES['default']['ENGINE'] = 'django_tenants.postgresql_backend'
+        print("✅ Using Neon PostgreSQL database")
+    else:
+        # Fallback to SQLite if Neon is disabled
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+        print("📦 Using SQLite fallback database")
+        print("📝 To enable PostgreSQL: visit https://console.neon.tech/")
 else:
-    # Fallback to individual environment variables
+    # No DATABASE_URL, use SQLite
     DATABASES['default'] = {
-        'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': os.getenv('PGDATABASE'),
-        'USER': os.getenv('PGUSER'),
-        'PASSWORD': os.getenv('PGPASSWORD'),
-        'HOST': os.getenv('PGHOST'),
-        'PORT': os.getenv('PGPORT', '5432'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
+    print("📦 Using SQLite database (no DATABASE_URL found)")
 
 DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )
 
