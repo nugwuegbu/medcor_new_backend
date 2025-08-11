@@ -2195,6 +2195,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                         onClick={() => {
                           setShowRecordsList(false);
                           setSelectedMenuItem(null);
+                          setShowChatInterface(true);
                         }}
                         className="flex items-center gap-2 text-purple-600 hover:text-purple-700 transition-colors"
                       >
@@ -2802,7 +2803,17 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                                 setShowAuthOverlay(true);
                                 return;
                               }
+                              // Hide all other views before showing records
                               setShowChatInterface(false);
+                              setShowDoctorList(false);
+                              setShowBookingCalendar(false);
+                              setShowAdminPage(false);
+                              setShowFacePage(false);
+                              setShowHairPage(false);
+                              setShowSkinPage(false);
+                              setShowLipsPage(false);
+                              setIsMinimized(false);
+                              // Now show records
                               setShowRecordsList(true); 
                               setSelectedMenuItem("records"); 
                             } },
