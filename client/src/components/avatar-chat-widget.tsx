@@ -307,13 +307,6 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Fetch medical records when records view is shown
-  useEffect(() => {
-    if (showRecordsList && user) {
-      fetchMedicalRecords();
-    }
-  }, [showRecordsList, user, fetchMedicalRecords]);
-
   // Handle mouse events for dragging
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -850,6 +843,13 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
       console.error('Error fetching medical records:', error);
     }
   }, []);
+
+  // Fetch medical records when records view is shown
+  useEffect(() => {
+    if (showRecordsList && user) {
+      fetchMedicalRecords();
+    }
+  }, [showRecordsList, user, fetchMedicalRecords]);
 
   // Face analysis handlers
   const handleStartFaceAnalysis = useCallback(async () => {
