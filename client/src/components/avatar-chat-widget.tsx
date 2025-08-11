@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown, Mail, Lock, Eye, EyeOff, LogIn, LogOut } from "lucide-react";
+import { Mic, MicOff, Send, X, MessageSquare, ChevronLeft, Calendar, Users, Smile, Phone, Settings, FileText, MessageCircle, User, Bot, Upload, UserCheck, Scissors, Circle, Heart, Volume2, Crown, Mail, Lock, Eye, EyeOff, LogIn, LogOut, Download, Trash2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -184,6 +184,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
+  const [medicalRecords, setMedicalRecords] = useState<any[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -305,6 +306,13 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Fetch medical records when records view is shown
+  useEffect(() => {
+    if (showRecordsList && user) {
+      fetchMedicalRecords();
+    }
+  }, [showRecordsList, user, fetchMedicalRecords]);
 
   // Handle mouse events for dragging
   useEffect(() => {
@@ -820,6 +828,27 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const handleCameraPermissionRequest = useCallback(() => {
     console.log("Camera permission requested");
     setCameraEnabled(true);
+  }, []);
+
+  // Fetch medical records from Django API
+  const fetchMedicalRecords = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return;
+
+      const response = await fetch('/api/medical-records/', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMedicalRecords(data.results || data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching medical records:', error);
+    }
   }, []);
 
   // Face analysis handlers
@@ -2157,191 +2186,253 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                   </div>
                 )}
                 
-                {/* Records View */}
+                {/* Medical Records Management View */}
                 {showRecordsList && (
                   <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
-                    {/* Back Button */}
-                    <button
-                      onClick={() => {
-                        setShowRecordsList(false);
-                      }}
-                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="font-medium text-sm">Back</span>
-                    </button>
+                    {/* Header */}
+                    <div className="bg-white shadow-sm p-4 flex items-center justify-between">
+                      <button
+                        onClick={() => {
+                          setShowRecordsList(false);
+                          setSelectedMenuItem(null);
+                        }}
+                        className="flex items-center gap-2 text-purple-600 hover:text-purple-700 transition-colors"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                        <span className="font-medium">Back</span>
+                      </button>
+                      
+                      <h2 className="text-lg font-bold text-gray-800">Medical Records</h2>
+                      
+                      <label htmlFor="records-upload" className="cursor-pointer">
+                        <div className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-full text-sm transition-colors">
+                          <Upload className="h-4 w-4" />
+                          <span>Upload</span>
+                        </div>
+                        <input
+                          id="records-upload"
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file && user) {
+                              try {
+                                // Validate file size (10MB limit)
+                                if (file.size > 10 * 1024 * 1024) {
+                                  toast({
+                                    title: "File Too Large",
+                                    description: "Please select a file smaller than 10MB.",
+                                    variant: "destructive"
+                                  });
+                                  return;
+                                }
+
+                                const formData = new FormData();
+                                formData.append('file', file);
+                                formData.append('record_type', 'medical_document');
+                                formData.append('description', file.name);
+
+                                const response = await fetch('/api/medical-records/', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                                  },
+                                  body: formData
+                                });
+
+                                if (response.ok) {
+                                  const newRecord = await response.json();
+                                  setMedicalRecords(prev => [newRecord, ...prev]);
+                                  
+                                  toast({
+                                    title: "Upload Successful",
+                                    description: `${file.name} has been uploaded to your medical records.`,
+                                  });
+                                  
+                                  // Refresh records
+                                  fetchMedicalRecords();
+                                } else {
+                                  throw new Error('Upload failed');
+                                }
+                              } catch (error) {
+                                console.error('Upload error:', error);
+                                toast({
+                                  title: "Upload Failed",
+                                  description: "Failed to upload the file. Please try again.",
+                                  variant: "destructive"
+                                });
+                              }
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
                     
-                    {/* Main Content Area */}
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                      {/* Messages Display */}
-                      {messages.length > 0 ? (
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                          {messages.map((msg, index) => (
+                    {/* Records List or Empty State */}
+                    <div className="flex-1 overflow-y-auto p-4">
+                      {medicalRecords.length > 0 ? (
+                        <div className="space-y-3">
+                          {medicalRecords.map(record => (
                             <div
-                              key={msg.id}
-                              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                              key={record.id}
+                              className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
                             >
-                              <div
-                                className={`max-w-[80%] ${
-                                  msg.sender === 'user'
-                                    ? 'bg-purple-600 text-white'
-                                    : 'bg-white shadow-md'
-                                } rounded-2xl p-4`}
-                              >
-                                <p className={`text-sm ${msg.sender === 'user' ? 'text-white' : 'text-gray-800'}`}>
-                                  {msg.text.slice(0, 100)}
-                                  {msg.text.length > 100 && '...'}
-                                </p>
-                                {msg.text.length > 100 && (
-                                  <button className={`text-xs mt-2 ${msg.sender === 'user' ? 'text-purple-200' : 'text-purple-600'} hover:underline`}>
-                                    Click to read more
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <FileText className="h-5 w-5 text-purple-600" />
+                                    <h3 className="font-medium text-gray-800">
+                                      {record.description || `Record #${record.id}`}
+                                    </h3>
+                                  </div>
+                                  
+                                  <div className="mt-2 space-y-1">
+                                    <p className="text-sm text-gray-600">
+                                      Type: <span className="font-medium">{record.record_type || 'Medical Document'}</span>
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      Date: <span className="font-medium">
+                                        {new Date(record.date || record.created_at).toLocaleDateString()}
+                                      </span>
+                                    </p>
+                                    {record.diagnosis && (
+                                      <p className="text-sm text-gray-600">
+                                        Diagnosis: <span className="font-medium">{record.diagnosis}</span>
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-2">
+                                  {record.file_path && (
+                                    <button
+                                      onClick={() => {
+                                        // Download file
+                                        window.open(record.file_path, '_blank');
+                                      }}
+                                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                      title="Download"
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                  
+                                  <button
+                                    onClick={async () => {
+                                      if (confirm('Are you sure you want to delete this record?')) {
+                                        try {
+                                          const response = await fetch(`/api/medical-records/${record.id}/`, {
+                                            method: 'DELETE',
+                                            headers: {
+                                              'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                                            }
+                                          });
+
+                                          if (response.ok) {
+                                            setMedicalRecords(prev => prev.filter(r => r.id !== record.id));
+                                            toast({
+                                              title: "Record Deleted",
+                                              description: "The medical record has been deleted successfully.",
+                                            });
+                                          } else {
+                                            throw new Error('Delete failed');
+                                          }
+                                        } catch (error) {
+                                          console.error('Delete error:', error);
+                                          toast({
+                                            title: "Delete Failed",
+                                            description: "Failed to delete the record. Please try again.",
+                                            variant: "destructive"
+                                          });
+                                        }
+                                      }
+                                    }}
+                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
                                   </button>
-                                )}
-                                <p className={`text-xs mt-2 ${msg.sender === 'user' ? 'text-purple-200' : 'text-gray-500'}`}>
-                                  {new Date(msg.timestamp).toLocaleTimeString('en-US', { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit',
-                                    hour12: true 
-                                  })}
-                                </p>
+                                </div>
                               </div>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="flex-1 flex items-center justify-center">
-                          <div className="text-center">
-                            <label htmlFor="records-file-upload" className="cursor-pointer">
-                              <div className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl transform hover:scale-105">
-                                <Upload size={18} />
-                                <span className="text-sm">Upload Medical Records</span>
-                              </div>
-                              <input
-                                id="records-file-upload"
-                                type="file"
-                                className="hidden"
-                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    try {
-                                      // Show loading toast
-                                      const loadingToast = toast({
-                                        title: "Uploading Medical Record",
-                                        description: `Uploading ${file.name}...`,
-                                        variant: "default"
-                                      });
-
-                                      // Validate file size (5MB limit)
-                                      if (file.size > 5 * 1024 * 1024) {
-                                        loadingToast.dismiss();
-                                        toast({
-                                          title: "File Too Large ❌",
-                                          description: "Please select a file smaller than 5MB.",
-                                          variant: "destructive"
-                                        });
-                                        return;
-                                      }
-
-                                      // Create FormData and upload
-                                      const formData = new FormData();
-                                      formData.append('file', file);
-                                      formData.append('recordType', 'medical_document');
-
-                                      const response = await fetch('/api/upload-medical-record', {
-                                        method: 'POST',
-                                        body: formData
-                                      });
-
-                                      loadingToast.dismiss();
-
-                                      if (response.ok) {
-                                        const uploadResult = await response.json();
-                                        
-                                        // Show success toast
-                                        toast({
-                                          title: "Upload Successful! ✅",
-                                          description: `${file.name} has been uploaded to your medical records. Our AI will analyze it for insights.`,
-                                          variant: "default"
-                                        });
-
-                                        console.log('Medical record uploaded:', uploadResult);
-                                        
-                                        // Add a message to chat about the upload
-                                        const uploadMessage = {
-                                          id: Date.now().toString(),
-                                          text: `Medical record "${file.name}" uploaded successfully. The document is now part of your health profile.`,
-                                          sender: 'bot' as const,
-                                          timestamp: new Date()
-                                        };
-                                        setMessages(prev => [...prev, uploadMessage]);
-
-                                      } else {
-                                        const errorData = await response.json();
-                                        throw new Error(errorData.message || 'Upload failed');
-                                      }
-
-                                    } catch (error) {
-                                      console.error('File upload error:', error);
-                                      
-                                      // Show error toast
+                        <div className="flex flex-col items-center justify-center h-full text-center">
+                          <div className="bg-white rounded-full p-6 mb-4">
+                            <FileText className="h-12 w-12 text-purple-600" />
+                          </div>
+                          <h3 className="text-lg font-medium text-gray-800 mb-2">No Medical Records</h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            Upload your medical documents to keep them organized and accessible
+                          </p>
+                          <label htmlFor="records-upload-empty" className="cursor-pointer">
+                            <div className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full transition-colors">
+                              <Upload className="h-4 w-4" />
+                              <span>Upload First Record</span>
+                            </div>
+                            <input
+                              id="records-upload-empty"
+                              type="file"
+                              className="hidden"
+                              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file && user) {
+                                  try {
+                                    if (file.size > 10 * 1024 * 1024) {
                                       toast({
-                                        title: "Upload Failed ❌",
-                                        description: error instanceof Error ? error.message : "Failed to upload the file. Please check your connection and try again.",
+                                        title: "File Too Large",
+                                        description: "Please select a file smaller than 10MB.",
                                         variant: "destructive"
                                       });
+                                      return;
                                     }
+
+                                    const formData = new FormData();
+                                    formData.append('file', file);
+                                    formData.append('record_type', 'medical_document');
+                                    formData.append('description', file.name);
+
+                                    const response = await fetch('/api/medical-records/', {
+                                      method: 'POST',
+                                      headers: {
+                                        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                                      },
+                                      body: formData
+                                    });
+
+                                    if (response.ok) {
+                                      const newRecord = await response.json();
+                                      setMedicalRecords(prev => [newRecord, ...prev]);
+                                      
+                                      toast({
+                                        title: "Upload Successful",
+                                        description: `${file.name} has been uploaded to your medical records.`,
+                                      });
+                                      
+                                      fetchMedicalRecords();
+                                    } else {
+                                      throw new Error('Upload failed');
+                                    }
+                                  } catch (error) {
+                                    console.error('Upload error:', error);
+                                    toast({
+                                      title: "Upload Failed",
+                                      description: "Failed to upload the file. Please try again.",
+                                      variant: "destructive"
+                                    });
                                   }
-                                }}
-                              />
-                            </label>
-                            <p className="text-gray-600 mt-3 text-xs text-center">
-                              Upload your medical documents or photos<br />
-                              (PDF, JPEG, PNG, DOC)
-                            </p>
-                          </div>
+                                }
+                              }}
+                            />
+                          </label>
+                          <p className="text-xs text-gray-500 mt-3">
+                            Supported formats: PDF, JPEG, PNG, DOC, DOCX (Max 10MB)
+                          </p>
                         </div>
                       )}
-                    </div>
-                    
-                    {/* Chat Input with Microphone for Records Page */}
-                    <div className="bg-gradient-to-t from-gray-100 to-transparent p-6">
-                      <div className="relative max-w-2xl mx-auto">
-                        <input
-                          type="text"
-                          value={recordsInputText}
-                          onChange={(e) => setRecordsInputText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && recordsInputText.trim()) {
-                              handleSendMessage(recordsInputText);
-                              setRecordsInputText('');
-                            }
-                          }}
-                          placeholder="Send your message..."
-                          className="w-full px-6 py-4 pr-24 bg-white/90 backdrop-blur-sm rounded-full shadow-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all"
-                        />
-                        
-                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-                          <BrowserVoiceButton
-                            onTranscript={(transcript) => {
-                              setRecordsInputText(transcript);
-                              handleSendMessage(transcript);
-                              setRecordsInputText('');
-                            }}
-                          />
-                          <button
-                            onClick={() => {
-                              if (recordsInputText.trim()) {
-                                handleSendMessage(recordsInputText);
-                                setRecordsInputText('');
-                              }
-                            }}
-                            className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all hover:scale-110 shadow-md"
-                          >
-                            <Send size={20} />
-                          </button>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 )}
@@ -4035,7 +4126,13 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
                   <User className="h-10 w-10 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-800">Your Profile</h2>
+                <h2 className="text-xl font-bold text-gray-800">
+                  {user?.first_name && user?.last_name 
+                    ? `${user.first_name} ${user.last_name}`
+                    : user?.first_name 
+                      ? user.first_name
+                      : user?.username || 'Your Profile'}
+                </h2>
                 <p className="text-sm text-gray-600 mt-1">Patient Account</p>
               </div>
               
@@ -4044,7 +4141,11 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                 <div className="border-b pb-3">
                   <p className="text-xs text-gray-500 mb-1">Name</p>
                   <p className="text-sm font-medium text-gray-800">
-                    {user?.first_name} {user?.last_name || ''}
+                    {user?.first_name && user?.last_name 
+                      ? `${user.first_name} ${user.last_name}`
+                      : user?.first_name 
+                        ? user.first_name
+                        : user?.username || 'Not provided'}
                   </p>
                 </div>
                 
