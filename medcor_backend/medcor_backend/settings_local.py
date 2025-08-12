@@ -1,5 +1,6 @@
-# Temporary local settings with SQLite database
-# This file is used when the Neon database is disabled
+"""
+Django settings for local development without multi-tenancy
+"""
 
 import os
 from pathlib import Path
@@ -8,14 +9,14 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-local-testing-key-2024'
+SECRET_KEY = 'django-insecure-local-development-key-change-in-production'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-# Application definition - Basic apps only, no multi-tenancy
+# Application definition - With tenants for model imports
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -24,19 +25,24 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework_simplejwt',
-    'corsheaders',
     'drf_spectacular',
-    # Core apps without multi-tenancy
+    'corsheaders',
+    'django_tenants',  # Required for multi-tenant models
+    'tenant_users.permissions',  # Required for UserProfile
+    'tenant_users.tenants',  # Required for TenantBase
+    'tenants',  # Custom tenant models
     'core',
     'api',
-    'appointment',
     'treatment',
+    'appointment',
+    'medical_api',
+    'user_auth',
+    'medical_records',
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -65,11 +71,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'medcor_backend.wsgi.application'
 
-# Database - Local SQLite
+# Database - Simple SQLite for local development
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'local_db.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -96,13 +102,32 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Use custom User model from tenants app
+AUTH_USER_MODEL = 'tenants.User'
+
+# Multi-tenancy settings (minimal for local dev)
+TENANT_MODEL = 'tenants.Client'
+TENANT_DOMAIN_MODEL = 'tenants.Domain'
+PUBLIC_SCHEMA_NAME = 'public'
+
 # CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5000",
+]
+
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -110,29 +135,44 @@ CORS_ALLOW_CREDENTIALS = True
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# JWT settings
+# JWT Settings
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-print("=" * 60)
-print("🚨 USING LOCAL SQLITE DATABASE (TEMPORARY)")
-print("This is a temporary solution while Neon database is disabled")
-print("To restore production database:")
-print("1. Go to https://console.neon.tech/")
-print("2. Find endpoint: ep-odd-darkness-aeh1zc2l")
-print("3. Click 'Enable' or 'Resume'")
-print("=" * 60)
+# DRF Spectacular settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MedCor API',
+    'DESCRIPTION': 'Medical Core API for healthcare management',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
+
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}

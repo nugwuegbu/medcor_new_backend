@@ -31,6 +31,7 @@ import { sendSkinAnalysis } from "./skin-analysis.js";
 import hairExtensionRouter from "./hair-extension-api";
 import adminRouter from "./admin-routes-mock";
 import djangoAuthRouter from "./django-auth-routes";
+import djangoProxyRouter from "./django-proxy";
 import superadminRouter from "./superadmin-routes";
 import doctorPatientRouter from "./doctor-patient-routes";
 
@@ -42,14 +43,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register admin routes
   app.use("/api", adminRouter);
   
-  // Register Django backend proxy routes (temporarily disabled for login)
-  // app.use("/api", djangoAuthRouter);
+  // Register Django backend proxy routes
+  app.use("/api", djangoAuthRouter);
+  app.use("/api", djangoProxyRouter);
   
   // Register MedCor superadmin routes
   app.use("/api", superadminRouter);
   
-  // Register doctor and patient specific routes
-  app.use("/api", doctorPatientRouter);
+  // NOTE: Disabled mock routes - using Django backend instead
+  // app.use("/api", doctorPatientRouter);
 
   // Create default accounts on startup
   AuthService.createDefaultAccounts().catch(console.error);
