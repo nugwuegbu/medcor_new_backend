@@ -6,7 +6,7 @@ import { storage } from './storage';
 
 const router = express.Router();
 
-const DJANGO_API_URL = process.env.DJANGO_API_URL || 'http://localhost:8000';
+const DJANGO_API_URL = process.env.DJANGO_API_URL || 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000';
 
 // Login endpoint that proxies to Django
 router.post('/auth/login', async (req, res) => {

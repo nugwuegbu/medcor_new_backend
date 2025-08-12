@@ -41,12 +41,11 @@ def check_neon_database():
 
 def main():
     """Main startup function"""
-    # Always try to use full Django first, regardless of database check
-    # This allows Django to handle database connections internally
-    try:
-        # Use local settings for development without multi-tenancy
-        os.environ['DJANGO_SETTINGS_MODULE'] = 'medcor_backend.settings_local'
-        print("🎯 Using local Django settings (without multi-tenancy)")
+    # Check database availability
+    if check_neon_database():
+        # Use full Django with PostgreSQL
+        os.environ['DJANGO_SETTINGS_MODULE'] = 'medcor_backend.settings'
+        print("🎯 Using full Django settings with PostgreSQL")
         
         # Import Django after setting the correct settings module
         import django
@@ -67,9 +66,8 @@ def main():
         # Start the Django development server
         print("🚀 Starting Django development server on port 8000...")
         execute_from_command_line(['manage.py', 'runserver', '0.0.0.0:8000', '--noreload'])
-    except Exception as e:
-        # Only fall back if Django completely fails to start
-        print(f"❌ Django startup failed: {e}")
+    else:
+        # Use simple fallback server
         print("📦 Using simple fallback API server")
         # Import and run the simple server
         from simple_django_server import main as simple_server_main
