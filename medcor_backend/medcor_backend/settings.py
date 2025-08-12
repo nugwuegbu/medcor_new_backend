@@ -102,14 +102,14 @@ INSTALLED_APPS = list(SHARED_APPS) + [
 ]
 
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
+    # 'django_tenants.middleware.main.TenantMainMiddleware',  # Disabled for SQLite
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'tenant_users.tenants.middleware.TenantAccessMiddleware',
+    # 'tenant_users.tenants.middleware.TenantAccessMiddleware',  # Disabled for SQLite
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -166,36 +166,16 @@ def check_database_connection(db_config):
             print("⚠️  Neon database endpoint is disabled - switching to SQLite")
         return False
 
-# Try to use DATABASE_URL from environment
-DATABASES = {}
-database_url = os.getenv('DATABASE_URL')
-
-if database_url:
-    # Parse DATABASE_URL
-    parsed_db = dj_database_url.parse(database_url, conn_max_age=600)
-    
-    # Check if the database is accessible
-    if check_database_connection(parsed_db):
-        DATABASES['default'] = parsed_db
-        DATABASES['default']['ENGINE'] = 'django_tenants.postgresql_backend'
-        print("✅ Using Neon PostgreSQL database")
-    else:
-        # Fallback to SQLite if Neon is disabled
-        DATABASES['default'] = {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-        print("📦 Using SQLite fallback database")
-        print("📝 To enable PostgreSQL: visit https://console.neon.tech/")
-else:
-    # No DATABASE_URL, use SQLite
-    DATABASES['default'] = {
+# Use SQLite for testing since PostgreSQL endpoint is disabled
+DATABASES = {
+    'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-    print("📦 Using SQLite database (no DATABASE_URL found)")
+}
+print("📦 Using SQLite database for testing")
 
-DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )
+# DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )  # Disabled for SQLite
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
