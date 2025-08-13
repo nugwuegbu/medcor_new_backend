@@ -54,7 +54,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register analysis tracking routes
   const analysisTrackingRouter = createAnalysisTrackingRoutes(storage);
-  app.use("/api", analysisTrackingRouter);
+  app.use(analysisTrackingRouter);
 
   // Create default accounts on startup
   AuthService.createDefaultAccounts().catch(console.error);

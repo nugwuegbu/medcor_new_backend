@@ -7,7 +7,7 @@ export function createAnalysisTrackingRoutes(storage: IStorage): Router {
   const router = Router();
 
   // Create a new analysis tracking entry
-  router.post("/analysis-tracking", async (req, res) => {
+  router.post("/api/analysis-tracking", async (req, res) => {
     try {
       const parsed = insertAnalysisTrackingSchema.parse(req.body);
       const analysis = await storage.createAnalysisTracking(parsed);
@@ -23,7 +23,7 @@ export function createAnalysisTrackingRoutes(storage: IStorage): Router {
   });
 
   // Get analysis tracking for a specific tenant
-  router.get("/analysis-tracking/:tenantId?", async (req, res) => {
+  router.get("/api/analysis-tracking/:tenantId?", async (req, res) => {
     try {
       const tenantId = req.params.tenantId ? parseInt(req.params.tenantId) : undefined;
       const analyses = await storage.getAnalysisTrackingByTenant(tenantId);
