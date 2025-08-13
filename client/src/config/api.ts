@@ -1,7 +1,7 @@
 // API Configuration for Django Backend
 export const API_CONFIG = {
   // Use production medcor.ai domain for API calls
-  BASE_URL: 'https://medcor.ai/api',
+  BASE_URL: 'https://medcor.ai',
   
   // API endpoints matching Django URL patterns
   ENDPOINTS: {

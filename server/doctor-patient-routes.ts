@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 
 const router = express.Router();
 
-const DJANGO_API_URL = process.env.DJANGO_API_URL || 'https://medcor.ai/api';
+const DJANGO_API_URL = process.env.DJANGO_API_URL || 'https://medcor.ai';
 
 // Middleware to check authentication
 const requireAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
