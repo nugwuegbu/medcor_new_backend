@@ -1,7 +1,7 @@
 // API Configuration for Django Backend
 export const API_CONFIG = {
-  // Use Django backend directly - always use Replit domain since Django is multi-tenant
-  BASE_URL: 'https://14b294fa-eeaf-46d5-a262-7c25b42c30d9-00-m9ex3vzr6khq.sisko.replit.dev:8000',
+  // Use production medcor.ai domain for API calls
+  BASE_URL: 'https://medcor.ai/api',
   
   // API endpoints matching Django URL patterns
   ENDPOINTS: {
