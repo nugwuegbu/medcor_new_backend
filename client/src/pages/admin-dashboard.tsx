@@ -289,10 +289,10 @@ export default function AdminDashboard() {
 
   // Fetch appointments - using Django's appointments endpoint  
   const { data: appointmentsData, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ['/appointments/'],
+    queryKey: ['/api/appointments/appointments/'],
     queryFn: async () => {
       try {
-        const response = await apiRequest('/appointments/', {
+        const response = await apiRequest('/api/appointments/appointments/', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
           }
