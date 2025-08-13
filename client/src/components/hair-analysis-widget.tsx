@@ -184,6 +184,31 @@ export default function HairAnalysisWidget({ onClose, videoStream, capturePhotoR
     try {
       console.log("🎬 HAIR DEBUG: Starting hair analysis");
       
+      // Track analysis usage
+      const sessionId = sessionStorage.getItem('sessionId') || Date.now().toString();
+      const userStr = localStorage.getItem('user');
+      const tenantId = localStorage.getItem('tenantId');
+      
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          await fetch('/api/track-analysis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              patientId: user.id || user.patient_id || 0,
+              tenantId: tenantId ? parseInt(tenantId) : null,
+              sessionId: sessionId,
+              analysisType: 'hair',
+              widgetLocation: 'chat_widget'
+            })
+          });
+          console.log('Hair analysis tracked successfully');
+        } catch (err) {
+          console.error('Failed to track hair analysis:', err);
+        }
+      }
+      
       // Capture image from video
       const video = videoRef.current;
       if (!video || !video.videoWidth || !video.videoHeight) {

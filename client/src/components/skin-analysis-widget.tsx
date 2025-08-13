@@ -225,6 +225,31 @@ export default function SkinAnalysisWidget({ onClose, videoStream, capturePhotoR
     try {
       console.log("🌟 SKIN DEBUG: Starting skin analysis");
       
+      // Track analysis usage
+      const sessionId = sessionStorage.getItem('sessionId') || Date.now().toString();
+      const userStr = localStorage.getItem('user');
+      const tenantId = localStorage.getItem('tenantId');
+      
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          await fetch('/api/track-analysis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              patientId: user.id || user.patient_id || 0,
+              tenantId: tenantId ? parseInt(tenantId) : null,
+              sessionId: sessionId,
+              analysisType: 'skin',
+              widgetLocation: 'chat_widget'
+            })
+          });
+          console.log('Skin analysis tracked successfully');
+        } catch (err) {
+          console.error('Failed to track skin analysis:', err);
+        }
+      }
+      
       // Show analysis steps with delays
       const steps = [
         "Capturing your image...",

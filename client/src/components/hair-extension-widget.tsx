@@ -300,6 +300,30 @@ const HairExtensionWidget: React.FC<HairExtensionWidgetProps> = ({ isOpen, onClo
     setError(null);
 
     try {
+      // Track analysis usage
+      const sessionId = sessionStorage.getItem('sessionId') || Date.now().toString();
+      const userStr = localStorage.getItem('user');
+      const tenantId = localStorage.getItem('tenantId');
+      
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          await fetch('/api/track-analysis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              patientId: user.id || user.patient_id || 0,
+              tenantId: tenantId ? parseInt(tenantId) : null,
+              sessionId: sessionId,
+              analysisType: 'hair_extension',
+              widgetLocation: 'chat_widget'
+            })
+          });
+          console.log('Hair extension analysis tracked successfully');
+        } catch (err) {
+          console.error('Failed to track hair extension analysis:', err);
+        }
+      }
       // Simulate processing steps
       const steps = [
         { message: 'Uploading image...', progress: 20 },

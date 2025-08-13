@@ -268,6 +268,30 @@ export default function LipsAnalysisWidget({ onClose, videoStream, hasVideoStrea
     setAnalysisStep(0);
 
     try {
+      // Track analysis usage
+      const sessionId = sessionStorage.getItem('sessionId') || Date.now().toString();
+      const userStr = localStorage.getItem('user');
+      const tenantId = localStorage.getItem('tenantId');
+      
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          await fetch('/api/track-analysis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              patientId: user.id || user.patient_id || 0,
+              tenantId: tenantId ? parseInt(tenantId) : null,
+              sessionId: sessionId,
+              analysisType: 'lips',
+              widgetLocation: 'chat_widget'
+            })
+          });
+          console.log('Lips analysis tracked successfully');
+        } catch (err) {
+          console.error('Failed to track lips analysis:', err);
+        }
+      }
       // Animate through analysis steps
       for (let i = 0; i < 5; i++) {
         setAnalysisStep(i);

@@ -108,6 +108,16 @@ interface AdminStats {
   monthlyGrowth: number;
 }
 
+interface AnalysisTrackingStats {
+  faceAnalyses: number;
+  hairAnalyses: number;
+  lipsAnalyses: number;
+  skinAnalyses: number;
+  hairExtensionAnalyses: number;
+  totalAnalyses: number;
+  growthPercentage: number;
+}
+
 // Form validation schemas
 const userFormSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -303,6 +313,20 @@ export default function AdminDashboard() {
   
   // Ensure appointments is always an array
   const appointments = Array.isArray(appointmentsData) ? appointmentsData : [];
+
+  // Fetch analysis tracking statistics
+  const { data: analysisStats, isLoading: analysisStatsLoading } = useQuery<AnalysisTrackingStats>({
+    queryKey: ['/api/analysis-tracking-stats'],
+    queryFn: () => apiRequest('/api/analysis-tracking-stats'),
+    retry: false,
+  });
+
+  // Fetch recent analysis tracking data
+  const { data: recentAnalyses, isLoading: recentAnalysesLoading } = useQuery({
+    queryKey: ['/api/analysis-tracking'],
+    queryFn: () => apiRequest('/api/analysis-tracking'),
+    retry: false,
+  });
 
   // Calculate statistics from the fetched data
   const stats: AdminStats = {
@@ -2016,6 +2040,133 @@ export default function AdminDashboard() {
                         <p className="text-xs text-gray-600">Based on 234 reviews</p>
                       </CardContent>
                     </Card>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Analysis Tracking Statistics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Chat Widget Analysis Tracking</CardTitle>
+                  <CardDescription>Track patient usage of analysis services across clinic tenants</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                    <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm">Face Analysis</CardTitle>
+                          <Scan className="h-4 w-4 text-purple-600" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{analysisStats?.faceAnalyses || 0}</div>
+                        <p className="text-xs text-purple-600">Total scans</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm">Hair Analysis</CardTitle>
+                          <Scan className="h-4 w-4 text-blue-600" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{analysisStats?.hairAnalyses || 0}</div>
+                        <p className="text-xs text-blue-600">Total scans</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-gradient-to-br from-pink-50 to-pink-100">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm">Lips Analysis</CardTitle>
+                          <Heart className="h-4 w-4 text-pink-600" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{analysisStats?.lipsAnalyses || 0}</div>
+                        <p className="text-xs text-pink-600">Total scans</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm">Skin Analysis</CardTitle>
+                          <Activity className="h-4 w-4 text-orange-600" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{analysisStats?.skinAnalyses || 0}</div>
+                        <p className="text-xs text-orange-600">Total scans</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm">Hair Extension</CardTitle>
+                          <Package className="h-4 w-4 text-indigo-600" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{analysisStats?.hairExtensionAnalyses || 0}</div>
+                        <p className="text-xs text-indigo-600">Total analyses</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-gradient-to-br from-green-50 to-green-100">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm">Total Analyses</CardTitle>
+                          <BarChart3 className="h-4 w-4 text-green-600" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{analysisStats?.totalAnalyses || 0}</div>
+                        <p className="text-xs text-green-600">
+                          {analysisStats?.growthPercentage > 0 ? '+' : ''}{analysisStats?.growthPercentage || 0}% growth
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Recent Analysis Activity */}
+                  <div className="mt-6">
+                    <h3 className="text-sm font-semibold mb-3">Recent Analysis Activity</h3>
+                    <div className="space-y-2">
+                      {recentAnalyses?.slice(0, 5).map((analysis: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${
+                              analysis.analysisType === 'face' ? 'bg-purple-500' :
+                              analysis.analysisType === 'hair' ? 'bg-blue-500' :
+                              analysis.analysisType === 'lips' ? 'bg-pink-500' :
+                              analysis.analysisType === 'skin' ? 'bg-orange-500' :
+                              analysis.analysisType === 'hair_extension' ? 'bg-indigo-500' :
+                              'bg-gray-500'
+                            }`}></div>
+                            <div>
+                              <p className="text-sm font-medium">Patient #{analysis.patientId}</p>
+                              <p className="text-xs text-gray-500">
+                                {analysis.analysisType.replace('_', ' ').charAt(0).toUpperCase() + 
+                                 analysis.analysisType.replace('_', ' ').slice(1)} analysis
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500">{formatDate(analysis.createdAt)}</p>
+                            <p className="text-xs text-gray-400">Clinic #{analysis.tenantId || 'N/A'}</p>
+                          </div>
+                        </div>
+                      )) || (
+                        <div className="text-center py-4 text-sm text-gray-500">
+                          No analysis activity yet
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
