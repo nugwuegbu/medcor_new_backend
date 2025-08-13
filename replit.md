@@ -47,6 +47,7 @@ Preferred communication style: Simple, everyday language.
 - **Patient Dashboard** (NEW - Jan 2025): Comprehensive patient portal with appointment management, medical records viewing, treatment history, prescription tracking, and real-time doctor availability. Full Django API integration for appointments, treatments, and medical records.
 - **Enhanced Doctor Dashboard** (NEW - Jan 2025): Advanced doctor portal featuring patient management, appointment scheduling with status tracking (scheduled/in-progress/completed), treatment recording, prescription issuance, analytics dashboard, and patient medical history access. Integrated with Django backend for real-time data synchronization.
 - **Critical Backend Fixes** (Jan 8, 2025): Fixed doctors/patients list filtering to use `role` field instead of non-existent groups. Made appointment `slot`, `treatment`, and `medical_record` fields optional to fix creation errors.
+- **Analysis Tracking API Fix** (Jan 13, 2025): Added `/api/track-analysis` and `/api/analysis-tracking-stats` endpoints to Django fallback server for proper tracking when Neon database is unavailable. Fixed appointments endpoint to match documentation: `/api/appointments/appointments/`.
 
 ## External Dependencies
 ### Core Services

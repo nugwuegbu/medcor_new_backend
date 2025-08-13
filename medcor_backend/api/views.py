@@ -20,12 +20,14 @@ from rest_framework.generics import ListAPIView, CreateAPIView
 from asgiref.sync import sync_to_async
 
 from core.models import ChatMessage, HairAnalysisReport, FaceAnalysisReport
+from api.models import AnalysisTracking
 from .serializers import (
-    DoctorSerializer, AppointmentSerializer, CreateAppointmentSerializer,
     ChatMessageSerializer, CreateChatMessageSerializer,
     HairAnalysisReportSerializer, CreateHairAnalysisReportSerializer,
     FaceAnalysisReportSerializer, CreateFaceAnalysisReportSerializer,
-    WeatherRequestSerializer, AdminStatsSerializer)
+    WeatherRequestSerializer, AdminStatsSerializer,
+    AnalysisTrackingSerializer, CreateAnalysisTrackingSerializer,
+    AnalysisTrackingStatsSerializer)
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -474,3 +476,106 @@ class AdminUsersView(ListAPIView):
                     'message': 'Failed to get users'
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CreateAnalysisTrackingView(APIView):
+    """API endpoint to track analysis widget usage."""
+    
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        """Create analysis tracking record."""
+        try:
+            serializer = CreateAnalysisTrackingSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    {'success': False, 'errors': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            validated_data = serializer.validated_data
+            
+            # Get or create patient user
+            patient = None
+            if validated_data.get('patientId'):
+                try:
+                    patient = User.objects.get(id=validated_data['patientId'])
+                except User.DoesNotExist:
+                    pass
+            
+            # Get tenant ID if provided
+            tenant_id = validated_data.get('tenantId')
+            
+            # Create tracking record
+            tracking = AnalysisTracking.objects.create(
+                patient=patient,  # Can be None if no patient ID provided
+                tenant_id=tenant_id,
+                session_id=validated_data['sessionId'],
+                analysis_type=validated_data['analysisType'],
+                widget_location=validated_data.get('widgetLocation', 'chat_widget'),
+                metadata=validated_data.get('metadata')
+            )
+            
+            return Response({
+                'success': True,
+                'id': tracking.id,
+                'message': 'Analysis tracking recorded successfully'
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Analysis tracking error: {str(e)}")
+            return Response(
+                {'success': False, 'message': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class AnalysisTrackingStatsView(APIView):
+    """API endpoint to get analysis tracking statistics."""
+    
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        """Get analysis tracking statistics."""
+        try:
+            # Get tenant ID from query params
+            tenant_id = request.query_params.get('tenantId')
+            
+            # Base query
+            queryset = AnalysisTracking.objects.all()
+            
+            # Filter by tenant if provided
+            if tenant_id:
+                queryset = queryset.filter(tenant_id=tenant_id)
+            
+            # Get counts by analysis type
+            stats = queryset.values('analysis_type').annotate(
+                count=Count('id')
+            )
+            
+            # Format statistics
+            result = {
+                'face': 0,
+                'hair': 0,
+                'lips': 0,
+                'skin': 0,
+                'hair_extension': 0,
+                'total': 0
+            }
+            
+            for stat in stats:
+                analysis_type = stat['analysis_type']
+                count = stat['count']
+                if analysis_type in result:
+                    result[analysis_type] = count
+                result['total'] += count
+            
+            serializer = AnalysisTrackingStatsSerializer(result)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Analysis tracking stats error: {str(e)}")
+            return Response(
+                {'success': False, 'message': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

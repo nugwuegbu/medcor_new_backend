@@ -33,7 +33,8 @@ import adminRouter from "./admin-routes-mock";
 import djangoAuthRouter from "./django-auth-routes";
 import superadminRouter from "./superadmin-routes";
 import doctorPatientRouter from "./doctor-patient-routes";
-import { createAnalysisTrackingRoutes } from "./analysis-tracking-routes";
+// Disabled - now handled by Django backend
+// import { createAnalysisTrackingRoutes } from "./analysis-tracking-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication
@@ -53,8 +54,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", doctorPatientRouter);
   
   // Register analysis tracking routes
-  const analysisTrackingRouter = createAnalysisTrackingRoutes(storage);
-  app.use(analysisTrackingRouter);
+  // Disabled - now handled by Django backend
+  // const analysisTrackingRouter = createAnalysisTrackingRoutes(storage);
+  // app.use(analysisTrackingRouter);
 
   // Create default accounts on startup
   AuthService.createDefaultAccounts().catch(console.error);
