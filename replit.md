@@ -17,6 +17,23 @@ Preferred communication style: Simple, everyday language.
 - **Form Handling**: React Hook Form with Zod validation
 - **UI/UX Design**: Medical-themed color scheme, responsive design, component-based, dark mode support.
 
+### Django Backend (medcor_backend2) - Added January 16, 2025
+- **Framework**: Django 4.2+ with Django REST Framework
+- **Database**: PostgreSQL (Supabase - migrated from disabled Neon)
+- **Architecture**: Multi-tenant with shared database and tenant ID approach
+- **Authentication**: JWT-based using django-rest-framework-simplejwt
+- **API Documentation**: Auto-generated with drf-spectacular (Swagger/ReDoc)
+- **Apps Structure**:
+  - **core**: User authentication and management with custom User model
+  - **tenants**: Hospital management (hospitals as tenants)
+  - **appointments**: Scheduling with time slots
+  - **medical_records**: Patient health information
+  - **treatments**: Treatment plans and prescriptions
+  - **subscription_plans**: Tiered billing for hospitals
+- **Middleware**: Custom TenantMiddleware for multi-tenant request handling
+- **FastMCP Integration**: Voice interaction server with 33 tools for healthcare operations
+- **Default Accounts**: admin@medcor.ai/admin123, demo hospital with doctor/nurse/patient accounts
+
 ### Dashboard Structure (Simplified - January 8, 2025)
 - **4 Main Dashboards Only**:
   1. **Superadmin Dashboard** (`/superadmin/dashboard`) - Multi-tenancy management for MedCor platform
