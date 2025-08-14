@@ -1022,9 +1022,9 @@ const DoctorDashboardEnhanced: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
-        <aside className={`fixed inset-y-0 left-0 z-10 w-64 h-screen bg-white border-r shadow-lg transform transition-transform lg:translate-x-0 lg:static lg:inset-0 flex flex-col ${
+        <aside className={`fixed top-0 left-0 z-10 w-64 h-screen bg-white border-r shadow-lg transform transition-transform lg:translate-x-0 flex flex-col ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
           <nav className="flex-1 p-4 space-y-2 mt-16 lg:mt-0 overflow-hidden">
@@ -1061,7 +1061,7 @@ const DoctorDashboardEnhanced: React.FC = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 lg:ml-64 p-6 overflow-y-auto">
           <div className="max-w-7xl mx-auto">
             {activeView === 'overview' && <OverviewPage />}
             {activeView === 'appointments' && <AppointmentsPage />}
