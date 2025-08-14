@@ -109,7 +109,7 @@ interface MedicalRecord {
 
 interface AnalysisRecord {
   id: number;
-  analysis_type: 'skin' | 'hair' | 'lips';
+  analysis_type: 'skin' | 'hair' | 'lips' | 'face';
   date: string;
   score: number;
   recommendations: string[];
@@ -125,6 +125,8 @@ const PatientDashboard: React.FC = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisRecord | null>(null);
 
   // Demo patient data
   const patientInfo = {
@@ -135,6 +137,7 @@ const PatientDashboard: React.FC = () => {
     phone: '+1 (555) 123-4567',
     date_of_birth: '1985-06-15',
     blood_type: 'O+',
+    genotype: 'AA',
     allergies: ['Penicillin', 'Peanuts'],
     emergency_contact: 'Jane Smith - +1 (555) 987-6543',
     insurance_provider: 'Blue Cross Blue Shield',
@@ -263,6 +266,18 @@ const PatientDashboard: React.FC = () => {
         'Stay hydrated'
       ],
       image_url: '/api/placeholder/200/200'
+    },
+    {
+      id: 4,
+      analysis_type: 'face',
+      date: '2025-01-12',
+      score: 78,
+      recommendations: [
+        'Focus on evening skincare routine',
+        'Use vitamin C serum',
+        'Get adequate sleep (7-8 hours)'
+      ],
+      image_url: '/api/placeholder/200/200'
     }
   ];
 
@@ -271,7 +286,7 @@ const PatientDashboard: React.FC = () => {
     { id: 'overview', label: 'Overview', icon: Home, badge: null },
     { id: 'appointments', label: 'Appointments', icon: Calendar, badge: '2' },
     { id: 'medical-records', label: 'Medical Records', icon: FileText, badge: null },
-    { id: 'analysis', label: 'Health Analysis', icon: Scan, badge: 'NEW' },
+    { id: 'analysis', label: 'Health Analysis', icon: Scan, badge: null },
     { id: 'profile', label: 'Profile & Settings', icon: Settings, badge: null }
   ];
 
@@ -579,16 +594,12 @@ const PatientDashboard: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Health Analysis</h2>
-          <p className="text-gray-500">Track your skin, hair, and lips health</p>
+          <p className="text-gray-500">Track your skin, hair, lips, and face health</p>
         </div>
-        <Button>
-          <Camera className="h-4 w-4 mr-2" />
-          New Analysis
-        </Button>
       </div>
 
       {/* Analysis Type Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="cursor-pointer hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -651,6 +662,27 @@ const PatientDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <User className="h-5 w-5 text-blue-600" />
+              </div>
+              Face Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500">Last Score</span>
+                <span className="text-2xl font-bold">78/100</span>
+              </div>
+              <Progress value={78} className="h-2" />
+              <p className="text-xs text-gray-500">Last analyzed: Jan 12, 2025</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Analysis History */}
@@ -685,15 +717,18 @@ const PatientDashboard: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <ul className="text-sm space-y-1">
-                      {record.recommendations.slice(0, 2).map((rec, idx) => (
-                        <li key={idx} className="text-gray-600">• {rec}</li>
-                      ))}
-                    </ul>
+                    <p className="text-sm text-gray-600">• {record.recommendations[0]}</p>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedAnalysis(record);
+                          setShowAnalysisModal(true);
+                        }}
+                      >
                         <Eye className="h-3 w-3 mr-1" />
                         View
                       </Button>
@@ -724,7 +759,6 @@ const PatientDashboard: React.FC = () => {
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="medical">Medical Info</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
 
@@ -793,6 +827,22 @@ const PatientDashboard: React.FC = () => {
                   </Select>
                 </div>
                 <div>
+                  <Label>Genotype</Label>
+                  <Select defaultValue={patientInfo.genotype}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AA">AA</SelectItem>
+                      <SelectItem value="AS">AS</SelectItem>
+                      <SelectItem value="AC">AC</SelectItem>
+                      <SelectItem value="SS">SS</SelectItem>
+                      <SelectItem value="SC">SC</SelectItem>
+                      <SelectItem value="CC">CC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label>Emergency Contact</Label>
                   <Input value={patientInfo.emergency_contact} />
                 </div>
@@ -819,48 +869,7 @@ const PatientDashboard: React.FC = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Appointment Reminders</p>
-                    <p className="text-sm text-gray-500">Get notified about upcoming appointments</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Test Results</p>
-                    <p className="text-sm text-gray-500">Receive alerts when test results are ready</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Medication Reminders</p>
-                    <p className="text-sm text-gray-500">Get reminders to take your medications</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Health Tips</p>
-                    <p className="text-sm text-gray-500">Receive personalized health recommendations</p>
-                  </div>
-                  <Switch />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
 
         <TabsContent value="security" className="mt-4">
           <Card>
@@ -1061,6 +1070,90 @@ const PatientDashboard: React.FC = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* View Analysis Modal */}
+        <Dialog open={showAnalysisModal} onOpenChange={setShowAnalysisModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedAnalysis && (
+                  <span className="capitalize">{selectedAnalysis.analysis_type} Analysis Report</span>
+                )}
+              </DialogTitle>
+              <DialogDescription>
+                Analysis Date: {selectedAnalysis && format(new Date(selectedAnalysis.date), 'MMMM d, yyyy')}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedAnalysis && (
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Analysis Type</Label>
+                    <div className="mt-1">
+                      <Badge variant="outline" className="capitalize">
+                        {selectedAnalysis.analysis_type}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Health Score</Label>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="text-2xl font-bold">{selectedAnalysis.score}/100</span>
+                      <Progress value={selectedAnalysis.score} className="w-20" />
+                    </div>
+                  </div>
+                </div>
+                
+                {selectedAnalysis.image_url && (
+                  <div>
+                    <Label>Analysis Image</Label>
+                    <div className="mt-2 flex justify-center">
+                      <img 
+                        src={selectedAnalysis.image_url} 
+                        alt={`${selectedAnalysis.analysis_type} analysis`}
+                        className="rounded-lg border max-w-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <Label>Recommendations</Label>
+                  <Card className="mt-2">
+                    <CardContent className="pt-4">
+                      <ul className="space-y-2">
+                        {selectedAnalysis.recommendations.map((rec, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                            <span className="text-sm">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-blue-600" />
+                    <span className="text-sm text-blue-900">
+                      Next analysis recommended in 30 days
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAnalysisModal(false)}>
+                Close
+              </Button>
+              <Button>
+                <Download className="h-4 w-4 mr-2" />
+                Download Report
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   );
