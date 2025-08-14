@@ -170,54 +170,69 @@ export default function AppointmentCalendarInline({
     return date < today;
   };
 
+  const isDateHighlighted = (date: Date | null) => {
+    if (!date || !voiceData?.date) return false;
+    const voiceDateStr = voiceData.date.toLowerCase();
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    if (voiceDateStr.includes('tomorrow')) {
+      return date.toDateString() === tomorrow.toDateString();
+    } else if (voiceDateStr.includes('today')) {
+      return date.toDateString() === today.toDateString();
+    }
+    return false;
+  };
+
   // Determine current step based on conversation state
   const currentStep = conversationState?.step || 'select_date';
 
   return (
-    <div className="w-full max-w-sm mx-auto p-2 bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Compact Progress Indicator */}
-      <div className="flex items-center justify-between mb-2 px-1">
-        <div className={`flex items-center gap-1 ${currentStep === 'select_date' ? 'text-purple-600' : 'text-gray-400'}`}>
-          <Calendar className="h-3 w-3" />
-          <span className="text-[10px]">Date</span>
+    <div className="w-full">
+      {/* Progress Indicator */}
+      <div className="flex items-center justify-between mb-4 px-2">
+        <div className={`flex items-center gap-2 ${currentStep === 'select_date' ? 'text-purple-600' : 'text-gray-400'}`}>
+          <Calendar className="h-4 w-4" />
+          <span className="text-sm font-medium">Date</span>
         </div>
-        <div className={`flex items-center gap-1 ${currentStep === 'select_doctor' ? 'text-purple-600' : 'text-gray-400'}`}>
-          <User className="h-3 w-3" />
-          <span className="text-[10px]">Doctor</span>
+        <div className={`flex items-center gap-2 ${currentStep === 'select_doctor' ? 'text-purple-600' : 'text-gray-400'}`}>
+          <User className="h-4 w-4" />
+          <span className="text-sm font-medium">Doctor</span>
         </div>
-        <div className={`flex items-center gap-1 ${currentStep === 'select_time' ? 'text-purple-600' : 'text-gray-400'}`}>
-          <Clock className="h-3 w-3" />
-          <span className="text-[10px]">Time</span>
+        <div className={`flex items-center gap-2 ${currentStep === 'select_time' ? 'text-purple-600' : 'text-gray-400'}`}>
+          <Clock className="h-4 w-4" />
+          <span className="text-sm font-medium">Time</span>
         </div>
       </div>
 
       {/* Calendar View */}
       {currentStep === 'select_date' && (
-        <div className="space-y-1">
+        <div className="space-y-3">
           {/* Month Navigation */}
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center justify-between px-2">
             <button
               onClick={handlePrevMonth}
-              className="p-0.5 hover:bg-gray-100 rounded"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <ChevronLeft className="h-3 w-3" />
+              <ChevronLeft className="h-5 w-5" />
             </button>
-            <h3 className="text-xs font-semibold">
-              {format(currentMonth, 'MMM yyyy')}
+            <h3 className="text-base font-semibold text-gray-800">
+              {format(currentMonth, 'MMMM yyyy')}
             </h3>
             <button
               onClick={handleNextMonth}
-              className="p-0.5 hover:bg-gray-100 rounded"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <ChevronRight className="h-3 w-3" />
+              <ChevronRight className="h-5 w-5" />
             </button>
           </div>
 
           {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-0.5 text-[10px]">
+          <div className="grid grid-cols-7 gap-2">
             {/* Week Days */}
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
-              <div key={day} className="text-center text-gray-500 font-medium py-0.5">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+              <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
                 {day}
               </div>
             ))}
@@ -229,11 +244,12 @@ export default function AppointmentCalendarInline({
                 onClick={() => date && !isPastDate(date) && handleDateClick(date)}
                 disabled={!date || isPastDate(date)}
                 className={`
-                  h-6 w-full rounded text-[10px]
+                  h-10 w-full rounded-lg text-sm font-medium transition-all
                   ${!date ? 'invisible' : ''}
-                  ${isDateSelected(date) ? 'bg-purple-600 text-white' : ''}
-                  ${isToday(date) && !isDateSelected(date) ? 'bg-yellow-100 font-bold' : ''}
-                  ${isPastDate(date) ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100'}
+                  ${isDateSelected(date) ? 'bg-purple-600 text-white shadow-md ring-2 ring-purple-600 ring-offset-2' : ''}
+                  ${isToday(date) && !isDateSelected(date) ? 'bg-yellow-100 border-2 border-yellow-400 font-bold' : ''}
+                  ${isPastDate(date) ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100 border border-gray-200'}
+                  ${isDateHighlighted(date) && !isDateSelected(date) ? 'bg-purple-100 border-2 border-purple-400 animate-pulse' : ''}
                 `}
               >
                 {date?.getDate()}
@@ -242,27 +258,27 @@ export default function AppointmentCalendarInline({
           </div>
 
           {/* Voice Hint */}
-          <div className="flex items-center gap-1 p-1 bg-blue-50 rounded">
-            <Mic className="h-2.5 w-2.5 text-blue-600" />
-            <span className="text-[10px] text-blue-700">Say "tomorrow" or any date</span>
+          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+            <Mic className="h-4 w-4 text-blue-600 animate-pulse" />
+            <span className="text-sm text-blue-700">Say "tomorrow" or any date</span>
           </div>
         </div>
       )}
 
       {/* Doctor Selection */}
       {currentStep === 'select_doctor' && (
-        <div className="space-y-1">
-          <h4 className="text-xs font-medium mb-1">Select Doctor</h4>
-          <div className="grid grid-cols-2 gap-1">
+        <div className="space-y-3">
+          <h4 className="text-base font-semibold text-gray-800 mb-3">Select Doctor</h4>
+          <div className="grid grid-cols-2 gap-3">
             {doctors.map((doctor) => (
               <button
                 key={doctor}
                 onClick={() => handleDoctorSelect(doctor)}
                 className={`
-                  p-1.5 text-[10px] rounded border transition-all
+                  p-4 text-sm font-medium rounded-lg border-2 transition-all
                   ${selectedDoctor === doctor 
-                    ? 'bg-purple-600 text-white border-purple-600' 
-                    : 'bg-white hover:bg-gray-50 border-gray-200'}
+                    ? 'bg-purple-600 text-white border-purple-600 shadow-md ring-2 ring-purple-600 ring-offset-2' 
+                    : 'bg-white hover:bg-gray-50 border-gray-300'}
                 `}
               >
                 {doctor}
@@ -271,27 +287,27 @@ export default function AppointmentCalendarInline({
           </div>
           
           {/* Voice Hint */}
-          <div className="flex items-center gap-1 p-1 bg-blue-50 rounded">
-            <Mic className="h-2.5 w-2.5 text-blue-600" />
-            <span className="text-[10px] text-blue-700">Say doctor's name</span>
+          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+            <Mic className="h-4 w-4 text-blue-600 animate-pulse" />
+            <span className="text-sm text-blue-700">Say doctor's name</span>
           </div>
         </div>
       )}
 
       {/* Time Selection */}
       {currentStep === 'select_time' && (
-        <div className="space-y-1">
-          <h4 className="text-xs font-medium mb-1">Select Time</h4>
-          <div className="grid grid-cols-4 gap-1">
+        <div className="space-y-3">
+          <h4 className="text-base font-semibold text-gray-800 mb-3">Select Time</h4>
+          <div className="grid grid-cols-4 gap-2">
             {timeSlots.map((time) => (
               <button
                 key={time}
                 onClick={() => handleTimeSelect(time)}
                 className={`
-                  p-1 text-[10px] rounded border transition-all
+                  p-3 text-sm font-medium rounded-lg border-2 transition-all
                   ${selectedTime === time 
-                    ? 'bg-purple-600 text-white border-purple-600' 
-                    : 'bg-white hover:bg-gray-50 border-gray-200'}
+                    ? 'bg-purple-600 text-white border-purple-600 shadow-md ring-2 ring-purple-600 ring-offset-2' 
+                    : 'bg-white hover:bg-gray-50 border-gray-300'}
                 `}
               >
                 {time}
@@ -300,35 +316,48 @@ export default function AppointmentCalendarInline({
           </div>
           
           {/* Voice Hint */}
-          <div className="flex items-center gap-1 p-1 bg-blue-50 rounded">
-            <Mic className="h-2.5 w-2.5 text-blue-600" />
-            <span className="text-[10px] text-blue-700">Say preferred time</span>
+          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+            <Mic className="h-4 w-4 text-blue-600 animate-pulse" />
+            <span className="text-sm text-blue-700">Say preferred time</span>
           </div>
         </div>
       )}
 
       {/* Confirmation Summary */}
       {currentStep === 'confirm' && (
-        <div className="space-y-1">
-          <h4 className="text-xs font-medium mb-1">Confirm Appointment</h4>
-          <div className="p-2 bg-green-50 rounded space-y-0.5 text-[10px]">
-            <p>📅 {selectedDate && format(selectedDate, 'EEE, MMM d')}</p>
-            <p>👨‍⚕️ {selectedDoctor}</p>
-            <p>🕐 {selectedTime}</p>
-            {voiceData?.reason && <p>📝 {voiceData.reason}</p>}
+        <div className="space-y-3">
+          <h4 className="text-base font-semibold text-gray-800 mb-3">Confirm Appointment</h4>
+          <div className="p-4 bg-green-50 rounded-lg space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-green-600" />
+              <span className="font-medium">{selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <User className="h-4 w-4 text-green-600" />
+              <span className="font-medium">{selectedDoctor}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="h-4 w-4 text-green-600" />
+              <span className="font-medium">{selectedTime}</span>
+            </div>
+            {voiceData?.reason && (
+              <div className="mt-2 pt-2 border-t border-green-200">
+                <p className="text-sm text-green-700">Reason: {voiceData.reason}</p>
+              </div>
+            )}
           </div>
           
           <Button
             onClick={handleConfirmBooking}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white text-[10px] h-7"
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-base font-medium h-12 shadow-lg"
           >
             Confirm Booking
           </Button>
           
           {/* Voice Hint */}
-          <div className="flex items-center gap-1 p-1 bg-green-50 rounded">
-            <Mic className="h-2.5 w-2.5 text-green-600" />
-            <span className="text-[10px] text-green-700">Say "yes" to confirm</span>
+          <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+            <Mic className="h-4 w-4 text-green-600 animate-pulse" />
+            <span className="text-sm text-green-700">Say "yes" or "confirm" to book</span>
           </div>
         </div>
       )}

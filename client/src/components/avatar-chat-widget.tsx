@@ -2272,63 +2272,89 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     </div>
                   ))}
                   
-                  {/* Inline Appointment Calendar - Shows within chat when voice booking starts */}
+                  {/* Inline Appointment Calendar Modal - Shows as overlay within chat widget */}
                   {conversationState?.feature === 'appointment' && showBookingCalendar && (
-                    <div className="w-full">
-                      <AppointmentCalendarInline
-                        voiceData={{
-                          doctor: bookingFormData.selectedDoctor,
-                          date: bookingFormData.selectedDate?.toISOString(),
-                          time: bookingFormData.selectedTime,
-                          reason: bookingFormData.reason
-                        }}
-                        conversationState={conversationState}
-                        onDateSelect={(date) => {
-                          setSelectedDate(date);
-                          setBookingFormData(prev => ({ ...prev, selectedDate: date }));
-                          // Advance conversation state
-                          setConversationState(prev => ({ ...prev, step: 'select_doctor' }));
-                        }}
-                        onDoctorSelect={(doctor) => {
-                          setBookingFormData(prev => ({ ...prev, selectedDoctor: doctor }));
-                          // Advance conversation state
-                          setConversationState(prev => ({ ...prev, step: 'select_time' }));
-                        }}
-                        onTimeSelect={(time) => {
-                          setBookingFormData(prev => ({ ...prev, selectedTime: time }));
-                          // Advance conversation state
-                          setConversationState(prev => ({ ...prev, step: 'confirm' }));
-                        }}
-                        onAppointmentBooked={(appointment) => {
-                          // Handle successful booking
-                          const confirmMessage: Message = {
-                            id: `msg_${Date.now()}`,
-                            text: `✅ Your appointment with ${appointment.doctorName} on ${appointment.date} at ${appointment.time} has been confirmed!`,
-                            sender: 'bot',
-                            timestamp: new Date()
-                          };
-                          setMessages(prev => [...prev, confirmMessage]);
+                    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 relative">
+                          <button
+                            onClick={() => {
+                              setShowBookingCalendar(false);
+                              setConversationState(null);
+                            }}
+                            className="absolute top-3 right-3 text-white/80 hover:text-white transition-colors"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
                           
-                          // Make avatar speak confirmation
-                          if (avatarRef.current) {
-                            avatarRef.current.speak(confirmMessage.text);
-                          }
-                          
-                          // Reset states
-                          setShowBookingCalendar(false);
-                          setConversationState(null);
-                          setBookingFormData({
-                            patientName: '',
-                            patientEmail: '',
-                            patientPhone: '',
-                            reason: '',
-                            doctorId: 1,
-                            selectedDate: null,
-                            selectedDoctor: '',
-                            selectedTime: ''
-                          });
-                        }}
-                      />
+                          <div className="text-center">
+                            <div className="w-16 h-16 bg-white/20 rounded-full mx-auto mb-2 flex items-center justify-center">
+                              <Calendar className="h-8 w-8 text-white" />
+                            </div>
+                            <h2 className="text-xl font-bold text-white">Book Appointment</h2>
+                            <p className="text-white/80 text-sm mt-1">Voice-enabled booking</p>
+                          </div>
+                        </div>
+
+                        {/* Modal Body - Calendar Content */}
+                        <div className="flex-1 overflow-y-auto p-4">
+                          <AppointmentCalendarInline
+                            voiceData={{
+                              doctor: bookingFormData.selectedDoctor,
+                              date: bookingFormData.selectedDate?.toISOString(),
+                              time: bookingFormData.selectedTime,
+                              reason: bookingFormData.reason
+                            }}
+                            conversationState={conversationState}
+                            onDateSelect={(date) => {
+                              setSelectedDate(date);
+                              setBookingFormData(prev => ({ ...prev, selectedDate: date }));
+                              // Advance conversation state
+                              setConversationState(prev => ({ ...prev, step: 'select_doctor' }));
+                            }}
+                            onDoctorSelect={(doctor) => {
+                              setBookingFormData(prev => ({ ...prev, selectedDoctor: doctor }));
+                              // Advance conversation state
+                              setConversationState(prev => ({ ...prev, step: 'select_time' }));
+                            }}
+                            onTimeSelect={(time) => {
+                              setBookingFormData(prev => ({ ...prev, selectedTime: time }));
+                              // Advance conversation state
+                              setConversationState(prev => ({ ...prev, step: 'confirm' }));
+                            }}
+                            onAppointmentBooked={(appointment) => {
+                              // Handle successful booking
+                              const confirmMessage: Message = {
+                                id: `msg_${Date.now()}`,
+                                text: `✅ Your appointment with ${appointment.doctorName} on ${appointment.date} at ${appointment.time} has been confirmed!`,
+                                sender: 'bot',
+                                timestamp: new Date()
+                              };
+                              setMessages(prev => [...prev, confirmMessage]);
+                              
+                              // Make avatar speak confirmation
+                              if (avatarRef.current) {
+                                avatarRef.current.speak(confirmMessage.text);
+                              }
+                              
+                              // Reset states
+                              setShowBookingCalendar(false);
+                              setConversationState(null);
+                              setBookingFormData({
+                                patientName: '',
+                                patientEmail: '',
+                                patientPhone: '',
+                                reason: '',
+                                doctorId: 1,
+                                selectedDate: null,
+                                selectedDoctor: '',
+                                selectedTime: ''
+                              });
+                            }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
