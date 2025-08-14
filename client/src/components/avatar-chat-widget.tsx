@@ -471,8 +471,103 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
       return await response.json();
     },
     onSuccess: async (data) => {
-      // Check if the response contains a nearby search command
-      if (data.message.includes("NEARBY_SEARCH:")) {
+      // Check for voice commands first
+      if (data.message.includes("VOICE_COMMAND:")) {
+        console.log("VOICE_COMMAND detected in response:", data.message);
+        const commandMatch = data.message.match(/VOICE_COMMAND:(\w+)/);
+        const command = commandMatch ? commandMatch[1] : "";
+        console.log("Voice command extracted:", command);
+        
+        // Clean the message to remove the command
+        const cleanMessage = data.message.replace(/VOICE_COMMAND:\w+\s*/, "");
+        
+        // Process the command
+        switch(command) {
+          case "APPOINTMENT":
+            setShowChatInterface(false);
+            setShowBookingCalendar(true);
+            setSelectedMenuItem("book");
+            setSelectedDate(null);
+            setBookingFormData(prev => ({ ...prev, selectedDate: null }));
+            break;
+            
+          case "FACE_ANALYSIS":
+            setShowFacePage(true);
+            setSelectedMenuItem("face");
+            setShowChatInterface(true);
+            setShowDoctorList(false);
+            setShowRecordsList(false);
+            setShowAdminPage(false);
+            setShowBookingCalendar(false);
+            setIsMinimized(false);
+            setCameraEnabled(true);
+            setCameraPermissionRequested(true);
+            break;
+            
+          case "SKIN_ANALYSIS":
+            setShowSkinPage(true);
+            setSelectedMenuItem("skin");
+            setIsMinimized(false);
+            setShowChatInterface(false);
+            setStreamReady(true);
+            setAnalysisStreamReady(true);
+            break;
+            
+          case "LIPS_ANALYSIS":
+            setShowLipsPage(true);
+            setSelectedMenuItem("lips");
+            setIsMinimized(false);
+            setShowChatInterface(false);
+            setStreamReady(true);
+            setAnalysisStreamReady(true);
+            break;
+            
+          case "HAIR_ANALYSIS":
+            setShowHairPage(true);
+            setSelectedMenuItem("hair");
+            setIsMinimized(false);
+            setShowChatInterface(false);
+            setStreamReady(true);
+            setAnalysisStreamReady(true);
+            break;
+            
+          case "HAIR_EXTENSION":
+            setShowHairExtensionWidget(true);
+            setSelectedMenuItem("hair-extension");
+            break;
+            
+          case "MEDICAL_RECORDS":
+            setShowRecordsList(true);
+            setSelectedMenuItem("records");
+            setShowChatInterface(false);
+            setIsMinimized(true);
+            break;
+            
+          case "DOCTORS":
+            setShowDoctorList(true);
+            setSelectedMenuItem("doctors");
+            setShowChatInterface(false);
+            setIsMinimized(true);
+            break;
+            
+          case "PROFILE":
+            setShowAuthOverlay(true);
+            setAuthTab('login');
+            break;
+        }
+        
+        // Add cleaned message to chat
+        const botMessage: Message = {
+          id: `bot_${Date.now()}`,
+          text: cleanMessage,
+          sender: "bot",
+          timestamp: new Date(),
+          avatarResponse: data.avatarResponse,
+          showDoctors: false
+        };
+        setMessages(prev => [...prev, botMessage]);
+        
+      } else if (data.message.includes("NEARBY_SEARCH:")) {
         console.log("NEARBY_SEARCH detected in response:", data.message);
         const searchType = data.message.split("NEARBY_SEARCH:")[1].trim();
         console.log("Search type extracted:", searchType);

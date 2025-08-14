@@ -1048,27 +1048,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate AI response using OpenAI
-      let aiResponse = await generateChatResponse(message, language);
+      // Parse user message for specific voice commands FIRST
+      const lowerMessage = message.toLowerCase();
+      let commandResponse = "";
+      let skipAIResponse = false;
       
-      // Add weather and compliment to the response if available
-      if (isFirstUserResponse) {
-        let prefix = "";
-        if (locationWeather) {
-          prefix += `So your location is ${locationWeather} `;
-          console.log("Weather info added:", locationWeather);
-        }
-        if (compliment) {
-          prefix += `${compliment} `;
-        }
-        if (prefix) {
-          aiResponse = `${prefix}${aiResponse}`;
-          console.log("=== Final Combined Response ===");
-          console.log("Full message:", aiResponse);
-          console.log("==============================");
+      // Enhanced command detection for voice chat
+      if (lowerMessage.includes('appointment') || lowerMessage.includes('book') || lowerMessage.includes('schedule')) {
+        commandResponse = "VOICE_COMMAND:APPOINTMENT I'll help you schedule an appointment. Opening the booking calendar now.";
+        skipAIResponse = true;
+      } else if (lowerMessage.includes('face analysis') || lowerMessage.includes('analyze my face')) {
+        commandResponse = "VOICE_COMMAND:FACE_ANALYSIS Let me help you with face analysis. Opening the face analysis widget now.";
+        skipAIResponse = true;
+      } else if (lowerMessage.includes('skin analysis') || lowerMessage.includes('analyze my skin')) {
+        commandResponse = "VOICE_COMMAND:SKIN_ANALYSIS I'll assist you with skin analysis. Opening the skin analysis widget now.";
+        skipAIResponse = true;
+      } else if (lowerMessage.includes('lips analysis') || lowerMessage.includes('analyze my lips')) {
+        commandResponse = "VOICE_COMMAND:LIPS_ANALYSIS Let's analyze your lips health. Opening the lips analysis widget now.";
+        skipAIResponse = true;
+      } else if (lowerMessage.includes('hair analysis') || lowerMessage.includes('analyze my hair')) {
+        commandResponse = "VOICE_COMMAND:HAIR_ANALYSIS I'll help you analyze your hair health. Opening the hair analysis widget now.";
+        skipAIResponse = true;
+      } else if (lowerMessage.includes('hair extension')) {
+        commandResponse = "VOICE_COMMAND:HAIR_EXTENSION Let me show you hair extension options. Opening the hair extension widget now.";
+        skipAIResponse = true;
+      } else if (lowerMessage.includes('medical record') || lowerMessage.includes('my records')) {
+        commandResponse = "VOICE_COMMAND:MEDICAL_RECORDS I'll open your medical records. Accessing your medical history now.";
+        skipAIResponse = true;
+      } else if (lowerMessage.includes('show doctors') || lowerMessage.includes('list doctors')) {
+        commandResponse = "VOICE_COMMAND:DOCTORS Here are our available doctors. Opening the doctors list now.";
+        skipAIResponse = true;
+      } else if (lowerMessage.includes('my profile') || lowerMessage.includes('login') || lowerMessage.includes('sign in')) {
+        commandResponse = "VOICE_COMMAND:PROFILE I'll open your profile section. Opening the authentication page now.";
+        skipAIResponse = true;
+      }
+
+      let aiResponse = "";
+      
+      // Only generate AI response if no command was detected
+      if (!skipAIResponse) {
+        aiResponse = await generateChatResponse(message, language);
+        
+        // Add weather and compliment to the response if available
+        if (isFirstUserResponse) {
+          let prefix = "";
+          if (locationWeather) {
+            prefix += `So your location is ${locationWeather} `;
+            console.log("Weather info added:", locationWeather);
+          }
+          if (compliment) {
+            prefix += `${compliment} `;
+          }
+          if (prefix) {
+            aiResponse = `${prefix}${aiResponse}`;
+            console.log("=== Final Combined Response ===");
+            console.log("Full message:", aiResponse);
+            console.log("==============================");
+          }
+        } else {
+          console.log(`AI response: ${aiResponse}`);
         }
       } else {
-        console.log(`AI response: ${aiResponse}`);
+        // Use command response as the AI response
+        aiResponse = commandResponse;
+        console.log(`Voice command detected: ${commandResponse}`);
       }
       
       // Check if AI response includes special commands
@@ -2886,6 +2929,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chat: "/api/chat-widget/send",
         voices: "/api/voices",
         tts: "/api/tts"
+      }
+    });
+  });
+
+  // Voice Chat Feature Status Endpoint
+  app.get("/api/voice-chat/features", (req, res) => {
+    res.json({
+      status: "active",
+      supportedCommands: [
+        {
+          feature: "Appointment Scheduling",
+          commands: ["book appointment", "schedule appointment", "appointment"],
+          status: "active",
+          apiEndpoint: "/api/appointments/appointments/",
+          description: "Full appointment booking process through voice"
+        },
+        {
+          feature: "Face Analysis",
+          commands: ["face analysis", "analyze my face"],
+          status: "active",
+          widgetAvailable: true,
+          description: "Opens face analysis widget with camera capture"
+        },
+        {
+          feature: "Skin Analysis",
+          commands: ["skin analysis", "analyze my skin"],
+          status: "active",
+          widgetAvailable: true,
+          description: "Opens skin analysis widget"
+        },
+        {
+          feature: "Lips Analysis",
+          commands: ["lips analysis", "analyze my lips"],
+          status: "active",
+          widgetAvailable: true,
+          description: "Opens lips analysis widget"
+        },
+        {
+          feature: "Hair Analysis",
+          commands: ["hair analysis", "analyze my hair"],
+          status: "active",
+          widgetAvailable: true,
+          description: "Opens hair analysis widget"
+        },
+        {
+          feature: "Hair Extension",
+          commands: ["hair extension", "hair extensions"],
+          status: "active",
+          widgetAvailable: true,
+          description: "Opens hair extension options"
+        },
+        {
+          feature: "Medical Records",
+          commands: ["medical records", "my records"],
+          status: "active",
+          apiEndpoint: "/api/medical-records/",
+          description: "Access and view medical records"
+        },
+        {
+          feature: "Doctor List",
+          commands: ["show doctors", "list doctors"],
+          status: "active",
+          apiEndpoint: "/api/doctors/",
+          description: "Display available doctors"
+        },
+        {
+          feature: "Profile/Authentication",
+          commands: ["my profile", "login", "sign in"],
+          status: "active",
+          apiEndpoint: "/api/auth/login/",
+          description: "Opens profile and authentication overlay"
+        }
+      ],
+      voiceLanguages: ["en", "tr", "ar"],
+      integrations: {
+        django: {
+          status: "connected",
+          endpoints: [
+            "/api/appointments/",
+            "/api/medical-records/",
+            "/api/doctors/",
+            "/api/auth/"
+          ]
+        },
+        heygen: {
+          status: "requires_api_key",
+          avatarModel: "anna_public_3_20240108"
+        },
+        openai: {
+          status: "active",
+          model: "gpt-4o"
+        }
       }
     });
   });
