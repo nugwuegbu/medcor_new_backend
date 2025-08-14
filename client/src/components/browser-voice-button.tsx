@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 interface BrowserVoiceButtonProps {
   onTranscript: (text: string) => void;
   disabled?: boolean;
+  continuousListening?: boolean;
+  onStopListening?: () => void;
 }
 
 // Extend Window interface for speech recognition
@@ -13,7 +15,7 @@ interface IWindow extends Window {
   webkitSpeechRecognition: any;
 }
 
-export default function BrowserVoiceButton({ onTranscript, disabled = false }: BrowserVoiceButtonProps) {
+export default function BrowserVoiceButton({ onTranscript, disabled = false, continuousListening = false, onStopListening }: BrowserVoiceButtonProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSupported, setIsSupported] = useState(true);

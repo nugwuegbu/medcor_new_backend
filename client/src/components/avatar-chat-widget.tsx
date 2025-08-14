@@ -186,6 +186,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
   const [medicalRecords, setMedicalRecords] = useState<any[]>([]);
+  const [continuousListening, setContinuousListening] = useState(false);
+  const [showVoiceIndicator, setShowVoiceIndicator] = useState(false);
+  const [voiceIndicatorText, setVoiceIndicatorText] = useState("");
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HeyGenSDKAvatarRef>(null);
@@ -496,6 +499,50 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
               setSelectedMenuItem("book");
               setSelectedDate(null);
               setBookingFormData(prev => ({ ...prev, selectedDate: null, doctorId: 0 }));
+              break;
+              
+            case "START_CONTINUOUS":
+              // Start continuous listening mode for appointment
+              setShowChatInterface(true);
+              setContinuousListening(true);
+              setShowVoiceIndicator(true);
+              setVoiceIndicatorText("Listening for appointment details...");
+              break;
+              
+            case "CONTINUE_LISTENING":
+              // Keep listening for more details
+              setContinuousListening(true);
+              setShowVoiceIndicator(true);
+              setVoiceIndicatorText("Continue speaking... (say 'that's all' when done)");
+              break;
+              
+            case "CONFIRM":
+              // Show confirmation of collected details
+              setContinuousListening(false);
+              setShowVoiceIndicator(false);
+              if (data.voiceCommand?.data) {
+                setBookingFormData(prev => ({
+                  ...prev,
+                  selectedDoctor: data.voiceCommand.data.doctor,
+                  selectedDate: data.voiceCommand.data.date ? new Date(data.voiceCommand.data.date) : null,
+                  selectedTime: data.voiceCommand.data.time,
+                  appointmentType: data.voiceCommand.data.type,
+                  reason: data.voiceCommand.data.reason
+                }));
+              }
+              break;
+              
+            case "PROCESS":
+              // Process the confirmed appointment
+              setContinuousListening(false);
+              setShowVoiceIndicator(false);
+              // Submit the appointment
+              if (data.voiceCommand?.data) {
+                // Process appointment booking with collected data
+                console.log("Processing appointment with data:", data.voiceCommand.data);
+                setShowBookingCalendar(false);
+                setShowChatInterface(true);
+              }
               break;
               
             case "DATE_SELECTED":
@@ -2105,6 +2152,11 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       handleSendMessage(text);
                     }}
                     disabled={false}
+                    continuousListening={continuousListening}
+                    onStopListening={() => {
+                      setContinuousListening(false);
+                      setShowVoiceIndicator(false);
+                    }}
                   />
                   <button
                     onClick={() => {
@@ -2129,6 +2181,23 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                 
 
                 
+                {/* Continuous Listening Indicator */}
+                {showVoiceIndicator && continuousListening && (
+                  <div className="mb-4">
+                    <div className="bg-purple-600 text-white rounded-lg p-4 shadow-lg animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <Mic className="h-5 w-5 animate-pulse" />
+                        <div className="flex-1">
+                          <p className="font-medium">{voiceIndicatorText}</p>
+                          <p className="text-xs text-purple-200 mt-1">
+                            Speak all your appointment details: doctor, date, time, reason...
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Messages Container */}
                 <div className="flex-1 space-y-3">
                   {messages.map(message => (

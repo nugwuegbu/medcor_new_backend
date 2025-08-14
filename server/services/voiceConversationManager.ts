@@ -19,6 +19,8 @@ interface VoiceCommand {
 export class VoiceConversationManager {
   private sessions: Map<string, ConversationState> = new Map();
   private openai: OpenAI;
+  private continuousListeningMode: Map<string, boolean> = new Map();
+  private collectedData: Map<string, any> = new Map();
 
   constructor() {
     this.openai = new OpenAI({ 
@@ -97,8 +99,8 @@ export class VoiceConversationManager {
     const initMessages: Record<string, VoiceCommand> = {
       appointment: {
         action: 'VOICE_FLOW:APPOINTMENT:START',
-        message: "I'll help you book an appointment. What date would you like to schedule for? You can say things like 'tomorrow', 'next Monday', or a specific date.",
-        nextStep: 'select_date'
+        message: "I'm listening for your appointment details. Please tell me everything: the type of appointment, doctor's name, preferred date and time, and any additional notes. I'll wait until you're finished speaking.",
+        nextStep: 'continuous_listening'
       },
       face_analysis: {
         action: 'VOICE_FLOW:ANALYSIS:START',
@@ -153,14 +155,80 @@ export class VoiceConversationManager {
 
     switch (state.step) {
       case 'initialize':
-        state.step = 'select_date';
+        state.step = 'continuous_listening';
         state.formData = {};
+        this.continuousListeningMode.set(sessionId, true);
+        this.collectedData.set(sessionId, { messages: [] });
         this.sessions.set(sessionId, state);
         return {
-          action: 'VOICE_FLOW:APPOINTMENT:START',
-          message: "What date would you like to schedule your appointment? You can say tomorrow, next week, or a specific date.",
-          nextStep: 'select_date'
+          action: 'VOICE_FLOW:APPOINTMENT:START_CONTINUOUS',
+          message: "I'm listening for your appointment details. Please tell me everything: the type of appointment, doctor's name, preferred date and time, and any additional notes. I'll wait until you're finished speaking.",
+          nextStep: 'continuous_listening'
         };
+      
+      case 'continuous_listening':
+        // Collect all spoken information
+        const collectedInfo = this.collectedData.get(sessionId) || { messages: [] };
+        collectedInfo.messages.push(message);
+        this.collectedData.set(sessionId, collectedInfo);
+        
+        // Check if user has finished speaking (silence detection or completion phrase)
+        if (this.isAppointmentComplete(collectedInfo.messages.join(' '))) {
+          // Extract all appointment details from collected messages
+          const fullMessage = collectedInfo.messages.join(' ');
+          const appointmentDetails = await this.extractAppointmentDetails(fullMessage);
+          
+          // Confirm details back to user
+          state.step = 'confirmation';
+          state.formData = appointmentDetails;
+          this.sessions.set(sessionId, state);
+          
+          return {
+            action: 'VOICE_FLOW:APPOINTMENT:CONFIRM',
+            data: appointmentDetails,
+            message: `Let me confirm your appointment details: ${this.formatAppointmentSummary(appointmentDetails)}. Is this correct? Say 'yes' to confirm or 'no' to make changes.`,
+            nextStep: 'confirmation'
+          };
+        } else {
+          // Continue listening
+          return {
+            action: 'VOICE_FLOW:APPOINTMENT:CONTINUE_LISTENING',
+            message: "I'm still listening. Please continue with any additional details about your appointment.",
+            nextStep: 'continuous_listening'
+          };
+        }
+      
+      case 'confirmation':
+        if (lower.includes('yes') || lower.includes('confirm') || lower.includes('correct')) {
+          // Process the appointment
+          this.continuousListeningMode.set(sessionId, false);
+          this.collectedData.delete(sessionId);
+          this.sessions.delete(sessionId);
+          
+          return {
+            action: 'VOICE_FLOW:APPOINTMENT:PROCESS',
+            data: state.formData,
+            message: `Perfect! I'm now processing your appointment for ${state.formData.doctor} on ${state.formData.date} at ${state.formData.time}. You'll receive a confirmation shortly.`,
+            nextStep: 'complete'
+          };
+        } else if (lower.includes('no') || lower.includes('change')) {
+          // Reset and start over
+          state.step = 'continuous_listening';
+          this.collectedData.set(sessionId, { messages: [] });
+          this.sessions.set(sessionId, state);
+          
+          return {
+            action: 'VOICE_FLOW:APPOINTMENT:RESTART',
+            message: "No problem. Let's start over. Please tell me all your appointment details again.",
+            nextStep: 'continuous_listening'
+          };
+        } else {
+          return {
+            action: 'VOICE_FLOW:APPOINTMENT:CONFIRM_UNCLEAR',
+            message: "Please say 'yes' to confirm the appointment or 'no' to make changes.",
+            nextStep: 'confirmation'
+          };
+        }
 
       case 'select_date':
         const dateInfo = await this.extractDateFromText(message);
@@ -622,6 +690,122 @@ export class VoiceConversationManager {
     const match = processed.match(emailRegex);
     
     return match ? match[0] : null;
+  }
+  
+  // Check if appointment has all required information
+  private isAppointmentComplete(fullMessage: string): boolean {
+    const lower = fullMessage.toLowerCase();
+    
+    // Check for completion phrases
+    if (lower.includes('that\'s all') || 
+        lower.includes('that is all') || 
+        lower.includes('finished') || 
+        lower.includes('done speaking') ||
+        lower.includes('that\'s everything')) {
+      return true;
+    }
+    
+    // Check if we have all required components
+    const hasDoctor = /dr\.\s*\w+|doctor\s+\w+/i.test(fullMessage);
+    const hasDate = /tomorrow|today|next|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d+\/\d+|\d+\s+(january|february|march|april|may|june|july|august|september|october|november|december)/i.test(fullMessage);
+    const hasTime = /morning|afternoon|evening|\d+\s*(am|pm)|o'clock/i.test(fullMessage);
+    const hasType = /checkup|consultation|follow-up|appointment|visit|emergency/i.test(fullMessage);
+    
+    // Consider complete if we have at least doctor and date/time
+    return hasDoctor && (hasDate || hasTime);
+  }
+  
+  // Extract all appointment details from collected messages
+  private async extractAppointmentDetails(fullMessage: string): Promise<any> {
+    const details: any = {};
+    
+    // Extract doctor
+    details.doctor = await this.extractDoctorFromText(fullMessage);
+    
+    // Extract date
+    details.date = await this.extractDateFromText(fullMessage);
+    
+    // Extract time
+    details.time = await this.extractTimeFromText(fullMessage);
+    
+    // Extract appointment type
+    const lower = fullMessage.toLowerCase();
+    if (lower.includes('emergency')) {
+      details.type = 'Emergency';
+    } else if (lower.includes('follow-up') || lower.includes('followup')) {
+      details.type = 'Follow-up';
+    } else if (lower.includes('checkup') || lower.includes('check-up')) {
+      details.type = 'Checkup';
+    } else if (lower.includes('consultation')) {
+      details.type = 'Consultation';
+    } else {
+      details.type = 'General';
+    }
+    
+    // Extract reason/notes
+    const reasonMatch = fullMessage.match(/(?:for|about|regarding|because|due to)\s+([^.]+)/i);
+    if (reasonMatch) {
+      details.reason = reasonMatch[1].trim();
+    } else {
+      details.reason = fullMessage.length > 100 ? fullMessage.substring(0, 100) + '...' : fullMessage;
+    }
+    
+    // Use AI to extract any additional details we might have missed
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Extract appointment details from the message. Return a JSON object with fields: doctor, date, time, type, reason. Use null for missing fields."
+          },
+          {
+            role: "user",
+            content: fullMessage
+          }
+        ],
+        max_tokens: 200
+      });
+      
+      const aiExtracted = JSON.parse(response.choices[0].message.content || '{}');
+      // Merge AI extraction with our extraction, preferring our extraction
+      Object.keys(aiExtracted).forEach(key => {
+        if (!details[key] && aiExtracted[key]) {
+          details[key] = aiExtracted[key];
+        }
+      });
+    } catch (error) {
+      console.error('AI extraction error:', error);
+    }
+    
+    return details;
+  }
+  
+  // Format appointment summary for confirmation
+  private formatAppointmentSummary(details: any): string {
+    const parts = [];
+    
+    if (details.type) {
+      parts.push(`${details.type} appointment`);
+    }
+    
+    if (details.doctor) {
+      parts.push(`with ${details.doctor}`);
+    }
+    
+    if (details.date) {
+      parts.push(`on ${details.date}`);
+    }
+    
+    if (details.time) {
+      parts.push(`at ${details.time}`);
+    }
+    
+    if (details.reason && details.reason.length < 50) {
+      parts.push(`for ${details.reason}`);
+    }
+    
+    return parts.join(' ') || 'your appointment';
   }
 
   // Clear session state
