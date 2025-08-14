@@ -1,5 +1,6 @@
 // Voice Conversation Manager for handling complex multi-step voice interactions
 import OpenAI from 'openai';
+import { mcpAppointmentService } from './mcpAppointmentService';
 
 interface ConversationState {
   feature: string;
@@ -174,21 +175,44 @@ export class VoiceConversationManager {
         
         // Check if user has finished speaking (silence detection or completion phrase)
         if (this.isAppointmentComplete(collectedInfo.messages.join(' '))) {
-          // Extract all appointment details from collected messages
+          // Use MCP service to process the appointment
           const fullMessage = collectedInfo.messages.join(' ');
-          const appointmentDetails = await this.extractAppointmentDetails(fullMessage);
+          const result = await mcpAppointmentService.processVoiceAppointment(fullMessage);
           
-          // Confirm details back to user
-          state.step = 'confirmation';
-          state.formData = appointmentDetails;
-          this.sessions.set(sessionId, state);
-          
-          return {
-            action: 'VOICE_FLOW:APPOINTMENT:CONFIRM',
-            data: appointmentDetails,
-            message: `Let me confirm your appointment details: ${this.formatAppointmentSummary(appointmentDetails)}. Is this correct? Say 'yes' to confirm or 'no' to make changes.`,
-            nextStep: 'confirmation'
-          };
+          if (result.success) {
+            // Appointment successfully created via MCP
+            state.step = 'complete';
+            this.continuousListeningMode.set(sessionId, false);
+            this.collectedData.delete(sessionId);
+            this.sessions.delete(sessionId);
+            
+            return {
+              action: 'VOICE_FLOW:APPOINTMENT:SUCCESS',
+              data: result.appointment,
+              message: result.message,
+              nextStep: 'complete'
+            };
+          } else {
+            // Need more information or handle error
+            if (result.suggestions) {
+              state.step = 'clarification';
+              this.sessions.set(sessionId, state);
+              
+              return {
+                action: 'VOICE_FLOW:APPOINTMENT:CLARIFY',
+                data: { suggestions: result.suggestions },
+                message: result.message,
+                nextStep: 'clarification'
+              };
+            } else {
+              // General error
+              return {
+                action: 'VOICE_FLOW:APPOINTMENT:ERROR',
+                message: result.message,
+                nextStep: 'continuous_listening'
+              };
+            }
+          }
         } else {
           // Continue listening
           return {
@@ -198,17 +222,52 @@ export class VoiceConversationManager {
           };
         }
       
+      case 'clarification':
+        // Handle clarification responses
+        const previousData = this.collectedData.get(sessionId);
+        const updatedMessage = previousData ? previousData.messages.join(' ') + ' ' + message : message;
+        
+        const clarificationResult = await mcpAppointmentService.processVoiceAppointment(updatedMessage);
+        
+        if (clarificationResult.success) {
+          this.continuousListeningMode.set(sessionId, false);
+          this.collectedData.delete(sessionId);
+          this.sessions.delete(sessionId);
+          
+          return {
+            action: 'VOICE_FLOW:APPOINTMENT:SUCCESS',
+            data: clarificationResult.appointment,
+            message: clarificationResult.message,
+            nextStep: 'complete'
+          };
+        } else {
+          return {
+            action: 'VOICE_FLOW:APPOINTMENT:CLARIFY',
+            data: { suggestions: clarificationResult.suggestions },
+            message: clarificationResult.message,
+            nextStep: 'clarification'
+          };
+        }
+      
       case 'confirmation':
         if (lower.includes('yes') || lower.includes('confirm') || lower.includes('correct')) {
-          // Process the appointment
+          // Process the appointment using MCP service
+          const appointmentResult = await mcpAppointmentService.createAppointment({
+            patientId: 1, // Would get from session/auth
+            doctorId: state.formData.doctorId,
+            date: state.formData.date,
+            time: state.formData.time,
+            reason: state.formData.reason
+          });
+          
           this.continuousListeningMode.set(sessionId, false);
           this.collectedData.delete(sessionId);
           this.sessions.delete(sessionId);
           
           return {
             action: 'VOICE_FLOW:APPOINTMENT:PROCESS',
-            data: state.formData,
-            message: `Perfect! I'm now processing your appointment for ${state.formData.doctor} on ${state.formData.date} at ${state.formData.time}. You'll receive a confirmation shortly.`,
+            data: appointmentResult,
+            message: `Perfect! Your appointment has been booked successfully. You'll receive a confirmation email shortly.`,
             nextStep: 'complete'
           };
         } else if (lower.includes('no') || lower.includes('change')) {
