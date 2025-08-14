@@ -481,56 +481,122 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
       // Process VOICE_FLOW commands for multi-step conversations
       if (data.message.includes("VOICE_FLOW:")) {
         console.log("VOICE_FLOW detected for stateful conversation:", data.message);
-        const flowMatch = data.message.match(/VOICE_FLOW:(\w+)/);
-        const flowType = flowMatch ? flowMatch[1] : "";
-        const cleanMessage = data.message.replace(/VOICE_FLOW:\w+\s*/, "");
+        const flowParts = data.message.match(/VOICE_FLOW:([^:]+):(\w+)/);
+        const flowType = flowParts ? flowParts[1] : "";
+        const flowStep = flowParts ? flowParts[2] : "";
+        const cleanMessage = data.message.replace(/VOICE_FLOW:[^:]+:\w+\s*/, "");
         
-        // Process flow based on data in voiceCommand
-        if (data.voiceCommand && data.voiceCommand.data) {
-          const flowData = data.voiceCommand.data;
-          
-          switch(flowType) {
-            case "APPOINTMENT_DATE":
+        // Handle appointment flow
+        if (flowType === "APPOINTMENT") {
+          switch(flowStep) {
+            case "START":
+              // Open appointment booking calendar
+              setShowChatInterface(false);
+              setShowBookingCalendar(true);
+              setSelectedMenuItem("book");
+              setSelectedDate(null);
+              setBookingFormData(prev => ({ ...prev, selectedDate: null, doctorId: 0 }));
+              break;
+              
+            case "DATE_SELECTED":
               // Automatically select the date from voice
-              if (flowData.selectedDate) {
-                setSelectedDate(new Date(flowData.selectedDate));
+              if (data.voiceCommand && data.voiceCommand.data && data.voiceCommand.data.date) {
+                const dateStr = data.voiceCommand.data.date;
+                const parsedDate = new Date(dateStr);
+                setSelectedDate(parsedDate);
                 setBookingFormData(prev => ({ 
                   ...prev, 
-                  selectedDate: new Date(flowData.selectedDate) 
+                  selectedDate: parsedDate 
                 }));
+                console.log("Date selected via voice:", dateStr);
               }
               break;
               
-            case "APPOINTMENT_TIME":
-              // Automatically select the time slot
-              if (flowData.timeSlot) {
-                setBookingFormData(prev => ({ 
-                  ...prev, 
-                  selectedTime: flowData.timeSlot 
-                }));
-              }
-              break;
-              
-            case "APPOINTMENT_DOCTOR":
+            case "DOCTOR_SELECTED":
               // Automatically select the doctor
-              if (flowData.doctorId) {
+              if (data.voiceCommand && data.voiceCommand.data && data.voiceCommand.data.doctor) {
+                const doctorName = data.voiceCommand.data.doctor;
                 setBookingFormData(prev => ({ 
                   ...prev, 
-                  selectedDoctor: flowData.doctorId 
+                  selectedDoctor: doctorName,
+                  doctorId: doctorName === 'Dr. Johnson' ? 1 : doctorName === 'Dr. Chen' ? 2 : 3
                 }));
+                console.log("Doctor selected via voice:", doctorName);
               }
               break;
               
-            case "APPOINTMENT_CONFIRM":
+            case "TIME_SELECTED":
+              // Automatically select the time slot
+              if (data.voiceCommand && data.voiceCommand.data && data.voiceCommand.data.time) {
+                const timeSlot = data.voiceCommand.data.time;
+                setBookingFormData(prev => ({ 
+                  ...prev, 
+                  selectedTime: timeSlot 
+                }));
+                console.log("Time selected via voice:", timeSlot);
+              }
+              break;
+              
+            case "REASON_PROVIDED":
+              // Store the reason for visit
+              if (data.voiceCommand && data.voiceCommand.data && data.voiceCommand.data.reason) {
+                setBookingFormData(prev => ({ 
+                  ...prev, 
+                  reason: data.voiceCommand.data.reason 
+                }));
+                console.log("Reason provided via voice:", data.voiceCommand.data.reason);
+              }
+              break;
+              
+            case "CONFIRMED":
               // Auto-submit the appointment form
-              if (flowData.confirmed) {
-                // TODO: Trigger appointment submission once handleAppointmentSubmit is defined
-                console.log("Appointment confirmed via voice:", bookingFormData);
+              if (data.voiceCommand && data.voiceCommand.data) {
+                console.log("Appointment confirmed via voice:", data.voiceCommand.data);
+                
+                // Show confirmation toast
                 toast({
-                  title: "Appointment Confirmed",
-                  description: "Your appointment has been scheduled successfully through voice!",
+                  title: "✅ Appointment Confirmed!",
+                  description: `Your appointment has been successfully scheduled through voice`,
                   className: "bg-green-500 text-white"
                 });
+                
+                // Reset the booking form
+                setShowBookingCalendar(false);
+                setSelectedDate(null);
+                setBookingFormData({
+                  selectedDate: null,
+                  selectedDoctor: '',
+                  selectedTime: '',
+                  reason: '',
+                  doctorId: 0
+                });
+              }
+              break;
+          }
+        }
+        
+        // Handle analysis flows
+        if (flowType === "ANALYSIS") {
+          const analysisType = data.voiceCommand?.data?.type;
+          switch(flowStep) {
+            case "START":
+              // Open the appropriate analysis widget
+              if (analysisType === 'face') {
+                setShowFacePage(true);
+                setSelectedMenuItem("face");
+                setCameraEnabled(true);
+              } else if (analysisType === 'skin') {
+                setShowSkinPage(true);
+                setSelectedMenuItem("skin");
+                setCameraEnabled(true);
+              } else if (analysisType === 'lips') {
+                setShowLipsPage(true);
+                setSelectedMenuItem("lips");
+                setCameraEnabled(true);
+              } else if (analysisType === 'hair') {
+                setShowHairPage(true);
+                setSelectedMenuItem("hair");
+                setCameraEnabled(true);
               }
               break;
           }
@@ -3525,6 +3591,14 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     const day = i - new Date().getDay() + 1;
                     const isToday = day === new Date().getDate();
                     const isSelectable = day >= new Date().getDate();
+                    const currentMonth = new Date().getMonth();
+                    const currentYear = new Date().getFullYear();
+                    
+                    // Check if voice-selected date matches this day
+                    const isVoiceSelected = selectedDate && 
+                      selectedDate.getDate() === day && 
+                      selectedDate.getMonth() === currentMonth &&
+                      selectedDate.getFullYear() === currentYear;
                     
                     return (
                       <button
@@ -3534,6 +3608,12 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                             const newDate = new Date();
                             newDate.setDate(day);
                             setSelectedDate(newDate);
+                            setBookingFormData(prev => ({ ...prev, selectedDate: newDate }));
+                            
+                            // If voice session is active, announce the selection
+                            if (conversationState?.feature === 'appointment') {
+                              console.log("Date selected:", newDate.toLocaleDateString());
+                            }
                           }
                         }}
                         disabled={!isSelectable || day <= 0 || day > 31}
@@ -3541,8 +3621,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                           h-8 w-8 rounded-md text-xs font-medium transition-all
                           ${day <= 0 || day > 31 ? 'invisible' : ''}
                           ${isToday ? 'bg-yellow-600 text-white font-bold' : ''}
-                          ${selectedDate?.getDate() === day && !isToday ? 'bg-purple-200 text-purple-800' : ''}
-                          ${isSelectable && day > 0 && day <= 31 && !isToday && selectedDate?.getDate() !== day ? 'hover:bg-gray-100' : ''}
+                          ${isVoiceSelected && !isToday ? 'bg-purple-600 text-white ring-2 ring-purple-400 animate-pulse' : ''}
+                          ${selectedDate?.getDate() === day && !isToday && !isVoiceSelected ? 'bg-purple-200 text-purple-800' : ''}
+                          ${isSelectable && day > 0 && day <= 31 && !isToday && !isVoiceSelected ? 'hover:bg-gray-100' : ''}
                           ${!isSelectable && day > 0 && day <= 31 ? 'text-gray-300 cursor-not-allowed' : ''}
                         `}
                       >
@@ -3551,6 +3632,18 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                     );
                   })}
                 </div>
+                
+                {/* Voice Booking Assistant */}
+                {conversationState?.feature === 'appointment' && (
+                  <div className="mt-2 p-2 bg-blue-50 rounded-lg animate-pulse">
+                    <div className="flex items-center gap-2">
+                      <Mic className="h-3 w-3 text-blue-600" />
+                      <p className="text-xs text-blue-700">
+                        Voice Assistant Active - Say your preferred date
+                      </p>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Selected Date */}
                 {selectedDate && (
@@ -3562,6 +3655,108 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                         day: 'numeric' 
                       })}
                     </p>
+                  </div>
+                )}
+                
+                {/* Doctor Selection for Voice Flow */}
+                {selectedDate && conversationState?.step === 'select_doctor' && (
+                  <div className="mt-2 p-2 bg-white border border-purple-200 rounded-lg">
+                    <p className="text-xs text-gray-700 mb-2 font-medium">Available Doctors:</p>
+                    <div className="grid grid-cols-2 gap-1">
+                      {['Dr. Johnson', 'Dr. Chen', 'Dr. Williams', 'Dr. Smith'].map((doctor) => (
+                        <button
+                          key={doctor}
+                          onClick={() => {
+                            setBookingFormData(prev => ({ 
+                              ...prev, 
+                              selectedDoctor: doctor,
+                              doctorId: doctor === 'Dr. Johnson' ? 1 : doctor === 'Dr. Chen' ? 2 : doctor === 'Dr. Williams' ? 3 : 4
+                            }));
+                            console.log("Doctor selected:", doctor);
+                            
+                            // Announce selection for voice flow
+                            const msg = `You've selected ${doctor}`;
+                            const message = {
+                              id: Date.now().toString(),
+                              text: msg,
+                              sender: 'bot' as const,
+                              timestamp: new Date()
+                            };
+                            setMessages(prev => [...prev, message]);
+                          }}
+                          className={`text-left px-2 py-1 text-xs rounded ${
+                            bookingFormData.selectedDoctor === doctor 
+                              ? 'bg-purple-600 text-white animate-pulse' 
+                              : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                          } transition-all`}
+                        >
+                          {doctor}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex items-center gap-1 text-xs text-blue-600">
+                      <Mic className="h-3 w-3" />
+                      <span>Or say doctor's name</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Time Slot Selection for Voice Flow */}
+                {selectedDate && bookingFormData.selectedDoctor && conversationState?.step === 'select_time' && (
+                  <div className="mt-2 p-2 bg-white border border-purple-200 rounded-lg">
+                    <p className="text-xs text-gray-700 mb-2 font-medium">Available Times:</p>
+                    <div className="grid grid-cols-3 gap-1">
+                      {['9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '4:00 PM'].map((time) => (
+                        <button
+                          key={time}
+                          onClick={() => {
+                            setBookingFormData(prev => ({ 
+                              ...prev, 
+                              selectedTime: time
+                            }));
+                            console.log("Time selected:", time);
+                            
+                            // Announce selection
+                            const msg = `${time} selected`;
+                            const message = {
+                              id: Date.now().toString(),
+                              text: msg,
+                              sender: 'bot' as const,
+                              timestamp: new Date()
+                            };
+                            setMessages(prev => [...prev, message]);
+                          }}
+                          className={`px-1 py-1 text-xs rounded ${
+                            bookingFormData.selectedTime === time 
+                              ? 'bg-purple-600 text-white animate-pulse' 
+                              : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                          } transition-all`}
+                        >
+                          {time}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex items-center gap-1 text-xs text-blue-600">
+                      <Mic className="h-3 w-3" />
+                      <span>Or say preferred time</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Appointment Summary for Voice Confirmation */}
+                {conversationState?.step === 'confirm' && bookingFormData.selectedDate && bookingFormData.selectedDoctor && bookingFormData.selectedTime && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-xs text-green-700 font-medium mb-2">Confirm Appointment:</p>
+                    <div className="space-y-1 text-xs text-gray-700">
+                      <p>📅 {bookingFormData.selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                      <p>👨‍⚕️ {bookingFormData.selectedDoctor}</p>
+                      <p>🕐 {bookingFormData.selectedTime}</p>
+                      {bookingFormData.reason && <p>📝 {bookingFormData.reason}</p>}
+                    </div>
+                    <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
+                      <Mic className="h-3 w-3" />
+                      <span>Say "yes" to confirm or "no" to change</span>
+                    </div>
                   </div>
                 )}
                 
