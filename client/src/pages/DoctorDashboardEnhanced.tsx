@@ -988,7 +988,7 @@ const DoctorDashboardEnhanced: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-20 shadow-sm">
+      <header className="bg-white border-b sticky top-0 z-30 shadow-sm">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
             <Button
@@ -1024,10 +1024,10 @@ const DoctorDashboardEnhanced: React.FC = () => {
 
       <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
-        <aside className={`fixed top-0 left-0 z-10 w-64 h-screen bg-white border-r shadow-lg transform transition-transform lg:translate-x-0 flex flex-col ${
+        <aside className={`fixed top-16 left-0 z-10 w-64 h-[calc(100vh-4rem)] bg-white border-r shadow-lg transform transition-transform lg:translate-x-0 flex flex-col ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
-          <nav className="flex-1 p-4 space-y-2 mt-16 lg:mt-0 overflow-hidden">
+          <nav className="flex-1 p-4 space-y-2 overflow-hidden">
             {navItems.map((item) => (
               <Button
                 key={item.id}
