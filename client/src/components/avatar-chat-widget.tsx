@@ -26,6 +26,7 @@ import VoiceSkincareWidget from "./voice-skincare-tips";
 import HairExtensionWidget from "./hair-extension-widget";
 import VoiceIcon from "./ui/voice-icon";
 import AppointmentCalendar from "./appointment-calendar";
+import AppointmentCalendarInline from "./appointment-calendar-inline";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -496,12 +497,22 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
         if (flowType === "APPOINTMENT") {
           switch(flowStep) {
             case "START":
-              // Open appointment booking calendar
-              setShowChatInterface(false);
-              setShowBookingCalendar(true);
-              setSelectedMenuItem("book");
+              // Show inline calendar within chat interface
+              setShowChatInterface(true);  // Keep chat interface open
+              setShowBookingCalendar(true); // Show inline calendar
+              setSelectedMenuItem(null);    // Don't select menu item
               setSelectedDate(null);
-              setBookingFormData(prev => ({ ...prev, selectedDate: null, doctorId: 0 }));
+              setBookingFormData(prev => ({ ...prev, selectedDate: null, selectedDoctor: '', selectedTime: '' }));
+              // Set conversation state to track appointment flow
+              setConversationState({ 
+                feature: 'appointment', 
+                step: 'select_date',
+                context: {} 
+              });
+              // Enable continuous listening for voice input
+              setContinuousListening(true);
+              setShowVoiceIndicator(true);
+              setVoiceIndicatorText("Say your appointment details...");
               break;
               
             case "START_CONTINUOUS":
@@ -684,11 +695,18 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
         // Process the command
         switch(command) {
           case "APPOINTMENT":
-            setShowChatInterface(false);
-            setShowBookingCalendar(true);
-            setSelectedMenuItem("book");
+            // Show inline calendar within chat interface
+            setShowChatInterface(true);  // Keep chat interface open
+            setShowBookingCalendar(true); // Show inline calendar
+            setSelectedMenuItem(null);    // Don't select menu item
             setSelectedDate(null);
-            setBookingFormData(prev => ({ ...prev, selectedDate: null }));
+            setBookingFormData(prev => ({ ...prev, selectedDate: null, selectedDoctor: '', selectedTime: '' }));
+            // Set conversation state to track appointment flow
+            setConversationState({ 
+              feature: 'appointment', 
+              step: 'select_date',
+              context: {} 
+            });
             break;
             
           case "FACE_ANALYSIS":
@@ -2217,6 +2235,66 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Inline Appointment Calendar - Shows within chat when voice booking starts */}
+                  {conversationState?.feature === 'appointment' && showBookingCalendar && (
+                    <div className="w-full">
+                      <AppointmentCalendarInline
+                        voiceData={{
+                          doctor: bookingFormData.selectedDoctor,
+                          date: bookingFormData.selectedDate?.toISOString(),
+                          time: bookingFormData.selectedTime,
+                          reason: bookingFormData.reason
+                        }}
+                        conversationState={conversationState}
+                        onDateSelect={(date) => {
+                          setSelectedDate(date);
+                          setBookingFormData(prev => ({ ...prev, selectedDate: date }));
+                          // Advance conversation state
+                          setConversationState(prev => ({ ...prev, step: 'select_doctor' }));
+                        }}
+                        onDoctorSelect={(doctor) => {
+                          setBookingFormData(prev => ({ ...prev, selectedDoctor: doctor }));
+                          // Advance conversation state
+                          setConversationState(prev => ({ ...prev, step: 'select_time' }));
+                        }}
+                        onTimeSelect={(time) => {
+                          setBookingFormData(prev => ({ ...prev, selectedTime: time }));
+                          // Advance conversation state
+                          setConversationState(prev => ({ ...prev, step: 'confirm' }));
+                        }}
+                        onAppointmentBooked={(appointment) => {
+                          // Handle successful booking
+                          const confirmMessage: Message = {
+                            id: `msg_${Date.now()}`,
+                            text: `✅ Your appointment with ${appointment.doctorName} on ${appointment.date} at ${appointment.time} has been confirmed!`,
+                            sender: 'bot',
+                            timestamp: new Date()
+                          };
+                          setMessages(prev => [...prev, confirmMessage]);
+                          
+                          // Make avatar speak confirmation
+                          if (avatarRef.current) {
+                            avatarRef.current.speak(confirmMessage.text);
+                          }
+                          
+                          // Reset states
+                          setShowBookingCalendar(false);
+                          setConversationState(null);
+                          setBookingFormData({
+                            patientName: '',
+                            patientEmail: '',
+                            patientPhone: '',
+                            reason: '',
+                            doctorId: 1,
+                            selectedDate: null,
+                            selectedDoctor: '',
+                            selectedTime: ''
+                          });
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 {/* Show Book page */}
