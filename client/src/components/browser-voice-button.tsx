@@ -18,6 +18,7 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
   const [transcript, setTranscript] = useState("");
   const [isSupported, setIsSupported] = useState(true);
   const recognitionRef = useRef<any>(null);
+  const isStartingRef = useRef(false);
 
   useEffect(() => {
     // Check if browser supports speech recognition
@@ -69,10 +70,15 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
         console.log("No speech detected - continuing to listen");
         // Restart recognition to continue listening
         setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (e) {
-            console.log("Recognition already started");
+          if (!isStartingRef.current) {
+            isStartingRef.current = true;
+            try {
+              recognition.start();
+            } catch (e) {
+              console.log("Recognition already started");
+            } finally {
+              isStartingRef.current = false;
+            }
           }
         }, 100);
       } else if (event.error === 'not-allowed') {
@@ -83,10 +89,15 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
         // Restart if aborted (common when user pauses)
         if (isRecording) {
           setTimeout(() => {
-            try {
-              recognition.start();
-            } catch (e) {
-              console.log("Recognition already started");
+            if (!isStartingRef.current) {
+              isStartingRef.current = true;
+              try {
+                recognition.start();
+              } catch (e) {
+                console.log("Recognition already started");
+              } finally {
+                isStartingRef.current = false;
+              }
             }
           }, 100);
         }
@@ -102,8 +113,15 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
       if (isRecording) {
         console.log("Restarting recognition to continue listening");
         setTimeout(() => {
-          if (recognitionRef.current && isRecording) {
-            recognitionRef.current.start();
+          if (recognitionRef.current && isRecording && !isStartingRef.current) {
+            isStartingRef.current = true;
+            try {
+              recognitionRef.current.start();
+            } catch (e) {
+              console.log("Recognition already started");
+            } finally {
+              isStartingRef.current = false;
+            }
           }
         }, 100);
       }
@@ -112,6 +130,7 @@ export default function BrowserVoiceButton({ onTranscript, disabled = false }: B
     // Handle start
     recognition.onstart = () => {
       console.log("Recognition started");
+      isStartingRef.current = false; // Reset flag when started successfully
     };
 
     recognitionRef.current = recognition;
