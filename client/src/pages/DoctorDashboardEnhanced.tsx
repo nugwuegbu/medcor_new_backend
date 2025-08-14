@@ -1024,42 +1024,40 @@ const DoctorDashboardEnhanced: React.FC = () => {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className={`fixed inset-y-0 left-0 z-10 w-64 bg-white border-r shadow-lg transform transition-transform lg:translate-x-0 lg:static lg:inset-0 ${
+        <aside className={`fixed inset-y-0 left-0 z-10 w-64 h-screen bg-white border-r shadow-lg transform transition-transform lg:translate-x-0 lg:static lg:inset-0 flex flex-col ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
-          <ScrollArea className="h-full">
-            <nav className="p-4 space-y-2 mt-16 lg:mt-0">
-              {navItems.map((item) => (
-                <Button
-                  key={item.id}
-                  variant={activeView === item.id ? 'default' : 'ghost'}
-                  className={`w-full justify-start ${
-                    activeView === item.id 
-                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  onClick={() => {
-                    setActiveView(item.id);
-                    setSidebarOpen(false);
-                  }}
-                >
-                  <item.icon className="h-4 w-4 mr-3" />
-                  {item.label}
-                </Button>
-              ))}
-              
-              <Separator className="my-4" />
-              
+          <nav className="flex-1 p-4 space-y-2 mt-16 lg:mt-0 overflow-hidden">
+            {navItems.map((item) => (
               <Button
-                variant="ghost"
-                className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
-                onClick={handleLogout}
+                key={item.id}
+                variant={activeView === item.id ? 'default' : 'ghost'}
+                className={`w-full justify-start ${
+                  activeView === item.id 
+                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                onClick={() => {
+                  setActiveView(item.id);
+                  setSidebarOpen(false);
+                }}
               >
-                <LogOut className="h-4 w-4 mr-3" />
-                Logout
+                <item.icon className="h-4 w-4 mr-3" />
+                {item.label}
               </Button>
-            </nav>
-          </ScrollArea>
+            ))}
+          </nav>
+          
+          <div className="p-4 border-t">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4 mr-3" />
+              Logout
+            </Button>
+          </div>
         </aside>
 
         {/* Main Content */}
