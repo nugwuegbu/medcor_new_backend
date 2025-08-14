@@ -127,6 +127,14 @@ const PatientDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisRecord | null>(null);
+  const [showNewRecordDialog, setShowNewRecordDialog] = useState(false);
+  const [currentRecordsPage, setCurrentRecordsPage] = useState(1);
+  const [currentAnalysisPage, setCurrentAnalysisPage] = useState(1);
+  const [currentAppointmentsPage, setCurrentAppointmentsPage] = useState(1);
+  const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
+  const recordsPerPage = 3;
+  const analysisPerPage = 5;
+  const appointmentsPerPage = 5;
 
   // Demo patient data
   const patientInfo = {
@@ -314,107 +322,138 @@ const PatientDashboard: React.FC = () => {
   };
 
   // Overview Page Component
-  const OverviewPage = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Welcome back, {patientInfo.first_name}!</h2>
-        <p className="text-gray-500">Here's your health overview</p>
-      </div>
+  const OverviewPage = () => {
+    const upcomingAppointments = appointments.filter(apt => apt.appointment_status === 'scheduled');
+    const completedAppointments = appointments.filter(apt => apt.appointment_status === 'completed');
+    const nextAppointment = upcomingAppointments[0];
+    const avgHealthScore = Math.round(analysisRecords.reduce((acc, r) => acc + r.score, 0) / analysisRecords.length);
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">Next Appointment</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Jan 20</div>
-            <p className="text-xs text-gray-500 mt-1">10:00 AM with Dr. Johnson</p>
-          </CardContent>
-        </Card>
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">Welcome back, {patientInfo.first_name}!</h2>
+          <p className="text-gray-500">Here's your health overview</p>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">Health Score</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <div className="text-2xl font-bold">85</div>
-              <TrendingUp className="h-4 w-4 text-green-500" />
-            </div>
-            <Progress value={85} className="mt-2" />
-          </CardContent>
-        </Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-500">Total Appointments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{appointments.length}</div>
+              <p className="text-xs text-gray-500 mt-1">
+                {upcomingAppointments.length} upcoming, {completedAppointments.length} completed
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">Active Medications</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-gray-500 mt-1">Next refill in 12 days</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-500">Recent Tests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2</div>
-            <p className="text-xs text-gray-500 mt-1">All results normal</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {appointments.slice(0, 3).map((apt) => (
-              <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <div>
-                    <p className="font-medium">{apt.treatment_name}</p>
-                    <p className="text-sm text-gray-500">
-                      {format(new Date(apt.appointment_slot_date), 'MMM d, yyyy')} with {apt.doctor_name}
-                    </p>
-                  </div>
-                </div>
-                <Badge variant={apt.appointment_status === 'completed' ? 'secondary' : 'default'}>
-                  {apt.status_display}
-                </Badge>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-500">Average Health Score</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <div className="text-2xl font-bold">{avgHealthScore}</div>
+                <TrendingUp className="h-4 w-4 text-green-500" />
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+              <Progress value={avgHealthScore} className="mt-2" />
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-500">Medical Records</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{medicalRecords.length}</div>
+              <p className="text-xs text-gray-500 mt-1">
+                {medicalRecords.reduce((acc, r) => acc + r.files.length, 0)} files total
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-500">Health Analyses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analysisRecords.length}</div>
+              <p className="text-xs text-gray-500 mt-1">Last analysis {analysisRecords[0]?.date}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {appointments.slice(0, 3).map((apt) => (
+                <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <p className="font-medium">{apt.treatment_name}</p>
+                      <p className="text-sm text-gray-500">
+                        {format(new Date(apt.appointment_slot_date), 'MMM d, yyyy')} with {apt.doctor_name}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant={apt.appointment_status === 'completed' ? 'secondary' : 'default'}>
+                    {apt.status_display}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
 
   // Appointments Page Component
-  const AppointmentsPage = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Appointments</h2>
-          <p className="text-gray-500">Manage your medical appointments</p>
-        </div>
-        <Button onClick={() => setShowNewAppointmentDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Book Appointment
-        </Button>
-      </div>
+  const AppointmentsPage = () => {
+    const [appointmentTab, setAppointmentTab] = useState('upcoming');
+    
+    const filteredAppointments = () => {
+      if (appointmentTab === 'upcoming') {
+        return appointments.filter(apt => apt.appointment_status === 'scheduled');
+      } else if (appointmentTab === 'past') {
+        return appointments.filter(apt => apt.appointment_status === 'completed');
+      }
+      return appointments; // all
+    };
 
-      <Tabs defaultValue="upcoming">
-        <TabsList>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="past">Past</TabsTrigger>
-        </TabsList>
+    const paginatedAppointments = filteredAppointments().slice(
+      (currentAppointmentsPage - 1) * appointmentsPerPage,
+      currentAppointmentsPage * appointmentsPerPage
+    );
+
+    const totalPages = Math.ceil(filteredAppointments().length / appointmentsPerPage);
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold">Appointments</h2>
+            <p className="text-gray-500">Manage your medical appointments</p>
+          </div>
+          <Button onClick={() => setShowNewAppointmentDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Book Appointment
+          </Button>
+        </div>
+
+        <Tabs value={appointmentTab} onValueChange={setAppointmentTab}>
+          <TabsList>
+            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+            <TabsTrigger value="past">Past</TabsTrigger>
+            <TabsTrigger value="all">All</TabsTrigger>
+          </TabsList>
 
         <TabsContent value="upcoming" className="mt-4">
           <Card>
@@ -429,9 +468,7 @@ const PatientDashboard: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {appointments
-                  .filter(apt => apt.appointment_status === 'scheduled')
-                  .map((apt) => (
+                {paginatedAppointments.map((apt) => (
                     <TableRow key={apt.id}>
                       <TableCell>
                         <div>
@@ -483,9 +520,7 @@ const PatientDashboard: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {appointments
-                  .filter(apt => apt.appointment_status === 'completed')
-                  .map((apt) => (
+                {paginatedAppointments.map((apt) => (
                     <TableRow key={apt.id}>
                       <TableCell>
                         <div>
@@ -512,91 +547,238 @@ const PatientDashboard: React.FC = () => {
             </Table>
           </Card>
         </TabsContent>
+        
+        <TabsContent value="all" className="mt-4">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date & Time</TableHead>
+                  <TableHead>Doctor</TableHead>
+                  <TableHead>Treatment</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedAppointments.map((apt) => (
+                  <TableRow key={apt.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{format(new Date(apt.appointment_slot_date), 'MMM d, yyyy')}</p>
+                        <p className="text-sm text-gray-500">
+                          {apt.appointment_slot_start_time.slice(0, 5)} - {apt.appointment_slot_end_time.slice(0, 5)}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{apt.doctor_name}</TableCell>
+                    <TableCell>{apt.treatment_name}</TableCell>
+                    <TableCell>
+                      <Badge variant={apt.appointment_status === 'completed' ? 'secondary' : 'default'}>
+                        {apt.status_display}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedItem(apt);
+                            setShowEditDialog(true);
+                          }}
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                        {apt.appointment_status === 'scheduled' && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedItem(apt);
+                              setShowDeleteDialog(true);
+                            }}
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t">
+                <p className="text-sm text-gray-500">
+                  Showing {(currentAppointmentsPage - 1) * appointmentsPerPage + 1} to{' '}
+                  {Math.min(currentAppointmentsPage * appointmentsPerPage, filteredAppointments().length)} of{' '}
+                  {filteredAppointments().length} appointments
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={currentAppointmentsPage === 1}
+                    onClick={() => setCurrentAppointmentsPage(prev => prev - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={currentAppointmentsPage === totalPages}
+                    onClick={() => setCurrentAppointmentsPage(prev => prev + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
-  );
+    );
+  };
 
   // Medical Records Page Component
-  const MedicalRecordsPage = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Medical Records</h2>
-          <p className="text-gray-500">Access your health documents</p>
-        </div>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Search records..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-64"
-          />
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
-        </div>
-      </div>
+  const MedicalRecordsPage = () => {
+    const filteredRecords = medicalRecords.filter(record => 
+      record.diagnosis.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.files.some(file => file.file_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
-      <div className="grid gap-4">
-        {medicalRecords.map((record) => (
-          <Card key={record.id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">
-                    {record.diagnosis}
-                  </CardTitle>
-                  <CardDescription>
-                    Record ID: {record.record_id} • {format(new Date(record.date), 'MMMM d, yyyy')}
-                  </CardDescription>
+    const paginatedRecords = filteredRecords.slice(
+      (currentRecordsPage - 1) * recordsPerPage,
+      currentRecordsPage * recordsPerPage
+    );
+
+    const totalRecordPages = Math.ceil(filteredRecords.length / recordsPerPage);
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold">Medical Records</h2>
+            <p className="text-gray-500">Access your health documents</p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Search by diagnosis or file name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-80"
+            />
+            <Button onClick={() => setShowNewRecordDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Record
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-4">
+          {paginatedRecords.map((record) => (
+            <Card key={record.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">
+                      {record.diagnosis}
+                    </CardTitle>
+                    <CardDescription>
+                      Record ID: {record.record_id} • {format(new Date(record.date), 'MMMM d, yyyy')}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">
+                      <FileText className="h-3 w-3 mr-1" />
+                      {record.files.length} Files
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setSelectedItem(record);
+                        setShowDeleteDialog(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
                 </div>
-                <Badge variant="outline">
-                  <FileText className="h-3 w-3 mr-1" />
-                  {record.files.length} Files
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {record.files.map((file) => (
-                  <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="font-medium">{file.file_name}</p>
-                        <p className="text-sm text-gray-500">{formatFileSize(file.file_size)}</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {record.files.map((file) => (
+                    <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-blue-500" />
+                        <div>
+                          <p className="font-medium">{file.file_name}</p>
+                          <p className="text-sm text-gray-500">{formatFileSize(file.file_size)}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-3 w-3 mr-1" />
-                        View
-                      </Button>
                       <Button size="sm" variant="outline">
                         <Download className="h-3 w-3 mr-1" />
                         Download
                       </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {totalRecordPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={currentRecordsPage === 1}
+              onClick={() => setCurrentRecordsPage(prev => prev - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <span className="text-sm text-gray-500 px-3">
+              Page {currentRecordsPage} of {totalRecordPages}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={currentRecordsPage === totalRecordPages}
+              onClick={() => setCurrentRecordsPage(prev => prev + 1)}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   // Analysis Tracking Page Component
-  const AnalysisTrackingPage = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Health Analysis</h2>
-          <p className="text-gray-500">Track your skin, hair, lips, and face health</p>
+  const AnalysisTrackingPage = () => {
+    const paginatedAnalysis = analysisRecords.slice(
+      (currentAnalysisPage - 1) * analysisPerPage,
+      currentAnalysisPage * analysisPerPage
+    );
+
+    const totalAnalysisPages = Math.ceil(analysisRecords.length / analysisPerPage);
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold">Health Analysis</h2>
+            <p className="text-gray-500">Track your skin, hair, lips, and face health</p>
+          </div>
         </div>
-      </div>
 
       {/* Analysis Type Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -702,7 +884,7 @@ const PatientDashboard: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {analysisRecords.map((record) => (
+              {paginatedAnalysis.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell className="capitalize">
                     <div className="flex items-center gap-2">
@@ -742,10 +924,38 @@ const PatientDashboard: React.FC = () => {
               ))}
             </TableBody>
           </Table>
+          {totalAnalysisPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <p className="text-sm text-gray-500">
+                Showing {(currentAnalysisPage - 1) * analysisPerPage + 1} to{' '}
+                {Math.min(currentAnalysisPage * analysisPerPage, analysisRecords.length)} of{' '}
+                {analysisRecords.length} analyses
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentAnalysisPage === 1}
+                  onClick={() => setCurrentAnalysisPage(prev => prev - 1)}
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentAnalysisPage === totalAnalysisPages}
+                  onClick={() => setCurrentAnalysisPage(prev => prev + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
-  );
+    );
+  };
 
   // Profile & Settings Page Component
   const ProfileSettingsPage = () => (
@@ -1053,19 +1263,142 @@ const PatientDashboard: React.FC = () => {
           </DialogContent>
         </Dialog>
 
+        {/* Edit Appointment Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Appointment</DialogTitle>
+              <DialogDescription>
+                Update your appointment details
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label>Select Doctor</Label>
+                <Select defaultValue={selectedItem?.doctor_name}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a doctor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Dr. Emily Johnson">Dr. Emily Johnson - General Practice</SelectItem>
+                    <SelectItem value="Dr. Michael Chen">Dr. Michael Chen - Cardiology</SelectItem>
+                    <SelectItem value="Dr. Sarah Williams">Dr. Sarah Williams - Dermatology</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Appointment Date</Label>
+                <Input type="date" defaultValue={selectedItem?.appointment_slot_date} />
+              </div>
+              <div>
+                <Label>Preferred Time</Label>
+                <Select defaultValue={selectedItem?.appointment_slot_start_time?.slice(0, 5)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select time slot" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="09:00">09:00 AM</SelectItem>
+                    <SelectItem value="10:00">10:00 AM</SelectItem>
+                    <SelectItem value="11:00">11:00 AM</SelectItem>
+                    <SelectItem value="14:00">02:00 PM</SelectItem>
+                    <SelectItem value="15:00">03:00 PM</SelectItem>
+                    <SelectItem value="16:00">04:00 PM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Reason for Visit</Label>
+                <Textarea 
+                  defaultValue={selectedItem?.treatment_name} 
+                  placeholder="Briefly describe your symptoms or reason for the appointment" 
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                toast({
+                  title: "Appointment Updated",
+                  description: "Your appointment has been successfully updated."
+                });
+                setShowEditDialog(false);
+              }}>
+                Update Appointment
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add New Record Dialog */}
+        <Dialog open={showNewRecordDialog} onOpenChange={setShowNewRecordDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Medical Record</DialogTitle>
+              <DialogDescription>
+                Upload a new medical record or test result
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label>Record Type</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select record type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="blood-test">Blood Test</SelectItem>
+                    <SelectItem value="xray">X-Ray</SelectItem>
+                    <SelectItem value="mri">MRI Scan</SelectItem>
+                    <SelectItem value="prescription">Prescription</SelectItem>
+                    <SelectItem value="report">Medical Report</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Diagnosis/Notes</Label>
+                <Input placeholder="Enter diagnosis or notes" />
+              </div>
+              <div>
+                <Label>Upload Files</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                  <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">Click to upload or drag and drop</p>
+                  <p className="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNewRecordDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                toast({
+                  title: "Record Added",
+                  description: "Your medical record has been successfully added."
+                });
+                setShowNewRecordDialog(false);
+              }}>
+                Add Record
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently cancel your appointment.
+                This action cannot be undone. This will permanently delete the selected item.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteItem}>
-                Yes, cancel appointment
+                Yes, delete
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
