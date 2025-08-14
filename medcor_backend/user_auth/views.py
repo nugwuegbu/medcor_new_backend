@@ -103,6 +103,14 @@ class AdminLoginAPIView(APIView):
                 refresh = RefreshToken.for_user(user)
                 access_token = refresh.access_token
                 
+                # Determine the correct role
+                if hasattr(user, 'role') and user.role:
+                    role = user.role
+                elif user.is_superuser:
+                    role = 'admin'
+                else:
+                    role = 'admin'  # If they have staff/admin access, they're admin
+                
                 return Response({
                     'message': 'Login successful',
                     'access_token': str(access_token),
@@ -111,7 +119,7 @@ class AdminLoginAPIView(APIView):
                         'id': user.id,
                         'email': user.email,
                         'username': user.username,
-                        'role': 'admin' if user.is_superuser else 'staff',
+                        'role': role,
                         'is_active': user.is_active,
                         'is_staff': user.is_staff,
                         'is_superuser': user.is_superuser,
