@@ -1457,7 +1457,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
               <HeyGenSDKAvatar 
                 ref={avatarRef}
                 key="single-avatar-instance"
-                apiKey="Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+                apiKey={import.meta.env.VITE_HEYGEN_API_KEY || ""}
                 isVisible={true}
                 onMessage={(text) => {
                   console.log("Avatar message:", text);

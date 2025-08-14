@@ -93,7 +93,7 @@ export class InteractiveDialogueService {
       
       // Get avatar instance
       const avatar = await AvatarManager.getOrCreateAvatar(
-        "Mzk0YThhNTk4OWRiNGU4OGFlZDZiYzliYzkwOTBjOGQtMTcyNjczNDQ0Mg=="
+        import.meta.env.VITE_HEYGEN_API_KEY || ""
       );
       
       console.log("Speaking greeting:", analysis.greeting);
