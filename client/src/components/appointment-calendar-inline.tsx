@@ -174,50 +174,50 @@ export default function AppointmentCalendarInline({
   const currentStep = conversationState?.step || 'select_date';
 
   return (
-    <div className="w-full max-w-md mx-auto p-3 bg-white rounded-lg">
-      {/* Progress Indicator */}
-      <div className="flex items-center justify-between mb-3 text-xs">
+    <div className="w-full max-w-sm mx-auto p-2 bg-white rounded-lg shadow-sm border border-gray-200">
+      {/* Compact Progress Indicator */}
+      <div className="flex items-center justify-between mb-2 px-1">
         <div className={`flex items-center gap-1 ${currentStep === 'select_date' ? 'text-purple-600' : 'text-gray-400'}`}>
           <Calendar className="h-3 w-3" />
-          <span>Date</span>
+          <span className="text-[10px]">Date</span>
         </div>
         <div className={`flex items-center gap-1 ${currentStep === 'select_doctor' ? 'text-purple-600' : 'text-gray-400'}`}>
           <User className="h-3 w-3" />
-          <span>Doctor</span>
+          <span className="text-[10px]">Doctor</span>
         </div>
         <div className={`flex items-center gap-1 ${currentStep === 'select_time' ? 'text-purple-600' : 'text-gray-400'}`}>
           <Clock className="h-3 w-3" />
-          <span>Time</span>
+          <span className="text-[10px]">Time</span>
         </div>
       </div>
 
       {/* Calendar View */}
       {currentStep === 'select_date' && (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {/* Month Navigation */}
-          <div className="flex items-center justify-between px-2">
+          <div className="flex items-center justify-between px-1">
             <button
               onClick={handlePrevMonth}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-0.5 hover:bg-gray-100 rounded"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3 w-3" />
             </button>
-            <h3 className="text-sm font-semibold">
-              {format(currentMonth, 'MMMM yyyy')}
+            <h3 className="text-xs font-semibold">
+              {format(currentMonth, 'MMM yyyy')}
             </h3>
             <button
               onClick={handleNextMonth}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-0.5 hover:bg-gray-100 rounded"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3" />
             </button>
           </div>
 
           {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1 text-xs">
+          <div className="grid grid-cols-7 gap-0.5 text-[10px]">
             {/* Week Days */}
-            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
-              <div key={day} className="text-center text-gray-500 font-medium py-1">
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
+              <div key={day} className="text-center text-gray-500 font-medium py-0.5">
                 {day}
               </div>
             ))}
@@ -229,7 +229,7 @@ export default function AppointmentCalendarInline({
                 onClick={() => date && !isPastDate(date) && handleDateClick(date)}
                 disabled={!date || isPastDate(date)}
                 className={`
-                  h-7 w-full rounded text-xs
+                  h-6 w-full rounded text-[10px]
                   ${!date ? 'invisible' : ''}
                   ${isDateSelected(date) ? 'bg-purple-600 text-white' : ''}
                   ${isToday(date) && !isDateSelected(date) ? 'bg-yellow-100 font-bold' : ''}
@@ -242,24 +242,24 @@ export default function AppointmentCalendarInline({
           </div>
 
           {/* Voice Hint */}
-          <div className="flex items-center gap-2 p-2 bg-blue-50 rounded text-xs">
-            <Mic className="h-3 w-3 text-blue-600" />
-            <span className="text-blue-700">Say "tomorrow" or any date</span>
+          <div className="flex items-center gap-1 p-1 bg-blue-50 rounded">
+            <Mic className="h-2.5 w-2.5 text-blue-600" />
+            <span className="text-[10px] text-blue-700">Say "tomorrow" or any date</span>
           </div>
         </div>
       )}
 
       {/* Doctor Selection */}
       {currentStep === 'select_doctor' && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium mb-2">Select Doctor</h4>
-          <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <h4 className="text-xs font-medium mb-1">Select Doctor</h4>
+          <div className="grid grid-cols-2 gap-1">
             {doctors.map((doctor) => (
               <button
                 key={doctor}
                 onClick={() => handleDoctorSelect(doctor)}
                 className={`
-                  p-2 text-xs rounded border transition-all
+                  p-1.5 text-[10px] rounded border transition-all
                   ${selectedDoctor === doctor 
                     ? 'bg-purple-600 text-white border-purple-600' 
                     : 'bg-white hover:bg-gray-50 border-gray-200'}
@@ -271,24 +271,24 @@ export default function AppointmentCalendarInline({
           </div>
           
           {/* Voice Hint */}
-          <div className="flex items-center gap-2 p-2 bg-blue-50 rounded text-xs">
-            <Mic className="h-3 w-3 text-blue-600" />
-            <span className="text-blue-700">Say doctor's name</span>
+          <div className="flex items-center gap-1 p-1 bg-blue-50 rounded">
+            <Mic className="h-2.5 w-2.5 text-blue-600" />
+            <span className="text-[10px] text-blue-700">Say doctor's name</span>
           </div>
         </div>
       )}
 
       {/* Time Selection */}
       {currentStep === 'select_time' && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium mb-2">Select Time</h4>
-          <div className="grid grid-cols-4 gap-2">
+        <div className="space-y-1">
+          <h4 className="text-xs font-medium mb-1">Select Time</h4>
+          <div className="grid grid-cols-4 gap-1">
             {timeSlots.map((time) => (
               <button
                 key={time}
                 onClick={() => handleTimeSelect(time)}
                 className={`
-                  p-2 text-xs rounded border transition-all
+                  p-1 text-[10px] rounded border transition-all
                   ${selectedTime === time 
                     ? 'bg-purple-600 text-white border-purple-600' 
                     : 'bg-white hover:bg-gray-50 border-gray-200'}
@@ -300,19 +300,19 @@ export default function AppointmentCalendarInline({
           </div>
           
           {/* Voice Hint */}
-          <div className="flex items-center gap-2 p-2 bg-blue-50 rounded text-xs">
-            <Mic className="h-3 w-3 text-blue-600" />
-            <span className="text-blue-700">Say preferred time</span>
+          <div className="flex items-center gap-1 p-1 bg-blue-50 rounded">
+            <Mic className="h-2.5 w-2.5 text-blue-600" />
+            <span className="text-[10px] text-blue-700">Say preferred time</span>
           </div>
         </div>
       )}
 
       {/* Confirmation Summary */}
       {currentStep === 'confirm' && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium mb-2">Confirm Appointment</h4>
-          <div className="p-3 bg-green-50 rounded-lg space-y-1 text-xs">
-            <p>📅 {selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
+        <div className="space-y-1">
+          <h4 className="text-xs font-medium mb-1">Confirm Appointment</h4>
+          <div className="p-2 bg-green-50 rounded space-y-0.5 text-[10px]">
+            <p>📅 {selectedDate && format(selectedDate, 'EEE, MMM d')}</p>
             <p>👨‍⚕️ {selectedDoctor}</p>
             <p>🕐 {selectedTime}</p>
             {voiceData?.reason && <p>📝 {voiceData.reason}</p>}
@@ -320,15 +320,15 @@ export default function AppointmentCalendarInline({
           
           <Button
             onClick={handleConfirmBooking}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white text-[10px] h-7"
           >
             Confirm Booking
           </Button>
           
           {/* Voice Hint */}
-          <div className="flex items-center gap-2 p-2 bg-green-50 rounded text-xs">
-            <Mic className="h-3 w-3 text-green-600" />
-            <span className="text-green-700">Say "yes" to confirm</span>
+          <div className="flex items-center gap-1 p-1 bg-green-50 rounded">
+            <Mic className="h-2.5 w-2.5 text-green-600" />
+            <span className="text-[10px] text-green-700">Say "yes" to confirm</span>
           </div>
         </div>
       )}

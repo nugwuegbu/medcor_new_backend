@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Appointment Test - Inline Calendar</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      color: #5b21b6;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .test-section {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .test-title {
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    
+    .voice-input {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .voice-text {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    
+    .voice-text:focus {
+      outline: none;
+      border-color: #8b5cf6;
+    }
+    
+    .voice-button {
+      padding: 12px 24px;
+      background: #8b5cf6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 14px;
+    }
+    
+    .voice-button:hover {
+      background: #7c3aed;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+    
+    .voice-button:active {
+      transform: translateY(0);
+    }
+    
+    .response-box {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      min-height: 100px;
+      position: relative;
+    }
+    
+    .response-label {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .response-content {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1f2937;
+    }
+    
+    .parsed-data {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .data-item {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    
+    .data-label {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+    
+    .data-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    
+    .data-value.empty {
+      color: #9ca3af;
+      font-style: italic;
+    }
+    
+    .calendar-preview {
+      background: white;
+      border: 2px solid #8b5cf6;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .calendar-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #5b21b6;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .status-success {
+      background: #10b981;
+      color: white;
+    }
+    
+    .status-pending {
+      background: #f59e0b;
+      color: white;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #e5e7eb;
+      border-top: 2px solid #8b5cf6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .example-voices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    
+    .example-chip {
+      padding: 6px 12px;
+      background: #ede9fe;
+      color: #5b21b6;
+      border-radius: 16px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+    
+    .example-chip:hover {
+      background: #ddd6fe;
+      border-color: #8b5cf6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎙️ Voice Appointment Test</h1>
+    <p class="subtitle">Test the inline calendar with voice-parsed appointment data</p>
+    
+    <div class="test-section">
+      <div class="test-title">1. Simulate Voice Input</div>
+      <div class="voice-input">
+        <input 
+          type="text" 
+          id="voiceInput" 
+          class="voice-text" 
+          placeholder="Enter voice command (e.g., 'Book appointment with Dr Johnson tomorrow at 2pm')"
+          value="Hello I want to book an appointment with Dr Johnson at 2:00 p.m. tomorrow"
+        >
+        <button onclick="testVoiceCommand()" class="voice-button">
+          Send Voice Command
+        </button>
+      </div>
+      
+      <div class="example-voices">
+        <div class="example-chip" onclick="setExample('Hello I want to book an appointment with Dr Johnson at 2:00 p.m. tomorrow')">
+          Dr Johnson tomorrow 2pm
+        </div>
+        <div class="example-chip" onclick="setExample('I need to see Dr Chen on Friday at 10:30 AM')">
+          Dr Chen Friday 10:30am
+        </div>
+        <div class="example-chip" onclick="setExample('Book me with Dr Rodriguez next Monday at 3:45 PM for a checkup')">
+          Dr Rodriguez Monday 3:45pm
+        </div>
+        <div class="example-chip" onclick="setExample('Schedule appointment tomorrow morning')">
+          Tomorrow morning
+        </div>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <div class="test-title">2. Backend Response</div>
+      <div class="response-box">
+        <div class="response-label">Response Message</div>
+        <div id="responseMessage" class="response-content">
+          Waiting for voice command...
+        </div>
+      </div>
+      
+      <div class="parsed-data">
+        <div class="data-item">
+          <div class="data-label">Doctor</div>
+          <div id="parsedDoctor" class="data-value empty">Not parsed</div>
+        </div>
+        <div class="data-item">
+          <div class="data-label">Date</div>
+          <div id="parsedDate" class="data-value empty">Not parsed</div>
+        </div>
+        <div class="data-item">
+          <div class="data-label">Time</div>
+          <div id="parsedTime" class="data-value empty">Not parsed</div>
+        </div>
+        <div class="data-item">
+          <div class="data-label">Reason</div>
+          <div id="parsedReason" class="data-value empty">Not parsed</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <div class="test-title">3. Calendar Integration Status</div>
+      <div class="calendar-preview">
+        <div class="calendar-title">
+          📅 Inline Calendar Component
+          <span id="calendarStatus" class="status-badge status-pending">Pending</span>
+        </div>
+        <div id="calendarInfo" class="response-content">
+          The inline calendar should display within the chat widget with:
+          <ul style="margin-top: 10px; margin-bottom: 0;">
+            <li>Compact design optimized for chat widget (max-width: 320px)</li>
+            <li>Pre-selected date based on voice input</li>
+            <li>Pre-filled doctor name if mentioned</li>
+            <li>Pre-selected time slot if specified</li>
+            <li>Voice indicators for continuous interaction</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    function setExample(text) {
+      document.getElementById('voiceInput').value = text;
+    }
+    
+    async function testVoiceCommand() {
+      const voiceInput = document.getElementById('voiceInput').value;
+      if (!voiceInput.trim()) {
+        alert('Please enter a voice command');
+        return;
+      }
+      
+      // Update UI to show loading
+      document.getElementById('responseMessage').innerHTML = '<span class="loading"></span> Processing voice command...';
+      document.getElementById('calendarStatus').className = 'status-badge status-pending';
+      document.getElementById('calendarStatus').textContent = 'Processing';
+      
+      try {
+        // Create a test session ID
+        const sessionId = `test-ui-${Date.now()}`;
+        
+        // Send voice command to backend
+        const response = await fetch('/api/chat/voice', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: voiceInput,
+            sessionId: sessionId,
+            language: 'en'
+          })
+        });
+        
+        const data = await response.json();
+        console.log('Voice Response:', data);
+        
+        // Update response message
+        const cleanMessage = data.message.replace(/VOICE_FLOW:[^:]+:\w+\s*/, '');
+        document.getElementById('responseMessage').textContent = cleanMessage;
+        
+        // Update parsed data
+        if (data.voiceCommand && data.voiceCommand.data) {
+          const parsedData = data.voiceCommand.data;
+          
+          // Update doctor
+          const doctorEl = document.getElementById('parsedDoctor');
+          if (parsedData.doctor) {
+            doctorEl.textContent = parsedData.doctor;
+            doctorEl.className = 'data-value';
+          } else {
+            doctorEl.textContent = 'Not parsed';
+            doctorEl.className = 'data-value empty';
+          }
+          
+          // Update date
+          const dateEl = document.getElementById('parsedDate');
+          if (parsedData.date) {
+            const date = new Date(parsedData.date);
+            dateEl.textContent = date.toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric',
+              year: 'numeric'
+            });
+            dateEl.className = 'data-value';
+          } else {
+            dateEl.textContent = 'Not parsed';
+            dateEl.className = 'data-value empty';
+          }
+          
+          // Update time
+          const timeEl = document.getElementById('parsedTime');
+          if (parsedData.time) {
+            timeEl.textContent = parsedData.time;
+            timeEl.className = 'data-value';
+          } else {
+            timeEl.textContent = 'Not parsed';
+            timeEl.className = 'data-value empty';
+          }
+          
+          // Update reason
+          const reasonEl = document.getElementById('parsedReason');
+          if (parsedData.reason) {
+            reasonEl.textContent = parsedData.reason;
+            reasonEl.className = 'data-value';
+          } else {
+            reasonEl.textContent = 'Not specified';
+            reasonEl.className = 'data-value empty';
+          }
+          
+          // Update calendar status
+          document.getElementById('calendarStatus').className = 'status-badge status-success';
+          document.getElementById('calendarStatus').textContent = 'Data Ready';
+          
+          // Update calendar info with parsed details
+          let calendarHtml = '<strong>✅ Calendar ready with parsed data:</strong><ul style="margin-top: 10px; margin-bottom: 0;">';
+          if (parsedData.doctor) calendarHtml += `<li>Doctor: <strong>${parsedData.doctor}</strong></li>`;
+          if (parsedData.date) calendarHtml += `<li>Date: <strong>${new Date(parsedData.date).toLocaleDateString()}</strong></li>`;
+          if (parsedData.time) calendarHtml += `<li>Time: <strong>${parsedData.time}</strong></li>`;
+          if (parsedData.reason) calendarHtml += `<li>Reason: <strong>${parsedData.reason}</strong></li>`;
+          calendarHtml += '<li>Status: <strong>Ready for confirmation via voice or click</strong></li>';
+          calendarHtml += '</ul>';
+          document.getElementById('calendarInfo').innerHTML = calendarHtml;
+        } else {
+          // No parsed data
+          document.getElementById('calendarStatus').className = 'status-badge status-pending';
+          document.getElementById('calendarStatus').textContent = 'No Data';
+        }
+        
+      } catch (error) {
+        console.error('Error testing voice command:', error);
+        document.getElementById('responseMessage').textContent = `Error: ${error.message}`;
+        document.getElementById('calendarStatus').className = 'status-badge status-pending';
+        document.getElementById('calendarStatus').textContent = 'Error';
+      }
+    }
+    
+    // Test on page load with default input
+    window.addEventListener('load', () => {
+      // Optionally auto-test on load
+      // testVoiceCommand();
+    });
+  </script>
+</body>
+</html>

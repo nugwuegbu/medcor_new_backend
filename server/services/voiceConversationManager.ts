@@ -47,7 +47,14 @@ export class VoiceConversationManager {
       if (feature) {
         state.feature = feature;
         state.step = 'initialize';
+        state.context = { initialMessage: message }; // Store initial message
         this.sessions.set(sessionId, state);
+        
+        // For appointments, directly process with initial message
+        if (feature === 'appointment') {
+          return await this.handleAppointmentFlow(message, state, sessionId);
+        }
+        
         return this.initializeFeature(feature, sessionId);
       }
     }
@@ -100,7 +107,7 @@ export class VoiceConversationManager {
     const initMessages: Record<string, VoiceCommand> = {
       appointment: {
         action: 'VOICE_FLOW:APPOINTMENT:START',
-        message: "I'm listening for your appointment details. Please tell me everything: the type of appointment, doctor's name, preferred date and time, and any additional notes. I'll wait until you're finished speaking.",
+        message: "I'll help you book an appointment. Let me show you the calendar so you can select your preferred date, doctor, and time. You can speak your preferences and I'll guide you through the process.",
         nextStep: 'continuous_listening'
       },
       face_analysis: {
@@ -156,14 +163,30 @@ export class VoiceConversationManager {
 
     switch (state.step) {
       case 'initialize':
+        // Parse the initial message for appointment details
+        const parsedData = await this.parseAppointmentDetails(message);
         state.step = 'continuous_listening';
-        state.formData = {};
+        state.formData = parsedData;
         this.continuousListeningMode.set(sessionId, true);
-        this.collectedData.set(sessionId, { messages: [] });
+        this.collectedData.set(sessionId, { messages: [message] });
         this.sessions.set(sessionId, state);
+        
+        // Build a user-friendly message based on what was parsed
+        let messageText = "I'll help you book an appointment.";
+        if (parsedData.doctor || parsedData.date || parsedData.time) {
+          messageText = "Great! I understand you want to book an appointment";
+          if (parsedData.doctor) messageText += ` with ${parsedData.doctor}`;
+          if (parsedData.date) messageText += ` ${parsedData.date === new Date().toISOString().split('T')[0] ? 'today' : parsedData.date.includes('-') ? `on ${parsedData.date}` : parsedData.date}`;
+          if (parsedData.time) messageText += ` at ${parsedData.time}`;
+          messageText += ". Let me show you the calendar to confirm these details.";
+        } else {
+          messageText += " Let me show you the calendar so you can select your preferred date, doctor, and time.";
+        }
+        
         return {
-          action: 'VOICE_FLOW:APPOINTMENT:START_CONTINUOUS',
-          message: "I'm listening for your appointment details. Please tell me everything: the type of appointment, doctor's name, preferred date and time, and any additional notes. I'll wait until you're finished speaking.",
+          action: 'VOICE_FLOW:APPOINTMENT:START',
+          data: parsedData,
+          message: messageText,
           nextStep: 'continuous_listening'
         };
       
@@ -752,6 +775,58 @@ export class VoiceConversationManager {
   }
   
   // Check if appointment has all required information
+  private async parseAppointmentDetails(message: string): Promise<any> {
+    const lower = message.toLowerCase();
+    const result: any = {};
+    
+    // Parse doctor name
+    const doctorMatch = message.match(/(?:dr\.?|doctor)\s+(\w+)/i);
+    if (doctorMatch) {
+      result.doctor = `Dr. ${doctorMatch[1]}`;
+    }
+    
+    // Parse date
+    if (lower.includes('tomorrow')) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      result.date = tomorrow.toISOString().split('T')[0];
+    } else if (lower.includes('today')) {
+      result.date = new Date().toISOString().split('T')[0];
+    } else {
+      // Try to parse specific dates
+      const dateMatch = message.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)/i);
+      if (dateMatch) {
+        const day = parseInt(dateMatch[1]);
+        const month = dateMatch[2];
+        result.date = `${month} ${day}`;
+      }
+    }
+    
+    // Parse time
+    const timeMatch = message.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm|AM|PM|a\.m\.|p\.m\.)/i);
+    if (timeMatch) {
+      const hour = timeMatch[1];
+      const minutes = timeMatch[2] || '00';
+      const ampm = timeMatch[3].replace(/\./g, '').toUpperCase();
+      result.time = `${hour}:${minutes} ${ampm}`;
+    }
+    
+    // Parse reason
+    const reasonKeywords = ['for', 'regarding', 'about', 'because'];
+    for (const keyword of reasonKeywords) {
+      const index = lower.indexOf(keyword);
+      if (index !== -1) {
+        const reasonPart = message.substring(index + keyword.length).trim();
+        if (reasonPart) {
+          result.reason = reasonPart.split('.')[0].trim();
+          break;
+        }
+      }
+    }
+    
+    return result;
+  }
+
   private isAppointmentComplete(fullMessage: string): boolean {
     const lower = fullMessage.toLowerCase();
     

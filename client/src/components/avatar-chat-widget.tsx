@@ -501,18 +501,54 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
               setShowChatInterface(true);  // Keep chat interface open
               setShowBookingCalendar(true); // Show inline calendar
               setSelectedMenuItem(null);    // Don't select menu item
-              setSelectedDate(null);
-              setBookingFormData(prev => ({ ...prev, selectedDate: null, selectedDoctor: '', selectedTime: '' }));
-              // Set conversation state to track appointment flow
-              setConversationState({ 
-                feature: 'appointment', 
-                step: 'select_date',
-                context: {} 
-              });
+              
+              // Parse voice data if provided
+              if (data.voiceCommand?.data) {
+                const voiceData = data.voiceCommand.data;
+                console.log("Appointment data parsed from voice:", voiceData);
+                
+                // Set all parsed data
+                const parsedDate = voiceData.date ? new Date(voiceData.date) : null;
+                setSelectedDate(parsedDate);
+                setBookingFormData(prev => ({ 
+                  ...prev, 
+                  selectedDate: parsedDate,
+                  selectedDoctor: voiceData.doctor || '',
+                  selectedTime: voiceData.time || '',
+                  reason: voiceData.reason || '',
+                  doctorId: voiceData.doctor === 'Dr. Johnson' ? 1 : voiceData.doctor === 'Dr. Chen' ? 2 : voiceData.doctor === 'Dr. Rodriguez' ? 3 : 0
+                }));
+                
+                // Pass voice data to inline calendar
+                setVoiceData(voiceData);
+                
+                // Set conversation state with appropriate step
+                const step = parsedDate && voiceData.doctor && voiceData.time ? 'confirm' : 
+                            parsedDate && voiceData.doctor ? 'select_time' :
+                            parsedDate ? 'select_doctor' : 'select_date';
+                
+                setConversationState({ 
+                  feature: 'appointment', 
+                  step: step,
+                  context: voiceData,
+                  formData: voiceData
+                });
+                
+                console.log(`Starting appointment flow at step: ${step}`, voiceData);
+              } else {
+                setSelectedDate(null);
+                setBookingFormData(prev => ({ ...prev, selectedDate: null, selectedDoctor: '', selectedTime: '' }));
+                setConversationState({ 
+                  feature: 'appointment', 
+                  step: 'select_date',
+                  context: {} 
+                });
+              }
+              
               // Enable continuous listening for voice input
               setContinuousListening(true);
               setShowVoiceIndicator(true);
-              setVoiceIndicatorText("Say your appointment details...");
+              setVoiceIndicatorText("Continue speaking to adjust details...");
               break;
               
             case "START_CONTINUOUS":
