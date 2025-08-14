@@ -1030,30 +1030,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
     setMessages(prev => [...prev, userMessage]);
     setInputText("");
     
-    // Check for intent and redirect before sending to AI
-    const wasRedirected = detectIntentAndRedirect(text.trim());
-    
-    if (wasRedirected) {
-      // Add a bot message indicating redirection
-      const botMessage: Message = {
-        id: `bot_${Date.now()}`,
-        text: "I understand you want to access that feature. I'm redirecting you now.",
-        sender: "bot",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botMessage]);
-      
-      // Make avatar speak the redirection message
-      if (avatarRef.current) {
-        avatarRef.current.speak({
-          text: "I understand you want to access that feature. I'm redirecting you now.",
-          taskType: TaskType.TALK,
-          taskMode: TaskMode.SYNC
-        });
-      }
-      
-      return; // Don't send to AI if redirected
-    }
+    // Disabled local intent detection - let backend handle voice commands
+    // All commands including appointments should go through the backend voice conversation manager
+    // which will return VOICE_FLOW commands to trigger inline calendar
     
     // Track user messages and show auth after 2 messages
     const newCount = userMessageCount + 1;
@@ -1081,30 +1060,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
     setMessages(prev => [...prev, userMessage]);
     setDoctorsInputText("");
     
-    // Check for intent and redirect before sending to AI
-    const wasRedirected = detectIntentAndRedirect(text.trim());
-    
-    if (wasRedirected) {
-      // Add a bot message indicating redirection
-      const botMessage: Message = {
-        id: `bot_${Date.now()}`,
-        text: "I understand you want to access that feature. I'm redirecting you now.",
-        sender: "bot",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botMessage]);
-      
-      // Make avatar speak the redirection message
-      if (avatarRef.current) {
-        avatarRef.current.speak({
-          text: "I understand you want to access that feature. I'm redirecting you now.",
-          taskType: TaskType.TALK,
-          taskMode: TaskMode.SYNC
-        });
-      }
-      
-      return; // Don't send to AI if redirected
-    }
+    // Disabled local intent detection - let backend handle voice commands
+    // All commands including appointments should go through the backend voice conversation manager
+    // which will return VOICE_FLOW commands to trigger inline calendar
     
     // Track user messages and show auth after 2 messages
     const newCount = userMessageCount + 1;
