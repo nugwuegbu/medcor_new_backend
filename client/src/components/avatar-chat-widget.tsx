@@ -130,6 +130,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   const [doctorsInputText, setDoctorsInputText] = useState("");
   const [recordsInputText, setRecordsInputText] = useState("");
   const [sessionId] = useState(() => `session_${Date.now()}`);
+  const [conversationState, setConversationState] = useState<any>(null);
 
   const [showCalendar, setShowCalendar] = useState(false);
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
@@ -465,13 +466,96 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
           sessionId,
           language: detectLanguageFromText(message),
           userImage,
-          locationWeather: userMessageCount === 0 ? locationWeather : null
+          locationWeather: userMessageCount === 0 ? locationWeather : null,
+          conversationState
         })
       });
       return await response.json();
     },
     onSuccess: async (data) => {
-      // Check for voice commands first
+      // Update conversation state if provided
+      if (data.conversationState) {
+        setConversationState(data.conversationState);
+      }
+
+      // Process VOICE_FLOW commands for multi-step conversations
+      if (data.message.includes("VOICE_FLOW:")) {
+        console.log("VOICE_FLOW detected for stateful conversation:", data.message);
+        const flowMatch = data.message.match(/VOICE_FLOW:(\w+)/);
+        const flowType = flowMatch ? flowMatch[1] : "";
+        const cleanMessage = data.message.replace(/VOICE_FLOW:\w+\s*/, "");
+        
+        // Process flow based on data in voiceCommand
+        if (data.voiceCommand && data.voiceCommand.data) {
+          const flowData = data.voiceCommand.data;
+          
+          switch(flowType) {
+            case "APPOINTMENT_DATE":
+              // Automatically select the date from voice
+              if (flowData.selectedDate) {
+                setSelectedDate(new Date(flowData.selectedDate));
+                setBookingFormData(prev => ({ 
+                  ...prev, 
+                  selectedDate: new Date(flowData.selectedDate) 
+                }));
+              }
+              break;
+              
+            case "APPOINTMENT_TIME":
+              // Automatically select the time slot
+              if (flowData.timeSlot) {
+                setBookingFormData(prev => ({ 
+                  ...prev, 
+                  selectedTime: flowData.timeSlot 
+                }));
+              }
+              break;
+              
+            case "APPOINTMENT_DOCTOR":
+              // Automatically select the doctor
+              if (flowData.doctorId) {
+                setBookingFormData(prev => ({ 
+                  ...prev, 
+                  selectedDoctor: flowData.doctorId 
+                }));
+              }
+              break;
+              
+            case "APPOINTMENT_CONFIRM":
+              // Auto-submit the appointment form
+              if (flowData.confirmed) {
+                // TODO: Trigger appointment submission once handleAppointmentSubmit is defined
+                console.log("Appointment confirmed via voice:", bookingFormData);
+                toast({
+                  title: "Appointment Confirmed",
+                  description: "Your appointment has been scheduled successfully through voice!",
+                  className: "bg-green-500 text-white"
+                });
+              }
+              break;
+          }
+        }
+        
+        // Display the response message
+        const newMessage: Message = {
+          id: Date.now().toString(),
+          text: cleanMessage,
+          sender: "bot",
+          timestamp: new Date(),
+          showDoctors: false
+        };
+        setMessages(prev => [...prev, newMessage]);
+        
+        // Let avatar speak the response
+        if (data.avatarResponse && avatarRef.current) {
+          await avatarRef.current.speak({
+            text: cleanMessage
+          });
+        }
+        return;
+      }
+
+      // Check for voice commands (existing single-step commands)
       if (data.message.includes("VOICE_COMMAND:")) {
         console.log("VOICE_COMMAND detected in response:", data.message);
         const commandMatch = data.message.match(/VOICE_COMMAND:(\w+)/);

@@ -16,6 +16,7 @@ import { bookingAssistantAgent } from "./agents/booking-assistant-agent";
 import { textToSpeechService } from "./services/text-to-speech";
 import { elevenLabsService } from "./services/elevenlabs";
 import { pageCameraService, PAGE_IDS } from "./services/page-camera-service";
+import { voiceConversationManager } from "./services/voiceConversationManager";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -992,7 +993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Voice avatar chat endpoint
   app.post("/api/chat/voice", async (req, res) => {
     try {
-      const { message, sessionId, language = "en", userId, userImage, locationWeather } = req.body;
+      const { message, sessionId, language = "en", userId, userImage, locationWeather, conversationState } = req.body;
       
       if (!message || !sessionId) {
         return res.status(400).json({ error: "Message and sessionId are required" });
@@ -1048,71 +1049,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Parse user message for specific voice commands FIRST
-      const lowerMessage = message.toLowerCase();
-      let commandResponse = "";
-      let skipAIResponse = false;
-      
-      // Enhanced command detection for voice chat
-      if (lowerMessage.includes('appointment') || lowerMessage.includes('book') || lowerMessage.includes('schedule')) {
-        commandResponse = "VOICE_COMMAND:APPOINTMENT I'll help you schedule an appointment. Opening the booking calendar now.";
-        skipAIResponse = true;
-      } else if (lowerMessage.includes('face analysis') || lowerMessage.includes('analyze my face')) {
-        commandResponse = "VOICE_COMMAND:FACE_ANALYSIS Let me help you with face analysis. Opening the face analysis widget now.";
-        skipAIResponse = true;
-      } else if (lowerMessage.includes('skin analysis') || lowerMessage.includes('analyze my skin')) {
-        commandResponse = "VOICE_COMMAND:SKIN_ANALYSIS I'll assist you with skin analysis. Opening the skin analysis widget now.";
-        skipAIResponse = true;
-      } else if (lowerMessage.includes('lips analysis') || lowerMessage.includes('analyze my lips')) {
-        commandResponse = "VOICE_COMMAND:LIPS_ANALYSIS Let's analyze your lips health. Opening the lips analysis widget now.";
-        skipAIResponse = true;
-      } else if (lowerMessage.includes('hair analysis') || lowerMessage.includes('analyze my hair')) {
-        commandResponse = "VOICE_COMMAND:HAIR_ANALYSIS I'll help you analyze your hair health. Opening the hair analysis widget now.";
-        skipAIResponse = true;
-      } else if (lowerMessage.includes('hair extension')) {
-        commandResponse = "VOICE_COMMAND:HAIR_EXTENSION Let me show you hair extension options. Opening the hair extension widget now.";
-        skipAIResponse = true;
-      } else if (lowerMessage.includes('medical record') || lowerMessage.includes('my records')) {
-        commandResponse = "VOICE_COMMAND:MEDICAL_RECORDS I'll open your medical records. Accessing your medical history now.";
-        skipAIResponse = true;
-      } else if (lowerMessage.includes('show doctors') || lowerMessage.includes('list doctors')) {
-        commandResponse = "VOICE_COMMAND:DOCTORS Here are our available doctors. Opening the doctors list now.";
-        skipAIResponse = true;
-      } else if (lowerMessage.includes('my profile') || lowerMessage.includes('login') || lowerMessage.includes('sign in')) {
-        commandResponse = "VOICE_COMMAND:PROFILE I'll open your profile section. Opening the authentication page now.";
-        skipAIResponse = true;
-      }
+      // Use voice conversation manager for stateful conversation handling
+      const voiceCommand = await voiceConversationManager.processVoiceInput(
+        message, 
+        sessionId,
+        conversationState
+      );
 
-      let aiResponse = "";
+      // Get updated conversation state
+      const updatedState = voiceConversationManager.getSessionState(sessionId);
+
+      // Build the AI response with voice command
+      let aiResponse = voiceCommand.action + " " + voiceCommand.message;
       
-      // Only generate AI response if no command was detected
-      if (!skipAIResponse) {
-        aiResponse = await generateChatResponse(message, language);
-        
-        // Add weather and compliment to the response if available
-        if (isFirstUserResponse) {
-          let prefix = "";
-          if (locationWeather) {
-            prefix += `So your location is ${locationWeather} `;
-            console.log("Weather info added:", locationWeather);
-          }
-          if (compliment) {
-            prefix += `${compliment} `;
-          }
-          if (prefix) {
-            aiResponse = `${prefix}${aiResponse}`;
-            console.log("=== Final Combined Response ===");
-            console.log("Full message:", aiResponse);
-            console.log("==============================");
-          }
-        } else {
-          console.log(`AI response: ${aiResponse}`);
+      // Add weather and compliment to first response if available
+      if (isFirstUserResponse) {
+        let prefix = "";
+        if (locationWeather) {
+          prefix += `So your location is ${locationWeather} `;
+          console.log("Weather info added:", locationWeather);
         }
-      } else {
-        // Use command response as the AI response
-        aiResponse = commandResponse;
-        console.log(`Voice command detected: ${commandResponse}`);
+        if (compliment) {
+          prefix += `${compliment} `;
+        }
+        if (prefix && !voiceCommand.action.includes('VOICE_FLOW')) {
+          aiResponse = `${prefix}${aiResponse}`;
+        }
       }
+      
+      console.log(`Voice conversation response: ${aiResponse}`);
       
       // Check if AI response includes special commands
       const askingAboutDoctors = aiResponse.includes('DOCTOR_SEARCH:');
@@ -1180,7 +1145,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionId,
         success: true,
         showDoctors: askingAboutDoctors,
-        openChatInterface: openChatInterface
+        openChatInterface: openChatInterface,
+        conversationState: updatedState,
+        voiceCommand: voiceCommand
       });
     } catch (error) {
       console.error("Voice chat error:", error);

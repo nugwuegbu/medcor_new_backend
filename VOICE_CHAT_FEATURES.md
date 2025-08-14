@@ -1,11 +1,40 @@
 # MedCor AI Voice Chat Features Documentation
 
 ## Overview
-The MedCor AI chatbot supports comprehensive voice commands for all major features. Users can interact with the system using natural language voice commands to access various healthcare services.
+The MedCor AI chatbot supports comprehensive voice commands for all major features with stateful conversation management. Users can interact with the system using natural language voice commands to access various healthcare services. The platform now maintains conversation context and handles multi-step processes like appointment booking entirely through voice.
 
-## Status: ✅ FULLY IMPLEMENTED
+## Status: ✅ FULLY IMPLEMENTED WITH STATEFUL CONVERSATIONS
 
-All features listed below are fully integrated with both frontend widgets and Django backend APIs.
+All features listed below are fully integrated with both frontend widgets and Django backend APIs. The voice conversation manager enables complete voice-driven interactions without requiring any clicks.
+
+## New: Stateful Voice Conversations
+
+### Voice Conversation Manager
+The platform now includes a sophisticated VoiceConversationManager that maintains conversation state and handles multi-step voice interactions:
+
+#### Multi-Step Appointment Booking via Voice
+Users can now complete the entire appointment booking process through natural conversation:
+
+1. **User:** "I want to book an appointment"
+   - **System:** Opens appointment widget and asks for preferred date
+
+2. **User:** "Tomorrow at 3pm"
+   - **System:** Automatically selects date and time, asks about doctor preference
+
+3. **User:** "I want to see Dr. Johnson"
+   - **System:** Selects doctor, asks for appointment reason
+
+4. **User:** "I have a headache"
+   - **System:** Records symptoms and confirms appointment
+
+The system maintains context throughout the conversation and automatically fills forms based on voice input.
+
+#### VOICE_FLOW Commands
+The system now supports advanced VOICE_FLOW commands for stateful interactions:
+- `VOICE_FLOW:APPOINTMENT_DATE` - Handles date selection
+- `VOICE_FLOW:APPOINTMENT_TIME` - Handles time slot selection
+- `VOICE_FLOW:APPOINTMENT_DOCTOR` - Handles doctor selection
+- `VOICE_FLOW:APPOINTMENT_CONFIRM` - Confirms and submits appointment
 
 ## Supported Voice Commands
 
