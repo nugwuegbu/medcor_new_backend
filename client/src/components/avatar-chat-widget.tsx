@@ -25,6 +25,7 @@ import LipsAnalysisWidget from "./lips-analysis-widget";
 import VoiceSkincareWidget from "./voice-skincare-tips";
 import HairExtensionWidget from "./hair-extension-widget";
 import VoiceIcon from "./ui/voice-icon";
+import AppointmentCalendar from "./appointment-calendar";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
@@ -180,7 +181,9 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
     patientPhone: '',
     reason: '',
     doctorId: 1,
-    selectedDate: null as Date | null
+    selectedDate: null as Date | null,
+    selectedDoctor: '',
+    selectedTime: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -3624,281 +3627,47 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
           </div>
         )}
         
-        {/* Booking Calendar View */}
-        {showBookingCalendar && (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden flex flex-col">
-            {/* Back Button */}
-            <button
-              onClick={() => {
-                setShowBookingCalendar(false);
-                // Reset selected date when closing calendar
-                setSelectedDate(null);
-                setBookingFormData(prev => ({ ...prev, selectedDate: null }));
-              }}
-              className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="font-medium text-sm">Back</span>
-            </button>
+        {/* Enhanced Appointment Calendar */}
+        <AppointmentCalendar 
+          isOpen={showBookingCalendar}
+          onClose={() => {
+            setShowBookingCalendar(false);
+            setSelectedDate(null);
+            setBookingFormData(prev => ({ ...prev, selectedDate: null, selectedDoctor: '', selectedTime: '' }));
+          }}
+          preferredDate={bookingFormData.selectedDate ? bookingFormData.selectedDate.toISOString() : undefined}
+          preferredTime={bookingFormData.selectedTime}
+          preferredDoctor={bookingFormData.selectedDoctor}
+          voiceData={conversationState?.voiceData}
+          onAppointmentBooked={(appointment) => {
+            // Handle successful booking
+            const confirmMessage: Message = {
+              id: `msg_${Date.now()}`,
+              text: `✅ Your appointment with ${appointment.doctorName} on ${appointment.date} at ${appointment.time} has been confirmed!`,
+              sender: 'bot',
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, confirmMessage]);
             
-            {/* Calendar Content */}
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="bg-white rounded-2xl shadow-lg p-4 w-full max-w-sm">
-                <h3 className="text-base font-semibold text-gray-800 mb-3 text-center">Book an Appointment</h3>
-                
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-1">
-                  {/* Week Days */}
-                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                    <div key={index} className="text-center text-xs text-gray-500 font-medium py-1">
-                      {day}
-                    </div>
-                  ))}
-                  
-                  {/* Calendar Days */}
-                  {Array.from({ length: 35 }, (_, i) => {
-                    const day = i - new Date().getDay() + 1;
-                    const isToday = day === new Date().getDate();
-                    const isSelectable = day >= new Date().getDate();
-                    const currentMonth = new Date().getMonth();
-                    const currentYear = new Date().getFullYear();
-                    
-                    // Check if voice-selected date matches this day
-                    const isVoiceSelected = selectedDate && 
-                      selectedDate.getDate() === day && 
-                      selectedDate.getMonth() === currentMonth &&
-                      selectedDate.getFullYear() === currentYear;
-                    
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          if (isSelectable && day > 0 && day <= 31) {
-                            const newDate = new Date();
-                            newDate.setDate(day);
-                            setSelectedDate(newDate);
-                            setBookingFormData(prev => ({ ...prev, selectedDate: newDate }));
-                            
-                            // If voice session is active, announce the selection
-                            if (conversationState?.feature === 'appointment') {
-                              console.log("Date selected:", newDate.toLocaleDateString());
-                            }
-                          }
-                        }}
-                        disabled={!isSelectable || day <= 0 || day > 31}
-                        className={`
-                          h-8 w-8 rounded-md text-xs font-medium transition-all
-                          ${day <= 0 || day > 31 ? 'invisible' : ''}
-                          ${isToday ? 'bg-yellow-600 text-white font-bold' : ''}
-                          ${isVoiceSelected && !isToday ? 'bg-purple-600 text-white ring-2 ring-purple-400 animate-pulse' : ''}
-                          ${selectedDate?.getDate() === day && !isToday && !isVoiceSelected ? 'bg-purple-200 text-purple-800' : ''}
-                          ${isSelectable && day > 0 && day <= 31 && !isToday && !isVoiceSelected ? 'hover:bg-gray-100' : ''}
-                          ${!isSelectable && day > 0 && day <= 31 ? 'text-gray-300 cursor-not-allowed' : ''}
-                        `}
-                      >
-                        {day > 0 && day <= 31 ? day : ''}
-                      </button>
-                    );
-                  })}
-                </div>
-                
-                {/* Voice Booking Assistant */}
-                {conversationState?.feature === 'appointment' && (
-                  <div className="mt-2 p-2 bg-blue-50 rounded-lg animate-pulse">
-                    <div className="flex items-center gap-2">
-                      <Mic className="h-3 w-3 text-blue-600" />
-                      <p className="text-xs text-blue-700">
-                        Voice Assistant Active - Say your preferred date
-                      </p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Selected Date */}
-                {selectedDate && (
-                  <div className="mt-3 p-2 bg-purple-50 rounded-lg">
-                    <p className="text-xs text-purple-700">
-                      Selected: {selectedDate.toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
-                    </p>
-                  </div>
-                )}
-                
-                {/* Doctor Selection for Voice Flow */}
-                {selectedDate && conversationState?.step === 'select_doctor' && (
-                  <div className="mt-2 p-2 bg-white border border-purple-200 rounded-lg">
-                    <p className="text-xs text-gray-700 mb-2 font-medium">Available Doctors:</p>
-                    <div className="grid grid-cols-2 gap-1">
-                      {['Dr. Johnson', 'Dr. Chen', 'Dr. Williams', 'Dr. Smith'].map((doctor) => (
-                        <button
-                          key={doctor}
-                          onClick={() => {
-                            setBookingFormData(prev => ({ 
-                              ...prev, 
-                              selectedDoctor: doctor,
-                              doctorId: doctor === 'Dr. Johnson' ? 1 : doctor === 'Dr. Chen' ? 2 : doctor === 'Dr. Williams' ? 3 : 4
-                            }));
-                            console.log("Doctor selected:", doctor);
-                            
-                            // Announce selection for voice flow
-                            const msg = `You've selected ${doctor}`;
-                            const message = {
-                              id: Date.now().toString(),
-                              text: msg,
-                              sender: 'bot' as const,
-                              timestamp: new Date()
-                            };
-                            setMessages(prev => [...prev, message]);
-                          }}
-                          className={`text-left px-2 py-1 text-xs rounded ${
-                            bookingFormData.selectedDoctor === doctor 
-                              ? 'bg-purple-600 text-white animate-pulse' 
-                              : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                          } transition-all`}
-                        >
-                          {doctor}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mt-2 flex items-center gap-1 text-xs text-blue-600">
-                      <Mic className="h-3 w-3" />
-                      <span>Or say doctor's name</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Time Slot Selection for Voice Flow */}
-                {selectedDate && bookingFormData.selectedDoctor && conversationState?.step === 'select_time' && (
-                  <div className="mt-2 p-2 bg-white border border-purple-200 rounded-lg">
-                    <p className="text-xs text-gray-700 mb-2 font-medium">Available Times:</p>
-                    <div className="grid grid-cols-3 gap-1">
-                      {['9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '4:00 PM'].map((time) => (
-                        <button
-                          key={time}
-                          onClick={() => {
-                            setBookingFormData(prev => ({ 
-                              ...prev, 
-                              selectedTime: time
-                            }));
-                            console.log("Time selected:", time);
-                            
-                            // Announce selection
-                            const msg = `${time} selected`;
-                            const message = {
-                              id: Date.now().toString(),
-                              text: msg,
-                              sender: 'bot' as const,
-                              timestamp: new Date()
-                            };
-                            setMessages(prev => [...prev, message]);
-                          }}
-                          className={`px-1 py-1 text-xs rounded ${
-                            bookingFormData.selectedTime === time 
-                              ? 'bg-purple-600 text-white animate-pulse' 
-                              : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                          } transition-all`}
-                        >
-                          {time}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mt-2 flex items-center gap-1 text-xs text-blue-600">
-                      <Mic className="h-3 w-3" />
-                      <span>Or say preferred time</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Appointment Summary for Voice Confirmation */}
-                {conversationState?.step === 'confirm' && bookingFormData.selectedDate && bookingFormData.selectedDoctor && bookingFormData.selectedTime && (
-                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-xs text-green-700 font-medium mb-2">Confirm Appointment:</p>
-                    <div className="space-y-1 text-xs text-gray-700">
-                      <p>📅 {bookingFormData.selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
-                      <p>👨‍⚕️ {bookingFormData.selectedDoctor}</p>
-                      <p>🕐 {bookingFormData.selectedTime}</p>
-                      {bookingFormData.reason && <p>📝 {bookingFormData.reason}</p>}
-                    </div>
-                    <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
-                      <Mic className="h-3 w-3" />
-                      <span>Say "yes" to confirm or "no" to change</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Book Button */}
-                <button
-                  onClick={async () => {
-                    if (selectedDate) {
-                      // Store selected date first
-                      setBookingFormData(prev => ({ ...prev, selectedDate }));
-                      
-                      // Initialize booking assistant
-                      try {
-                        const response = await fetch('/api/booking-assistant/initialize', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            sessionId: sessionId,
-                            selectedDate: selectedDate.toISOString().split('T')[0]
-                          })
-                        });
-                        
-                        const assistantStep = await response.json();
-                        console.log('Booking assistant initialized:', assistantStep);
-                        
-                        // Add assistant message to chat
-                        const assistantMessage = {
-                          id: Date.now().toString(),
-                          text: assistantStep.message,
-                          sender: 'bot' as const,
-                          timestamp: new Date()
-                        };
-                        setMessages(prev => [...prev, assistantMessage]);
-                        
-                        // Make avatar speak the message
-                        if (avatarRef.current) {
-                          avatarRef.current.speak(assistantStep.message);
-                        }
-                        
-                        // Navigate to doctor selection after initialization
-                        setShowBookingCalendar(false);
-                        setShowChatInterface(false);
-                        setShowDoctorList(true);
-                        setSelectedMenuItem('doctors');
-                        // Force page to show doctors view
-                        setIsMinimized(true);
-                        
-                      } catch (error) {
-                        console.error('Failed to initialize booking assistant:', error);
-                        // Even if API fails, show doctor list
-                        setShowBookingCalendar(false);
-                        setShowChatInterface(false);
-                        setShowDoctorList(true);
-                        setSelectedMenuItem('doctors');
-                        // Force page to show doctors view
-                        setIsMinimized(true);
-                      }
-                    }
-                  }}
-                  disabled={!selectedDate}
-                  className={`
-                    w-full mt-3 py-2 rounded-full font-medium transition-all text-sm
-                    ${selectedDate 
-                      ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg hover:shadow-xl' 
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }
-                  `}
-                >
-                  Select Doctor
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+            // Make avatar speak confirmation
+            if (avatarRef.current) {
+              avatarRef.current.speak(confirmMessage.text);
+            }
+            
+            // Reset form
+            setShowBookingCalendar(false);
+            setBookingFormData({
+              patientName: '',
+              patientEmail: '',
+              patientPhone: '',
+              reason: '',
+              doctorId: 1,
+              selectedDate: null,
+              selectedDoctor: '',
+              selectedTime: ''
+            });
+          }}
+        />
         
         {/* Booking Form View */}
         {showBookingForm && showChatInterface && (
