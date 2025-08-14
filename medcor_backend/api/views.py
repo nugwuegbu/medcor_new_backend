@@ -18,6 +18,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, CreateAPIView
 from asgiref.sync import sync_to_async
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 from core.models import ChatMessage, HairAnalysisReport, FaceAnalysisReport
 from api.models import AnalysisTracking
@@ -483,6 +485,17 @@ class CreateAnalysisTrackingView(APIView):
     
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Analysis Tracking'],
+        operation_id='track_analysis',
+        description='Track usage of analysis widgets (face, hair, lips, skin)',
+        request=CreateAnalysisTrackingSerializer,
+        responses={
+            201: {'description': 'Analysis tracked successfully'},
+            400: {'description': 'Invalid request data'},
+            500: {'description': 'Server error'}
+        }
+    )
     def post(self, request):
         """Create analysis tracking record."""
         try:
@@ -535,6 +548,24 @@ class AnalysisTrackingStatsView(APIView):
     
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Analysis Tracking'],
+        operation_id='get_analysis_stats',
+        description='Get statistics of analysis widget usage',
+        parameters=[
+            OpenApiParameter(
+                name='tenantId',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Filter by tenant ID'
+            )
+        ],
+        responses={
+            200: AnalysisTrackingStatsSerializer,
+            500: {'description': 'Server error'}
+        }
+    )
     def get(self, request):
         """Get analysis tracking statistics."""
         try:
