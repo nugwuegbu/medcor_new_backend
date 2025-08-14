@@ -347,34 +347,6 @@ const DoctorDashboardEnhanced: React.FC = () => {
         </Card>
       </div>
 
-      {/* Today's Schedule */}
-      <Card className="border-t-4 border-purple-500">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-purple-500" />
-            Today's Schedule
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {demoAppointments.slice(0, 4).map((apt) => (
-              <div key={apt.id} className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 transition-all">
-                <div className="flex items-center gap-4">
-                  <div className={`p-2 rounded-full ${apt.status === 'in-progress' ? 'bg-yellow-100' : 'bg-blue-100'}`}>
-                    <Clock className={`h-4 w-4 ${apt.status === 'in-progress' ? 'text-yellow-600' : 'text-blue-600'}`} />
-                  </div>
-                  <div>
-                    <p className="font-medium">{apt.patient.name}</p>
-                    <p className="text-sm text-gray-500">{apt.time} - {apt.type}</p>
-                  </div>
-                </div>
-                <Badge className={getStatusColor(apt.status)}>{apt.status}</Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="cursor-pointer bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 transition-all" onClick={() => setActiveView('appointments')}>
@@ -413,6 +385,34 @@ const DoctorDashboardEnhanced: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Today's Schedule */}
+      <Card className="border-t-4 border-purple-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-purple-500" />
+            Today's Schedule
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {demoAppointments.slice(0, 4).map((apt) => (
+              <div key={apt.id} className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className={`p-2 rounded-full ${apt.status === 'in-progress' ? 'bg-yellow-100' : 'bg-blue-100'}`}>
+                    <Clock className={`h-4 w-4 ${apt.status === 'in-progress' ? 'text-yellow-600' : 'text-blue-600'}`} />
+                  </div>
+                  <div>
+                    <p className="font-medium">{apt.patient.name}</p>
+                    <p className="text-sm text-gray-500">{apt.time} - {apt.type}</p>
+                  </div>
+                </div>
+                <Badge className={getStatusColor(apt.status)}>{apt.status}</Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 
@@ -570,10 +570,6 @@ const DoctorDashboardEnhanced: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-64"
             />
-            <Button className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Patient
-            </Button>
           </div>
         </div>
 
@@ -584,11 +580,8 @@ const DoctorDashboardEnhanced: React.FC = () => {
                 <TableRow>
                   <TableHead>Patient</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Age/Gender</TableHead>
                   <TableHead>Blood Type</TableHead>
                   <TableHead>Conditions</TableHead>
-                  <TableHead>Last Visit</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -621,12 +614,6 @@ const DoctorDashboardEnhanced: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <p className="font-medium">{patient.age} years</p>
-                        <p className="text-sm text-gray-500">{patient.gender}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       <Badge className="bg-red-100 text-red-700">{patient.bloodType}</Badge>
                     </TableCell>
                     <TableCell>
@@ -641,12 +628,6 @@ const DoctorDashboardEnhanced: React.FC = () => {
                           <span className="text-sm text-gray-400">None</span>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell>{patient.lastVisit}</TableCell>
-                    <TableCell>
-                      <Badge className={patient.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                        {patient.status}
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
@@ -1043,7 +1024,7 @@ const DoctorDashboardEnhanced: React.FC = () => {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className={`fixed inset-y-0 left-0 z-10 w-64 bg-gradient-to-b from-purple-600 to-blue-600 text-white transform transition-transform lg:translate-x-0 lg:static lg:inset-0 ${
+        <aside className={`fixed inset-y-0 left-0 z-10 w-64 bg-white border-r shadow-lg transform transition-transform lg:translate-x-0 lg:static lg:inset-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
           <ScrollArea className="h-full">
@@ -1051,11 +1032,11 @@ const DoctorDashboardEnhanced: React.FC = () => {
               {navItems.map((item) => (
                 <Button
                   key={item.id}
-                  variant={activeView === item.id ? 'secondary' : 'ghost'}
+                  variant={activeView === item.id ? 'default' : 'ghost'}
                   className={`w-full justify-start ${
                     activeView === item.id 
-                      ? 'bg-white/20 text-white' 
-                      : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600' 
+                      : 'text-gray-700 hover:bg-gray-100'
                   }`}
                   onClick={() => {
                     setActiveView(item.id);
@@ -1067,11 +1048,11 @@ const DoctorDashboardEnhanced: React.FC = () => {
                 </Button>
               ))}
               
-              <Separator className="my-4 bg-white/20" />
+              <Separator className="my-4" />
               
               <Button
                 variant="ghost"
-                className="w-full justify-start text-white/80 hover:bg-white/10 hover:text-white"
+                className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-3" />
