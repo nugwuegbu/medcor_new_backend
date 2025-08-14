@@ -25,7 +25,6 @@ import LipsAnalysisWidget from "./lips-analysis-widget";
 import VoiceSkincareWidget from "./voice-skincare-tips";
 import HairExtensionWidget from "./hair-extension-widget";
 import VoiceIcon from "./ui/voice-icon";
-import AppointmentCalendar from "./appointment-calendar";
 import AppointmentCalendarInline from "./appointment-calendar-inline";
 import { AvatarManager } from "../services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
@@ -2298,25 +2297,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
                 </div>
                 
                 {/* Show Book page */}
-                {showCalendar && (
-                  <div className="fixed inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50 rounded-lg overflow-hidden">
-                    {/* Back Button */}
-                    <button
-                      onClick={() => setShowCalendar(false)}
-                      className="absolute top-[85px] left-[25px] flex items-center gap-1 px-4 py-2 bg-purple-600 text-white rounded-md shadow-md hover:shadow-lg hover:bg-purple-700 transition-all transform hover:scale-105 z-50"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="font-medium text-sm">Back</span>
-                    </button>
-                    
-                    {/* Empty Book Page */}
-                    <div className="h-full flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        {/* Empty page content */}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* Removed full-screen calendar - now using inline calendar in chat */}
                 
                 {showDoctorList && !showChatInterface && (
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-100/95 to-blue-100/95 backdrop-blur-sm z-50">
@@ -3706,46 +3687,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
         )}
         
         {/* Enhanced Appointment Calendar */}
-        <AppointmentCalendar 
-          isOpen={showBookingCalendar}
-          onClose={() => {
-            setShowBookingCalendar(false);
-            setSelectedDate(null);
-            setBookingFormData(prev => ({ ...prev, selectedDate: null, selectedDoctor: '', selectedTime: '' }));
-          }}
-          preferredDate={bookingFormData.selectedDate ? bookingFormData.selectedDate.toISOString() : undefined}
-          preferredTime={bookingFormData.selectedTime}
-          preferredDoctor={bookingFormData.selectedDoctor}
-          voiceData={conversationState?.voiceData}
-          onAppointmentBooked={(appointment) => {
-            // Handle successful booking
-            const confirmMessage: Message = {
-              id: `msg_${Date.now()}`,
-              text: `✅ Your appointment with ${appointment.doctorName} on ${appointment.date} at ${appointment.time} has been confirmed!`,
-              sender: 'bot',
-              timestamp: new Date()
-            };
-            setMessages(prev => [...prev, confirmMessage]);
-            
-            // Make avatar speak confirmation
-            if (avatarRef.current) {
-              avatarRef.current.speak(confirmMessage.text);
-            }
-            
-            // Reset form
-            setShowBookingCalendar(false);
-            setBookingFormData({
-              patientName: '',
-              patientEmail: '',
-              patientPhone: '',
-              reason: '',
-              doctorId: 1,
-              selectedDate: null,
-              selectedDoctor: '',
-              selectedTime: ''
-            });
-          }}
-        />
+        {/* Full-screen AppointmentCalendar removed - now using inline calendar in chat messages */}
         
         {/* Booking Form View */}
         {showBookingForm && showChatInterface && (
