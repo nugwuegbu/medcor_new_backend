@@ -120,7 +120,7 @@ class APIHandler(BaseHTTPRequestHandler):
             self._set_headers()
             self.wfile.write(json.dumps(doctors).encode())
             
-        elif path == '/api/appointments' or path == '/api/appointments/':
+        elif path in ['/api/appointments', '/api/appointments/', '/api/appointments/appointments', '/api/appointments/appointments/']:
             # List appointments
             appointments = [
                 {
@@ -135,7 +135,7 @@ class APIHandler(BaseHTTPRequestHandler):
             self._set_headers()
             self.wfile.write(json.dumps(appointments).encode())
             
-        elif path == '/api/analysis-tracking-stats' or path == '/api/analysis-tracking-stats/':
+        elif path in ['/api/analysis-tracking-stats', '/api/analysis-tracking-stats/', '/api/analysis-tracking']:
             # Get analysis tracking statistics
             stats = {
                 "total": len(analysis_tracking),

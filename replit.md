@@ -48,6 +48,7 @@ Preferred communication style: Simple, everyday language.
 - **Enhanced Doctor Dashboard** (NEW - Jan 2025): Advanced doctor portal featuring patient management, appointment scheduling with status tracking (scheduled/in-progress/completed), treatment recording, prescription issuance, analytics dashboard, and patient medical history access. Integrated with Django backend for real-time data synchronization.
 - **Critical Backend Fixes** (Jan 8, 2025): Fixed doctors/patients list filtering to use `role` field instead of non-existent groups. Made appointment `slot`, `treatment`, and `medical_record` fields optional to fix creation errors.
 - **Analysis Tracking API Fix** (Jan 13, 2025): Added `/api/track-analysis` and `/api/analysis-tracking-stats` endpoints to Django fallback server for proper tracking when Neon database is unavailable. Fixed appointments endpoint to match documentation: `/api/appointments/appointments/`.
+- **Production URL Configuration Fix** (Jan 14, 2025): Fixed Django `urls_public.py` configuration for production deployment at medcor.ai. Added proper path prefixes for appointments (`/api/appointments/`), tenants (`/api/tenants/`), and subscriptions (`/api/subscription/`). Updated simple Django fallback server to handle all three critical endpoints: `/api/appointments/appointments/`, `/api/analysis-tracking-stats`, and `/api/analysis-tracking`.
 
 ## External Dependencies
 ### Core Services
