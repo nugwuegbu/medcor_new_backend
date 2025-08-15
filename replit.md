@@ -3,6 +3,14 @@
 ## Overview
 MedCare AI is an advanced healthcare platform that integrates interactive AI avatars, face recognition for authentication, and multi-language support to enhance patient interaction. It provides seamless AI-powered chatbot experiences that can identify returning patients, detect preferred languages, and transition between nurse and doctor avatars for personalized care. The project aims to provide comprehensive patient management, appointment scheduling, and health analysis capabilities, with a vision for broad market potential in digital healthcare.
 
+## Recent Changes (Jan 16, 2025)
+- **CRITICAL FIX**: Removed duplicate `date` field from DoctorAvailabilitySlot model - now uses only `start_time` and `end_time` as DateTime fields
+- Fixed all serializers, views, and admin interfaces to work with DateTime fields
+- Removed duplicate Meta class and field definitions that were causing model conflicts
+- Created missing URL files for tenants, medical_records, treatments, and subscription_plans apps
+- Added SessionMiddleware to Django settings to fix admin panel access
+- Django backend now runs successfully on port 8002 with all APIs working
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 **CRITICAL PORT CONFIGURATION (Jan 16, 2025)**: 

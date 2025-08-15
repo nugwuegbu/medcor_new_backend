@@ -25,7 +25,7 @@ class DoctorAvailabilitySlotSerializer(serializers.ModelSerializer):
         model = DoctorAvailabilitySlot
         fields = [
             'id', 'hospital', 'hospital_name', 'doctor', 'doctor_name',
-            'doctor_email', 'doctor_specialization', 'date', 'start_time',
+            'doctor_email', 'doctor_specialization', 'start_time',
             'end_time', 'slot_duration_minutes', 'max_appointments',
             'current_appointments', 'status', 'is_recurring',
             'recurrence_pattern', 'recurrence_end_date', 'day_of_week',
@@ -48,8 +48,8 @@ class DoctorAvailabilitySlotSerializer(serializers.ModelSerializer):
             if data['start_time'] >= data['end_time']:
                 raise serializers.ValidationError("End time must be after start time.")
         
-        # Ensure date is not in the past
-        if 'date' in data and data['date'] < timezone.now().date():
+        # Ensure start time is not in the past
+        if 'start_time' in data and data['start_time'] < timezone.now():
             raise serializers.ValidationError("Cannot create slots in the past.")
         
         # Validate recurrence settings
@@ -74,7 +74,7 @@ class DoctorAvailabilitySlotCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = DoctorAvailabilitySlot
         fields = [
-            'doctor', 'date', 'start_time', 'end_time',
+            'doctor', 'start_time', 'end_time',
             'slot_duration_minutes', 'max_appointments', 'status',
             'is_recurring', 'recurrence_pattern', 'recurrence_end_date',
             'day_of_week', 'allowed_appointment_types', 'notes',
@@ -97,20 +97,14 @@ class DoctorAvailabilitySlotCreateSerializer(serializers.ModelSerializer):
         if generate_slots:
             # Generate multiple slots based on duration
             slots = []
-            current_time = datetime.combine(
-                validated_data['date'],
-                validated_data['start_time']
-            )
-            end_datetime = datetime.combine(
-                validated_data['date'],
-                validated_data['end_time']
-            )
+            current_time = validated_data['start_time']
+            end_time = validated_data['end_time']
             slot_duration = timedelta(minutes=validated_data['slot_duration_minutes'])
             
-            while current_time + slot_duration <= end_datetime:
+            while current_time + slot_duration <= end_time:
                 slot_data = validated_data.copy()
-                slot_data['start_time'] = current_time.time()
-                slot_data['end_time'] = (current_time + slot_duration).time()
+                slot_data['start_time'] = current_time
+                slot_data['end_time'] = current_time + slot_duration
                 slot = DoctorAvailabilitySlot.objects.create(**slot_data)
                 slots.append(slot)
                 current_time += slot_duration

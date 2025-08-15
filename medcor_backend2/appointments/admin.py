@@ -75,20 +75,20 @@ class AppointmentAdmin(admin.ModelAdmin):
 class DoctorAvailabilitySlotAdmin(admin.ModelAdmin):
     """Admin interface for DoctorAvailabilitySlot model."""
     list_display = [
-        'id', 'doctor', 'date', 'start_time', 'end_time',
+        'id', 'doctor', 'start_time', 'end_time',
         'status', 'current_appointments', 'max_appointments',
         'hospital'
     ]
     list_filter = [
-        'status', 'date', 'is_recurring', 'recurrence_pattern',
+        'status', 'is_recurring', 'recurrence_pattern',
         'hospital', 'doctor'
     ]
     search_fields = [
         'doctor__email', 'doctor__first_name', 'doctor__last_name',
         'notes'
     ]
-    date_hierarchy = 'date'
-    ordering = ['date', 'start_time']
+    date_hierarchy = 'start_time'
+    ordering = ['start_time']
     
     fieldsets = (
         ('Basic Information', {
@@ -96,7 +96,7 @@ class DoctorAvailabilitySlotAdmin(admin.ModelAdmin):
         }),
         ('Slot Timing', {
             'fields': (
-                'date', 'start_time', 'end_time',
+                'start_time', 'end_time',
                 'slot_duration_minutes'
             )
         }),

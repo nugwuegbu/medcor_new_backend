@@ -43,9 +43,8 @@ List all doctor availability slots.
     "doctor_name": "Dr. John Smith",
     "doctor_email": "doctor@demo.com",
     "doctor_specialization": "Cardiologist",
-    "date": "2025-01-20",
-    "start_time": "09:00:00",
-    "end_time": "09:30:00",
+    "start_time": "2025-01-20T09:00:00Z",
+    "end_time": "2025-01-20T09:30:00Z",
     "slot_duration_minutes": 30,
     "max_appointments": 1,
     "current_appointments": 0,
@@ -90,9 +89,8 @@ Create a new availability slot.
 ```json
 {
   "doctor": "doctor-uuid",
-  "date": "2025-01-20",
-  "start_time": "09:00:00",
-  "end_time": "17:00:00",
+  "start_time": "2025-01-20T09:00:00Z",
+  "end_time": "2025-01-20T17:00:00Z",
   "slot_duration_minutes": 30,
   "max_appointments": 1,
   "generate_slots": true,  // If true, splits time into multiple slots

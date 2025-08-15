@@ -29,10 +29,10 @@ class DoctorAvailabilitySlotViewSet(viewsets.ModelViewSet):
     queryset = DoctorAvailabilitySlot.objects.all()
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['doctor', 'date', 'status', 'is_recurring']
+    filterset_fields = ['doctor', 'status', 'is_recurring']
     search_fields = ['doctor__first_name', 'doctor__last_name', 'notes']
-    ordering_fields = ['date', 'start_time']
-    ordering = ['date', 'start_time']
+    ordering_fields = ['start_time']
+    ordering = ['start_time']
     
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
@@ -55,21 +55,35 @@ class DoctorAvailabilitySlotViewSet(viewsets.ModelViewSet):
         if doctor_id:
             queryset = queryset.filter(doctor_id=doctor_id)
         
-        # Filter by date range
+        # Filter by date range using DateTime fields
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
         
         if start_date:
-            queryset = queryset.filter(date__gte=start_date)
+            # Convert date string to datetime at start of day
+            try:
+                start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+                start_datetime = timezone.make_aware(start_datetime) if timezone.is_naive(start_datetime) else start_datetime
+                queryset = queryset.filter(start_time__gte=start_datetime)
+            except ValueError:
+                pass
+        
         if end_date:
-            queryset = queryset.filter(date__lte=end_date)
+            # Convert date string to datetime at end of day
+            try:
+                end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
+                end_datetime = end_datetime.replace(hour=23, minute=59, second=59)
+                end_datetime = timezone.make_aware(end_datetime) if timezone.is_naive(end_datetime) else end_datetime
+                queryset = queryset.filter(start_time__lte=end_datetime)
+            except ValueError:
+                pass
         
         # Filter available slots only
         available_only = self.request.query_params.get('available_only', 'false').lower() == 'true'
         if available_only:
             queryset = queryset.filter(
                 status='AVAILABLE',
-                date__gte=timezone.now().date()
+                start_time__gte=timezone.now()
             ).exclude(
                 current_appointments__gte=F('max_appointments')
             )
@@ -81,7 +95,7 @@ class DoctorAvailabilitySlotViewSet(viewsets.ModelViewSet):
         """Get available slots for booking."""
         queryset = self.get_queryset().filter(
             status='AVAILABLE',
-            date__gte=timezone.now().date()
+            start_time__gte=timezone.now()
         )
         
         # Filter by doctor if specified
@@ -93,8 +107,13 @@ class DoctorAvailabilitySlotViewSet(viewsets.ModelViewSet):
         date_str = request.query_params.get('date')
         if date_str:
             try:
-                slot_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                queryset = queryset.filter(date=slot_date)
+                slot_date = datetime.strptime(date_str, '%Y-%m-%d')
+                start_datetime = timezone.make_aware(slot_date) if timezone.is_naive(slot_date) else slot_date
+                end_datetime = start_datetime.replace(hour=23, minute=59, second=59)
+                queryset = queryset.filter(
+                    start_time__gte=start_datetime,
+                    start_time__lte=end_datetime
+                )
             except ValueError:
                 return Response(
                     {'error': 'Invalid date format. Use YYYY-MM-DD'},
@@ -147,12 +166,23 @@ class DoctorAvailabilitySlotViewSet(viewsets.ModelViewSet):
                 day_slots = daily_slots.get(str(day_of_week), [])
                 
                 for slot_config in day_slots:
+                    # Parse time strings and combine with date to create DateTime objects
+                    start_time_str = slot_config['start_time']
+                    end_time_str = slot_config['end_time']
+                    
+                    # Create datetime objects
+                    start_datetime = datetime.strptime(f"{current_date} {start_time_str}", "%Y-%m-%d %H:%M:%S")
+                    end_datetime = datetime.strptime(f"{current_date} {end_time_str}", "%Y-%m-%d %H:%M:%S")
+                    
+                    # Make timezone aware
+                    start_datetime = timezone.make_aware(start_datetime) if timezone.is_naive(start_datetime) else start_datetime
+                    end_datetime = timezone.make_aware(end_datetime) if timezone.is_naive(end_datetime) else end_datetime
+                    
                     slot_data = {
                         'doctor': doctor,
                         'hospital': doctor.hospital,
-                        'date': current_date,
-                        'start_time': slot_config['start_time'],
-                        'end_time': slot_config['end_time'],
+                        'start_time': start_datetime,
+                        'end_time': end_datetime,
                         'slot_duration_minutes': slot_config.get('duration', 30),
                         'max_appointments': slot_config.get('max_appointments', 1),
                         'status': 'AVAILABLE',
@@ -162,9 +192,8 @@ class DoctorAvailabilitySlotViewSet(viewsets.ModelViewSet):
                     # Check if slot already exists
                     existing = DoctorAvailabilitySlot.objects.filter(
                         doctor=doctor,
-                        date=current_date,
-                        start_time=slot_data['start_time'],
-                        end_time=slot_data['end_time']
+                        start_time=start_datetime,
+                        end_time=end_datetime
                     ).first()
                     
                     if not existing:

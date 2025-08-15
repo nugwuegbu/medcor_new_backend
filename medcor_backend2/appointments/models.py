@@ -246,10 +246,13 @@ class DoctorAvailabilitySlot(models.Model):
         limit_choices_to={'role': 'DOCTOR'}
     )
     
-    # Slot details
-    date = models.DateField(help_text="Specific date for this slot")
-    start_time = models.TimeField(help_text="Slot start time")
-    end_time = models.TimeField(help_text="Slot end time")
+    # Slot details - Using DateTime fields for precise timing
+    start_time = models.DateTimeField(
+        help_text="Slot start date and time"
+    )
+    end_time = models.DateTimeField(
+        help_text="Slot end date and time"
+    )
     
     # Duration and capacity
     slot_duration_minutes = models.IntegerField(
@@ -329,19 +332,19 @@ class DoctorAvailabilitySlot(models.Model):
     
     class Meta:
         db_table = 'doctor_availability_slots'
-        ordering = ['date', 'start_time']
+        ordering = ['start_time']
         indexes = [
-            models.Index(fields=['hospital', 'doctor', 'date']),
+            models.Index(fields=['hospital', 'doctor', 'start_time']),
             models.Index(fields=['hospital', 'doctor', 'status']),
-            models.Index(fields=['hospital', 'date', 'status']),
-            models.Index(fields=['doctor', 'date', 'start_time']),
+            models.Index(fields=['hospital', 'start_time', 'status']),
+            models.Index(fields=['doctor', 'start_time']),
         ]
         unique_together = [
-            ['hospital', 'doctor', 'date', 'start_time', 'end_time']
+            ['hospital', 'doctor', 'start_time', 'end_time']
         ]
     
     def __str__(self):
-        return f"Dr. {self.doctor.get_full_name()} - {self.date} {self.start_time}-{self.end_time} ({self.status})"
+        return f"Dr. {self.doctor.get_full_name()} - {self.start_time.strftime('%Y-%m-%d %H:%M')} to {self.end_time.strftime('%H:%M')} ({self.status})"
     
     def clean(self):
         """Validate slot data."""
@@ -350,7 +353,7 @@ class DoctorAvailabilitySlot(models.Model):
             raise ValidationError("End time must be after start time.")
         
         # Validate date is not in the past
-        if self.date < timezone.now().date():
+        if self.start_time < timezone.now():
             raise ValidationError("Cannot create slots in the past.")
         
         # Validate doctor belongs to hospital
@@ -359,16 +362,16 @@ class DoctorAvailabilitySlot(models.Model):
                 raise ValidationError("Doctor must belong to the specified hospital.")
         
         # Check for overlapping slots
-        if self.doctor_id and self.date and self.start_time and self.end_time:
+        if self.doctor_id and self.start_time and self.end_time:
             overlapping = DoctorAvailabilitySlot.objects.filter(
                 doctor=self.doctor,
-                date=self.date,
+                start_time__lt=self.end_time,
+                end_time__gt=self.start_time,
                 status__in=['AVAILABLE', 'BOOKED']
             ).exclude(pk=self.pk)
             
-            for slot in overlapping:
-                if (self.start_time < slot.end_time and self.end_time > slot.start_time):
-                    raise ValidationError(f"Slot overlaps with existing slot: {slot}")
+            if overlapping.exists():
+                raise ValidationError(f"Slot overlaps with existing slot(s)")
     
     def save(self, *args, **kwargs):
         """Auto-set hospital from doctor if not provided."""
@@ -379,20 +382,23 @@ class DoctorAvailabilitySlot(models.Model):
         super().save(*args, **kwargs)
     
     @property
+    def date(self):
+        """Get the date from start_time for compatibility."""
+        return self.start_time.date() if self.start_time else None
+    
+    @property
     def is_available(self):
         """Check if slot is available for booking."""
         return (
             self.status == 'AVAILABLE' and
             self.current_appointments < self.max_appointments and
-            self.date >= timezone.now().date()
+            self.start_time >= timezone.now()
         )
     
     @property
     def is_past(self):
         """Check if slot is in the past."""
-        from datetime import datetime
-        slot_datetime = datetime.combine(self.date, self.start_time)
-        return slot_datetime < timezone.now()
+        return self.start_time < timezone.now()
     
     @property
     def available_spots(self):
@@ -425,51 +431,21 @@ class DoctorAvailabilitySlot(models.Model):
     
     def generate_time_slots(self):
         """Generate individual time slots based on slot duration."""
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         
         slots = []
-        current_time = datetime.combine(self.date, self.start_time)
-        end_datetime = datetime.combine(self.date, self.end_time)
+        current_time = self.start_time
         
-        while current_time + timedelta(minutes=self.slot_duration_minutes) <= end_datetime:
+        while current_time + timedelta(minutes=self.slot_duration_minutes) <= self.end_time:
             slot_end = current_time + timedelta(minutes=self.slot_duration_minutes)
             slots.append({
-                'start_time': current_time.time(),
-                'end_time': slot_end.time(),
+                'start_time': current_time.strftime('%H:%M:%S'),
+                'end_time': slot_end.strftime('%H:%M:%S'),
+                'start_datetime': current_time.isoformat(),
+                'end_datetime': slot_end.isoformat(),
                 'available': self.is_available,
-                'date': self.date
+                'date': current_time.date().isoformat()
             })
             current_time = slot_end
         
         return slots
-    
-    # Linked appointment (if booked)
-    appointment = models.OneToOneField(
-        'Appointment',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='slot'
-    )
-    
-    # Slot type
-    is_telemedicine = models.BooleanField(default=False)
-    max_patients = models.IntegerField(default=1)  # For group sessions
-    
-    # Timestamps
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'appointment_slots'
-        ordering = ['date', 'start_time']
-        indexes = [
-            models.Index(fields=['hospital', 'doctor', 'date']),
-            models.Index(fields=['hospital', 'status', 'date']),
-        ]
-        unique_together = [
-            ['hospital', 'doctor', 'date', 'start_time']
-        ]
-    
-    def __str__(self):
-        return f"Slot: {self.doctor} on {self.date} at {self.start_time}-{self.end_time}"
