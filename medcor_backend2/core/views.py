@@ -9,6 +9,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import login, logout
 from django.db.models import Q, Count
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 from .models import User
 from tenants.models import Hospital
 from tenants.serializers import HospitalBasicSerializer
@@ -34,6 +36,15 @@ class AvailableHospitalsView(generics.ListAPIView):
         return queryset.order_by('name')
 
 
+@extend_schema(
+    tags=['Authentication'],
+    summary='Register new user',
+    description='Register a new user with hospital assignment. Users must select a hospital during registration.',
+    responses={
+        201: UserSerializer,
+        400: {'description': 'Validation error'}
+    }
+)
 class RegisterView(generics.CreateAPIView):
     """User registration endpoint with hospital selection."""
     
@@ -81,6 +92,25 @@ class RegisterView(generics.CreateAPIView):
         }, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(
+    tags=['Authentication'],
+    summary='User login',
+    description='Authenticate user with email and password to receive JWT tokens',
+    request=LoginSerializer,
+    responses={
+        200: {
+            'description': 'Login successful',
+            'example': {
+                'user': {},
+                'tokens': {
+                    'access': 'eyJ0eXAiOiJKV1Q...',
+                    'refresh': 'eyJ0eXAiOiJKV1Q...'
+                }
+            }
+        },
+        401: {'description': 'Invalid credentials'}
+    }
+)
 class LoginView(APIView):
     """User login endpoint."""
     
@@ -173,6 +203,59 @@ class ChangePasswordView(generics.UpdateAPIView):
         return Response({'detail': 'Password changed successfully'})
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=['Users'],
+        summary='List users',
+        description='List all users with optional filtering by role, hospital, and search',
+        parameters=[
+            OpenApiParameter(
+                name='role',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Filter by user role (admin, doctor, nurse, patient)',
+                enum=['admin', 'doctor', 'nurse', 'patient']
+            ),
+            OpenApiParameter(
+                name='search',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description='Search in first name, last name, or email'
+            ),
+            OpenApiParameter(
+                name='hospital',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description='Filter by hospital ID'
+            )
+        ]
+    ),
+    create=extend_schema(
+        tags=['Users'],
+        summary='Create new user',
+        description='Create a new user (admin only). Assign to hospital and set role.'
+    ),
+    retrieve=extend_schema(
+        tags=['Users'],
+        summary='Get user details',
+        description='Get detailed information about a specific user including specialties for doctors'
+    ),
+    update=extend_schema(
+        tags=['Users'],
+        summary='Update user',
+        description='Update user information (admin only)'
+    ),
+    partial_update=extend_schema(
+        tags=['Users'],
+        summary='Partially update user',
+        description='Partially update user information (admin only)'
+    ),
+    destroy=extend_schema(
+        tags=['Users'],
+        summary='Deactivate user',
+        description='Deactivate a user account (admin only). User is not deleted but marked inactive.'
+    )
+)
 class UserViewSet(viewsets.ModelViewSet):
     """ViewSet for user management (admin only)."""
     
@@ -262,6 +345,11 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
     
+    @extend_schema(
+        tags=['Users'],
+        summary='List all doctors',
+        description='Get all doctors in the hospital with their specialization information, appointment counts, and patient statistics'
+    )
     @action(detail=False, methods=['get'])
     def doctors(self, request):
         """Get all doctors in the hospital with specialization info."""
@@ -285,6 +373,11 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = DoctorSerializer(doctors, many=True)
         return Response(serializer.data)
     
+    @extend_schema(
+        tags=['Users'],
+        summary='List all patients',
+        description='Get all patients in the hospital with their medical record counts'
+    )
     @action(detail=False, methods=['get'])
     def patients(self, request):
         """Get all patients in the hospital."""

@@ -3,7 +3,16 @@
 ## Overview
 MedCare AI is an advanced healthcare platform that integrates interactive AI avatars, face recognition for authentication, and multi-language support to enhance patient interaction. It provides seamless AI-powered chatbot experiences that can identify returning patients, detect preferred languages, and transition between nurse and doctor avatars for personalized care. The project aims to provide comprehensive patient management, appointment scheduling, and health analysis capabilities, with a vision for broad market potential in digital healthcare.
 
-## Recent Changes (Jan 16, 2025)
+## Recent Changes (Aug 15, 2025)
+- **API Documentation Complete**: Implemented comprehensive Swagger/OpenAPI documentation for all medcor_backend2 REST endpoints
+  - Enhanced all ViewSets with OpenAPI decorators and proper tags
+  - Created detailed API workflow documentation showing proper sequence (Hospital → Users → Medical Services)
+  - Added 65 fully documented endpoints across 9 API categories
+  - Swagger UI available at `/api/docs/`, ReDoc at `/api/redoc/`
+  - Complete API_DOCUMENTATION.md with examples, authentication flow, and rate limiting
+- **Doctor Specialization Integration**: UserDetails and DoctorSerializer now include specialization fields with error handling
+
+## Previous Changes (Jan 16, 2025)
 - **CRITICAL FIX**: Removed duplicate `date` field from DoctorAvailabilitySlot model - now uses only `start_time` and `end_time` as DateTime fields
 - Fixed all serializers, views, and admin interfaces to work with DateTime fields
 - Removed duplicate Meta class and field definitions that were causing model conflicts

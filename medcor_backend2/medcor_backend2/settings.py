@@ -193,12 +193,96 @@ CORS_ALLOW_METHODS = [
 
 # Spectacular settings for API documentation
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'MedCor Backend API',
-    'DESCRIPTION': 'Multi-tenant healthcare platform API with hospital management',
+    'TITLE': 'MedCor Healthcare Platform API',
+    'DESCRIPTION': '''
+# MedCor Healthcare Platform API Documentation
+
+## Overview
+MedCor is a comprehensive multi-tenant healthcare management platform that provides APIs for hospital management, patient care, appointment scheduling, and medical records management.
+
+## API Workflow - Getting Started
+
+### Step 1: Create a Hospital (Tenant)
+First, create a hospital/clinic which serves as the tenant in our multi-tenant architecture:
+- **POST** `/api/hospitals/` - Create a new hospital
+
+### Step 2: User Registration & Authentication
+Register users and assign them to hospitals:
+- **POST** `/api/auth/register/` - Register new user (assign to hospital)
+- **POST** `/api/auth/login/` - Login and get JWT tokens
+
+### Step 3: Create Core Entities
+After authentication, create the necessary entities in order:
+
+1. **Doctors & Staff**
+   - **POST** `/api/auth/users/` - Create doctor/nurse/staff accounts
+   - **POST** `/api/specialty/doctor-specialties/` - Assign specialties to doctors
+
+2. **Availability & Scheduling**
+   - **POST** `/api/appointments/availability-slots/` - Set doctor availability
+   - **GET** `/api/appointments/availability-slots/` - View available slots
+
+3. **Patient Management**
+   - **POST** `/api/auth/users/` - Create patient accounts
+   - **POST** `/api/medical-records/` - Create patient medical records
+
+4. **Appointments & Treatments**
+   - **POST** `/api/appointments/` - Book appointments
+   - **POST** `/api/treatments/` - Record treatments
+   - **POST** `/api/treatments/prescriptions/` - Issue prescriptions
+
+## Authentication
+All endpoints (except registration/login) require JWT authentication:
+- Include `Authorization: Bearer <token>` in request headers
+- Tokens expire after 60 minutes
+- Use refresh token endpoint to get new access tokens
+
+## Multi-Tenancy
+- Each hospital is a separate tenant
+- Users are associated with specific hospitals
+- Data is isolated between hospitals
+- Admin users can manage multiple hospitals
+
+## Rate Limiting
+- 100 requests per minute for authenticated users
+- 20 requests per minute for unauthenticated users
+
+## Response Formats
+All responses follow RESTful conventions with appropriate HTTP status codes.
+    ''',
     'VERSION': '2.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
     'SCHEMA_PATH_PREFIX': '/api/',
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': False,
+        'filter': True,
+        'tryItOutEnabled': True,
+    },
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'User authentication and registration'},
+        {'name': 'Hospitals', 'description': 'Hospital/Tenant management'},
+        {'name': 'Users', 'description': 'User management and profiles'},
+        {'name': 'Appointments', 'description': 'Appointment scheduling and management'},
+        {'name': 'Medical Records', 'description': 'Patient medical records'},
+        {'name': 'Treatments', 'description': 'Treatment plans and prescriptions'},
+        {'name': 'Specialties', 'description': 'Doctor specializations'},
+        {'name': 'Subscriptions', 'description': 'Hospital subscription plans'},
+        {'name': 'Chat & Voice', 'description': 'AI chat and voice interactions'},
+    ],
+    'EXTERNAL_DOCS': {
+        'description': 'MedCor Platform Documentation',
+        'url': 'https://medcor.ai/docs',
+    },
+    'CONTACT': {
+        'name': 'MedCor Support',
+        'email': 'support@medcor.ai',
+    },
+    'LICENSE': {
+        'name': 'Proprietary',
+    },
 }
 
 # Logging configuration
