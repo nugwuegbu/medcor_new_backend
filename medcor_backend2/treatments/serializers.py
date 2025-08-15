@@ -12,10 +12,12 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescription
         fields = [
-            'id', 'treatment', 'medication_name', 'generic_name',
-            'dosage', 'frequency', 'route', 'quantity',
-            'refills', 'instructions', 'start_date', 'end_date',
-            'is_active', 'pharmacy_notes', 'created_at', 'updated_at'
+            'id', 'treatment', 'medication_name', 'generic_name', 'brand_name',
+            'dosage', 'dosage_unit', 'frequency', 'route', 'duration_days',
+            'quantity_prescribed', 'quantity_unit', 'refills_allowed', 'refills_used',
+            'instructions', 'take_with_food', 'start_date', 'end_date',
+            'pharmacy_name', 'pharmacy_phone', 'is_active', 'is_dispensed', 
+            'dispensed_date', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
