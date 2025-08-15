@@ -5,6 +5,10 @@ MedCare AI is an advanced healthcare platform that integrates interactive AI ava
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+**CRITICAL PORT CONFIGURATION (Jan 16, 2025)**: 
+- medcor_backend MUST run on port 8000
+- medcor_backend2 MUST run on port 8002
+- Never change these ports to avoid conflicts
 
 ## System Architecture
 ### Frontend

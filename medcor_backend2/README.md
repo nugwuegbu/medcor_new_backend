@@ -55,10 +55,10 @@ python setup_database.py
 
 5. **Run development server**
 ```bash
-python manage.py runserver
+python manage.py runserver 0.0.0.0:8002
 ```
 
-The API will be available at `http://localhost:8000`
+The API will be available at `http://localhost:8002`
 
 ## API Endpoints
 
@@ -111,9 +111,9 @@ The API will be available at `http://localhost:8000`
 - `POST /api/subscription-plans/subscribe/` - Subscribe to plan
 
 ## API Documentation
-- **Swagger UI**: `http://localhost:8000/api/docs/`
-- **ReDoc**: `http://localhost:8000/api/redoc/`
-- **OpenAPI Schema**: `http://localhost:8000/api/schema/`
+- **Swagger UI**: `http://localhost:8002/api/docs/`
+- **ReDoc**: `http://localhost:8002/api/redoc/`
+- **OpenAPI Schema**: `http://localhost:8002/api/schema/`
 
 ## FastMCP Server
 
@@ -150,13 +150,13 @@ The system supports multi-tenant access via:
 ### JWT Token Usage
 ```bash
 # Login to get tokens
-curl -X POST http://localhost:8000/api/auth/login/ \
+curl -X POST http://localhost:8002/api/auth/login/ \
   -H "Content-Type: application/json" \
   -d '{"email": "admin@medcor.ai", "password": "admin123"}'
 
 # Use access token in requests
 curl -H "Authorization: Bearer <access_token>" \
-  http://localhost:8000/api/auth/profile/
+  http://localhost:8002/api/auth/profile/
 ```
 
 ## Default Accounts

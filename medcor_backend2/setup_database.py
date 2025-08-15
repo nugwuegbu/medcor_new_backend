@@ -234,9 +234,9 @@ def setup_database():
     
     print("\n✨ Database setup complete!")
     print("\n📝 You can now:")
-    print("  1. Access Django admin at: http://localhost:8000/admin")
+    print("  1. Access Django admin at: http://localhost:8002/admin")
     print("  2. Login with: admin@medcor.ai / admin123")
-    print("  3. Access API docs at: http://localhost:8000/api/docs")
+    print("  3. Access API docs at: http://localhost:8002/api/docs")
     print("  4. Use demo accounts:")
     print("     - Doctor: doctor@demo.com / demo123")
     print("     - Nurse: nurse@demo.com / demo123")
