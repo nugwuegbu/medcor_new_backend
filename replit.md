@@ -12,6 +12,15 @@ MedCare AI is an advanced healthcare platform that integrates interactive AI ava
 - Django backend now runs successfully on port 8002 with all APIs working
 - Added computed `duration` property to DoctorAvailabilitySlot model that calculates total slot duration from start_time and end_time
 - Updated DoctorAvailabilitySlotSerializer to include the duration field in API responses
+- **NEW SPECIALTY APP**: Created comprehensive doctor specialization management system with:
+  - Support for 27+ medical specializations (pediatrics, gynecology, cardiology, etc.)
+  - Default "General Medicine" specialty for doctors without specific specialization
+  - Many-to-many relationship allowing doctors to have multiple specializations
+  - Primary specialty designation for each doctor
+  - Full REST API with ViewSets implementing pagination, lazy loading, and caching
+  - Advanced search, filtering, and statistics tracking for demand analysis
+  - Three pagination classes (Small: 10, Standard: 20, Large: 50 items per page)
+  - Optimized database queries with select_related and prefetch_related for performance
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
