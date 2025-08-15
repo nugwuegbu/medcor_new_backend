@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ChatInterface from "@/components/chat-interface";
+import ChatInterface from "@/features/chat/components/chat-interface";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, Phone, Users, Calendar } from "lucide-react";
 

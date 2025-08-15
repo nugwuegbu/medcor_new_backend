@@ -457,6 +457,15 @@ wheels = [
 ]
 
 [[package]]
+name = "django-chatter"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d2/82/d11032c00c41769e62b1f8438afa887639ea0e2bcda8eb4a4492517db7ef/django-chatter-0.1.1.tar.gz", hash = "sha256:32924b9ea60a0387675460126077bd3b065fae1e2d1b7f21328f7fd34d3c511f", size = 26744 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/65/c6/394534efc5a8d643344d8cd9b403a57e61df259a183e82acef0c775338d7/django_chatter-0.1.1-py3-none-any.whl", hash = "sha256:576f84e467768256ca48f34496cf2c6f809b5524792661bdb297b6160812358f", size = 23792 },
+]
+
+[[package]]
 name = "django-ckeditor"
 version = "6.7.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1403,6 +1412,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "dj-database-url" },
     { name = "django" },
+    { name = "django-chatter" },
     { name = "django-ckeditor" },
     { name = "django-cors-headers" },
     { name = "django-filter" },
@@ -1441,6 +1451,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=45.0.5" },
     { name = "dj-database-url", specifier = ">=3.0.1" },
     { name = "django", specifier = "==4.2.7" },
+    { name = "django-chatter", specifier = ">=0.1.1" },
     { name = "django-ckeditor", specifier = ">=6.7.3" },
     { name = "django-cors-headers", specifier = "==4.3.1" },
     { name = "django-filter", specifier = ">=25.1" },

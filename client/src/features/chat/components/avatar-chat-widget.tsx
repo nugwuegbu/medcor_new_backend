@@ -18,21 +18,21 @@ import AvatarVideoLoop from "./avatar-video-loop";
 import UserCameraView from "./user-camera-view";
 import BrowserVoiceButton from "./browser-voice-button";
 import InfoOverlay from "./info-overlay";
-import FaceAnalysisWidgetInline from "./face-analysis-widget-inline";
-import HairAnalysisWidget from "./hair-analysis-widget";
-import SkinAnalysisWidget from "./skin-analysis-widget";
-import LipsAnalysisWidget from "./lips-analysis-widget";
+import FaceAnalysisWidgetInline from "../../analysis/components/face-analysis-widget-inline";
+import HairAnalysisWidget from "../../analysis/components/hair-analysis-widget";
+import SkinAnalysisWidget from "../../analysis/components/skin-analysis-widget";
+import LipsAnalysisWidget from "../../analysis/components/lips-analysis-widget";
 import VoiceSkincareWidget from "./voice-skincare-tips";
-import HairExtensionWidget from "./hair-extension-widget";
-import VoiceIcon from "./ui/voice-icon";
-import AppointmentCalendar from "./appointment-calendar";
-import AppointmentCalendarInline from "./appointment-calendar-inline";
-import { AvatarManager } from "../services/avatar-manager";
+import HairExtensionWidget from "../../analysis/components/hair-extension-widget";
+import VoiceIcon from "@/components/ui/voice-icon";
+import AppointmentCalendar from "../../appointments/components/appointment-calendar";
+import AppointmentCalendarInline from "../../appointments/components/appointment-calendar-inline";
+import { AvatarManager } from "@/services/avatar-manager";
 import { TaskType, TaskMode } from "@heygen/streaming-avatar";
 import doctorPhoto from "@assets/isolated-shotof-happy-successful-mature-senior-physician-wearing-medical-unifrom-stethoscope-having-cheerful-facial-expression-smiling-broadly-keeping-arms-crossed-chest_1751652590767.png";
 import doctorEmilyPhoto from "@assets/image-professional-woman-doctor-physician-with-clipboard-writing-listening-patient-hospital-cl_1751701299986.png";
 import { FaGoogle, FaApple, FaMicrosoft } from "react-icons/fa";
-import { videoStreamRef, ensureCameraReady } from "../utils/camera-manager";
+import { videoStreamRef, ensureCameraReady } from "@/utils/camera-manager";
 import { useAuth } from "@/hooks/useAuth";
 
 // Perfect Corp YCE SDK types
@@ -1163,7 +1163,7 @@ function AvatarChatWidget({ isOpen, onClose }: AvatarChatWidgetProps) {
   // Memoized camera permission handler to prevent re-renders
   // Centralized camera management utility - FIXED VERSION
   const ensureCameraReady = useCallback(async (): Promise<MediaStream> => {
-    const { ensureCameraReady: cameraManager } = await import('../utils/camera-manager');
+    const { ensureCameraReady: cameraManager } = await import('@/utils/camera-manager');
     return cameraManager();
   }, []);
 

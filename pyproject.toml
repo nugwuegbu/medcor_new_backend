@@ -38,4 +38,5 @@ dependencies = [
     "reportlab>=4.4.3",
     "aiofiles>=24.1.0",
     "whitenoise>=6.9.0",
+    "django-chatter>=0.1.1",
 ]
