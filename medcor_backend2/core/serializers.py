@@ -4,17 +4,20 @@ Serializers for core user authentication and management.
 
 from rest_framework import serializers
 from django.contrib.auth import authenticate
+from django.db.models import Prefetch
 from .models import User
 from tenants.models import Hospital
 from tenants.serializers import HospitalBasicSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer for User model with hospital details."""
+    """Serializer for User model with hospital details and doctor specialization."""
     
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
     hospital_details = HospitalBasicSerializer(source='hospital', read_only=True)
     full_name = serializers.CharField(source='get_full_name', read_only=True)
+    doctor_specialties = serializers.SerializerMethodField()
+    primary_specialty = serializers.SerializerMethodField()
     
     class Meta:
         model = User
@@ -23,9 +26,73 @@ class UserSerializer(serializers.ModelSerializer):
             'phone_number', 'date_of_birth', 'gender', 'role',
             'hospital', 'hospital_name', 'hospital_details', 'department', 'specialization',
             'is_active', 'is_verified', 'created_at', 'updated_at',
-            'profile_picture', 'bio', 'preferred_language', 'timezone'
+            'profile_picture', 'bio', 'preferred_language', 'timezone',
+            'doctor_specialties', 'primary_specialty'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'hospital_name', 'hospital_details']
+    
+    def get_doctor_specialties(self, obj):
+        """Get all specialties if user is a doctor."""
+        if obj.role != 'doctor':
+            return None
+        
+        try:
+            # Import here to avoid circular import
+            from specialty.models import DoctorSpecialty
+            specialties = DoctorSpecialty.objects.filter(
+                doctor=obj
+            ).select_related('specialty').order_by('-is_primary', 'specialty__name')
+            
+            return [
+                {
+                    'id': ds.specialty.id,
+                    'code': ds.specialty.code,
+                    'name': ds.specialty.name,
+                    'is_primary': ds.is_primary,
+                    'certification_date': ds.certification_date,
+                    'years_of_experience': ds.years_of_experience
+                }
+                for ds in specialties
+            ]
+        except Exception:
+            # Return empty list if database table doesn't exist yet
+            return []
+    
+    def get_primary_specialty(self, obj):
+        """Get the primary specialty if user is a doctor."""
+        if obj.role != 'doctor':
+            return None
+        
+        try:
+            # Import here to avoid circular import
+            from specialty.models import DoctorSpecialty
+            primary = DoctorSpecialty.objects.filter(
+                doctor=obj,
+                is_primary=True
+            ).select_related('specialty').first()
+            
+            if primary:
+                return {
+                    'id': primary.specialty.id,
+                    'code': primary.specialty.code,
+                    'name': primary.specialty.name
+                }
+            
+            # If no primary specialty, check for default General Medicine
+            from specialty.models import Specialty
+            default = Specialty.get_default_specialty()
+            return {
+                'id': default.id,
+                'code': default.code,
+                'name': default.name
+            }
+        except Exception:
+            # Return default specialty if database error
+            return {
+                'id': 1,
+                'code': 'GEN',
+                'name': 'General Medicine'
+            }
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -121,17 +188,91 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
 
+class DoctorSpecialtyInfoSerializer(serializers.Serializer):
+    """Lightweight serializer for doctor's specialty information."""
+    id = serializers.IntegerField(read_only=True)
+    code = serializers.CharField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    is_primary = serializers.BooleanField(read_only=True)
+    years_of_experience = serializers.IntegerField(read_only=True)
+    certification_date = serializers.DateField(read_only=True)
+
+
 class DoctorSerializer(UserSerializer):
-    """Serializer for doctor users."""
+    """Serializer for doctor users with specialization information."""
     
     appointments_count = serializers.IntegerField(read_only=True)
     patients_count = serializers.IntegerField(read_only=True)
+    specialties = serializers.SerializerMethodField()
+    primary_specialty = serializers.SerializerMethodField()
     
     class Meta(UserSerializer.Meta):
         fields = UserSerializer.Meta.fields + [
             'license_number', 'years_of_experience',
-            'appointments_count', 'patients_count'
+            'appointments_count', 'patients_count',
+            'specialties', 'primary_specialty'
         ]
+    
+    def get_specialties(self, obj):
+        """Get all specialties for the doctor."""
+        if obj.role != 'doctor':
+            return []
+        
+        try:
+            # Check if doctor_specialties are prefetched
+            if hasattr(obj, '_prefetched_objects_cache') and 'doctor_specialties' in obj._prefetched_objects_cache:
+                doctor_specialties = obj.doctor_specialties.all()
+            else:
+                # Import here to avoid circular import
+                from specialty.models import DoctorSpecialty
+                doctor_specialties = DoctorSpecialty.objects.filter(
+                    doctor=obj
+                ).select_related('specialty')
+            
+            return [
+                {
+                    'id': ds.specialty.id,
+                    'code': ds.specialty.code,
+                    'name': ds.specialty.name,
+                    'is_primary': ds.is_primary,
+                    'years_of_experience': ds.years_of_experience,
+                    'certification_date': ds.certification_date
+                }
+                for ds in doctor_specialties
+            ]
+        except Exception:
+            # Return empty list if database error
+            return []
+    
+    def get_primary_specialty(self, obj):
+        """Get the primary specialty for the doctor."""
+        if obj.role != 'doctor':
+            return None
+        
+        try:
+            # Import here to avoid circular import
+            from specialty.models import DoctorSpecialty
+            primary = DoctorSpecialty.objects.filter(
+                doctor=obj,
+                is_primary=True
+            ).select_related('specialty').first()
+            
+            if primary:
+                return {
+                    'id': primary.specialty.id,
+                    'code': primary.specialty.code,
+                    'name': primary.specialty.name,
+                    'years_of_experience': primary.years_of_experience
+                }
+            return None
+        except Exception:
+            # Return default if database error
+            return {
+                'id': 1,
+                'code': 'GEN',
+                'name': 'General Medicine',
+                'years_of_experience': 0
+            }
 
 
 class PatientSerializer(UserSerializer):

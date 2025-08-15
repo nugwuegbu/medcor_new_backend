@@ -130,14 +130,29 @@ class LogoutView(APIView):
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):
-    """User profile endpoint."""
+    """User profile endpoint with specialization info for doctors."""
     
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     
     def get_object(self):
-        """Return current user."""
-        return self.request.user
+        """Return current user with optimized queries."""
+        from specialty.models import DoctorSpecialty
+        from django.db.models import Prefetch
+        
+        user = self.request.user
+        
+        # If user is a doctor, prefetch specialties
+        if user.role == 'doctor':
+            # Re-fetch with prefetch
+            user = User.objects.prefetch_related(
+                Prefetch(
+                    'doctor_specialties',
+                    queryset=DoctorSpecialty.objects.select_related('specialty').order_by('-is_primary', 'specialty__name')
+                )
+            ).select_related('hospital').get(pk=user.pk)
+        
+        return user
 
 
 class ChangePasswordView(generics.UpdateAPIView):
@@ -165,7 +180,10 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        """Filter users by current hospital."""
+        """Filter users by current hospital with optimized queries."""
+        from specialty.models import DoctorSpecialty
+        from django.db.models import Prefetch
+        
         queryset = User.objects.all()
         
         # Filter by hospital if not superadmin
@@ -178,7 +196,7 @@ class UserViewSet(viewsets.ModelViewSet):
         # Filter by role if specified
         role = self.request.query_params.get('role')
         if role:
-            queryset = queryset.filter(role=role)
+            queryset = queryset.filter(role=role.lower())  # Ensure lowercase
         
         # Search functionality
         search = self.request.query_params.get('search')
@@ -189,22 +207,77 @@ class UserViewSet(viewsets.ModelViewSet):
                 Q(email__icontains=search)
             )
         
-        return queryset.select_related('hospital')
+        # Always select related hospital
+        queryset = queryset.select_related('hospital')
+        
+        # If fetching doctors, prefetch specialties
+        if role and role.lower() == 'doctor':
+            queryset = queryset.prefetch_related(
+                Prefetch(
+                    'doctor_specialties',
+                    queryset=DoctorSpecialty.objects.select_related('specialty').order_by('-is_primary', 'specialty__name')
+                )
+            )
+        
+        return queryset
     
     def get_serializer_class(self):
-        """Return appropriate serializer based on action."""
+        """Return appropriate serializer based on action and user role."""
         if self.action == 'create':
             return UserCreateSerializer
-        elif self.request.query_params.get('role') == 'DOCTOR':
+        
+        # Check if we're retrieving a specific user
+        if self.action == 'retrieve':
+            user = self.get_object()
+            if user.role == 'doctor':
+                return DoctorSerializer
+            elif user.role == 'patient':
+                return PatientSerializer
+        
+        # Check query params for role filtering
+        role = self.request.query_params.get('role')
+        if role and role.lower() == 'doctor':
             return DoctorSerializer
-        elif self.request.query_params.get('role') == 'PATIENT':
+        elif role and role.lower() == 'patient':
             return PatientSerializer
+        
         return UserSerializer
+    
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve user with optimized queries for specialization."""
+        from specialty.models import DoctorSpecialty
+        from django.db.models import Prefetch
+        
+        instance = self.get_object()
+        
+        # If it's a doctor, refetch with prefetch
+        if instance.role == 'doctor':
+            instance = User.objects.prefetch_related(
+                Prefetch(
+                    'doctor_specialties',
+                    queryset=DoctorSpecialty.objects.select_related('specialty').order_by('-is_primary', 'specialty__name')
+                )
+            ).select_related('hospital').get(pk=instance.pk)
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def doctors(self, request):
-        """Get all doctors in the hospital."""
-        doctors = self.get_queryset().filter(role='DOCTOR')
+        """Get all doctors in the hospital with specialization info."""
+        from specialty.models import DoctorSpecialty
+        from django.db.models import Prefetch
+        
+        doctors = self.get_queryset().filter(role='doctor')  # Use lowercase 'doctor'
+        
+        # Prefetch doctor specialties for efficient querying
+        doctors = doctors.prefetch_related(
+            Prefetch(
+                'doctor_specialties',
+                queryset=DoctorSpecialty.objects.select_related('specialty').order_by('-is_primary', 'specialty__name')
+            )
+        )
+        
         doctors = doctors.annotate(
             appointments_count=Count('doctor_appointments'),
             patients_count=Count('doctor_appointments__patient', distinct=True)
@@ -215,7 +288,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def patients(self, request):
         """Get all patients in the hospital."""
-        patients = self.get_queryset().filter(role='PATIENT')
+        patients = self.get_queryset().filter(role='patient')  # Use lowercase 'patient'
         serializer = PatientSerializer(patients, many=True)
         return Response(serializer.data)
     
