@@ -4,6 +4,16 @@
 MedCare AI is an advanced healthcare platform that integrates interactive AI avatars, face recognition for authentication, and multi-language support to enhance patient interaction. It provides seamless AI-powered chatbot experiences that can identify returning patients, detect preferred languages, and transition between nurse and doctor avatars for personalized care. The project aims to provide comprehensive patient management, appointment scheduling, and health analysis capabilities, with a vision for broad market potential in digital healthcare.
 
 ## Recent Changes (Aug 15, 2025)
+- **MCP Server Enhanced**: Comprehensive REST endpoint implementation for hospitals, doctors, specialties, and medical records
+  - Added 15+ new tools for complete CRUD operations across all entities
+  - Implemented specialty management system with doctor-specialty associations
+  - Enhanced medical records with detailed filtering and update capabilities
+  - Added comprehensive hospital and doctor detail endpoints with statistics
+  - Created 10 resource endpoints for RESTful access patterns
+  - Fixed role filtering to use uppercase consistently (DOCTOR, PATIENT, NURSE)
+  - Optimized queries with prefetch_related for better performance
+  - Added guided prompts for common workflows (appointment booking, patient onboarding)
+  - Complete MCP_SERVER_README.md documentation with usage examples
 - **API Documentation Complete**: Implemented comprehensive Swagger/OpenAPI documentation for all medcor_backend2 REST endpoints
   - Enhanced all ViewSets with OpenAPI decorators and proper tags
   - Created detailed API workflow documentation showing proper sequence (Hospital → Users → Medical Services)
