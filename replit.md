@@ -1,122 +1,46 @@
-# Replit.md - MedCare AI Compressed
+# MedCare AI - Compressed Replit.md
 
 ## Overview
-MedCare AI is an advanced healthcare platform that integrates interactive AI avatars, face recognition for authentication, and multi-language support to enhance patient interaction. It provides seamless AI-powered chatbot experiences that can identify returning patients, detect preferred languages, and transition between nurse and doctor avatars for personalized care. The project aims to provide comprehensive patient management, appointment scheduling, and health analysis capabilities, with a vision for broad market potential in digital healthcare.
-
-## Recent Changes (Aug 15, 2025)
-- **HeyGen Credit Conservation Implemented**: Modified avatar initialization to require explicit user interaction (click "Start AI Assistant" button) before creating avatar sessions, preventing automatic API calls and credit consumption
-- **HeyGen API Key Updated**: Successfully updated VITE_HEYGEN_API_KEY environment variable with new authentication token for avatar services
-- **MCP Server Enhanced**: Comprehensive REST endpoint implementation for hospitals, doctors, specialties, and medical records
-  - Added 15+ new tools for complete CRUD operations across all entities
-  - Implemented specialty management system with doctor-specialty associations
-  - Enhanced medical records with detailed filtering and update capabilities
-  - Added comprehensive hospital and doctor detail endpoints with statistics
-  - Created 10 resource endpoints for RESTful access patterns
-  - Fixed role filtering to use uppercase consistently (DOCTOR, PATIENT, NURSE)
-  - Optimized queries with prefetch_related for better performance
-  - Added guided prompts for common workflows (appointment booking, patient onboarding)
-  - Complete MCP_SERVER_README.md documentation with usage examples
-- **API Documentation Complete**: Implemented comprehensive Swagger/OpenAPI documentation for all medcor_backend2 REST endpoints
-  - Enhanced all ViewSets with OpenAPI decorators and proper tags
-  - Created detailed API workflow documentation showing proper sequence (Hospital → Users → Medical Services)
-  - Added 65 fully documented endpoints across 9 API categories
-  - Swagger UI available at `/api/docs/`, ReDoc at `/api/redoc/`
-  - Complete API_DOCUMENTATION.md with examples, authentication flow, and rate limiting
-- **Doctor Specialization Integration**: UserDetails and DoctorSerializer now include specialization fields with error handling
-
-## Previous Changes (Jan 16, 2025)
-- **CRITICAL FIX**: Removed duplicate `date` field from DoctorAvailabilitySlot model - now uses only `start_time` and `end_time` as DateTime fields
-- Fixed all serializers, views, and admin interfaces to work with DateTime fields
-- Removed duplicate Meta class and field definitions that were causing model conflicts
-- Created missing URL files for tenants, medical_records, treatments, and subscription_plans apps
-- Added SessionMiddleware to Django settings to fix admin panel access
-- Django backend now runs successfully on port 8002 with all APIs working
-- Added computed `duration` property to DoctorAvailabilitySlot model that calculates total slot duration from start_time and end_time
-- Updated DoctorAvailabilitySlotSerializer to include the duration field in API responses
-- **NEW SPECIALTY APP**: Created comprehensive doctor specialization management system with:
-  - Support for 27+ medical specializations (pediatrics, gynecology, cardiology, etc.)
-  - Default "General Medicine" specialty for doctors without specific specialization
-  - Many-to-many relationship allowing doctors to have multiple specializations
-  - Primary specialty designation for each doctor
-  - Full REST API with ViewSets implementing pagination, lazy loading, and caching
-  - Advanced search, filtering, and statistics tracking for demand analysis
-  - Three pagination classes (Small: 10, Standard: 20, Large: 50 items per page)
-  - Optimized database queries with select_related and prefetch_related for performance
+MedCare AI is an advanced healthcare platform designed to enhance patient interaction through interactive AI avatars, face recognition for authentication, and multi-language support. It offers seamless AI-powered chatbot experiences, identifies returning patients, detects preferred languages, and transitions between nurse and doctor avatars for personalized care. The project aims to provide comprehensive patient management, appointment scheduling, and health analysis capabilities, with significant market potential in digital healthcare.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
-**CRITICAL PORT CONFIGURATION (Jan 16, 2025)**: 
-- medcor_backend MUST run on port 8000
-- medcor_backend2 MUST run on port 8002
-- Never change these ports to avoid conflicts
-**Django Backend Migration (Aug 15, 2025)**:
-- Converting Express API to Django async implementation
-- Django backend runs on port 8002 with all chat/voice/avatar APIs
-- Frontend configured to use Django backend via api-config.ts
+medcor_backend MUST run on port 8000.
+medcor_backend2 MUST run on port 8002.
+Never change these ports to avoid conflicts.
 
 ## System Architecture
 ### Frontend
-- **Framework**: React with TypeScript
-- **Build Tool**: Vite
+- **Framework**: React with TypeScript, Vite build tool
 - **UI Framework**: Shadcn/ui (Radix UI primitives)
 - **Styling**: Tailwind CSS (medical-themed design tokens)
 - **State Management**: TanStack Query
 - **Routing**: Wouter
 - **Form Handling**: React Hook Form with Zod validation
-- **UI/UX Design**: Medical-themed color scheme, responsive design, component-based, dark mode support.
-
-### Django Backend (medcor_backend2) - Added January 16, 2025
-- **Framework**: Django 4.2+ with Django REST Framework
-- **Database**: PostgreSQL (Supabase - migrated from disabled Neon)
-- **Architecture**: Multi-tenant with shared database and tenant ID approach
-- **Authentication**: JWT-based using django-rest-framework-simplejwt
-- **API Documentation**: Auto-generated with drf-spectacular (Swagger/ReDoc)
-- **Apps Structure**:
-  - **core**: User authentication and management with custom User model
-  - **tenants**: Hospital management (hospitals as tenants)
-  - **appointments**: Scheduling with time slots
-  - **medical_records**: Patient health information
-  - **treatments**: Treatment plans and prescriptions
-  - **subscription_plans**: Tiered billing for hospitals
-- **Middleware**: Custom TenantMiddleware for multi-tenant request handling
-- **FastMCP Integration**: Voice interaction server with 33 tools for healthcare operations
-- **Default Accounts**: admin@medcor.ai/admin123, demo hospital with doctor/nurse/patient accounts
-
-### Dashboard Structure (Simplified - January 8, 2025)
-- **4 Main Dashboards Only**:
-  1. **Superadmin Dashboard** (`/superadmin/dashboard`) - Multi-tenancy management for MedCor platform
-  2. **Admin Dashboard** (`/admin/dashboard`) - Hospital/clinic administration within a tenant
-  3. **Doctor Dashboard** (`/doctor/dashboard`) - Doctor portal within hospital tenant
-  4. **Patient Dashboard** (`/patient/dashboard`) - Patient portal within hospital tenant
+- **UI/UX Design**: Medical-themed color scheme, responsive, component-based, dark mode support.
+- **Dashboard Structure**: Four main dashboards: Superadmin, Admin (hospital/clinic), Doctor, and Patient.
 
 ### Backend
-- **Runtime**: Python with Django framework
-- **Language**: Python 3.11+ (async support)
-- **Database**: PostgreSQL (Neon Database)
-- **API Design**: Django REST Framework (RESTful endpoints)
-- **Authentication**: JWT-based with bcrypt hashing, passwordless login via face recognition.
-- **Session Management**: Django sessions (PostgreSQL backend)
-- **Core Entities**: Users, Doctors, Appointments, Chat Messages, Treatments, Tenants (multi-tenant architecture).
-- **Model Context Protocol (MCP) Server**: Provides programmatic access to healthcare management functions, including 33 tools for CRUD operations on tenants, users, appointments, treatments, and subscriptions, 3 resource endpoints, and 3 guided prompts. Supports multi-tenant operations and JWT-based authentication with role-based access control.
-- **User Management API** (Updated Jan 8, 2025): Complete CRUD operations for user management including GET (list/detail), PATCH (update), and DELETE (deactivate) endpoints with admin-only permissions and comprehensive Swagger documentation. Uses deactivation instead of deletion for data integrity in multi-tenant environment.
+- **Framework**: Django 4.2+ with Django REST Framework
+- **Runtime**: Python 3.11+ (async support)
+- **Database**: PostgreSQL (Supabase)
+- **Architecture**: Multi-tenant with shared database and tenant ID approach
+- **Authentication**: JWT-based (django-rest-framework-simplejwt), bcrypt hashing, passwordless login via face recognition.
+- **API Documentation**: Auto-generated with drf-spectacular (Swagger/ReDoc)
+- **Key Apps**: `core` (user auth), `tenants` (hospital management), `appointments`, `medical_records`, `treatments`, `subscription_plans`.
+- **Middleware**: Custom TenantMiddleware for multi-tenant request handling.
+- **MCP Server**: Model Context Protocol (MCP) server providing programmatic access to healthcare management functions, including 33 tools for CRUD operations and guided prompts.
+- **API Design**: RESTful endpoints with comprehensive CRUD for users, doctors, appointments, medical records, and more. User deactivation instead of deletion for data integrity.
 
 ### Key Features & Technical Implementations
-- **AI Chat System**: HeyGen interactive avatars, OpenAI GPT-4o integration, multi-language support, automatic language detection, avatar transitions (nurse to doctor), session continuity.
-- **Face Recognition**: Azure Face API/AWS Rekognition for authentication, privacy-compliant storage, language detection.
+- **AI Chat System**: HeyGen interactive avatars, OpenAI GPT-4o, multi-language support, automatic language detection, avatar transitions, session continuity.
+- **Face Recognition**: Azure Face API/AWS Rekognition for authentication, privacy-compliant.
 - **Doctor Management**: Comprehensive profiles, availability, and experience tracking.
-- **Appointment System**: Form-based booking, doctor/time slot management, status tracking.
-- **Health Analysis Widgets**: Integrated YouCam AI for Skin, Lips, and Hair analysis with camera capture, personalized recommendations, and transparent UI overlays.
-- **Multi-Tenant System**: Comprehensive management of tenants, domains, users (Patient, Doctor, Nurse roles), and customizable branding per tenant. Subdomain routing for tenant-specific access.
-- **Authentication System**: JWT-based authentication with role-based access control (Admin, Clinic, Doctor, Patient roles), secure password hashing, OAuth integration (Google, Apple, Microsoft).
-- **Subscription Management**: Subscription plans, payment tracking, and usage analytics.
-- **Patient Dashboard** (NEW - Jan 2025): Comprehensive patient portal with appointment management, medical records viewing, treatment history, prescription tracking, and real-time doctor availability. Full Django API integration for appointments, treatments, and medical records.
-- **Enhanced Doctor Dashboard** (NEW - Jan 2025): Advanced doctor portal featuring patient management, appointment scheduling with status tracking (scheduled/in-progress/completed), treatment recording, prescription issuance, analytics dashboard, and patient medical history access. Integrated with Django backend for real-time data synchronization.
-- **Critical Backend Fixes** (Jan 8, 2025): Fixed doctors/patients list filtering to use `role` field instead of non-existent groups. Made appointment `slot`, `treatment`, and `medical_record` fields optional to fix creation errors.
-- **Analysis Tracking API Fix** (Jan 13, 2025): Added `/api/track-analysis` and `/api/analysis-tracking-stats` endpoints to Django fallback server for proper tracking when Neon database is unavailable. Fixed appointments endpoint to match documentation: `/api/appointments/appointments/`.
-- **Production URL Configuration Fix** (Jan 14, 2025): Fixed Django `urls_public.py` configuration for production deployment at medcor.ai. Added proper path prefixes for appointments (`/api/appointments/`), tenants (`/api/tenants/`), and subscriptions (`/api/subscription/`). Updated simple Django fallback server to handle all three critical endpoints: `/api/appointments/appointments/`, `/api/analysis-tracking-stats`, and `/api/analysis-tracking`.
-- **Voice Chat Integration Complete** (Jan 14, 2025): Fully implemented voice command system for all healthcare features. Added VOICE_COMMAND detection in backend `/api/chat/voice` endpoint with automatic widget navigation. Supports 9 major features: appointment scheduling, face/skin/lips/hair analysis, hair extensions, medical records, doctor listings, and profile/auth. All commands are processed in real-time with full Django API integration. Created comprehensive documentation in VOICE_CHAT_FEATURES.md.
-- **Complete Voice-Driven Appointment Booking** (Jan 14, 2025): Enhanced appointment booking to be fully voice-driven without requiring clicks. Users can say "I want to book an appointment with Dr Johnson", and the system automatically opens calendar, processes voice-selected dates (e.g., "tomorrow", "August 15th"), shows doctor selection UI responsive to voice, displays time slots for voice selection, and provides voice-driven confirmation. Added VoiceConversationManager service for stateful multi-step conversations. Calendar UI now visually highlights voice-selected dates with animations. Added voice assistant indicators and confirmation summaries for seamless voice interaction.
-- **MCP Server Integration for Voice Appointments** (Jan 14, 2025): Fully integrated Model Context Protocol (MCP) server with voice appointment system. Created MCPAppointmentService that bridges voice commands to MCP server operations for doctor lookup, availability checking, and appointment creation. Voice commands like "Book appointment with Dr. Johnson tomorrow at 2 PM" now trigger complete MCP workflow: parseAppointmentRequest() → findDoctor() → checkAvailability() → createAppointment(). System processes natural language, extracts appointment details (doctor, date, time, reason), and books appointments entirely through voice without any clicks. Comprehensive testing confirms all MCP tools (list_doctors, list_appointment_slots, create_appointment) working seamlessly with voice interface.
+- **Appointment System**: Form-based booking, doctor/time slot management, status tracking, fully voice-driven booking with multi-step conversation management.
+- **Health Analysis Widgets**: Integrated YouCam AI for Skin, Lips, and Hair analysis with personalized recommendations.
+- **Multi-Tenant System**: Management of tenants, domains, users (Patient, Doctor, Nurse roles), customizable branding, subdomain routing.
+- **Subscription Management**: Subscription plans, payment tracking, usage analytics.
+- **Voice Chat Integration**: Full voice command system for healthcare features, including appointment booking, analysis, medical records, and doctor listings.
 
 ## External Dependencies
 ### Core Services
@@ -132,7 +56,7 @@ Preferred communication style: Simple, everyday language.
 - **Google Calendar API**: Appointment scheduling
 - **Tcall.ai API**: Automated voice communication
 - **YouCam AI**: Skin, Lips, and Hair analysis
-- **ElevenLabs**: Text-to-speech API (Turkish voice support)
+- **ElevenLabs**: Text-to-speech API
 
 ### Development Tools
 - **vite**: Build tool
