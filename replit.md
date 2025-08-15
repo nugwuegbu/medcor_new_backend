@@ -19,6 +19,10 @@ Preferred communication style: Simple, everyday language.
 - medcor_backend MUST run on port 8000
 - medcor_backend2 MUST run on port 8002
 - Never change these ports to avoid conflicts
+**Django Backend Migration (Aug 15, 2025)**:
+- Converting Express API to Django async implementation
+- Django backend runs on port 8002 with all chat/voice/avatar APIs
+- Frontend configured to use Django backend via api-config.ts
 
 ## System Architecture
 ### Frontend

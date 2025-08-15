@@ -28,4 +28,7 @@ urlpatterns = [
     
     # User management
     path('', include(router.urls)),
+    
+    # Chat, Voice, and Avatar APIs
+    path('', include('core.chat_urls')),
 ]

@@ -24,6 +24,9 @@ urlpatterns = [
     # Authentication & Core
     path('api/auth/', include('core.urls')),
     
+    # Chat, Voice, and Avatar APIs (root level for compatibility)
+    path('api/', include('core.chat_urls')),
+    
     # Apps
     path('api/hospitals/', include('tenants.urls')),
     path('api/appointments/', include('appointments.urls')),
