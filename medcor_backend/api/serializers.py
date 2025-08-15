@@ -1,5 +1,7 @@
 from rest_framework import serializers
+from django.db.models import Count
 from core.models import ChatMessage, HairAnalysisReport, FaceAnalysisReport
+from api.models import AnalysisTracking
 
 
 class ChatMessageSerializer(serializers.ModelSerializer):
@@ -116,3 +118,40 @@ class AdminStatsSerializer(serializers.Serializer):
             'pendingAppointments': instance.get('pending_appointments', 0),
             'recentRegistrations': instance.get('recent_registrations', 0)
         }
+
+
+class AnalysisTrackingSerializer(serializers.ModelSerializer):
+    """Serializer for AnalysisTracking model."""
+    
+    patient_email = serializers.EmailField(source='patient.email', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = AnalysisTracking
+        fields = [
+            'id', 'patient', 'patient_email', 'tenant_id',
+            'session_id', 'analysis_type', 'widget_location', 
+            'created_at', 'metadata'
+        ]
+        read_only_fields = ['id', 'created_at', 'patient_email']
+
+
+class CreateAnalysisTrackingSerializer(serializers.Serializer):
+    """Serializer for creating analysis tracking records."""
+    
+    patientId = serializers.IntegerField(required=False, allow_null=True)
+    tenantId = serializers.IntegerField(required=False, allow_null=True)
+    sessionId = serializers.CharField(max_length=255)
+    analysisType = serializers.ChoiceField(choices=['face', 'hair', 'lips', 'skin', 'hair_extension'])
+    widgetLocation = serializers.CharField(max_length=50, default='chat_widget')
+    metadata = serializers.JSONField(required=False, allow_null=True)
+
+
+class AnalysisTrackingStatsSerializer(serializers.Serializer):
+    """Serializer for analysis tracking statistics."""
+    
+    face = serializers.IntegerField()
+    hair = serializers.IntegerField()
+    lips = serializers.IntegerField()
+    skin = serializers.IntegerField()
+    hair_extension = serializers.IntegerField()
+    total = serializers.IntegerField()

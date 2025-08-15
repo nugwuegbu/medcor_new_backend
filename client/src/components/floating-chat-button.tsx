@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
-import AvatarChatWidget from "./avatar-chat-widget";
+import AvatarChatWidget from "@/features/chat/components/avatar-chat-widget";
 
 export default function FloatingChatButton() {
   const [isChatOpen, setIsChatOpen] = useState(false);

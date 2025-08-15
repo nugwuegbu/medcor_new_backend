@@ -1,4 +1,4 @@
-import { doctors, appointments, chatMessages, faceAnalysisReports, hairAnalysisReports, clinics, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser, type FaceAnalysisReport, type InsertFaceAnalysisReport, type HairAnalysisReport, type InsertHairAnalysisReport, type Clinic, type InsertClinic } from "@shared/schema";
+import { doctors, appointments, chatMessages, faceAnalysisReports, hairAnalysisReports, clinics, analysisTracking, type Doctor, type InsertDoctor, type Appointment, type InsertAppointment, type ChatMessage, type InsertChatMessage, type User, type InsertUser, type FaceAnalysisReport, type InsertFaceAnalysisReport, type HairAnalysisReport, type InsertHairAnalysisReport, type Clinic, type InsertClinic, type AnalysisTracking, type InsertAnalysisTracking } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -47,6 +47,19 @@ export interface IStorage {
     todayAppointments: number;
     monthlyGrowth: number;
   }>;
+  
+  // Analysis Tracking operations
+  createAnalysisTracking(analysis: InsertAnalysisTracking): Promise<AnalysisTracking>;
+  getAnalysisTrackingByTenant(tenantId?: number): Promise<AnalysisTracking[]>;
+  getAnalysisTrackingStats(tenantId?: number): Promise<{
+    faceAnalyses: number;
+    hairAnalyses: number;
+    lipsAnalyses: number;
+    skinAnalyses: number;
+    hairExtensionAnalyses: number;
+    totalAnalyses: number;
+    growthPercentage: number;
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -57,6 +70,7 @@ export class MemStorage implements IStorage {
   private faceAnalysisReports: Map<number, FaceAnalysisReport>;
   private hairAnalysisReports: Map<number, HairAnalysisReport>;
   private clinics: Map<number, Clinic>;
+  private analysisTrackingData: Map<number, AnalysisTracking>;
   private currentUserId: number;
   private currentDoctorId: number;
   private currentAppointmentId: number;
@@ -64,6 +78,7 @@ export class MemStorage implements IStorage {
   private currentFaceAnalysisReportId: number;
   private currentHairAnalysisReportId: number;
   private currentClinicId: number;
+  private currentAnalysisTrackingId: number;
 
   constructor() {
     this.users = new Map();
@@ -73,6 +88,7 @@ export class MemStorage implements IStorage {
     this.faceAnalysisReports = new Map();
     this.hairAnalysisReports = new Map();
     this.clinics = new Map();
+    this.analysisTrackingData = new Map();
     this.currentUserId = 1;
     this.currentDoctorId = 1;
     this.currentAppointmentId = 1;
@@ -80,6 +96,7 @@ export class MemStorage implements IStorage {
     this.currentFaceAnalysisReportId = 1;
     this.currentHairAnalysisReportId = 1;
     this.currentClinicId = 1;
+    this.currentAnalysisTrackingId = 1;
     
     this.seedDoctors();
     this.seedTestData();
@@ -557,6 +574,83 @@ export class MemStorage implements IStorage {
       monthlyGrowth: Math.floor(Math.random() * 20) + 5 // Mock growth percentage
     };
   }
+  
+  // Analysis Tracking operations
+  async createAnalysisTracking(insertAnalysis: InsertAnalysisTracking): Promise<AnalysisTracking> {
+    const id = this.currentAnalysisTrackingId++;
+    const analysis: AnalysisTracking = { 
+      ...insertAnalysis, 
+      id, 
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.analysisTrackingData.set(id, analysis);
+    return analysis;
+  }
+
+  async getAnalysisTrackingByTenant(tenantId?: number): Promise<AnalysisTracking[]> {
+    const allAnalyses = Array.from(this.analysisTrackingData.values());
+    if (tenantId) {
+      return allAnalyses.filter(analysis => analysis.tenantId === tenantId);
+    }
+    return allAnalyses;
+  }
+
+  async getAnalysisTrackingStats(tenantId?: number): Promise<{
+    faceAnalyses: number;
+    hairAnalyses: number;
+    lipsAnalyses: number;
+    skinAnalyses: number;
+    hairExtensionAnalyses: number;
+    totalAnalyses: number;
+    growthPercentage: number;
+  }> {
+    const analyses = await this.getAnalysisTrackingByTenant(tenantId);
+    
+    const faceAnalyses = analyses.filter(a => a.analysisType === 'face').length;
+    const hairAnalyses = analyses.filter(a => a.analysisType === 'hair').length;
+    const lipsAnalyses = analyses.filter(a => a.analysisType === 'lips').length;
+    const skinAnalyses = analyses.filter(a => a.analysisType === 'skin').length;
+    const hairExtensionAnalyses = analyses.filter(a => a.analysisType === 'hair_extension').length;
+    
+    const totalAnalyses = analyses.length;
+    
+    // Calculate growth percentage (mock for now - compare with last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentAnalyses = analyses.filter(a => new Date(a.createdAt) > thirtyDaysAgo).length;
+    const olderAnalyses = totalAnalyses - recentAnalyses;
+    const growthPercentage = olderAnalyses > 0 ? Math.round((recentAnalyses - olderAnalyses) / olderAnalyses * 100) : 100;
+    
+    return {
+      faceAnalyses,
+      hairAnalyses,
+      lipsAnalyses,
+      skinAnalyses,
+      hairExtensionAnalyses,
+      totalAnalyses,
+      growthPercentage
+    };
+  }
 }
 
-export const storage = new MemStorage();
+// Import DatabaseStorage
+import { DatabaseStorage } from "./database-storage";
+
+// Use DatabaseStorage if DATABASE_URL is available, otherwise fall back to MemStorage
+let storage: IStorage;
+
+if (process.env.DATABASE_URL) {
+  try {
+    storage = new DatabaseStorage();
+    console.log("✅ Using PostgreSQL database for persistent storage");
+  } catch (error) {
+    console.error("❌ Failed to initialize database storage, falling back to memory storage:", error);
+    storage = new MemStorage();
+  }
+} else {
+  console.log("⚠️ No DATABASE_URL found, using in-memory storage (data will not persist)");
+  storage = new MemStorage();
+}
+
+export { storage };

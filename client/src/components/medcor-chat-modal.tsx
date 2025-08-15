@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, ArrowRight, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { Link } from "wouter";
-import FaceRecognition from "./face-recognition";
-import VoiceAvatarChat from "./voice-avatar-chat";
+import FaceRecognition from "@/features/auth/components/face-recognition";
+import VoiceAvatarChat from "@/features/chat/components/voice-avatar-chat";
 
 interface MedcorChatModalProps {
   isOpen: boolean;

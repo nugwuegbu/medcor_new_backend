@@ -16,6 +16,7 @@ import { bookingAssistantAgent } from "./agents/booking-assistant-agent";
 import { textToSpeechService } from "./services/text-to-speech";
 import { elevenLabsService } from "./services/elevenlabs";
 import { pageCameraService, PAGE_IDS } from "./services/page-camera-service";
+import { voiceConversationManager } from "./services/voiceConversationManager";
 import OpenAI from "openai";
 import passport from "passport";
 import { 
@@ -33,6 +34,8 @@ import adminRouter from "./admin-routes-mock";
 import djangoAuthRouter from "./django-auth-routes";
 import superadminRouter from "./superadmin-routes";
 import doctorPatientRouter from "./doctor-patient-routes";
+// Disabled - now handled by Django backend
+// import { createAnalysisTrackingRoutes } from "./analysis-tracking-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication
@@ -50,6 +53,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register doctor and patient specific routes
   app.use("/api", doctorPatientRouter);
+  
+  // Register analysis tracking routes
+  // Disabled - now handled by Django backend
+  // const analysisTrackingRouter = createAnalysisTrackingRoutes(storage);
+  // app.use(analysisTrackingRouter);
 
   // Create default accounts on startup
   AuthService.createDefaultAccounts().catch(console.error);
@@ -985,7 +993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Voice avatar chat endpoint
   app.post("/api/chat/voice", async (req, res) => {
     try {
-      const { message, sessionId, language = "en", userId, userImage, locationWeather } = req.body;
+      const { message, sessionId, language = "en", userId, userImage, locationWeather, conversationState } = req.body;
       
       if (!message || !sessionId) {
         return res.status(400).json({ error: "Message and sessionId are required" });
@@ -1041,10 +1049,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate AI response using OpenAI
-      let aiResponse = await generateChatResponse(message, language);
+      // Use voice conversation manager for stateful conversation handling
+      const voiceCommand = await voiceConversationManager.processVoiceInput(
+        message, 
+        sessionId,
+        conversationState
+      );
+
+      // Get updated conversation state
+      const updatedState = voiceConversationManager.getSessionState(sessionId);
+
+      // Build the AI response with voice command
+      let aiResponse = voiceCommand.action + " " + voiceCommand.message;
       
-      // Add weather and compliment to the response if available
+      // Add weather and compliment to first response if available
       if (isFirstUserResponse) {
         let prefix = "";
         if (locationWeather) {
@@ -1054,15 +1072,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (compliment) {
           prefix += `${compliment} `;
         }
-        if (prefix) {
+        if (prefix && !voiceCommand.action.includes('VOICE_FLOW')) {
           aiResponse = `${prefix}${aiResponse}`;
-          console.log("=== Final Combined Response ===");
-          console.log("Full message:", aiResponse);
-          console.log("==============================");
         }
-      } else {
-        console.log(`AI response: ${aiResponse}`);
       }
+      
+      console.log(`Voice conversation response: ${aiResponse}`);
       
       // Check if AI response includes special commands
       const askingAboutDoctors = aiResponse.includes('DOCTOR_SEARCH:');
@@ -1130,7 +1145,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionId,
         success: true,
         showDoctors: askingAboutDoctors,
-        openChatInterface: openChatInterface
+        openChatInterface: openChatInterface,
+        conversationState: updatedState,
+        voiceCommand: voiceCommand
       });
     } catch (error) {
       console.error("Voice chat error:", error);
@@ -2879,6 +2896,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chat: "/api/chat-widget/send",
         voices: "/api/voices",
         tts: "/api/tts"
+      }
+    });
+  });
+
+  // Voice Chat Feature Status Endpoint
+  app.get("/api/voice-chat/features", (req, res) => {
+    res.json({
+      status: "active",
+      supportedCommands: [
+        {
+          feature: "Appointment Scheduling",
+          commands: ["book appointment", "schedule appointment", "appointment"],
+          status: "active",
+          apiEndpoint: "/api/appointments/appointments/",
+          description: "Full appointment booking process through voice"
+        },
+        {
+          feature: "Face Analysis",
+          commands: ["face analysis", "analyze my face"],
+          status: "active",
+          widgetAvailable: true,
+          description: "Opens face analysis widget with camera capture"
+        },
+        {
+          feature: "Skin Analysis",
+          commands: ["skin analysis", "analyze my skin"],
+          status: "active",
+          widgetAvailable: true,
+          description: "Opens skin analysis widget"
+        },
+        {
+          feature: "Lips Analysis",
+          commands: ["lips analysis", "analyze my lips"],
+          status: "active",
+          widgetAvailable: true,
+          description: "Opens lips analysis widget"
+        },
+        {
+          feature: "Hair Analysis",
+          commands: ["hair analysis", "analyze my hair"],
+          status: "active",
+          widgetAvailable: true,
+          description: "Opens hair analysis widget"
+        },
+        {
+          feature: "Hair Extension",
+          commands: ["hair extension", "hair extensions"],
+          status: "active",
+          widgetAvailable: true,
+          description: "Opens hair extension options"
+        },
+        {
+          feature: "Medical Records",
+          commands: ["medical records", "my records"],
+          status: "active",
+          apiEndpoint: "/api/medical-records/",
+          description: "Access and view medical records"
+        },
+        {
+          feature: "Doctor List",
+          commands: ["show doctors", "list doctors"],
+          status: "active",
+          apiEndpoint: "/api/doctors/",
+          description: "Display available doctors"
+        },
+        {
+          feature: "Profile/Authentication",
+          commands: ["my profile", "login", "sign in"],
+          status: "active",
+          apiEndpoint: "/api/auth/login/",
+          description: "Opens profile and authentication overlay"
+        }
+      ],
+      voiceLanguages: ["en", "tr", "ar"],
+      integrations: {
+        django: {
+          status: "connected",
+          endpoints: [
+            "/api/appointments/",
+            "/api/medical-records/",
+            "/api/doctors/",
+            "/api/auth/"
+          ]
+        },
+        heygen: {
+          status: "requires_api_key",
+          avatarModel: "anna_public_3_20240108"
+        },
+        openai: {
+          status: "active",
+          model: "gpt-4o"
+        }
       }
     });
   });

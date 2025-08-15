@@ -1,0 +1,25 @@
+[Unit]
+Description=Gunicorn daemon for MedCor Hospital application
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/var/www/html/medcor_backend
+ExecStart=/var/www/html/medcor_backend/venv/bin/gunicorn \
+          --workers 3 \
+          --worker-class sync \
+          --worker-connections 1000 \
+          --timeout 60 \
+          --bind unix:/var/www/html/medcor_backend/gunicorn.sock \
+          --log-level debug \
+          --access-logfile /var/log/gunicorn/access.log \
+          --error-logfile /var/log/gunicorn/error.log \
+          medcor_backend.wsgi:application
+
+Restart=always
+Environment="DJANGO_SETTINGS_MODULE=medcor_backend.settings"
+Environment="PYTHONPATH=/var/www/html/medcor_backend"
+
+[Install]
+WantedBy=multi-user.target

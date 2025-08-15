@@ -26,7 +26,9 @@ def root_view(request):
             'tenants': '/api/tenants/',
             'subscriptions': '/api/subscription/',
             'appointments': '/api/appointments/',
-            'treatments': '/api/treatments/'
+            'treatments': '/api/treatments/',
+            'analysis_tracking': '/api/track-analysis',
+            'analysis_stats': '/api/analysis-tracking-stats'
         },
         'status': 'running'
     })
@@ -48,9 +50,9 @@ urlpatterns = [
     path('api/', include('api.urls')),
     
     # Main API Endpoints (for public access)
-    path('', include('tenants.urls')),
-    path('', include('subscription_plan.urls')),
-    path('', include('appointment.urls')),
+    path('api/tenants/', include('tenants.urls')),
+    path('api/subscription/', include('subscription_plan.urls')),
+    path('api/appointments/', include('appointment.urls')),
     path('api/treatments/', include('treatment.urls')),
     path('api/', include('medical_records.urls')),  # Medical records management
     

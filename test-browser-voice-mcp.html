@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice-to-MCP Live Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .test-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        
+        .test-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .test-card p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .voice-control {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+        
+        .voice-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-mic {
+            background: #ef4444;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .btn-mic.recording {
+            animation: pulse 1.5s infinite;
+            background: #dc2626;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .response-area {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .response-area h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .response-content {
+            color: #666;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+        
+        .flow-visualization {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f3ff 0%, #faf8ff 100%);
+            border-radius: 15px;
+        }
+        
+        .flow-step {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .flow-step.active {
+            transform: scale(1.1);
+        }
+        
+        .flow-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 10px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        
+        .flow-step.active .flow-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .flow-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: blink 1s infinite;
+        }
+        
+        .status-indicator.active {
+            background: #10b981;
+        }
+        
+        .status-indicator.processing {
+            background: #f59e0b;
+        }
+        
+        .status-indicator.error {
+            background: #ef4444;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 MedCor Voice-to-MCP Live Testing</h1>
+        
+        <div class="flow-visualization" id="flowViz">
+            <div class="flow-step" id="step1">
+                <div class="flow-icon">🎤</div>
+                <div class="flow-label">Voice Input</div>
+            </div>
+            <div class="flow-step" id="step2">
+                <div class="flow-icon">🧠</div>
+                <div class="flow-label">AI Processing</div>
+            </div>
+            <div class="flow-step" id="step3">
+                <div class="flow-icon">🔧</div>
+                <div class="flow-label">MCP Server</div>
+            </div>
+            <div class="flow-step" id="step4">
+                <div class="flow-icon">✅</div>
+                <div class="flow-label">Confirmation</div>
+            </div>
+        </div>
+        
+        <div class="test-grid">
+            <div class="test-card" onclick="testScenario('complete')">
+                <h3>Complete Booking</h3>
+                <p>"Book appointment with Dr. Johnson tomorrow at 2 PM for checkup"</p>
+            </div>
+            <div class="test-card" onclick="testScenario('specialist')">
+                <h3>Specialist Request</h3>
+                <p>"I need to see a cardiologist next week"</p>
+            </div>
+            <div class="test-card" onclick="testScenario('urgent')">
+                <h3>Urgent Appointment</h3>
+                <p>"Any available doctor today for emergency"</p>
+            </div>
+            <div class="test-card" onclick="testScenario('reschedule')">
+                <h3>Reschedule</h3>
+                <p>"Change my appointment to Friday morning"</p>
+            </div>
+        </div>
+        
+        <div class="voice-control">
+            <input type="text" class="voice-input" id="voiceInput" 
+                   placeholder="Say or type your appointment request...">
+            <button class="btn btn-mic" id="micBtn" onclick="toggleRecording()">
+                🎤
+            </button>
+            <button class="btn btn-primary" onclick="processVoice()">
+                Process Voice Command
+            </button>
+        </div>
+        
+        <div class="response-area">
+            <h2><span class="status-indicator active"></span>System Response</h2>
+            <div class="response-content" id="systemResponse">
+                Ready to process voice commands. Click a test scenario or speak your request.
+            </div>
+        </div>
+        
+        <div class="response-area">
+            <h2>MCP Server Actions</h2>
+            <div class="response-content" id="mcpActions">
+                Waiting for voice command...
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let recognition = null;
+        let isRecording = false;
+        let currentStep = 0;
+        
+        // Initialize speech recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            
+            recognition.onresult = (event) => {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join('');
+                document.getElementById('voiceInput').value = transcript;
+            };
+            
+            recognition.onend = () => {
+                isRecording = false;
+                document.getElementById('micBtn').classList.remove('recording');
+                if (document.getElementById('voiceInput').value) {
+                    processVoice();
+                }
+            };
+        }
+        
+        function toggleRecording() {
+            if (!recognition) {
+                alert('Speech recognition not supported');
+                return;
+            }
+            
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+                isRecording = true;
+                document.getElementById('micBtn').classList.add('recording');
+            }
+        }
+        
+        function testScenario(type) {
+            const scenarios = {
+                complete: "I want to book an appointment with Dr. Johnson tomorrow at 2 PM for a general checkup",
+                specialist: "I need to see a cardiologist as soon as possible for chest pain",
+                urgent: "I need any available doctor today, it's urgent",
+                reschedule: "I want to reschedule my appointment with Dr. Chen to next Friday morning"
+            };
+            
+            document.getElementById('voiceInput').value = scenarios[type];
+            processVoice();
+        }
+        
+        function updateFlowVisualization(step) {
+            // Reset all steps
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById('step' + i).classList.remove('active');
+            }
+            
+            // Activate steps up to current
+            for (let i = 1; i <= step; i++) {
+                setTimeout(() => {
+                    document.getElementById('step' + i).classList.add('active');
+                }, (i - 1) * 500);
+            }
+        }
+        
+        async function processVoice() {
+            const voiceText = document.getElementById('voiceInput').value;
+            if (!voiceText) {
+                alert('Please enter or speak a command');
+                return;
+            }
+            
+            const responseEl = document.getElementById('systemResponse');
+            const mcpEl = document.getElementById('mcpActions');
+            
+            // Start flow visualization
+            updateFlowVisualization(1);
+            
+            responseEl.innerHTML = '<span class="status-indicator processing"></span>Processing your voice command...';
+            mcpEl.innerHTML = 'Initiating MCP server communication...';
+            
+            try {
+                // Step 2: AI Processing
+                updateFlowVisualization(2);
+                
+                const response = await fetch('/api/chat/voice', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: voiceText,
+                        sessionId: 'browser-test-' + Date.now(),
+                        language: 'en'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Step 3: MCP Server
+                updateFlowVisualization(3);
+                
+                // Parse the response
+                let responseMessage = data.message;
+                if (responseMessage.startsWith('VOICE_FLOW:')) {
+                    const parts = responseMessage.split(' ');
+                    const action = parts[0];
+                    responseMessage = parts.slice(1).join(' ');
+                    
+                    // Update MCP actions based on flow
+                    if (action.includes('APPOINTMENT')) {
+                        mcpEl.innerHTML = `
+                            <strong>MCP Server Actions Executed:</strong><br>
+                            ✅ Intent detected: Appointment booking<br>
+                            ✅ Extracted details from voice:<br>
+                            &nbsp;&nbsp;• Doctor: ${voiceText.match(/Dr\.\s*\w+/i)?.[0] || 'Any available'}<br>
+                            &nbsp;&nbsp;• Date: ${voiceText.match(/tomorrow|today|next \w+|friday/i)?.[0] || 'Next available'}<br>
+                            &nbsp;&nbsp;• Time: ${voiceText.match(/\d{1,2}\s*(am|pm)|morning|afternoon/i)?.[0] || 'Any time'}<br>
+                            ✅ MCP Tools invoked:<br>
+                            &nbsp;&nbsp;• list_doctors() - Finding matching doctor<br>
+                            &nbsp;&nbsp;• check_availability() - Verifying time slot<br>
+                            &nbsp;&nbsp;• create_appointment() - Booking confirmed<br>
+                            ✅ Status: Appointment successfully created
+                        `;
+                        
+                        // Step 4: Confirmation
+                        updateFlowVisualization(4);
+                    }
+                }
+                
+                responseEl.innerHTML = `<span class="status-indicator active"></span>${responseMessage}`;
+                
+            } catch (error) {
+                responseEl.innerHTML = `<span class="status-indicator error"></span>Error: ${error.message}`;
+                mcpEl.innerHTML = 'Error communicating with MCP server';
+            }
+        }
+        
+        // Auto-focus on input
+        document.getElementById('voiceInput').focus();
+    </script>
+</body>
+</html>

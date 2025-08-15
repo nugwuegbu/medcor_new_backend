@@ -399,10 +399,59 @@ sudo vim /etc/nginx/sites-available/medcor
 Add the following configuration:
 
 ```nginx
-# Main server block for your domain
+# Backend API server block - accessible at medcor.ai:8001
+server {
+    listen 8001;
+    server_name medcor.ai www.medcor.ai;
+    client_max_body_size 100M;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization" always;
+
+    # Static files
+    location /static/ {
+        alias /var/www/html/medcor_backend/static/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location /media/ {
+        alias /var/www/html/medcor_backend/media/;
+        expires 7d;
+    }
+
+    # Django application API
+    location / {
+        proxy_pass http://unix:/var/www/html/medcor_backend/gunicorn.sock;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
+        proxy_buffering off;
+        
+        # Handle OPTIONS requests for CORS
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization';
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+    }
+}
+
+# Frontend server block (if you're also serving frontend) - port 80/443
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name medcor.ai www.medcor.ai;
     client_max_body_size 100M;
 
     # Redirect to HTTPS
@@ -411,46 +460,40 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name medcor.ai www.medcor.ai;
     client_max_body_size 100M;
 
     # SSL configuration (will be auto-configured by certbot)
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/medcor.ai/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/medcor.ai/privkey.pem;
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header X-Content-Type-Options "nosniff" always;
 
-    # Static files
-    location /static/ {
-        alias /var/www/medcor/static/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
+    # Frontend static files or React app
+    root /var/www/html/medcor-frontend/build;
+    index index.html;
 
-    location /media/ {
-        alias /var/www/medcor/media/;
-        expires 7d;
-    }
-
-    # Django application
     location / {
-        proxy_pass http://unix:/home/ubuntu/medcor-backend/gunicorn.sock;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy API calls to backend (optional - if frontend needs to call backend via same domain)
+    location /api/ {
+        proxy_pass http://127.0.0.1:8001;
         proxy_set_header Host $http_host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_redirect off;
-        proxy_buffering off;
     }
 }
 
-# Subdomain configuration for multi-tenant
+# Subdomain configuration for multi-tenant (if needed)
 server {
     listen 80;
-    server_name *.yourdomain.com;
+    server_name *.medcor.ai;
     client_max_body_size 100M;
 
     return 301 https://$host$request_uri;
@@ -458,25 +501,25 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name *.yourdomain.com;
+    server_name *.medcor.ai;
     client_max_body_size 100M;
 
     # SSL configuration (wildcard certificate)
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/medcor.ai/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/medcor.ai/privkey.pem;
 
     location /static/ {
-        alias /var/www/medcor/static/;
+        alias /var/www/html/medcor_backend/static/;
         expires 30d;
     }
 
     location /media/ {
-        alias /var/www/medcor/media/;
+        alias /var/www/html/medcor_backend/media/;
         expires 7d;
     }
 
     location / {
-        proxy_pass http://unix:/home/ubuntu/medcor-backend/gunicorn.sock;
+        proxy_pass http://unix:/var/www/html/medcor_backend/gunicorn.sock;
         proxy_set_header Host $http_host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

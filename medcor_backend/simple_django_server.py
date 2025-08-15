@@ -42,6 +42,9 @@ users_db = {
 
 sessions = {}
 
+# Analysis tracking storage - in-memory
+analysis_tracking = []
+
 class APIHandler(BaseHTTPRequestHandler):
     def _set_headers(self, status=200, content_type='application/json'):
         self.send_response(status)
@@ -71,7 +74,9 @@ class APIHandler(BaseHTTPRequestHandler):
                     "/api/auth/logout", 
                     "/api/auth/user",
                     "/api/doctors",
-                    "/api/appointments"
+                    "/api/appointments",
+                    "/api/track-analysis",
+                    "/api/analysis-tracking-stats"
                 ]
             }
             self.wfile.write(json.dumps(response).encode())
@@ -115,7 +120,7 @@ class APIHandler(BaseHTTPRequestHandler):
             self._set_headers()
             self.wfile.write(json.dumps(doctors).encode())
             
-        elif path == '/api/appointments' or path == '/api/appointments/':
+        elif path in ['/api/appointments', '/api/appointments/', '/api/appointments/appointments', '/api/appointments/appointments/']:
             # List appointments
             appointments = [
                 {
@@ -129,6 +134,26 @@ class APIHandler(BaseHTTPRequestHandler):
             ]
             self._set_headers()
             self.wfile.write(json.dumps(appointments).encode())
+            
+        elif path in ['/api/analysis-tracking-stats', '/api/analysis-tracking-stats/', '/api/analysis-tracking']:
+            # Get analysis tracking statistics
+            stats = {
+                "total": len(analysis_tracking),
+                "by_type": {},
+                "by_location": {},
+                "recent": analysis_tracking[-10:] if analysis_tracking else []
+            }
+            
+            # Calculate stats by type and location
+            for track in analysis_tracking:
+                analysis_type = track.get('analysisType', 'unknown')
+                location = track.get('widgetLocation', 'unknown')
+                
+                stats['by_type'][analysis_type] = stats['by_type'].get(analysis_type, 0) + 1
+                stats['by_location'][location] = stats['by_location'].get(location, 0) + 1
+            
+            self._set_headers()
+            self.wfile.write(json.dumps(stats).encode())
             
         else:
             self._set_headers(404)
@@ -184,6 +209,37 @@ class APIHandler(BaseHTTPRequestHandler):
                     
             self._set_headers()
             self.wfile.write(json.dumps({"message": "Logged out"}).encode())
+            
+        elif path == '/api/track-analysis' or path == '/api/track-analysis/':
+            # Track analysis usage
+            try:
+                content_length = int(self.headers['Content-Length'])
+                post_data = self.rfile.read(content_length)
+                data = json.loads(post_data.decode('utf-8'))
+                
+                # Add timestamp to the tracking data
+                track_data = {
+                    "sessionId": data.get('sessionId'),
+                    "analysisType": data.get('analysisType'),
+                    "widgetLocation": data.get('widgetLocation'),
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "tenantId": data.get('tenantId', 1)  # Default to tenant 1 in fallback mode
+                }
+                
+                # Store in memory
+                analysis_tracking.append(track_data)
+                
+                self._set_headers()
+                response = {
+                    "success": True,
+                    "message": "Analysis tracked successfully",
+                    "data": track_data
+                }
+                self.wfile.write(json.dumps(response).encode())
+                
+            except Exception as e:
+                self._set_headers(400)
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
             
         else:
             self._set_headers(404)

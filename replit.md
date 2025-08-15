@@ -1,52 +1,46 @@
-# Replit.md - MedCare AI Compressed
+# MedCare AI - Compressed Replit.md
 
 ## Overview
-MedCare AI is an advanced healthcare platform that integrates interactive AI avatars, face recognition for authentication, and multi-language support to enhance patient interaction. It provides seamless AI-powered chatbot experiences that can identify returning patients, detect preferred languages, and transition between nurse and doctor avatars for personalized care. The project aims to provide comprehensive patient management, appointment scheduling, and health analysis capabilities, with a vision for broad market potential in digital healthcare.
+MedCare AI is an advanced healthcare platform designed to enhance patient interaction through interactive AI avatars, face recognition for authentication, and multi-language support. It offers seamless AI-powered chatbot experiences, identifies returning patients, detects preferred languages, and transitions between nurse and doctor avatars for personalized care. The project aims to provide comprehensive patient management, appointment scheduling, and health analysis capabilities, with significant market potential in digital healthcare.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+medcor_backend MUST run on port 8000.
+medcor_backend2 MUST run on port 8002.
+Never change these ports to avoid conflicts.
 
 ## System Architecture
 ### Frontend
-- **Framework**: React with TypeScript
-- **Build Tool**: Vite
+- **Framework**: React with TypeScript, Vite build tool
 - **UI Framework**: Shadcn/ui (Radix UI primitives)
 - **Styling**: Tailwind CSS (medical-themed design tokens)
 - **State Management**: TanStack Query
 - **Routing**: Wouter
 - **Form Handling**: React Hook Form with Zod validation
-- **UI/UX Design**: Medical-themed color scheme, responsive design, component-based, dark mode support.
-
-### Dashboard Structure (Simplified - January 8, 2025)
-- **4 Main Dashboards Only**:
-  1. **Superadmin Dashboard** (`/superadmin/dashboard`) - Multi-tenancy management for MedCor platform
-  2. **Admin Dashboard** (`/admin/dashboard`) - Hospital/clinic administration within a tenant
-  3. **Doctor Dashboard** (`/doctor/dashboard`) - Doctor portal within hospital tenant
-  4. **Patient Dashboard** (`/patient/dashboard`) - Patient portal within hospital tenant
+- **UI/UX Design**: Medical-themed color scheme, responsive, component-based, dark mode support.
+- **Dashboard Structure**: Four main dashboards: Superadmin, Admin (hospital/clinic), Doctor, and Patient.
 
 ### Backend
-- **Runtime**: Python with Django framework
-- **Language**: Python 3.11+ (async support)
-- **Database**: PostgreSQL (Neon Database)
-- **API Design**: Django REST Framework (RESTful endpoints)
-- **Authentication**: JWT-based with bcrypt hashing, passwordless login via face recognition.
-- **Session Management**: Django sessions (PostgreSQL backend)
-- **Core Entities**: Users, Doctors, Appointments, Chat Messages, Treatments, Tenants (multi-tenant architecture).
-- **Model Context Protocol (MCP) Server**: Provides programmatic access to healthcare management functions, including 33 tools for CRUD operations on tenants, users, appointments, treatments, and subscriptions, 3 resource endpoints, and 3 guided prompts. Supports multi-tenant operations and JWT-based authentication with role-based access control.
-- **User Management API** (Updated Jan 8, 2025): Complete CRUD operations for user management including GET (list/detail), PATCH (update), and DELETE (deactivate) endpoints with admin-only permissions and comprehensive Swagger documentation. Uses deactivation instead of deletion for data integrity in multi-tenant environment.
+- **Framework**: Django 4.2+ with Django REST Framework
+- **Runtime**: Python 3.11+ (async support)
+- **Database**: PostgreSQL (Supabase)
+- **Architecture**: Multi-tenant with shared database and tenant ID approach
+- **Authentication**: JWT-based (django-rest-framework-simplejwt), bcrypt hashing, passwordless login via face recognition.
+- **API Documentation**: Auto-generated with drf-spectacular (Swagger/ReDoc)
+- **Key Apps**: `core` (user auth), `tenants` (hospital management), `appointments`, `medical_records`, `treatments`, `subscription_plans`.
+- **Middleware**: Custom TenantMiddleware for multi-tenant request handling.
+- **MCP Server**: Model Context Protocol (MCP) server providing programmatic access to healthcare management functions, including 33 tools for CRUD operations and guided prompts.
+- **API Design**: RESTful endpoints with comprehensive CRUD for users, doctors, appointments, medical records, and more. User deactivation instead of deletion for data integrity.
 
 ### Key Features & Technical Implementations
-- **AI Chat System**: HeyGen interactive avatars, OpenAI GPT-4o integration, multi-language support, automatic language detection, avatar transitions (nurse to doctor), session continuity.
-- **Face Recognition**: Azure Face API/AWS Rekognition for authentication, privacy-compliant storage, language detection.
+- **AI Chat System**: HeyGen interactive avatars, OpenAI GPT-4o, multi-language support, automatic language detection, avatar transitions, session continuity.
+- **Face Recognition**: Azure Face API/AWS Rekognition for authentication, privacy-compliant.
 - **Doctor Management**: Comprehensive profiles, availability, and experience tracking.
-- **Appointment System**: Form-based booking, doctor/time slot management, status tracking.
-- **Health Analysis Widgets**: Integrated YouCam AI for Skin, Lips, and Hair analysis with camera capture, personalized recommendations, and transparent UI overlays.
-- **Multi-Tenant System**: Comprehensive management of tenants, domains, users (Patient, Doctor, Nurse roles), and customizable branding per tenant. Subdomain routing for tenant-specific access.
-- **Authentication System**: JWT-based authentication with role-based access control (Admin, Clinic, Doctor, Patient roles), secure password hashing, OAuth integration (Google, Apple, Microsoft).
-- **Subscription Management**: Subscription plans, payment tracking, and usage analytics.
-- **Patient Dashboard** (NEW - Jan 2025): Comprehensive patient portal with appointment management, medical records viewing, treatment history, prescription tracking, and real-time doctor availability. Full Django API integration for appointments, treatments, and medical records.
-- **Enhanced Doctor Dashboard** (NEW - Jan 2025): Advanced doctor portal featuring patient management, appointment scheduling with status tracking (scheduled/in-progress/completed), treatment recording, prescription issuance, analytics dashboard, and patient medical history access. Integrated with Django backend for real-time data synchronization.
-- **Critical Backend Fixes** (Jan 8, 2025): Fixed doctors/patients list filtering to use `role` field instead of non-existent groups. Made appointment `slot`, `treatment`, and `medical_record` fields optional to fix creation errors.
+- **Appointment System**: Form-based booking, doctor/time slot management, status tracking, fully voice-driven booking with multi-step conversation management.
+- **Health Analysis Widgets**: Integrated YouCam AI for Skin, Lips, and Hair analysis with personalized recommendations.
+- **Multi-Tenant System**: Management of tenants, domains, users (Patient, Doctor, Nurse roles), customizable branding, subdomain routing.
+- **Subscription Management**: Subscription plans, payment tracking, usage analytics.
+- **Voice Chat Integration**: Full voice command system for healthcare features, including appointment booking, analysis, medical records, and doctor listings.
 
 ## External Dependencies
 ### Core Services
@@ -62,7 +56,7 @@ Preferred communication style: Simple, everyday language.
 - **Google Calendar API**: Appointment scheduling
 - **Tcall.ai API**: Automated voice communication
 - **YouCam AI**: Skin, Lips, and Hair analysis
-- **ElevenLabs**: Text-to-speech API (Turkish voice support)
+- **ElevenLabs**: Text-to-speech API
 
 ### Development Tools
 - **vite**: Build tool

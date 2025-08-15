@@ -67,15 +67,13 @@ class GeneralLoginAPIView(APIView):
             refresh = RefreshToken.for_user(user)
             access_token = refresh.access_token
             
-            # Determine user role
-            if user.is_superuser:
-                role = 'admin'
-            elif user.is_staff:
-                role = 'staff'  
-            elif hasattr(user, 'role'):
+            # Determine user role - check actual role field first
+            if hasattr(user, 'role') and user.role:
                 role = user.role
+            elif user.is_superuser:
+                role = 'admin'
             else:
-                # Determine role based on email or other criteria
+                # Fallback: determine role based on email or other criteria
                 email_lower = email.lower()
                 if 'doctor' in email_lower:
                     role = 'doctor'
@@ -84,7 +82,7 @@ class GeneralLoginAPIView(APIView):
                 elif 'clinic' in email_lower:
                     role = 'clinic'
                 else:
-                    role = 'user'
+                    role = 'patient'  # Default to patient instead of 'user'
             
             return Response({
                 'access': str(access_token),
@@ -124,21 +122,21 @@ class UserProfileAPIView(APIView):
     def get(self, request):
         user = request.user
         
-        # Determine user role
-        if user.is_superuser:
-            role = 'admin'
-        elif user.is_staff:
-            role = 'staff'
-        elif hasattr(user, 'role'):
+        # Determine user role - check actual role field first
+        if hasattr(user, 'role') and user.role:
             role = user.role
+        elif user.is_superuser:
+            role = 'admin'
         else:
-            # Determine role based on email or other criteria
+            # Fallback: determine role based on email or other criteria
             if 'doctor' in user.email.lower():
                 role = 'doctor'
             elif 'patient' in user.email.lower():
                 role = 'patient'
+            elif 'clinic' in user.email.lower():
+                role = 'clinic'
             else:
-                role = 'user'
+                role = 'patient'  # Default to patient instead of 'user'
         
         return Response({
             'user': {

@@ -70,6 +70,19 @@ export const chatMessages = pgTable("chat_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const analysisTracking = pgTable("analysis_tracking", {
+  id: serial("id").primaryKey(),
+  patientId: integer("patient_id").notNull().references(() => users.id),
+  patientName: text("patient_name").notNull(),
+  tenantId: integer("tenant_id").references(() => tenants.id),
+  analysisType: text("analysis_type").notNull(), // face, hair, lips, skin, hair_extension
+  resultSummary: text("result_summary").notNull(),
+  recommendations: text("recommendations"),
+  analysisData: json("analysis_data"), // Detailed analysis data
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
 export const faceRecognitionLogs = pgTable("face_recognition_logs", {
   id: serial("id").primaryKey(),
   sessionId: text("session_id").notNull(),
@@ -223,6 +236,12 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   updatedAt: true,
 });
 
+export const insertAnalysisTrackingSchema = createInsertSchema(analysisTracking).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // User schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -275,6 +294,8 @@ export type Tenant = typeof tenants.$inferSelect;
 export type InsertTenant = z.infer<typeof insertTenantSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type AnalysisTracking = typeof analysisTracking.$inferSelect;
+export type InsertAnalysisTracking = z.infer<typeof insertAnalysisTrackingSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;
 export type SignupData = z.infer<typeof signupSchema>;

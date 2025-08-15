@@ -14,6 +14,9 @@ class HeyGenSingleton {
   private initializationPromise: Promise<{ session_id: string; mediaStream: MediaStream | null }> | null = null;
   private mediaStream: MediaStream | null = null;
   private listeners: Map<string, Function[]> = new Map();
+  private retryCount = 0;
+  private maxRetries = 3;
+  private lastErrorTime = 0;
 
   private constructor() {}
 
@@ -100,10 +103,36 @@ class HeyGenSingleton {
       this.isInitializing = false;
       return { session_id: sessionInfo.session_id, mediaStream: this.mediaStream };
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to initialize avatar:", error);
       this.isInitializing = false;
       this.initializationPromise = null; // Reset on error
+      
+      // Implement retry logic with exponential backoff
+      const now = Date.now();
+      const timeSinceLastError = now - this.lastErrorTime;
+      this.lastErrorTime = now;
+      
+      // Check if it's an authentication error or quota error
+      if (error.status === 401 || error.status === 400) {
+        console.error("Authentication or quota error. Please check your HeyGen API key and credits.");
+        throw error; // Don't retry on auth/quota errors
+      }
+      
+      // Only retry for network or temporary errors
+      if (this.retryCount < this.maxRetries && timeSinceLastError > 30000) {
+        this.retryCount++;
+        const retryDelay = Math.min(1000 * Math.pow(2, this.retryCount), 60000);
+        console.log(`Will retry avatar initialization in ${retryDelay}ms (attempt ${this.retryCount}/${this.maxRetries})`);
+        
+        setTimeout(() => {
+          this.initializationPromise = null;
+          // Next call to initialize will retry
+        }, retryDelay);
+      } else if (this.retryCount >= this.maxRetries) {
+        console.error("Maximum retry attempts reached for HeyGen avatar initialization.");
+      }
+      
       throw error;
     }
   }
