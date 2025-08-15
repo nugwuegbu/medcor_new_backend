@@ -4,6 +4,7 @@
 MedCare AI is an advanced healthcare platform that integrates interactive AI avatars, face recognition for authentication, and multi-language support to enhance patient interaction. It provides seamless AI-powered chatbot experiences that can identify returning patients, detect preferred languages, and transition between nurse and doctor avatars for personalized care. The project aims to provide comprehensive patient management, appointment scheduling, and health analysis capabilities, with a vision for broad market potential in digital healthcare.
 
 ## Recent Changes (Aug 15, 2025)
+- **HeyGen Credit Conservation Implemented**: Modified avatar initialization to require explicit user interaction (click "Start AI Assistant" button) before creating avatar sessions, preventing automatic API calls and credit consumption
 - **HeyGen API Key Updated**: Successfully updated VITE_HEYGEN_API_KEY environment variable with new authentication token for avatar services
 - **MCP Server Enhanced**: Comprehensive REST endpoint implementation for hospitals, doctors, specialties, and medical records
   - Added 15+ new tools for complete CRUD operations across all entities

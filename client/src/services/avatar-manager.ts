@@ -23,13 +23,19 @@ if (typeof window !== 'undefined') {
 }
 
 export class AvatarManager {
-  static async getOrCreateAvatar(apiKey: string): Promise<StreamingAvatar> {
+  static async getOrCreateAvatar(apiKey: string, forceCreate: boolean = false): Promise<StreamingAvatar> {
     const manager = (window as any).__avatarManager;
     
     // If we already have an avatar, return it
-    if (manager.avatar) {
+    if (manager.avatar && !forceCreate) {
       console.log("Returning existing avatar instance from window");
       return manager.avatar;
+    }
+
+    // Don't auto-create avatar unless explicitly requested
+    if (!forceCreate && !manager.userInitiated) {
+      console.log("Avatar creation blocked - waiting for user interaction to prevent credit consumption");
+      throw new Error("Avatar creation requires user interaction");
     }
 
     // If initialization is in progress, wait for it
@@ -49,7 +55,7 @@ export class AvatarManager {
       console.log("Initialization already locked, waiting...");
       // Wait a bit and try again
       await new Promise(resolve => setTimeout(resolve, 100));
-      return AvatarManager.getOrCreateAvatar(apiKey);
+      return AvatarManager.getOrCreateAvatar(apiKey, forceCreate);
     }
 
     // Lock and start new initialization
@@ -151,6 +157,12 @@ export class AvatarManager {
   static getAvatar() {
     const manager = (window as any).__avatarManager;
     return manager?.avatar;
+  }
+
+  static enableUserInteraction() {
+    const manager = (window as any).__avatarManager;
+    manager.userInitiated = true;
+    console.log("User interaction enabled - avatar creation now allowed");
   }
 
   static detectLanguage(text: string): string {
