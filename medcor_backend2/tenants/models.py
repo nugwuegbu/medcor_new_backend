@@ -47,8 +47,15 @@ class Hospital(models.Model):
     
     # Branding
     logo = models.ImageField(upload_to='hospital_logos/', null=True, blank=True)
+    cover_image = models.ImageField(upload_to='hospital_covers/', null=True, blank=True)
     primary_color = models.CharField(max_length=7, default='#0066cc')  # Hex color
     secondary_color = models.CharField(max_length=7, default='#f0f8ff')  # Hex color
+    
+    # Additional details
+    bed_capacity = models.IntegerField(null=True, blank=True)
+    established_date = models.DateField(null=True, blank=True)
+    description = models.TextField(blank=True)
+    is_verified = models.BooleanField(default=False)
     
     # Subscription and billing
     subscription_plan = models.ForeignKey(

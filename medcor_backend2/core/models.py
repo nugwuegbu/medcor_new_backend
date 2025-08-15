@@ -85,13 +85,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Role and permissions
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='PATIENT')
     
-    # Multi-tenant field - link to hospital
+    # Multi-tenant field - link to hospital (REQUIRED for all users)
     hospital = models.ForeignKey(
         'tenants.Hospital',
         on_delete=models.CASCADE,
         related_name='users',
-        null=True,
-        blank=True
+        null=True,  # Keep nullable for database migration compatibility
+        blank=False,  # But required in forms/serializers
+        help_text='Every user must belong to a hospital'
     )
     
     # Professional information (for doctors/nurses)

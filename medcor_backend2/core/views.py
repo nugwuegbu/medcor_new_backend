@@ -10,18 +10,58 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import login, logout
 from django.db.models import Q, Count
 from .models import User
+from tenants.models import Hospital
+from tenants.serializers import HospitalBasicSerializer
 from .serializers import (
     UserSerializer, UserCreateSerializer, LoginSerializer,
     ChangePasswordSerializer, DoctorSerializer, PatientSerializer
 )
 
 
+class AvailableHospitalsView(generics.ListAPIView):
+    """List available hospitals for user registration."""
+    
+    queryset = Hospital.objects.filter(is_active=True)
+    serializer_class = HospitalBasicSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None  # Disable pagination for this endpoint
+    
+    def get_queryset(self):
+        """Return only active hospitals that can accept new users."""
+        queryset = super().get_queryset()
+        # You can add additional filtering here if needed
+        # e.g., only hospitals that haven't reached their user limit
+        return queryset.order_by('name')
+
+
 class RegisterView(generics.CreateAPIView):
-    """User registration endpoint."""
+    """User registration endpoint with hospital selection."""
     
     queryset = User.objects.all()
     serializer_class = UserCreateSerializer
     permission_classes = [permissions.AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        """Return available hospitals for registration."""
+        hospitals = Hospital.objects.filter(is_active=True).values(
+            'id', 'name', 'city', 'state', 'hospital_type'
+        )
+        return Response({
+            'available_hospitals': list(hospitals),
+            'role_choices': User.ROLE_CHOICES,
+            'form_fields': {
+                'email': 'required',
+                'password': 'required (min 8 characters)',
+                'password_confirm': 'required',
+                'first_name': 'required',
+                'last_name': 'required',
+                'hospital': 'required (select from available_hospitals)',
+                'role': 'required (select from role_choices)',
+                'phone_number': 'optional',
+                'department': 'optional (for staff/doctors/nurses)',
+                'specialization': 'optional (for doctors)'
+            }
+        })
     
     def create(self, request, *args, **kwargs):
         """Create user and return with tokens."""

@@ -6,12 +6,14 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import User
 from tenants.models import Hospital
+from tenants.serializers import HospitalBasicSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer for User model."""
+    """Serializer for User model with hospital details."""
     
     hospital_name = serializers.CharField(source='hospital.name', read_only=True)
+    hospital_details = HospitalBasicSerializer(source='hospital', read_only=True)
     full_name = serializers.CharField(source='get_full_name', read_only=True)
     
     class Meta:
@@ -19,26 +21,37 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'username', 'first_name', 'last_name', 'full_name',
             'phone_number', 'date_of_birth', 'gender', 'role',
-            'hospital', 'hospital_name', 'department', 'specialization',
+            'hospital', 'hospital_name', 'hospital_details', 'department', 'specialization',
             'is_active', 'is_verified', 'created_at', 'updated_at',
             'profile_picture', 'bio', 'preferred_language', 'timezone'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'hospital_name', 'hospital_details']
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating new users."""
+    """Serializer for creating new users with hospital selection."""
     
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
+    hospital = serializers.PrimaryKeyRelatedField(
+        queryset=Hospital.objects.filter(is_active=True),
+        required=True,
+        help_text="Select the hospital this user belongs to"
+    )
+    available_hospitals = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
         model = User
         fields = [
             'email', 'username', 'password', 'password_confirm',
             'first_name', 'last_name', 'phone_number', 'role',
-            'hospital', 'department', 'specialization'
+            'hospital', 'department', 'specialization', 'available_hospitals'
         ]
+    
+    def get_available_hospitals(self, obj):
+        """Return list of available hospitals for selection."""
+        hospitals = Hospital.objects.filter(is_active=True).values('id', 'name', 'city', 'state')
+        return list(hospitals)
     
     def validate(self, attrs):
         """Validate password confirmation."""
