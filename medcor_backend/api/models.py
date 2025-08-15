@@ -31,7 +31,7 @@ class AnalysisTracking(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['patient', 'analysis_type']),
-            models.Index(fields=['tenant', 'created_at']),
+            models.Index(fields=['tenant_id', 'created_at']),
             models.Index(fields=['session_id']),
         ]
     

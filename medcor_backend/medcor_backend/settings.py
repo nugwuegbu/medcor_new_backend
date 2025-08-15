@@ -175,7 +175,7 @@ DATABASES = {
 }
 print("📦 Using SQLite database for testing")
 
-# DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )  # Disabled for SQLite
+DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter', )  # Required by django_tenants
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
