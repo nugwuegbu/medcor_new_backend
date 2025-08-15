@@ -21,6 +21,9 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const checkStreamInterval = useRef<NodeJS.Timeout | null>(null);
   const hasCalledOnReady = useRef(false);
+  const retryCount = useRef(0);
+  const maxRetries = 3;
+  const lastErrorTime = useRef<number>(0);
 
   // Expose speak method through ref
   useImperativeHandle(ref, () => ({
@@ -33,27 +36,11 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
       } catch (e: any) {
         console.error("Failed to speak:", e);
         
-        // If session is closed, try to recreate the avatar
+        // Don't automatically recreate on session errors to prevent credit consumption
         if (e.message?.includes('session state wrong') || e.message?.includes('closed')) {
-          console.log("Session closed, attempting to recreate avatar...");
-          try {
-            // Reset manager state
-            const manager = (window as any).__avatarManager;
-            manager.avatar = null;
-            manager.promise = null;
-            manager.lock = false;
-            
-            // Recreate avatar
-            await AvatarManager.getOrCreateAvatar(apiKey);
-            
-            // Retry speaking
-            const newAvatar = AvatarManager.getAvatar();
-            if (newAvatar) {
-              await newAvatar.speak({ text, taskType, taskMode });
-            }
-          } catch (recreateError) {
-            console.error("Failed to recreate avatar:", recreateError);
-          }
+          console.log("Session closed. Manual reconnection required to prevent excessive API calls.");
+          setConnectionStatus("failed");
+          // User needs to manually refresh or reconnect
         }
       }
     }
@@ -122,48 +109,35 @@ const HeyGenSDKAvatar = forwardRef<HeyGenSDKAvatarRef, HeyGenSDKAvatarProps>(({ 
           clearInterval(checkStreamInterval.current);
         }
         
-        checkStreamInterval.current = setInterval(async () => {
-          // Skip if already reconnecting
-          if (connectionStatus === "reconnecting") return;
-          
-          const stream = AvatarManager.getMediaStream();
-          const status = {
-            hasStream: !!stream,
-            streamActive: stream?.active || false,
-            videoTracks: stream?.getVideoTracks().length || 0,
-            audioTracks: stream?.getAudioTracks().length || 0
-          };
-          console.log("Avatar debug - Stream status:", status);
-          
-          // If stream is dead, recreate
-          if (!stream || !stream.active || status.videoTracks === 0) {
-            console.log("Stream is inactive, recreating avatar...");
-            setConnectionStatus("reconnecting");
-            
-            // Clear the interval to prevent multiple recreations
-            if (checkStreamInterval.current) {
-              clearInterval(checkStreamInterval.current);
-              checkStreamInterval.current = null;
-            }
-            
-            // Clear the manager's avatar to force recreation
-            const manager = (window as any).__avatarManager;
-            if (manager && !manager.lock) {
-              manager.avatar = null;
-              manager.promise = null;
-            }
-            
-            // Reinitialize after a short delay
-            setTimeout(() => {
-              initAvatar();
-            }, 1000);
-          }
-        }, 5000);
+        // Disable automatic stream monitoring to prevent excessive API calls
+        // Only check stream status manually when needed
+        console.log("Stream monitoring disabled to prevent excessive HeyGen API calls");
 
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to initialize avatar:", error);
         setConnectionStatus("failed");
         setIsLoading(false);
+        
+        // Implement retry logic with exponential backoff
+        const now = Date.now();
+        const timeSinceLastError = now - lastErrorTime.current;
+        lastErrorTime.current = now;
+        
+        // Only retry if we haven't exceeded max retries and enough time has passed
+        if (retryCount.current < maxRetries && timeSinceLastError > 30000) {
+          retryCount.current++;
+          const retryDelay = Math.min(1000 * Math.pow(2, retryCount.current), 60000);
+          console.log(`Will retry avatar initialization in ${retryDelay}ms (attempt ${retryCount.current}/${maxRetries})`);
+          
+          setTimeout(() => {
+            if (isVisible) {
+              initAvatar();
+            }
+          }, retryDelay);
+        } else if (retryCount.current >= maxRetries) {
+          console.error("Maximum retry attempts reached. Please check your HeyGen API key and quota.");
+          // Don't retry anymore to prevent credit consumption
+        }
       }
     };
 

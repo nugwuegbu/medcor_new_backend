@@ -103,23 +103,10 @@ export class AvatarManager {
       clearInterval(manager.healthCheckInterval);
     }
     
-    // Smart health check - only reconnect if truly disconnected
-    manager.healthCheckInterval = setInterval(async () => {
-      try {
-        if (manager.avatar && manager.avatar.mediaStream) {
-          const active = manager.avatar.mediaStream.active;
-          if (!active && !manager.lock) {
-            console.log("Avatar stream inactive, recreating session...");
-            // Only recreate if not already in progress
-            manager.avatar = null;
-            manager.promise = null;
-            // Will be recreated on next speak attempt
-          }
-        }
-      } catch (error) {
-        console.error("Health check error:", error);
-      }
-    }, 30000); // Check every 30 seconds
+    // Disable automatic health checks to prevent excessive API calls
+    // Health checks will only be done manually when needed
+    console.log("Avatar health checks disabled to prevent excessive HeyGen API calls");
+    // Previously: healthCheckInterval every 30 seconds - now disabled
     
     // Set global speak function with language detection
     (window as any).heygenSpeak = async (text: string, language?: string) => {
@@ -138,13 +125,14 @@ export class AvatarManager {
         } catch (e: any) {
           console.error("Failed to speak:", e);
           
-          // If session is closed, recreate avatar for next attempt
+          // Don't automatically recreate on session errors to prevent credit consumption
           if (e.message?.includes('session state wrong') || e.message?.includes('closed')) {
-            console.log("Session closed, clearing avatar for recreation on next attempt");
+            console.log("Session closed. Manual reconnection required to prevent excessive API calls.");
+            // Clear avatar but don't auto-recreate
             manager.avatar = null;
             manager.promise = null;
             manager.lock = false;
-            // Don't throw error - avatar will be recreated on next speak attempt
+            throw new Error("Avatar session closed. Please refresh the page to reconnect.");
           }
         }
       }
