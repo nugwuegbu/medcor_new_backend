@@ -10,6 +10,8 @@ MedCare AI is an advanced healthcare platform that integrates interactive AI ava
 - Created missing URL files for tenants, medical_records, treatments, and subscription_plans apps
 - Added SessionMiddleware to Django settings to fix admin panel access
 - Django backend now runs successfully on port 8002 with all APIs working
+- Added computed `duration` property to DoctorAvailabilitySlot model that calculates total slot duration from start_time and end_time
+- Updated DoctorAvailabilitySlotSerializer to include the duration field in API responses
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

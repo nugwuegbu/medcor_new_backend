@@ -387,6 +387,14 @@ class DoctorAvailabilitySlot(models.Model):
         return self.start_time.date() if self.start_time else None
     
     @property
+    def duration(self):
+        """Calculate total duration of the availability slot in minutes."""
+        if self.start_time and self.end_time:
+            delta = self.end_time - self.start_time
+            return int(delta.total_seconds() / 60)
+        return 0
+    
+    @property
     def is_available(self):
         """Check if slot is available for booking."""
         return (

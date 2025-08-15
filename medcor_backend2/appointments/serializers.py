@@ -19,6 +19,7 @@ class DoctorAvailabilitySlotSerializer(serializers.ModelSerializer):
     is_available = serializers.BooleanField(read_only=True)
     is_past = serializers.BooleanField(read_only=True)
     available_spots = serializers.IntegerField(read_only=True)
+    duration = serializers.IntegerField(read_only=True)  # Computed from start_time and end_time
     time_slots = serializers.SerializerMethodField()
     
     class Meta:
@@ -26,14 +27,14 @@ class DoctorAvailabilitySlotSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'hospital', 'hospital_name', 'doctor', 'doctor_name',
             'doctor_email', 'doctor_specialization', 'start_time',
-            'end_time', 'slot_duration_minutes', 'max_appointments',
+            'end_time', 'duration', 'slot_duration_minutes', 'max_appointments',
             'current_appointments', 'status', 'is_recurring',
             'recurrence_pattern', 'recurrence_end_date', 'day_of_week',
             'allowed_appointment_types', 'notes', 'advance_booking_days',
             'minimum_notice_hours', 'is_available', 'is_past',
             'available_spots', 'time_slots', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['current_appointments', 'is_available', 'is_past', 'available_spots']
+        read_only_fields = ['current_appointments', 'is_available', 'is_past', 'available_spots', 'duration']
     
     def get_time_slots(self, obj):
         """Get individual time slots based on duration."""
