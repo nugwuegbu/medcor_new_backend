@@ -1,1 +1,0 @@
-# User Authentication App for MedCor Django Backend

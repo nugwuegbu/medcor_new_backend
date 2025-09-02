@@ -1,1 +1,0 @@
-# Medical API App for comprehensive REST endpoints

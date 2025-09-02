@@ -1,1 +1,0 @@
-# Tenants app for multi-tenancy support

@@ -1,1 +1,0 @@
-# Simple treatment app for Django admin

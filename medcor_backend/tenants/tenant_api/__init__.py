@@ -1,1 +1,0 @@
-# Tenant API App for comprehensive tenant-based REST endpoints

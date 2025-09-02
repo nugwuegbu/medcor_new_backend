@@ -1,1 +1,0 @@
-# Simple appointment app for Django admin
