@@ -40,7 +40,7 @@ billiard==4.2.0
 amqp==5.2.0
 
 # Optional: Redis (for caching and health checks)
-redis==5.0.1
+redis==6.4.0
 
 # Testing and Development (for local development only)
 # pytest==7.4.3
