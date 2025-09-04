@@ -36,7 +36,7 @@ fastmcp==0.1.0
 # Celery and Task Queue
 celery==5.3.4
 kombu==5.3.4
-billiard==4.2.0
+billiard==4.2.1
 amqp==5.2.0
 
 # Optional: Redis (for caching and health checks)
