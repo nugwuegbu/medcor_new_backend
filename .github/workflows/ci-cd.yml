@@ -49,7 +49,7 @@ jobs:
           python-version: "3.11"
 
       - name: Cache pip dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -94,7 +94,7 @@ jobs:
           coverage html
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
           flags: unittests
@@ -197,7 +197,7 @@ jobs:
 
       - name: Notify deployment success
         if: success()
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@v3.15.0
         with:
           status: success
           text: "✅ Production deployment successful for MedCor Backend"
@@ -206,7 +206,7 @@ jobs:
 
       - name: Notify deployment failure
         if: failure()
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@v3.15.0
         with:
           status: failure
           text: "❌ Production deployment failed for MedCor Backend"
