@@ -1,0 +1,170 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run linting
+        run: |
+          pip install flake8 black isort
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          black --check .
+          isort --check-only .
+
+      - name: Run tests
+        run: |
+          python manage.py test --settings=medcor_backend2.test_settings
+
+      - name: Security check
+        run: |
+          pip install bandit safety
+          bandit -r . -f json -o bandit-report.json || true
+          safety check --json --output safety-report.json || true
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build Docker image
+        run: |
+          docker build -t medcor-backend:${{ github.sha }} .
+          docker tag medcor-backend:${{ github.sha }} medcor-backend:latest
+
+      - name: Save Docker image
+        run: |
+          docker save medcor-backend:latest | gzip > medcor-backend.tar.gz
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            # Create backup of current deployment
+            sudo cp -r /var/www/html/medcor_backend2 /var/www/html/medcor_backend2_backup_$(date +%Y%m%d_%H%M%S) || true
+
+            # Stop current services
+            cd /var/www/html/medcor_backend2
+            sudo docker-compose down || true
+
+            # Wait for services to stop
+            sleep 10
+
+      - name: Upload and extract new code
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          source: "."
+          target: "/tmp/medcor_backend2_new"
+          strip_components: 0
+
+      - name: Deploy new version
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            # Remove old deployment
+            sudo rm -rf /var/www/html/medcor_backend2
+
+            # Move new code to production location
+            sudo mv /tmp/medcor_backend2_new /var/www/html/medcor_backend2
+            sudo chown -R $USER:$USER /var/www/html/medcor_backend2
+
+            # Set proper permissions
+            cd /var/www/html/medcor_backend2
+            chmod +x run_server.sh
+            chmod +x scripts/deploy.sh
+
+            # Copy environment file
+            sudo cp /var/www/html/medcor_backend2/env.prod /var/www/html/medcor_backend2/.env
+
+            # Start services
+            sudo docker-compose up -d --build
+
+            # Wait for services to start
+            sleep 30
+
+            # Health check
+            curl -f http://localhost/api/health/ || exit 1
+
+            # Clean up old Docker images
+            sudo docker image prune -f
+
+            echo "Deployment completed successfully!"
+
+  notify:
+    needs: [test, build-and-deploy]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Notify deployment status
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            if [ "${{ job.status }}" == "success" ]; then
+              echo "✅ Deployment successful! MedCor Backend updated to commit ${{ github.sha }}"
+              # You can add notification logic here (Slack, Discord, email, etc.)
+            else
+              echo "❌ Deployment failed! Check the logs for details."
+              # You can add failure notification logic here
+            fi
