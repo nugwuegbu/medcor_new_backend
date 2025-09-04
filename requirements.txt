@@ -35,7 +35,7 @@ fastmcp==0.1.0
 
 # Celery and Task Queue
 celery==5.3.4
-kombu==5.3.4
+kombu==5.5.4
 billiard==4.2.0
 amqp==5.2.0
 
