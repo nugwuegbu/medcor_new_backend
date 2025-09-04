@@ -1,0 +1,59 @@
+# Django and REST Framework
+Django==5.0.1
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+
+# Django Extensions and Middleware
+django-cors-headers==4.3.1
+django-filter==25.1
+whitenoise==6.6.0
+
+# Database
+psycopg2-binary==2.9.9
+
+# Authentication and Security
+bcrypt==4.1.2
+PyJWT==2.10.1
+
+# API Documentation
+drf-spectacular==0.27.0
+
+# Image Processing
+Pillow==10.2.0
+
+# HTTP Requests
+requests==2.31.0
+
+# Web Server
+gunicorn==21.2.0
+
+# Environment and Configuration
+python-dotenv==1.0.0
+
+# MCP Server
+fastmcp==0.1.0
+
+# Celery and Task Queue
+celery==5.3.4
+kombu==5.3.4
+billiard==4.2.0
+amqp==5.2.0
+
+# Optional: Redis (for caching and health checks)
+redis==5.0.1
+
+# Testing and Development (for local development only)
+# pytest==7.4.3
+# pytest-django==4.7.0
+# coverage==7.3.2
+
+# Code Quality (for local development only)
+# flake8==6.1.0
+# black==23.11.0
+# isort==5.12.0
+# bandit==1.7.5
+# safety==3.0.1
+
+# Additional dependencies that might be needed
+# uvicorn==0.27.0  # Commented out as it's not currently used
+# pydantic==2.5.3  # Commented out as it's not currently used

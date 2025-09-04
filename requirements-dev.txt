@@ -1,0 +1,25 @@
+# Development and Testing Dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# Include production requirements
+-r requirements.txt
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+coverage==7.3.2
+
+# Code Quality
+flake8==6.1.0
+black==23.11.0
+isort==5.12.0
+bandit==1.7.5
+safety==3.0.1
+
+# Development Tools
+ipython==8.18.1
+django-debug-toolbar==4.2.0
+django-extensions==3.2.3
+
+# MCP Server (if needed)
+fastmcp==0.1.0
