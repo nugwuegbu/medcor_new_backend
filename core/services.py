@@ -225,7 +225,7 @@ class FaceRecognitionService:
         """Recognize face from image."""
         try:
             # For demo, generate a mock face ID
-            face_id = hashlib.md5(f"{session_id}_{datetime.now()}".encode()).hexdigest()
+            face_id = hashlib.sha256(f"{session_id}_{datetime.now()}".encode()).hexdigest()
 
             # Check if face exists in database (would query FaceRecognition model)
             # For now, return mock response
@@ -247,7 +247,7 @@ class FaceRecognitionService:
         """Register new face for user."""
         try:
             # Generate face encoding
-            face_id = hashlib.md5(f"{user_id}_{datetime.now()}".encode()).hexdigest()
+            face_id = hashlib.sha256(f"{user_id}_{datetime.now()}".encode()).hexdigest()
 
             # In production, would save to FaceRecognition model
             return {
