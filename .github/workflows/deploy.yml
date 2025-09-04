@@ -86,13 +86,32 @@ jobs:
           script: |
             # Navigate to project directory
             cd /var/www/html/medcor_backend2
-            
-            # Pull latest code
-            git pull origin main
-            
+
+            # Check if we can pull with current configuration
+            echo "Attempting to pull latest code..."
+            if git pull origin main; then
+              echo "✅ Successfully pulled latest code"
+            else
+              echo "⚠️  Git pull failed, trying to fix authentication..."
+              
+              # Try to configure git for SSH access
+              git remote set-url origin git@github.com:${{ github.repository }}.git
+              
+              # Try pulling again
+              if git pull origin main; then
+                echo "✅ Successfully pulled with SSH"
+              else
+                echo "❌ Git pull failed. Please check SSH key configuration on server."
+                echo "The server needs SSH access to GitHub repository."
+                echo "Run: ssh-keygen -t rsa -b 4096 -C 'your-email@example.com'"
+                echo "Then add the public key to GitHub repository settings."
+                exit 1
+              fi
+            fi
+
             # Make deployment script executable
             chmod +x scripts/traditional-deploy.sh
-            
+
             # Run traditional deployment
             ./scripts/traditional-deploy.sh
 
