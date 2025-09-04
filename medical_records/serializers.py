@@ -167,7 +167,7 @@ class CreateMedicalRecordSerializer(serializers.ModelSerializer):
             MedicalDocument.objects.create(
                 medical_record=medical_record,
                 hospital=medical_record.hospital,
-                **document_data
+                **document_data,
             )
 
         return medical_record

@@ -5,8 +5,14 @@ Serializers for chat, voice, and avatar-related models.
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .chat_models import (AnalysisReport, AvatarRecording, ChatMessage,
-                          ChatSession, ConsentRecord, FaceRecognition)
+from .chat_models import (
+    AnalysisReport,
+    AvatarRecording,
+    ChatMessage,
+    ChatSession,
+    ConsentRecord,
+    FaceRecognition,
+)
 
 User = get_user_model()
 

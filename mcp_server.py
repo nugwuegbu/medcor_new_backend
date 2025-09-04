@@ -17,6 +17,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "medcor_backend2.settings")
 django.setup()
 
 from appointments.models import Appointment, DoctorAvailabilitySlot
+
 # Import Django models after setup
 from core.models import User
 from medical_records.models import MedicalRecord

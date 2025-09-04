@@ -14,10 +14,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Appointment, DoctorAvailabilitySlot
-from .serializers import (AppointmentCreateSerializer, AppointmentSerializer,
-                          AppointmentUpdateSerializer,
-                          DoctorAvailabilitySlotCreateSerializer,
-                          DoctorAvailabilitySlotSerializer)
+from .serializers import (
+    AppointmentCreateSerializer,
+    AppointmentSerializer,
+    AppointmentUpdateSerializer,
+    DoctorAvailabilitySlotCreateSerializer,
+    DoctorAvailabilitySlotSerializer,
+)
 
 
 class DoctorAvailabilitySlotViewSet(viewsets.ModelViewSet):

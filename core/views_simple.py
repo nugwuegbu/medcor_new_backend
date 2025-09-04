@@ -5,8 +5,12 @@ Simplified API views for user authentication and management without multi-tenanc
 from django.contrib.auth import login, logout
 from django.db.models import Count, Q
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
-                                   extend_schema, extend_schema_view)
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -14,9 +18,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
-from .serializers import (ChangePasswordSerializer, DoctorSerializer,
-                          LoginSerializer, PatientSerializer,
-                          UserCreateSerializer, UserSerializer)
+from .serializers import (
+    ChangePasswordSerializer,
+    DoctorSerializer,
+    LoginSerializer,
+    PatientSerializer,
+    UserCreateSerializer,
+    UserSerializer,
+)
 
 
 @extend_schema(

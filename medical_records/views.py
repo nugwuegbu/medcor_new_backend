@@ -14,10 +14,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import MedicalDocument, MedicalRecord
-from .serializers import (CreateMedicalRecordSerializer,
-                          MedicalDocumentSerializer,
-                          MedicalRecordListSerializer, MedicalRecordSerializer,
-                          PatientMedicalHistorySerializer)
+from .serializers import (
+    CreateMedicalRecordSerializer,
+    MedicalDocumentSerializer,
+    MedicalRecordListSerializer,
+    MedicalRecordSerializer,
+    PatientMedicalHistorySerializer,
+)
 
 
 class MedicalRecordViewSet(viewsets.ModelViewSet):

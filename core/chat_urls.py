@@ -5,12 +5,26 @@ URL configuration for chat, voice, and avatar APIs.
 from django.urls import path
 
 from .chat_views import (  # Voice & Chat; Speech Processing; Avatar Management; Face Recognition; Analysis Reports; Location & Context; Consent Management
-    AvatarCreateSessionView, AvatarSpeechToTextView, AvatarStartRecordingView,
-    AvatarStatusView, AvatarStopRecordingView, ConsentRecordView,
-    ConsentRevokeView, FaceAnalysisReportView, FaceLoginView,
-    FaceRecognizeView, FaceRegisterView, HairAnalysisReportView, LanguagesView,
-    LocationWeatherView, SkinAnalysisView, SpeechToTextView, TextChatView,
-    TextToSpeechView, VoiceChatView)
+    AvatarCreateSessionView,
+    AvatarSpeechToTextView,
+    AvatarStartRecordingView,
+    AvatarStatusView,
+    AvatarStopRecordingView,
+    ConsentRecordView,
+    ConsentRevokeView,
+    FaceAnalysisReportView,
+    FaceLoginView,
+    FaceRecognizeView,
+    FaceRegisterView,
+    HairAnalysisReportView,
+    LanguagesView,
+    LocationWeatherView,
+    SkinAnalysisView,
+    SpeechToTextView,
+    TextChatView,
+    TextToSpeechView,
+    VoiceChatView,
+)
 
 urlpatterns = [
     # 1. Voice & Chat APIs

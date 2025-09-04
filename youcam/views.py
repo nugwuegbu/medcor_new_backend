@@ -8,25 +8,34 @@ from django.db.models import Avg, Count, Q
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
-                                   extend_schema, extend_schema_view)
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import (AnalysisHistory, AnalysisStatus, AnalysisType,
-                     YouCamAnalysis)
-from .serializers import (AnalysisFeedbackSerializer,
-                          AnalysisHistorySerializer, BatchAnalysisSerializer,
-                          YouCamAnalysisCreateSerializer,
-                          YouCamAnalysisDetailSerializer,
-                          YouCamAnalysisListSerializer,
-                          YouCamAnalysisRetrySerializer,
-                          YouCamAnalysisStatsSerializer)
-from .tasks import (generate_analysis_report, process_youcam_analysis,
-                    retry_failed_youcam_analyses)
+from .models import AnalysisHistory, AnalysisStatus, AnalysisType, YouCamAnalysis
+from .serializers import (
+    AnalysisFeedbackSerializer,
+    AnalysisHistorySerializer,
+    BatchAnalysisSerializer,
+    YouCamAnalysisCreateSerializer,
+    YouCamAnalysisDetailSerializer,
+    YouCamAnalysisListSerializer,
+    YouCamAnalysisRetrySerializer,
+    YouCamAnalysisStatsSerializer,
+)
+from .tasks import (
+    generate_analysis_report,
+    process_youcam_analysis,
+    retry_failed_youcam_analyses,
+)
 
 logger = logging.getLogger(__name__)
 

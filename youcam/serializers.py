@@ -5,8 +5,7 @@ Serializers for YouCam AI Analysis API
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import (AnalysisHistory, AnalysisStatus, AnalysisType,
-                     YouCamAnalysis)
+from .models import AnalysisHistory, AnalysisStatus, AnalysisType, YouCamAnalysis
 
 User = get_user_model()
 

@@ -4,16 +4,24 @@ Views for the tenants app.
 
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
-                                   extend_schema, extend_schema_view)
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Hospital
-from .serializers import (HospitalCreateSerializer, HospitalListSerializer,
-                          HospitalSerializer, HospitalUpdateSerializer)
+from .serializers import (
+    HospitalCreateSerializer,
+    HospitalListSerializer,
+    HospitalSerializer,
+    HospitalUpdateSerializer,
+)
 
 
 @extend_schema_view(

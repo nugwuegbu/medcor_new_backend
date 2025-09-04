@@ -11,8 +11,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Prescription, Treatment
-from .serializers import (CreateTreatmentSerializer, PrescriptionSerializer,
-                          TreatmentListSerializer, TreatmentSerializer)
+from .serializers import (
+    CreateTreatmentSerializer,
+    PrescriptionSerializer,
+    TreatmentListSerializer,
+    TreatmentSerializer,
+)
 
 
 class TreatmentViewSet(viewsets.ModelViewSet):

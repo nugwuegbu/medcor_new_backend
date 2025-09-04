@@ -7,8 +7,12 @@ from django.db import connection
 from django.db.models import Count, Q
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
-                                   extend_schema, extend_schema_view)
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -19,9 +23,14 @@ from tenants.models import Hospital
 from tenants.serializers import HospitalListSerializer
 
 from .models import User
-from .serializers import (ChangePasswordSerializer, DoctorSerializer,
-                          LoginSerializer, PatientSerializer,
-                          UserCreateSerializer, UserSerializer)
+from .serializers import (
+    ChangePasswordSerializer,
+    DoctorSerializer,
+    LoginSerializer,
+    PatientSerializer,
+    UserCreateSerializer,
+    UserSerializer,
+)
 
 
 @api_view(["GET"])

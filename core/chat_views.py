@@ -24,23 +24,41 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .chat_models import (AnalysisReport, AvatarRecording, ChatMessage,
-                          ChatSession, ConsentRecord, FaceRecognition)
-from .chat_serializers import (AnalysisReportSerializer,
-                               AvatarRecordingSerializer,
-                               ChatMessageSerializer, ChatSessionSerializer,
-                               ConsentRecordRequestSerializer,
-                               ConsentRecordSerializer,
-                               FaceRecognitionSerializer,
-                               FaceRecognizeSerializer, FaceRegisterSerializer,
-                               LocationWeatherSerializer,
-                               SpeechToTextSerializer, TextChatSerializer,
-                               TextToSpeechSerializer, VoiceChatSerializer)
+from .chat_models import (
+    AnalysisReport,
+    AvatarRecording,
+    ChatMessage,
+    ChatSession,
+    ConsentRecord,
+    FaceRecognition,
+)
+from .chat_serializers import (
+    AnalysisReportSerializer,
+    AvatarRecordingSerializer,
+    ChatMessageSerializer,
+    ChatSessionSerializer,
+    ConsentRecordRequestSerializer,
+    ConsentRecordSerializer,
+    FaceRecognitionSerializer,
+    FaceRecognizeSerializer,
+    FaceRegisterSerializer,
+    LocationWeatherSerializer,
+    SpeechToTextSerializer,
+    TextChatSerializer,
+    TextToSpeechSerializer,
+    VoiceChatSerializer,
+)
 from .models import User
 from .serializers import UserSerializer
-from .services import (FaceRecognitionService, HeyGenService, OpenAIService,
-                       SpeechToTextService, TextToSpeechService,
-                       VoiceConversationManager, WeatherService)
+from .services import (
+    FaceRecognitionService,
+    HeyGenService,
+    OpenAIService,
+    SpeechToTextService,
+    TextToSpeechService,
+    VoiceConversationManager,
+    WeatherService,
+)
 
 logger = logging.getLogger(__name__)
 

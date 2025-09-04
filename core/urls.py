@@ -7,9 +7,16 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import health_check
-from .views_simple import (ChangePasswordView, DoctorListView, LoginView,
-                           LogoutView, PatientListView, RegisterView,
-                           UserProfileView, UserStatsView)
+from .views_simple import (
+    ChangePasswordView,
+    DoctorListView,
+    LoginView,
+    LogoutView,
+    PatientListView,
+    RegisterView,
+    UserProfileView,
+    UserStatsView,
+)
 
 urlpatterns = [
     # Authentication

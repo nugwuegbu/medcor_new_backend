@@ -8,12 +8,15 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import DoctorSpecialty, Specialty, SpecialtyStatistics
-from .serializers import (BulkSpecialtyAssignSerializer,
-                          DoctorSpecialtyCreateSerializer,
-                          DoctorSpecialtySerializer,
-                          DoctorWithSpecialtiesSerializer,
-                          SpecialtyListSerializer, SpecialtySerializer,
-                          SpecialtyStatisticsSerializer)
+from .serializers import (
+    BulkSpecialtyAssignSerializer,
+    DoctorSpecialtyCreateSerializer,
+    DoctorSpecialtySerializer,
+    DoctorWithSpecialtiesSerializer,
+    SpecialtyListSerializer,
+    SpecialtySerializer,
+    SpecialtyStatisticsSerializer,
+)
 
 User = get_user_model()
 

@@ -6,8 +6,12 @@ import logging
 
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
-                                   extend_schema, extend_schema_view)
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework import filters, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
@@ -15,8 +19,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import EmailRequest
-from .serializers import (EmailRequestDetailSerializer,
-                          EmailRequestListSerializer, EmailRequestSerializer)
+from .serializers import (
+    EmailRequestDetailSerializer,
+    EmailRequestListSerializer,
+    EmailRequestSerializer,
+)
 from .tasks import retry_failed_emails, send_email_task
 
 logger = logging.getLogger(__name__)
