@@ -7,23 +7,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('auth', '0012_alter_user_first_name_max_length'),
-        ('core', '0001_initial'),
-        ('tenants', '0001_initial'),
+        ("auth", "0012_alter_user_first_name_max_length"),
+        ("core", "0001_initial"),
+        ("tenants", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='user',
-            name='hospital_name',
+            model_name="user",
+            name="hospital_name",
         ),
         migrations.AddField(
-            model_name='user',
-            name='hospital',
-            field=models.ForeignKey(blank=True, help_text='Hospital this user belongs to (not required for SUPERADMIN)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='users', to='tenants.hospital'),
+            model_name="user",
+            name="hospital",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Hospital this user belongs to (not required for SUPERADMIN)",
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="users",
+                to="tenants.hospital",
+            ),
         ),
         migrations.AddIndex(
-            model_name='user',
-            index=models.Index(fields=['hospital'], name='users_hospita_aabe15_idx'),
+            model_name="user",
+            index=models.Index(fields=["hospital"], name="users_hospita_aabe15_idx"),
         ),
     ]

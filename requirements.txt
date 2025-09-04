@@ -30,7 +30,7 @@ gunicorn==21.2.0
 # Environment and Configuration
 python-dotenv==1.0.0
 
-# MCP Server (if needed)
+# MCP Server
 fastmcp==0.1.0
 
 # Celery and Task Queue
@@ -38,6 +38,18 @@ celery==5.3.4
 kombu==5.3.4
 billiard==4.2.0
 amqp==5.2.0
+
+# Testing and Development (for local development only)
+# pytest==7.4.3
+# pytest-django==4.7.0
+# coverage==7.3.2
+
+# Code Quality (for local development only)
+# flake8==6.1.0
+# black==23.11.0
+# isort==5.12.0
+# bandit==1.7.5
+# safety==3.0.1
 
 # Additional dependencies that might be needed
 # uvicorn==0.27.0  # Commented out as it's not currently used

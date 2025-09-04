@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  # Note: Using AWS RDS PostgreSQL for testing
+  # Database: medcore.czouassyu7f2.il-central-1.rds.amazonaws.com:5432/medcor_db2
+
+  # Note: Using existing RabbitMQ service on host for testing
+  # RabbitMQ: amqp://guest:guest@localhost:5672//
+
+  # Test Application
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate --settings=medcor_backend2.test_settings &&
+             python manage.py test --settings=medcor_backend2.test_settings"
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=test-secret-key
+      - DATABASE_ENGINE=django.db.backends.postgresql
+      - DATABASE_HOST=medcore.czouassyu7f2.il-central-1.rds.amazonaws.com
+      - DATABASE_NAME=medcor_db2
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+      - DATABASE_PASS=3765R7vmFQwF6ddlNyWa
+      - DATABASE_URL=postgresql://postgres:3765R7vmFQwF6ddlNyWa@medcore.czouassyu7f2.il-central-1.rds.amazonaws.com:5432/medcor_db2
+      - CELERY_BROKER_URL=amqp://guest:guest@host.docker.internal:5672//
+      - CELERY_RESULT_BACKEND=rpc://
+      - ALLOWED_HOSTS=localhost,127.0.0.1,testserver
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -1,0 +1,28 @@
+[Unit]
+Description=MedCor MCP Server
+After=network.target redis.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/var/www/html/medcor_backend2
+Environment=DJANGO_SETTINGS_MODULE=medcor_backend2.settings
+Environment=PYTHONPATH=/var/www/html/medcor_backend2
+ExecStart=/usr/bin/python3 /var/www/html/medcor_backend2/mcp_server.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mcp-server
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/html/medcor_backend2
+
+[Install]
+WantedBy=multi-user.target

@@ -6,21 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('subscription_plans', '0002_auto_20250818_2336'),
-        ('tenants', '0001_initial'),
+        ("subscription_plans", "0002_auto_20250818_2336"),
+        ("tenants", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name='subscription',
-            name='subscriptio_hospita_4f671f_idx',
+            model_name="subscription",
+            name="subscriptio_hospita_4f671f_idx",
         ),
         migrations.RemoveField(
-            model_name='subscription',
-            name='hospital_name',
+            model_name="subscription",
+            name="hospital_name",
         ),
         migrations.AddIndex(
-            model_name='subscription',
-            index=models.Index(fields=['hospital'], name='subscriptio_hospita_813e31_idx'),
+            model_name="subscription",
+            index=models.Index(
+                fields=["hospital"], name="subscriptio_hospita_813e31_idx"
+            ),
         ),
     ]

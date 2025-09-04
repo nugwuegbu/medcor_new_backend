@@ -1,1 +1,1 @@
-# Management commands for email service 
+# Management commands for email service

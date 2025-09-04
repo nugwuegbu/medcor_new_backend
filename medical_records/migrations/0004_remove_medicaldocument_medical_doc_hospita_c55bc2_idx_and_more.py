@@ -7,51 +7,64 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('appointments', '0005_remove_appointment_appointment_hospita_d5dfb2_idx_and_more'),
-        ('medical_records', '0003_auto_20250818_2327'),
-        ('tenants', '0001_initial'),
+        (
+            "appointments",
+            "0005_remove_appointment_appointment_hospita_d5dfb2_idx_and_more",
+        ),
+        ("medical_records", "0003_auto_20250818_2327"),
+        ("tenants", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name='medicaldocument',
-            name='medical_doc_hospita_c55bc2_idx',
+            model_name="medicaldocument",
+            name="medical_doc_hospita_c55bc2_idx",
         ),
         migrations.RemoveIndex(
-            model_name='medicalrecord',
-            name='medical_rec_hospita_a571f7_idx',
+            model_name="medicalrecord",
+            name="medical_rec_hospita_a571f7_idx",
         ),
         migrations.RemoveIndex(
-            model_name='medicalrecord',
-            name='medical_rec_hospita_350bca_idx',
+            model_name="medicalrecord",
+            name="medical_rec_hospita_350bca_idx",
         ),
         migrations.RemoveIndex(
-            model_name='medicalrecord',
-            name='medical_rec_hospita_12a171_idx',
+            model_name="medicalrecord",
+            name="medical_rec_hospita_12a171_idx",
         ),
         migrations.RemoveField(
-            model_name='medicaldocument',
-            name='hospital_name',
+            model_name="medicaldocument",
+            name="hospital_name",
         ),
         migrations.RemoveField(
-            model_name='medicalrecord',
-            name='hospital_name',
+            model_name="medicalrecord",
+            name="hospital_name",
         ),
         migrations.AddIndex(
-            model_name='medicaldocument',
-            index=models.Index(fields=['hospital', 'medical_record'], name='medical_doc_hospita_5fa9ce_idx'),
+            model_name="medicaldocument",
+            index=models.Index(
+                fields=["hospital", "medical_record"],
+                name="medical_doc_hospita_5fa9ce_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='medicalrecord',
-            index=models.Index(fields=['hospital', 'patient'], name='medical_rec_hospita_bd1397_idx'),
+            model_name="medicalrecord",
+            index=models.Index(
+                fields=["hospital", "patient"], name="medical_rec_hospita_bd1397_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='medicalrecord',
-            index=models.Index(fields=['hospital', 'created_at'], name='medical_rec_hospita_c00b98_idx'),
+            model_name="medicalrecord",
+            index=models.Index(
+                fields=["hospital", "created_at"], name="medical_rec_hospita_c00b98_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='medicalrecord',
-            index=models.Index(fields=['hospital', 'record_type'], name='medical_rec_hospita_76e24a_idx'),
+            model_name="medicalrecord",
+            index=models.Index(
+                fields=["hospital", "record_type"],
+                name="medical_rec_hospita_76e24a_idx",
+            ),
         ),
     ]

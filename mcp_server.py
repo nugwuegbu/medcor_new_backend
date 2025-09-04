@@ -3,31 +3,33 @@ FastMCP Server for MedCor Backend
 Provides programmatic access to healthcare management functions.
 """
 
+import json
 import os
 import sys
+from datetime import date, datetime, time
+from typing import Any, Dict, List, Optional
+
 import django
 from fastmcp import FastMCP
-from typing import Optional, List, Dict, Any
-from datetime import datetime, date, time
-import json
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'medcor_backend2.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "medcor_backend2.settings")
 django.setup()
 
+from appointments.models import Appointment, DoctorAvailabilitySlot
 # Import Django models after setup
 from core.models import User
-from tenants.models import Hospital
-from appointments.models import Appointment, DoctorAvailabilitySlot
 from medical_records.models import MedicalRecord
-from treatments.models import Treatment, Prescription
-from subscription_plans.models import SubscriptionPlan, Subscription
-from specialty.models import Specialty, DoctorSpecialty
+from specialty.models import DoctorSpecialty, Specialty
+from subscription_plans.models import Subscription, SubscriptionPlan
+from tenants.models import Hospital
+from treatments.models import Prescription, Treatment
 
 # Initialize FastMCP server
 mcp = FastMCP("MedCor Healthcare MCP Server")
 
 # ========== HOSPITAL (TENANT) TOOLS ==========
+
 
 @mcp.tool()
 def create_hospital(
@@ -41,7 +43,7 @@ def create_hospital(
     state: str,
     country: str,
     postal_code: str,
-    hospital_type: str = "General"
+    hospital_type: str = "General",
 ) -> Dict[str, Any]:
     """Create a new hospital (tenant) in the system."""
     try:
@@ -56,13 +58,13 @@ def create_hospital(
             state=state,
             country=country,
             postal_code=postal_code,
-            hospital_type=hospital_type
+            hospital_type=hospital_type,
         )
         return {
             "success": True,
             "hospital_id": str(hospital.id),
             "name": hospital.name,
-            "subdomain": hospital.subdomain
+            "subdomain": hospital.subdomain,
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -73,50 +75,61 @@ def list_hospitals(
     is_active: Optional[bool] = True,
     hospital_type: Optional[str] = None,
     city: Optional[str] = None,
-    limit: int = 20
+    limit: int = 20,
 ) -> List[Dict[str, Any]]:
     """List all hospitals in the system with filters."""
     queryset = Hospital.objects.all()
-    
+
     if is_active is not None:
         queryset = queryset.filter(is_active=is_active)
-    
+
     if hospital_type:
         queryset = queryset.filter(hospital_type__icontains=hospital_type)
-    
+
     if city:
         queryset = queryset.filter(city__icontains=city)
-    
+
     hospitals = queryset[:limit]
-    
-    return [{
-        "id": str(h.id),
-        "name": h.name,
-        "subdomain": h.subdomain,
-        "hospital_type": h.hospital_type,
-        "city": h.city,
-        "state": h.state,
-        "country": h.country,
-        "status": h.subscription_status,
-        "total_doctors": User.objects.filter(hospital=h, role='DOCTOR', is_active=True).count(),
-        "total_patients": User.objects.filter(hospital=h, role='PATIENT', is_active=True).count(),
-        "is_active": h.is_active
-    } for h in hospitals]
+
+    return [
+        {
+            "id": str(h.id),
+            "name": h.name,
+            "subdomain": h.subdomain,
+            "hospital_type": h.hospital_type,
+            "city": h.city,
+            "state": h.state,
+            "country": h.country,
+            "status": h.subscription_status,
+            "total_doctors": User.objects.filter(
+                hospital=h, role="DOCTOR", is_active=True
+            ).count(),
+            "total_patients": User.objects.filter(
+                hospital=h, role="PATIENT", is_active=True
+            ).count(),
+            "is_active": h.is_active,
+        }
+        for h in hospitals
+    ]
 
 
 @mcp.tool()
-def get_hospital_details(
-    hospital_id: str
-) -> Dict[str, Any]:
+def get_hospital_details(hospital_id: str) -> Dict[str, Any]:
     """Get detailed information about a specific hospital."""
     try:
         hospital = Hospital.objects.get(id=hospital_id)
-        
+
         # Count users by role
-        doctor_count = User.objects.filter(hospital=hospital, role='doctor', is_active=True).count()
-        patient_count = User.objects.filter(hospital=hospital, role='patient', is_active=True).count()
-        nurse_count = User.objects.filter(hospital=hospital, role='nurse', is_active=True).count()
-        
+        doctor_count = User.objects.filter(
+            hospital=hospital, role="doctor", is_active=True
+        ).count()
+        patient_count = User.objects.filter(
+            hospital=hospital, role="patient", is_active=True
+        ).count()
+        nurse_count = User.objects.filter(
+            hospital=hospital, role="nurse", is_active=True
+        ).count()
+
         return {
             "success": True,
             "hospital": {
@@ -135,15 +148,19 @@ def get_hospital_details(
                 "hospital_type": hospital.hospital_type,
                 "is_active": hospital.is_active,
                 "subscription_status": hospital.subscription_status,
-                "subscription_plan": hospital.subscription_plan.name if hospital.subscription_plan else None,
+                "subscription_plan": (
+                    hospital.subscription_plan.name
+                    if hospital.subscription_plan
+                    else None
+                ),
                 "created_at": hospital.created_at.isoformat(),
                 "statistics": {
                     "total_doctors": doctor_count,
                     "total_patients": patient_count,
                     "total_nurses": nurse_count,
-                    "total_users": doctor_count + patient_count + nurse_count
-                }
-            }
+                    "total_users": doctor_count + patient_count + nurse_count,
+                },
+            },
         }
     except Hospital.DoesNotExist:
         return {"success": False, "error": "Hospital not found"}
@@ -160,12 +177,12 @@ def update_hospital(
     address_line1: Optional[str] = None,
     city: Optional[str] = None,
     state: Optional[str] = None,
-    is_active: Optional[bool] = None
+    is_active: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """Update hospital information."""
     try:
         hospital = Hospital.objects.get(id=hospital_id)
-        
+
         if name:
             hospital.name = name
         if email:
@@ -180,14 +197,14 @@ def update_hospital(
             hospital.state = state
         if is_active is not None:
             hospital.is_active = is_active
-        
+
         hospital.save()
-        
+
         return {
             "success": True,
             "hospital_id": str(hospital.id),
             "name": hospital.name,
-            "updated": True
+            "updated": True,
         }
     except Hospital.DoesNotExist:
         return {"success": False, "error": "Hospital not found"}
@@ -196,6 +213,7 @@ def update_hospital(
 
 
 # ========== USER MANAGEMENT TOOLS ==========
+
 
 @mcp.tool()
 def create_user(
@@ -207,7 +225,7 @@ def create_user(
     password: str,
     phone_number: Optional[str] = None,
     department: Optional[str] = None,
-    specialization: Optional[str] = None
+    specialization: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Create a new user in the system."""
     try:
@@ -221,13 +239,13 @@ def create_user(
             hospital=hospital,
             phone_number=phone_number or "",
             department=department or "",
-            specialization=specialization or ""
+            specialization=specialization or "",
         )
         return {
             "success": True,
             "user_id": str(user.id),
             "email": user.email,
-            "role": user.role
+            "role": user.role,
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -238,25 +256,25 @@ def list_users(
     hospital_id: str,
     role: Optional[str] = None,
     is_active: bool = True,
-    limit: int = 50
+    limit: int = 50,
 ) -> List[Dict[str, Any]]:
     """List users in a hospital."""
-    queryset = User.objects.filter(
-        hospital_id=hospital_id,
-        is_active=is_active
-    )
+    queryset = User.objects.filter(hospital_id=hospital_id, is_active=is_active)
     if role:
         queryset = queryset.filter(role=role)
-    
+
     users = queryset[:limit]
-    return [{
-        "id": str(u.id),
-        "email": u.email,
-        "full_name": u.get_full_name(),
-        "role": u.role,
-        "department": u.department,
-        "specialization": u.specialization
-    } for u in users]
+    return [
+        {
+            "id": str(u.id),
+            "email": u.email,
+            "full_name": u.get_full_name(),
+            "role": u.role,
+            "department": u.department,
+            "specialization": u.specialization,
+        }
+        for u in users
+    ]
 
 
 @mcp.tool()
@@ -265,70 +283,69 @@ def list_doctors(
     specialization: Optional[str] = None,
     department: Optional[str] = None,
     is_active: bool = True,
-    limit: int = 20
+    limit: int = 20,
 ) -> List[Dict[str, Any]]:
     """List all doctors in a hospital with enhanced filters."""
     queryset = User.objects.filter(
-        hospital_id=hospital_id,
-        role='DOCTOR',
-        is_active=is_active
-    ).prefetch_related('doctor_specialties__specialty')
-    
+        hospital_id=hospital_id, role="DOCTOR", is_active=is_active
+    ).prefetch_related("doctor_specialties__specialty")
+
     if specialization:
         queryset = queryset.filter(specialization__icontains=specialization)
-    
+
     if department:
         queryset = queryset.filter(department__icontains=department)
-    
+
     doctors = queryset[:limit]
-    
+
     result = []
     for d in doctors:
         # Get primary specialty if available
         primary_specialty = None
         all_specialties = []
-        
+
         try:
             doctor_specialties = d.doctor_specialties.all()
             for ds in doctor_specialties:
                 spec_info = {
                     "name": ds.specialty.name,
                     "code": ds.specialty.code,
-                    "is_primary": ds.is_primary
+                    "is_primary": ds.is_primary,
                 }
                 all_specialties.append(spec_info)
                 if ds.is_primary:
                     primary_specialty = ds.specialty.name
         except:
             pass
-        
-        result.append({
-            "id": str(d.id),
-            "name": d.get_full_name(),
-            "email": d.email,
-            "phone_number": d.phone_number,
-            "specialization": d.specialization or primary_specialty or "General Medicine",
-            "primary_specialty": primary_specialty,
-            "all_specialties": all_specialties,
-            "department": d.department,
-            "years_of_experience": d.years_of_experience,
-            "is_active": d.is_active
-        })
-    
+
+        result.append(
+            {
+                "id": str(d.id),
+                "name": d.get_full_name(),
+                "email": d.email,
+                "phone_number": d.phone_number,
+                "specialization": d.specialization
+                or primary_specialty
+                or "General Medicine",
+                "primary_specialty": primary_specialty,
+                "all_specialties": all_specialties,
+                "department": d.department,
+                "years_of_experience": d.years_of_experience,
+                "is_active": d.is_active,
+            }
+        )
+
     return result
 
 
 @mcp.tool()
-def get_doctor_details(
-    doctor_id: str
-) -> Dict[str, Any]:
+def get_doctor_details(doctor_id: str) -> Dict[str, Any]:
     """Get detailed information about a specific doctor."""
     try:
         doctor = User.objects.prefetch_related(
-            'doctor_specialties__specialty',
-            'appointments_as_doctor'
-        ).get(id=doctor_id, role='DOCTOR')
-        
+            "doctor_specialties__specialty", "appointments_as_doctor"
+        ).get(id=doctor_id, role="DOCTOR")
+
         # Get specialties
         specialties = []
         primary_specialty = None
@@ -339,17 +356,23 @@ def get_doctor_details(
                 "code": ds.specialty.code,
                 "is_primary": ds.is_primary,
                 "years_of_experience": ds.years_of_experience,
-                "certification_date": str(ds.certification_date) if ds.certification_date else None
+                "certification_date": (
+                    str(ds.certification_date) if ds.certification_date else None
+                ),
             }
             specialties.append(spec_info)
             if ds.is_primary:
                 primary_specialty = ds.specialty.name
-        
+
         # Count appointments
         total_appointments = doctor.appointments_as_doctor.count()
-        completed_appointments = doctor.appointments_as_doctor.filter(status='COMPLETED').count()
-        upcoming_appointments = doctor.appointments_as_doctor.filter(status='SCHEDULED').count()
-        
+        completed_appointments = doctor.appointments_as_doctor.filter(
+            status="COMPLETED"
+        ).count()
+        upcoming_appointments = doctor.appointments_as_doctor.filter(
+            status="SCHEDULED"
+        ).count()
+
         return {
             "success": True,
             "doctor": {
@@ -360,7 +383,9 @@ def get_doctor_details(
                 "full_name": doctor.get_full_name(),
                 "phone_number": doctor.phone_number,
                 "department": doctor.department,
-                "specialization": doctor.specialization or primary_specialty or "General Medicine",
+                "specialization": doctor.specialization
+                or primary_specialty
+                or "General Medicine",
                 "primary_specialty": primary_specialty,
                 "specialties": specialties,
                 "years_of_experience": doctor.years_of_experience,
@@ -372,9 +397,9 @@ def get_doctor_details(
                 "statistics": {
                     "total_appointments": total_appointments,
                     "completed_appointments": completed_appointments,
-                    "upcoming_appointments": upcoming_appointments
-                }
-            }
+                    "upcoming_appointments": upcoming_appointments,
+                },
+            },
         }
     except User.DoesNotExist:
         return {"success": False, "error": "Doctor not found"}
@@ -384,47 +409,43 @@ def get_doctor_details(
 
 # ========== SPECIALTY TOOLS ==========
 
+
 @mcp.tool()
 def list_specialties(
-    search: Optional[str] = None,
-    is_active: bool = True,
-    limit: int = 50
+    search: Optional[str] = None, is_active: bool = True, limit: int = 50
 ) -> List[Dict[str, Any]]:
     """List all medical specialties available in the system."""
     queryset = Specialty.objects.filter(is_active=is_active)
-    
+
     if search:
         queryset = queryset.filter(name__icontains=search)
-    
-    specialties = queryset.order_by('name')[:limit]
-    
-    return [{
-        "id": str(s.id),
-        "code": s.code,
-        "name": s.name,
-        "description": s.description,
-        "is_active": s.is_active
-    } for s in specialties]
+
+    specialties = queryset.order_by("name")[:limit]
+
+    return [
+        {
+            "id": str(s.id),
+            "code": s.code,
+            "name": s.name,
+            "description": s.description,
+            "is_active": s.is_active,
+        }
+        for s in specialties
+    ]
 
 
 @mcp.tool()
-def create_specialty(
-    code: str,
-    name: str,
-    description: str
-) -> Dict[str, Any]:
+def create_specialty(code: str, name: str, description: str) -> Dict[str, Any]:
     """Create a new medical specialty."""
     try:
         specialty = Specialty.objects.create(
-            code=code.upper(),
-            name=name,
-            description=description
+            code=code.upper(), name=name, description=description
         )
         return {
             "success": True,
             "specialty_id": str(specialty.id),
             "code": specialty.code,
-            "name": specialty.name
+            "name": specialty.name,
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -436,82 +457,92 @@ def assign_doctor_specialty(
     specialty_id: str,
     is_primary: bool = False,
     years_of_experience: int = 0,
-    certification_date: Optional[str] = None  # Format: YYYY-MM-DD
+    certification_date: Optional[str] = None,  # Format: YYYY-MM-DD
 ) -> Dict[str, Any]:
     """Assign a specialty to a doctor."""
     try:
-        doctor = User.objects.get(id=doctor_id, role='DOCTOR')
+        doctor = User.objects.get(id=doctor_id, role="DOCTOR")
         specialty = Specialty.objects.get(id=specialty_id)
-        
+
         # If setting as primary, unset other primary specialties
         if is_primary:
-            DoctorSpecialty.objects.filter(
-                doctor=doctor,
-                is_primary=True
-            ).update(is_primary=False)
-        
+            DoctorSpecialty.objects.filter(doctor=doctor, is_primary=True).update(
+                is_primary=False
+            )
+
         doctor_specialty = DoctorSpecialty.objects.create(
             doctor=doctor,
             specialty=specialty,
             is_primary=is_primary,
             years_of_experience=years_of_experience,
-            certification_date=datetime.strptime(certification_date, '%Y-%m-%d').date() if certification_date else None
+            certification_date=(
+                datetime.strptime(certification_date, "%Y-%m-%d").date()
+                if certification_date
+                else None
+            ),
         )
-        
+
         return {
             "success": True,
             "doctor": doctor.get_full_name(),
             "specialty": specialty.name,
-            "is_primary": is_primary
+            "is_primary": is_primary,
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
 @mcp.tool()
-def list_doctor_specialties(
-    doctor_id: str
-) -> List[Dict[str, Any]]:
+def list_doctor_specialties(doctor_id: str) -> List[Dict[str, Any]]:
     """List all specialties for a specific doctor."""
-    doctor_specialties = DoctorSpecialty.objects.filter(
-        doctor_id=doctor_id
-    ).select_related('specialty').order_by('-is_primary', 'specialty__name')
-    
-    return [{
-        "id": str(ds.id),
-        "specialty_id": str(ds.specialty.id),
-        "specialty_code": ds.specialty.code,
-        "specialty_name": ds.specialty.name,
-        "is_primary": ds.is_primary,
-        "years_of_experience": ds.years_of_experience,
-        "certification_date": str(ds.certification_date) if ds.certification_date else None
-    } for ds in doctor_specialties]
+    doctor_specialties = (
+        DoctorSpecialty.objects.filter(doctor_id=doctor_id)
+        .select_related("specialty")
+        .order_by("-is_primary", "specialty__name")
+    )
+
+    return [
+        {
+            "id": str(ds.id),
+            "specialty_id": str(ds.specialty.id),
+            "specialty_code": ds.specialty.code,
+            "specialty_name": ds.specialty.name,
+            "is_primary": ds.is_primary,
+            "years_of_experience": ds.years_of_experience,
+            "certification_date": (
+                str(ds.certification_date) if ds.certification_date else None
+            ),
+        }
+        for ds in doctor_specialties
+    ]
 
 
 @mcp.tool()
 def get_doctors_by_specialty(
-    hospital_id: str,
-    specialty_id: str,
-    limit: int = 20
+    hospital_id: str, specialty_id: str, limit: int = 20
 ) -> List[Dict[str, Any]]:
     """Get all doctors in a hospital with a specific specialty."""
     doctor_specialties = DoctorSpecialty.objects.filter(
         specialty_id=specialty_id,
         doctor__hospital_id=hospital_id,
-        doctor__is_active=True
-    ).select_related('doctor', 'specialty')[:limit]
-    
-    return [{
-        "doctor_id": str(ds.doctor.id),
-        "doctor_name": ds.doctor.get_full_name(),
-        "doctor_email": ds.doctor.email,
-        "specialty": ds.specialty.name,
-        "is_primary": ds.is_primary,
-        "years_of_experience": ds.years_of_experience
-    } for ds in doctor_specialties]
+        doctor__is_active=True,
+    ).select_related("doctor", "specialty")[:limit]
+
+    return [
+        {
+            "doctor_id": str(ds.doctor.id),
+            "doctor_name": ds.doctor.get_full_name(),
+            "doctor_email": ds.doctor.email,
+            "specialty": ds.specialty.name,
+            "is_primary": ds.is_primary,
+            "years_of_experience": ds.years_of_experience,
+        }
+        for ds in doctor_specialties
+    ]
 
 
 # ========== APPOINTMENT TOOLS ==========
+
 
 @mcp.tool()
 def create_appointment(
@@ -522,31 +553,31 @@ def create_appointment(
     scheduled_time: str,  # Format: HH:MM
     reason: str,
     appointment_type: str = "CONSULTATION",
-    duration_minutes: int = 30
+    duration_minutes: int = 30,
 ) -> Dict[str, Any]:
     """Create a new appointment."""
     try:
         hospital = Hospital.objects.get(id=hospital_id)
-        patient = User.objects.get(id=patient_id, role='PATIENT')
-        doctor = User.objects.get(id=doctor_id, role='DOCTOR')
-        
+        patient = User.objects.get(id=patient_id, role="PATIENT")
+        doctor = User.objects.get(id=doctor_id, role="DOCTOR")
+
         appointment = Appointment.objects.create(
             hospital=hospital,
             patient=patient,
             doctor=doctor,
-            scheduled_date=datetime.strptime(scheduled_date, '%Y-%m-%d').date(),
-            scheduled_time=datetime.strptime(scheduled_time, '%H:%M').time(),
+            scheduled_date=datetime.strptime(scheduled_date, "%Y-%m-%d").date(),
+            scheduled_time=datetime.strptime(scheduled_time, "%H:%M").time(),
             reason=reason,
             appointment_type=appointment_type,
-            duration_minutes=duration_minutes
+            duration_minutes=duration_minutes,
         )
-        
+
         return {
             "success": True,
             "appointment_id": str(appointment.id),
             "patient": patient.get_full_name(),
             "doctor": doctor.get_full_name(),
-            "scheduled": f"{scheduled_date} at {scheduled_time}"
+            "scheduled": f"{scheduled_date} at {scheduled_time}",
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -560,11 +591,11 @@ def list_appointments(
     status: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
-    limit: int = 50
+    limit: int = 50,
 ) -> List[Dict[str, Any]]:
     """List appointments with filters."""
     queryset = Appointment.objects.filter(hospital_id=hospital_id)
-    
+
     if doctor_id:
         queryset = queryset.filter(doctor_id=doctor_id)
     if patient_id:
@@ -575,26 +606,27 @@ def list_appointments(
         queryset = queryset.filter(scheduled_date__gte=date_from)
     if date_to:
         queryset = queryset.filter(scheduled_date__lte=date_to)
-    
-    appointments = queryset.select_related('patient', 'doctor')[:limit]
-    
-    return [{
-        "id": str(a.id),
-        "patient": a.patient.get_full_name(),
-        "doctor": a.doctor.get_full_name(),
-        "date": str(a.scheduled_date),
-        "time": str(a.scheduled_time),
-        "status": a.status,
-        "type": a.appointment_type,
-        "reason": a.reason
-    } for a in appointments]
+
+    appointments = queryset.select_related("patient", "doctor")[:limit]
+
+    return [
+        {
+            "id": str(a.id),
+            "patient": a.patient.get_full_name(),
+            "doctor": a.doctor.get_full_name(),
+            "date": str(a.scheduled_date),
+            "time": str(a.scheduled_time),
+            "status": a.status,
+            "type": a.appointment_type,
+            "reason": a.reason,
+        }
+        for a in appointments
+    ]
 
 
 @mcp.tool()
 def update_appointment_status(
-    appointment_id: str,
-    status: str,
-    notes: Optional[str] = None
+    appointment_id: str, status: str, notes: Optional[str] = None
 ) -> Dict[str, Any]:
     """Update appointment status."""
     try:
@@ -602,18 +634,18 @@ def update_appointment_status(
         appointment.status = status
         if notes:
             appointment.notes = notes
-        
-        if status == 'IN_PROGRESS':
+
+        if status == "IN_PROGRESS":
             appointment.start_time = datetime.now()
-        elif status == 'COMPLETED':
+        elif status == "COMPLETED":
             appointment.end_time_actual = datetime.now()
-        
+
         appointment.save()
-        
+
         return {
             "success": True,
             "appointment_id": str(appointment.id),
-            "status": appointment.status
+            "status": appointment.status,
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -625,34 +657,37 @@ def list_appointment_slots(
     doctor_id: str,
     date_from: Optional[str] = None,  # Format: YYYY-MM-DD
     date_to: Optional[str] = None,
-    is_available: bool = True
+    is_available: bool = True,
 ) -> List[Dict[str, Any]]:
     """List available appointment slots for a doctor."""
     queryset = DoctorAvailabilitySlot.objects.filter(
-        doctor_id=doctor_id,
-        is_available=is_available
+        doctor_id=doctor_id, is_available=is_available
     )
-    
+
     if date_from:
-        from_datetime = datetime.strptime(date_from, '%Y-%m-%d')
+        from_datetime = datetime.strptime(date_from, "%Y-%m-%d")
         queryset = queryset.filter(start_time__gte=from_datetime)
-    
+
     if date_to:
-        to_datetime = datetime.strptime(date_to, '%Y-%m-%d')
+        to_datetime = datetime.strptime(date_to, "%Y-%m-%d")
         queryset = queryset.filter(end_time__lte=to_datetime)
-    
+
     slots = queryset[:50]
-    
-    return [{
-        "id": str(s.id),
-        "start_time": s.start_time.isoformat(),
-        "end_time": s.end_time.isoformat(),
-        "is_available": s.is_available,
-        "duration_minutes": (s.end_time - s.start_time).total_seconds() / 60
-    } for s in slots]
+
+    return [
+        {
+            "id": str(s.id),
+            "start_time": s.start_time.isoformat(),
+            "end_time": s.end_time.isoformat(),
+            "is_available": s.is_available,
+            "duration_minutes": (s.end_time - s.start_time).total_seconds() / 60,
+        }
+        for s in slots
+    ]
 
 
 # ========== MEDICAL RECORDS TOOLS ==========
+
 
 @mcp.tool()
 def create_medical_record(
@@ -664,14 +699,14 @@ def create_medical_record(
     record_type: str = "GENERAL",
     diagnosis: Optional[str] = None,
     symptoms: Optional[str] = None,
-    appointment_id: Optional[str] = None
+    appointment_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Create a new medical record."""
     try:
         hospital = Hospital.objects.get(id=hospital_id)
-        patient = User.objects.get(id=patient_id, role='PATIENT')
+        patient = User.objects.get(id=patient_id, role="PATIENT")
         created_by = User.objects.get(id=created_by_id)
-        
+
         record = MedicalRecord.objects.create(
             hospital=hospital,
             patient=patient,
@@ -681,14 +716,14 @@ def create_medical_record(
             record_type=record_type,
             diagnosis=diagnosis or "",
             symptoms=symptoms or "",
-            appointment_id=appointment_id
+            appointment_id=appointment_id,
         )
-        
+
         return {
             "success": True,
             "record_id": str(record.id),
             "title": record.title,
-            "patient": patient.get_full_name()
+            "patient": patient.get_full_name(),
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -702,53 +737,58 @@ def list_medical_records(
     created_by_id: Optional[str] = None,
     date_from: Optional[str] = None,  # Format: YYYY-MM-DD
     date_to: Optional[str] = None,
-    limit: int = 20
+    limit: int = 20,
 ) -> List[Dict[str, Any]]:
     """List medical records with various filters."""
     queryset = MedicalRecord.objects.filter(hospital_id=hospital_id)
-    
+
     if patient_id:
         queryset = queryset.filter(patient_id=patient_id)
-    
+
     if created_by_id:
         queryset = queryset.filter(created_by_id=created_by_id)
-    
+
     if record_type:
         queryset = queryset.filter(record_type=record_type)
-    
+
     if date_from:
-        from_date = datetime.strptime(date_from, '%Y-%m-%d')
+        from_date = datetime.strptime(date_from, "%Y-%m-%d")
         queryset = queryset.filter(created_at__gte=from_date)
-    
+
     if date_to:
-        to_date = datetime.strptime(date_to, '%Y-%m-%d')
+        to_date = datetime.strptime(date_to, "%Y-%m-%d")
         queryset = queryset.filter(created_at__lte=to_date)
-    
-    records = queryset.select_related('patient', 'created_by').order_by('-created_at')[:limit]
-    
-    return [{
-        "id": str(r.id),
-        "patient_id": str(r.patient.id),
-        "patient_name": r.patient.get_full_name(),
-        "title": r.title,
-        "type": r.record_type,
-        "description": r.description,
-        "diagnosis": r.diagnosis,
-        "symptoms": r.symptoms,
-        "created_by": r.created_by.get_full_name() if r.created_by else "System",
-        "created_at": r.created_at.isoformat(),
-        "appointment_id": str(r.appointment_id) if r.appointment_id else None
-    } for r in records]
+
+    records = queryset.select_related("patient", "created_by").order_by("-created_at")[
+        :limit
+    ]
+
+    return [
+        {
+            "id": str(r.id),
+            "patient_id": str(r.patient.id),
+            "patient_name": r.patient.get_full_name(),
+            "title": r.title,
+            "type": r.record_type,
+            "description": r.description,
+            "diagnosis": r.diagnosis,
+            "symptoms": r.symptoms,
+            "created_by": r.created_by.get_full_name() if r.created_by else "System",
+            "created_at": r.created_at.isoformat(),
+            "appointment_id": str(r.appointment_id) if r.appointment_id else None,
+        }
+        for r in records
+    ]
 
 
 @mcp.tool()
-def get_medical_record_details(
-    record_id: str
-) -> Dict[str, Any]:
+def get_medical_record_details(record_id: str) -> Dict[str, Any]:
     """Get detailed information about a specific medical record."""
     try:
-        record = MedicalRecord.objects.select_related('patient', 'created_by', 'hospital').get(id=record_id)
-        
+        record = MedicalRecord.objects.select_related(
+            "patient", "created_by", "hospital"
+        ).get(id=record_id)
+
         return {
             "success": True,
             "record": {
@@ -763,12 +803,18 @@ def get_medical_record_details(
                 "description": record.description,
                 "diagnosis": record.diagnosis,
                 "symptoms": record.symptoms,
-                "appointment_id": str(record.appointment_id) if record.appointment_id else None,
-                "created_by_id": str(record.created_by.id) if record.created_by else None,
-                "created_by_name": record.created_by.get_full_name() if record.created_by else "System",
+                "appointment_id": (
+                    str(record.appointment_id) if record.appointment_id else None
+                ),
+                "created_by_id": (
+                    str(record.created_by.id) if record.created_by else None
+                ),
+                "created_by_name": (
+                    record.created_by.get_full_name() if record.created_by else "System"
+                ),
                 "created_at": record.created_at.isoformat(),
-                "updated_at": record.updated_at.isoformat()
-            }
+                "updated_at": record.updated_at.isoformat(),
+            },
         }
     except MedicalRecord.DoesNotExist:
         return {"success": False, "error": "Medical record not found"}
@@ -782,12 +828,12 @@ def update_medical_record(
     title: Optional[str] = None,
     description: Optional[str] = None,
     diagnosis: Optional[str] = None,
-    symptoms: Optional[str] = None
+    symptoms: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Update an existing medical record."""
     try:
         record = MedicalRecord.objects.get(id=record_id)
-        
+
         if title:
             record.title = title
         if description:
@@ -796,14 +842,14 @@ def update_medical_record(
             record.diagnosis = diagnosis
         if symptoms:
             record.symptoms = symptoms
-        
+
         record.save()
-        
+
         return {
             "success": True,
             "record_id": str(record.id),
             "title": record.title,
-            "updated": True
+            "updated": True,
         }
     except MedicalRecord.DoesNotExist:
         return {"success": False, "error": "Medical record not found"}
@@ -812,6 +858,7 @@ def update_medical_record(
 
 
 # ========== TREATMENT TOOLS ==========
+
 
 @mcp.tool()
 def create_treatment(
@@ -824,14 +871,14 @@ def create_treatment(
     start_date: str,  # Format: YYYY-MM-DD
     treatment_type: str = "MEDICATION",
     end_date: Optional[str] = None,
-    appointment_id: Optional[str] = None
+    appointment_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Create a new treatment plan."""
     try:
         hospital = Hospital.objects.get(id=hospital_id)
-        patient = User.objects.get(id=patient_id, role='PATIENT')
-        prescribed_by = User.objects.get(id=prescribed_by_id, role='DOCTOR')
-        
+        patient = User.objects.get(id=patient_id, role="PATIENT")
+        prescribed_by = User.objects.get(id=prescribed_by_id, role="DOCTOR")
+
         treatment = Treatment.objects.create(
             hospital=hospital,
             patient=patient,
@@ -840,16 +887,18 @@ def create_treatment(
             description=description,
             instructions=instructions,
             treatment_type=treatment_type,
-            start_date=datetime.strptime(start_date, '%Y-%m-%d').date(),
-            end_date=datetime.strptime(end_date, '%Y-%m-%d').date() if end_date else None,
-            appointment_id=appointment_id
+            start_date=datetime.strptime(start_date, "%Y-%m-%d").date(),
+            end_date=(
+                datetime.strptime(end_date, "%Y-%m-%d").date() if end_date else None
+            ),
+            appointment_id=appointment_id,
         )
-        
+
         return {
             "success": True,
             "treatment_id": str(treatment.id),
             "name": treatment.name,
-            "patient": patient.get_full_name()
+            "patient": patient.get_full_name(),
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -861,52 +910,57 @@ def list_treatments(
     patient_id: Optional[str] = None,
     doctor_id: Optional[str] = None,
     status: Optional[str] = None,
-    limit: int = 20
+    limit: int = 20,
 ) -> List[Dict[str, Any]]:
     """List treatments with filters."""
     queryset = Treatment.objects.filter(hospital_id=hospital_id)
-    
+
     if patient_id:
         queryset = queryset.filter(patient_id=patient_id)
     if doctor_id:
         queryset = queryset.filter(prescribed_by_id=doctor_id)
     if status:
         queryset = queryset.filter(status=status)
-    
-    treatments = queryset.select_related('patient', 'prescribed_by')[:limit]
-    
-    return [{
-        "id": str(t.id),
-        "name": t.name,
-        "type": t.treatment_type,
-        "patient": t.patient.get_full_name(),
-        "doctor": t.prescribed_by.get_full_name() if t.prescribed_by else "N/A",
-        "status": t.status,
-        "start_date": str(t.start_date),
-        "end_date": str(t.end_date) if t.end_date else None
-    } for t in treatments]
+
+    treatments = queryset.select_related("patient", "prescribed_by")[:limit]
+
+    return [
+        {
+            "id": str(t.id),
+            "name": t.name,
+            "type": t.treatment_type,
+            "patient": t.patient.get_full_name(),
+            "doctor": t.prescribed_by.get_full_name() if t.prescribed_by else "N/A",
+            "status": t.status,
+            "start_date": str(t.start_date),
+            "end_date": str(t.end_date) if t.end_date else None,
+        }
+        for t in treatments
+    ]
 
 
 # ========== SUBSCRIPTION TOOLS ==========
 
+
 @mcp.tool()
-def list_subscription_plans(
-    is_active: bool = True
-) -> List[Dict[str, Any]]:
+def list_subscription_plans(is_active: bool = True) -> List[Dict[str, Any]]:
     """List available subscription plans."""
     plans = SubscriptionPlan.objects.filter(is_active=is_active)
-    
-    return [{
-        "id": str(p.id),
-        "name": p.name,
-        "type": p.plan_type,
-        "price": float(p.price),
-        "billing_cycle": p.billing_cycle,
-        "max_users": p.max_users,
-        "max_doctors": p.max_doctors,
-        "max_patients": p.max_patients,
-        "features": p.features
-    } for p in plans]
+
+    return [
+        {
+            "id": str(p.id),
+            "name": p.name,
+            "type": p.plan_type,
+            "price": float(p.price),
+            "billing_cycle": p.billing_cycle,
+            "max_users": p.max_users,
+            "max_doctors": p.max_doctors,
+            "max_patients": p.max_patients,
+            "features": p.features,
+        }
+        for p in plans
+    ]
 
 
 @mcp.tool()
@@ -914,38 +968,39 @@ def create_subscription(
     hospital_id: str,
     plan_id: str,
     start_date: str,  # Format: YYYY-MM-DD
-    end_date: str  # Format: YYYY-MM-DD
+    end_date: str,  # Format: YYYY-MM-DD
 ) -> Dict[str, Any]:
     """Create a subscription for a hospital."""
     try:
         hospital = Hospital.objects.get(id=hospital_id)
         plan = SubscriptionPlan.objects.get(id=plan_id)
-        
+
         subscription = Subscription.objects.create(
             hospital=hospital,
             plan=plan,
-            start_date=datetime.strptime(start_date, '%Y-%m-%d'),
-            end_date=datetime.strptime(end_date, '%Y-%m-%d'),
-            current_period_start=datetime.strptime(start_date, '%Y-%m-%d'),
-            current_period_end=datetime.strptime(end_date, '%Y-%m-%d')
+            start_date=datetime.strptime(start_date, "%Y-%m-%d"),
+            end_date=datetime.strptime(end_date, "%Y-%m-%d"),
+            current_period_start=datetime.strptime(start_date, "%Y-%m-%d"),
+            current_period_end=datetime.strptime(end_date, "%Y-%m-%d"),
         )
-        
+
         # Update hospital subscription status
         hospital.subscription_plan = plan
-        hospital.subscription_status = 'ACTIVE'
+        hospital.subscription_status = "ACTIVE"
         hospital.save()
-        
+
         return {
             "success": True,
             "subscription_id": str(subscription.id),
             "hospital": hospital.name,
-            "plan": plan.name
+            "plan": plan.name,
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
 # ========== RESOURCES ==========
+
 
 @mcp.resource("hospitals://list")
 def get_hospitals_resource() -> str:
@@ -1003,9 +1058,7 @@ def get_patient_medical_records_resource(patient_id: str) -> str:
     try:
         patient = User.objects.get(id=patient_id)
         records = list_medical_records(
-            hospital_id=str(patient.hospital.id),
-            patient_id=patient_id,
-            limit=100
+            hospital_id=str(patient.hospital.id), patient_id=patient_id, limit=100
         )
         return json.dumps(records, indent=2)
     except:
@@ -1017,10 +1070,7 @@ def get_todays_appointments(hospital_id: str) -> str:
     """Get today's appointments for a hospital."""
     today = date.today().isoformat()
     appointments = list_appointments(
-        hospital_id=hospital_id,
-        date_from=today,
-        date_to=today,
-        limit=100
+        hospital_id=hospital_id, date_from=today, date_to=today, limit=100
     )
     return json.dumps(appointments, indent=2)
 
@@ -1030,21 +1080,17 @@ def get_upcoming_appointments_resource(hospital_id: str) -> str:
     """Get upcoming appointments for a hospital."""
     today = date.today().isoformat()
     appointments = list_appointments(
-        hospital_id=hospital_id,
-        date_from=today,
-        status="SCHEDULED",
-        limit=100
+        hospital_id=hospital_id, date_from=today, status="SCHEDULED", limit=100
     )
     return json.dumps(appointments, indent=2)
 
 
 # ========== PROMPTS ==========
 
+
 @mcp.prompt()
 def appointment_booking_prompt(
-    patient_name: str,
-    doctor_specialization: str,
-    preferred_date: str
+    patient_name: str, doctor_specialization: str, preferred_date: str
 ) -> str:
     """Generate a prompt for booking an appointment."""
     return f"""
@@ -1061,10 +1107,7 @@ def appointment_booking_prompt(
 
 
 @mcp.prompt()
-def patient_onboarding_prompt(
-    hospital_name: str,
-    patient_email: str
-) -> str:
+def patient_onboarding_prompt(hospital_name: str, patient_email: str) -> str:
     """Generate a prompt for onboarding a new patient."""
     return f"""
     Onboard a new patient to {hospital_name}.
