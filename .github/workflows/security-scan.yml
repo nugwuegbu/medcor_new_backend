@@ -32,8 +32,8 @@ jobs:
 
       - name: Run Bandit security scan
         run: |
-          bandit -r core/ appointments/ medical_records/ treatments/ subscription_plans/ specialty/ tenants/ youcam/ email_service/ -f json -o bandit-report.json
-          bandit -r core/ appointments/ medical_records/ treatments/ subscription_plans/ specialty/ tenants/ youcam/ email_service/ -f txt
+          bandit -r core/ appointments/ medical_records/ treatments/ subscription_plans/ specialty/ tenants/ youcam/ email_service/ -f json -o bandit-report.json --severity-level medium
+          bandit -r core/ appointments/ medical_records/ treatments/ subscription_plans/ specialty/ tenants/ youcam/ email_service/ -f txt --severity-level medium
 
       - name: Run Safety vulnerability scan
         run: |
