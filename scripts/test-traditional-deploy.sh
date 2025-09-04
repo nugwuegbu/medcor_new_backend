@@ -139,12 +139,23 @@ else
     echo -e "${RED}❌ Git repository not accessible${NC}"
 fi
 
-echo "Simulating virtual environment creation..."
-if python3 -m venv test_venv 2>/dev/null; then
-    echo -e "${GREEN}✅ Virtual environment creation works${NC}"
-    rm -rf test_venv
+echo "Checking for existing virtual environment..."
+if [ -d "venv" ]; then
+    echo -e "${GREEN}✅ Existing virtual environment found${NC}"
+    if [ -f "venv/bin/activate" ]; then
+        echo -e "${GREEN}✅ Virtual environment is properly configured${NC}"
+    else
+        echo -e "${RED}❌ Virtual environment is corrupted${NC}"
+    fi
 else
-    echo -e "${RED}❌ Virtual environment creation failed${NC}"
+    echo -e "${YELLOW}⚠️  No existing virtual environment found${NC}"
+    echo "Simulating virtual environment creation..."
+    if python3 -m venv test_venv 2>/dev/null; then
+        echo -e "${GREEN}✅ Virtual environment creation works${NC}"
+        rm -rf test_venv
+    else
+        echo -e "${RED}❌ Virtual environment creation failed${NC}"
+    fi
 fi
 
 echo "Simulating dependency installation..."
