@@ -72,14 +72,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Build Docker image
+      - name: Prepare deployment
         run: |
-          docker build -t medcor-backend:${{ github.sha }} .
-          docker tag medcor-backend:${{ github.sha }} medcor-backend:latest
-
-      - name: Save Docker image
-        run: |
-          docker save medcor-backend:latest | gzip > medcor-backend.tar.gz
+          echo "Preparing traditional deployment (no Docker build needed)"
 
       - name: Deploy to production server
         uses: appleboy/ssh-action@v1.0.3
@@ -89,63 +84,17 @@ jobs:
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: ${{ secrets.PRODUCTION_PORT }}
           script: |
-            # Create backup of current deployment
-            sudo cp -r /var/www/html/medcor_backend2 /var/www/html/medcor_backend2_backup_$(date +%Y%m%d_%H%M%S) || true
-
-            # Stop current services
+            # Navigate to project directory
             cd /var/www/html/medcor_backend2
-            sudo docker-compose down || true
-
-            # Wait for services to stop
-            sleep 10
-
-      - name: Upload and extract new code
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USER }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          port: ${{ secrets.PRODUCTION_PORT }}
-          source: "."
-          target: "/tmp/medcor_backend2_new"
-          strip_components: 0
-
-      - name: Deploy new version
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USER }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          port: ${{ secrets.PRODUCTION_PORT }}
-          script: |
-            # Remove old deployment
-            sudo rm -rf /var/www/html/medcor_backend2
-
-            # Move new code to production location
-            sudo mv /tmp/medcor_backend2_new /var/www/html/medcor_backend2
-            sudo chown -R $USER:$USER /var/www/html/medcor_backend2
-
-            # Set proper permissions
-            cd /var/www/html/medcor_backend2
-            chmod +x run_server.sh
-            chmod +x scripts/deploy.sh
-
-            # Copy environment file
-            sudo cp /var/www/html/medcor_backend2/env.prod /var/www/html/medcor_backend2/.env
-
-            # Start services
-            sudo docker-compose up -d --build
-
-            # Wait for services to start
-            sleep 30
-
-            # Health check
-            curl -f http://localhost/api/health/ || exit 1
-
-            # Clean up old Docker images
-            sudo docker image prune -f
-
-            echo "Deployment completed successfully!"
+            
+            # Pull latest code
+            git pull origin main
+            
+            # Make deployment script executable
+            chmod +x scripts/traditional-deploy.sh
+            
+            # Run traditional deployment
+            ./scripts/traditional-deploy.sh
 
   notify:
     needs: [test, build-and-deploy]
