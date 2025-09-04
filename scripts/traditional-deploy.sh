@@ -185,204 +185,50 @@ EOF
     log "✅ Systemd services updated"
 }
 
-# Function to update nginx configuration
-update_nginx() {
-    log "🌐 Updating nginx configuration..."
+# Function to check nginx status (no configuration changes)
+check_nginx() {
+    log "🌐 Checking nginx status..."
     
-    # Check if SSL certificates exist
-    SSL_CERT="/etc/letsencrypt/live/$NGINX_SITE/fullchain.pem"
-    SSL_KEY="/etc/letsencrypt/live/$NGINX_SITE/privkey.pem"
-    
-    if [ -f "$SSL_CERT" ] && [ -f "$SSL_KEY" ]; then
-        log "✅ SSL certificates found, configuring HTTPS"
-        SSL_CONFIGURED=true
+    # Check if nginx is running
+    if sudo systemctl is-active --quiet nginx; then
+        log "✅ Nginx is running"
     else
-        log "⚠️  SSL certificates not found, using HTTP only"
-        SSL_CONFIGURED=false
-    fi
-    
-    # Update nginx site configuration
-    if [ "$SSL_CONFIGURED" = true ]; then
-        # HTTPS configuration with SSL
-        sudo tee /etc/nginx/sites-available/$NGINX_SITE > /dev/null << EOF
-# HTTP to HTTPS redirect
-server {
-    listen 80;
-    server_name $NGINX_SITE;
-    return 301 https://\$server_name\$request_uri;
-}
-
-# HTTPS server
-server {
-    listen 443 ssl http2;
-    server_name $NGINX_SITE;
-    
-    # SSL configuration
-    ssl_certificate $SSL_CERT;
-    ssl_certificate_key $SSL_KEY;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
-    ssl_prefer_server_ciphers off;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    
-    # Client max body size for file uploads
-    client_max_body_size 100M;
-    
-    # Static files
-    location /static/ {
-        alias $PROJECT_DIR/staticfiles/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-    
-    # Media files
-    location /media/ {
-        alias $PROJECT_DIR/media/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-    
-    # API endpoints
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_redirect off;
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-    
-    # Admin interface
-    location /admin/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_redirect off;
-    }
-    
-    # Health check endpoint
-    location /health/ {
-        proxy_pass http://127.0.0.1:8000/api/health/;
-        access_log off;
-    }
-    
-    # Root redirect to API docs
-    location = / {
-        return 301 /api/schema/swagger-ui/;
-    }
-    
-    # Default location
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_redirect off;
-    }
-}
-EOF
-    else
-        # HTTP only configuration
-        sudo tee /etc/nginx/sites-available/$NGINX_SITE > /dev/null << EOF
-server {
-    listen 80;
-    server_name $NGINX_SITE;
-    
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
-    
-    # Client max body size for file uploads
-    client_max_body_size 100M;
-    
-    # Static files
-    location /static/ {
-        alias $PROJECT_DIR/staticfiles/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-    
-    # Media files
-    location /media/ {
-        alias $PROJECT_DIR/media/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-    
-    # API endpoints
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_redirect off;
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-    
-    # Admin interface
-    location /admin/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_redirect off;
-    }
-    
-    # Health check endpoint
-    location /health/ {
-        proxy_pass http://127.0.0.1:8000/api/health/;
-        access_log off;
-    }
-    
-    # Root redirect to API docs
-    location = / {
-        return 301 /api/schema/swagger-ui/;
-    }
-    
-    # Default location
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_redirect off;
-    }
-}
-EOF
-    fi
-
-    # Enable site if not already enabled
-    if [ ! -L "/etc/nginx/sites-enabled/$NGINX_SITE" ]; then
-        sudo ln -sf /etc/nginx/sites-available/$NGINX_SITE /etc/nginx/sites-enabled/
-        sudo rm -f /etc/nginx/sites-enabled/default
+        log "⚠️  Nginx is not running, starting it..."
+        sudo systemctl start nginx
+        if sudo systemctl is-active --quiet nginx; then
+            log "✅ Nginx started successfully"
+        else
+            error "❌ Failed to start nginx"
+            return 1
+        fi
     fi
     
     # Test nginx configuration
-    sudo nginx -t
-    log "✅ Nginx configuration updated"
+    if sudo nginx -t; then
+        log "✅ Nginx configuration is valid"
+    else
+        error "❌ Nginx configuration has errors"
+        return 1
+    fi
+}
+
+# Function to check RabbitMQ service
+check_rabbitmq() {
+    log "🐰 Checking RabbitMQ service..."
+    
+    # Check if RabbitMQ is running
+    if sudo systemctl is-active --quiet rabbitmq-server; then
+        log "✅ RabbitMQ is running"
+    else
+        log "⚠️  RabbitMQ is not running, starting it..."
+        sudo systemctl start rabbitmq-server
+        if sudo systemctl is-active --quiet rabbitmq-server; then
+            log "✅ RabbitMQ started successfully"
+        else
+            error "❌ Failed to start RabbitMQ"
+            return 1
+        fi
+    fi
 }
 
 # Function to start services
@@ -435,6 +281,14 @@ check_health() {
         return 1
     fi
     
+    # Check RabbitMQ
+    if systemctl is-active --quiet rabbitmq-server; then
+        log "✅ RabbitMQ service is running"
+    else
+        error "❌ RabbitMQ service failed to start"
+        return 1
+    fi
+    
     # Test API endpoint (try HTTPS first, then HTTP)
     if curl -f https://$NGINX_SITE/api/health/ > /dev/null 2>&1; then
         log "✅ API endpoint is responding (HTTPS)"
@@ -470,8 +324,11 @@ main() {
     # Update services
     update_services
     
-    # Update nginx
-    update_nginx
+    # Check nginx (no configuration changes)
+    check_nginx
+    
+    # Check RabbitMQ
+    check_rabbitmq
     
     # Start services
     start_services
