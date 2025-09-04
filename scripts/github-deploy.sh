@@ -92,12 +92,20 @@ create_backup() {
 stop_services() {
     log "🛑 Stopping current services..."
     
+    # Stop old systemd services that might conflict with Docker
+    log "🛑 Stopping old systemd services..."
+    sudo systemctl stop gunicorn.service 2>/dev/null || true
+    sudo systemctl stop celery.service 2>/dev/null || true
+    sudo systemctl stop nginx 2>/dev/null || true
+    log "✅ Old systemd services stopped"
+    
+    # Stop Docker services
     if [ -f "$PROJECT_DIR/$DOCKER_COMPOSE_FILE" ]; then
         cd "$PROJECT_DIR"
         docker-compose down --remove-orphans || true
-        log "✅ Services stopped"
+        log "✅ Docker services stopped"
     else
-        warning "No docker-compose.yml found, skipping service stop"
+        warning "No docker-compose.yml found, skipping Docker service stop"
     fi
 }
 
