@@ -4,13 +4,19 @@ Health check views for the MedCor Backend API
 
 import logging
 
-import redis
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.http import JsonResponse
 
 logger = logging.getLogger(__name__)
+
+# Optional Redis import
+try:
+    import redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
 
 
 def health_check(request):
@@ -39,20 +45,26 @@ def health_check(request):
         }
         health_status["status"] = "unhealthy"
 
-    # Check Redis connection
-    try:
-        redis_client = redis.Redis.from_url(settings.REDIS_URL)
-        redis_client.ping()
+    # Check Redis connection (if available)
+    if REDIS_AVAILABLE and hasattr(settings, 'REDIS_URL') and settings.REDIS_URL:
+        try:
+            redis_client = redis.Redis.from_url(settings.REDIS_URL)
+            redis_client.ping()
+            health_status["services"]["redis"] = {
+                "status": "healthy",
+                "message": "Redis connection successful",
+            }
+        except Exception as e:
+            health_status["services"]["redis"] = {
+                "status": "unhealthy",
+                "message": f"Redis connection failed: {str(e)}",
+            }
+            health_status["status"] = "unhealthy"
+    else:
         health_status["services"]["redis"] = {
-            "status": "healthy",
-            "message": "Redis connection successful",
+            "status": "not_configured",
+            "message": "Redis is not configured or not available",
         }
-    except Exception as e:
-        health_status["services"]["redis"] = {
-            "status": "unhealthy",
-            "message": f"Redis connection failed: {str(e)}",
-        }
-        health_status["status"] = "unhealthy"
 
     # Check cache
     try:
@@ -108,9 +120,10 @@ def readiness_check(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
 
-        # Check Redis
-        redis_client = redis.Redis.from_url(settings.REDIS_URL)
-        redis_client.ping()
+        # Check Redis (if available)
+        if REDIS_AVAILABLE and hasattr(settings, 'REDIS_URL') and settings.REDIS_URL:
+            redis_client = redis.Redis.from_url(settings.REDIS_URL)
+            redis_client.ping()
 
         return JsonResponse({"status": "ready"}, status=200)
     except Exception as e:

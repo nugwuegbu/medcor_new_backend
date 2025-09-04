@@ -69,3 +69,6 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # Disable YouCam API calls during tests
 YOUCAM_API_KEY = "test-api-key"
 YOUCAM_SECRET_KEY = "test-secret-key"
+
+# Disable Redis for testing (optional)
+REDIS_URL = None
