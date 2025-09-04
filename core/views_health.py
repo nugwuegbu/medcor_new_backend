@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # Optional Redis import
 try:
     import redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
@@ -46,7 +47,7 @@ def health_check(request):
         health_status["status"] = "unhealthy"
 
     # Check Redis connection (if available)
-    if REDIS_AVAILABLE and hasattr(settings, 'REDIS_URL') and settings.REDIS_URL:
+    if REDIS_AVAILABLE and hasattr(settings, "REDIS_URL") and settings.REDIS_URL:
         try:
             redis_client = redis.Redis.from_url(settings.REDIS_URL)
             redis_client.ping()
@@ -121,7 +122,7 @@ def readiness_check(request):
             cursor.execute("SELECT 1")
 
         # Check Redis (if available)
-        if REDIS_AVAILABLE and hasattr(settings, 'REDIS_URL') and settings.REDIS_URL:
+        if REDIS_AVAILABLE and hasattr(settings, "REDIS_URL") and settings.REDIS_URL:
             redis_client = redis.Redis.from_url(settings.REDIS_URL)
             redis_client.ping()
 
