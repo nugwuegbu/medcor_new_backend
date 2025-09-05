@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 502 Bad Gateway Diagnostic Script for MedCor Backend
-# Run this script on your AWS server to diagnose the issue
+# Diagnostic script to troubleshoot 502 Bad Gateway error
+# Run this on your AWS server to identify the issue
 
 set -e
 
@@ -9,168 +9,148 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🔍 MedCor Backend 502 Error Diagnostic Script${NC}"
-echo "=================================================="
+# Logging function
+log() {
+    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
+}
+
+error() {
+    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR:${NC} $1"
+}
+
+warning() {
+    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING:${NC} $1"
+}
+
+log "🔍 Diagnosing 502 Bad Gateway error..."
 
 # Check if we're in the right directory
-if [ ! -f "docker-compose.yml" ]; then
-    echo -e "${RED}❌ Error: docker-compose.yml not found. Please run this script from the project root.${NC}"
+if [ ! -f "manage.py" ]; then
+    error "Not in Django project directory. Please run from /var/www/html/medcor_backend2"
     exit 1
 fi
 
-echo -e "${YELLOW}📋 Step 1: Checking Docker and Docker Compose${NC}"
-echo "--------------------------------------------------"
+log "✅ In correct Django project directory"
 
-# Check Docker
-if ! command -v docker &> /dev/null; then
-    echo -e "${RED}❌ Docker is not installed${NC}"
-    exit 1
+# Check if venv exists
+if [ -d "venv" ]; then
+    log "✅ Virtual environment exists"
+    source venv/bin/activate
+    log "✅ Virtual environment activated"
 else
-    echo -e "${GREEN}✅ Docker is installed: $(docker --version)${NC}"
-fi
-
-# Check Docker Compose
-if ! command -v docker-compose &> /dev/null; then
-    echo -e "${RED}❌ Docker Compose is not installed${NC}"
+    error "❌ Virtual environment not found"
     exit 1
-else
-    echo -e "${GREEN}✅ Docker Compose is installed: $(docker-compose --version)${NC}"
 fi
 
-echo -e "${YELLOW}📋 Step 2: Checking Docker Services Status${NC}"
-echo "--------------------------------------------------"
+# Check if Gunicorn is installed
+if python -c "import gunicorn" 2>/dev/null; then
+    log "✅ Gunicorn is installed"
+else
+    error "❌ Gunicorn not installed"
+    log "Installing Gunicorn..."
+    pip install gunicorn
+fi
 
-# Check if containers are running
-echo "Docker containers status:"
-docker-compose ps
+# Check if Django app can start
+log "🔍 Testing Django application..."
+if python manage.py check --deploy 2>/dev/null; then
+    log "✅ Django application is healthy"
+else
+    warning "⚠️  Django application has issues"
+    python manage.py check
+fi
 
-echo ""
-echo "Docker containers logs (last 20 lines):"
-echo "======================================"
+# Check if port 8000 is in use
+log "🔍 Checking port 8000..."
+if netstat -tlnp 2>/dev/null | grep :8000 > /dev/null; then
+    log "✅ Port 8000 is in use"
+    netstat -tlnp | grep :8000
+else
+    warning "⚠️  Port 8000 is not in use"
+fi
 
-# Check web service logs
-echo -e "${BLUE}🌐 Web Service Logs:${NC}"
-docker-compose logs --tail=20 web || echo "No web service logs found"
+# Check if Gunicorn process is running
+log "🔍 Checking Gunicorn processes..."
+if pgrep -f gunicorn > /dev/null; then
+    log "✅ Gunicorn process is running"
+    ps aux | grep gunicorn | grep -v grep
+else
+    warning "⚠️  No Gunicorn process found"
+fi
 
-echo ""
-echo -e "${BLUE}🐰 Celery Service Logs:${NC}"
-docker-compose logs --tail=20 celery || echo "No celery service logs found"
+# Check systemd services
+log "🔍 Checking systemd services..."
+if systemctl is-active --quiet gunicorn.service 2>/dev/null; then
+    log "✅ Gunicorn systemd service is active"
+else
+    warning "⚠️  Gunicorn systemd service is not active"
+fi
 
-echo ""
-echo -e "${BLUE}🔧 MCP Server Logs:${NC}"
-docker-compose logs --tail=20 mcp-server || echo "No mcp-server service logs found"
+# Check Nginx status
+log "🔍 Checking Nginx status..."
+if systemctl is-active --quiet nginx 2>/dev/null; then
+    log "✅ Nginx is running"
+else
+    error "❌ Nginx is not running"
+fi
 
-echo ""
-echo -e "${BLUE}🌍 Nginx Service Logs:${NC}"
-docker-compose logs --tail=20 nginx || echo "No nginx service logs found"
-
-echo -e "${YELLOW}📋 Step 3: Checking Network Connectivity${NC}"
-echo "--------------------------------------------------"
-
-# Check if web service is accessible
-echo "Testing web service connectivity:"
-if docker-compose ps web | grep -q "Up"; then
-    echo -e "${GREEN}✅ Web service is running${NC}"
+# Test local connection
+log "🔍 Testing local connection to port 8000..."
+if curl -f http://localhost:8000 > /dev/null 2>&1; then
+    log "✅ Local connection to port 8000 works"
+else
+    error "❌ Local connection to port 8000 failed"
+    log "Trying to start Gunicorn manually..."
     
-    # Test internal connectivity
-    echo "Testing internal connectivity to web service:"
-    if docker-compose exec -T web curl -f http://localhost:8000/api/health/ 2>/dev/null; then
-        echo -e "${GREEN}✅ Web service health check passed${NC}"
-    else
-        echo -e "${RED}❌ Web service health check failed${NC}"
-    fi
-else
-    echo -e "${RED}❌ Web service is not running${NC}"
-fi
-
-# Check if nginx is accessible
-echo ""
-echo "Testing nginx service connectivity:"
-if docker-compose ps nginx | grep -q "Up"; then
-    echo -e "${GREEN}✅ Nginx service is running${NC}"
+    # Try to start Gunicorn manually
+    log "🚀 Starting Gunicorn manually..."
+    nohup gunicorn --bind 127.0.0.1:8000 medcor_backend2.wsgi:application --daemon 2>/dev/null || true
     
-    # Test nginx connectivity
-    if curl -f http://localhost/health/ 2>/dev/null; then
-        echo -e "${GREEN}✅ Nginx health check passed${NC}"
+    # Wait a moment
+    sleep 3
+    
+    # Test again
+    if curl -f http://localhost:8000 > /dev/null 2>&1; then
+        log "✅ Gunicorn started successfully"
     else
-        echo -e "${RED}❌ Nginx health check failed${NC}"
+        error "❌ Failed to start Gunicorn"
+        log "Checking Gunicorn logs..."
+        tail -n 20 /var/log/gunicorn/error.log 2>/dev/null || echo "No Gunicorn error log found"
     fi
-else
-    echo -e "${RED}❌ Nginx service is not running${NC}"
 fi
 
-echo -e "${YELLOW}📋 Step 4: Checking Port Availability${NC}"
-echo "--------------------------------------------------"
-
-# Check if ports are in use
-echo "Checking port 80 (nginx):"
-if netstat -tlnp | grep -q ":80 "; then
-    echo -e "${GREEN}✅ Port 80 is in use${NC}"
-    netstat -tlnp | grep ":80 "
+# Test external connection
+log "🔍 Testing external API connection..."
+if curl -f http://api.medcor.ai > /dev/null 2>&1; then
+    log "✅ External API connection works"
+elif curl -f https://api.medcor.ai > /dev/null 2>&1; then
+    log "✅ External HTTPS API connection works"
 else
-    echo -e "${RED}❌ Port 80 is not in use${NC}"
+    warning "⚠️  External API connection failed"
 fi
 
-echo ""
-echo "Checking port 8000 (web service):"
-if netstat -tlnp | grep -q ":8000 "; then
-    echo -e "${GREEN}✅ Port 8000 is in use${NC}"
-    netstat -tlnp | grep ":8000 "
+# Check Nginx configuration
+log "🔍 Checking Nginx configuration..."
+if nginx -t 2>/dev/null; then
+    log "✅ Nginx configuration is valid"
 else
-    echo -e "${RED}❌ Port 8000 is not in use${NC}"
+    error "❌ Nginx configuration has errors"
+    nginx -t
 fi
 
-echo -e "${YELLOW}📋 Step 5: Checking Environment Variables${NC}"
-echo "--------------------------------------------------"
-
-# Check if .env file exists
-if [ -f ".env" ]; then
-    echo -e "${GREEN}✅ .env file exists${NC}"
-    echo "Environment file contents (hiding sensitive data):"
-    grep -v -E "(PASSWORD|SECRET|KEY)" .env | head -10
+# Show Nginx error logs
+log "🔍 Checking Nginx error logs..."
+if [ -f "/var/log/nginx/error.log" ]; then
+    log "Recent Nginx errors:"
+    tail -n 10 /var/log/nginx/error.log
 else
-    echo -e "${YELLOW}⚠️  .env file not found${NC}"
+    warning "No Nginx error log found"
 fi
 
-echo -e "${YELLOW}📋 Step 6: Checking Database Connectivity${NC}"
-echo "--------------------------------------------------"
-
-# Test database connection
-echo "Testing database connection:"
-if docker-compose exec -T web python manage.py check --database default 2>/dev/null; then
-    echo -e "${GREEN}✅ Database connection successful${NC}"
-else
-    echo -e "${RED}❌ Database connection failed${NC}"
-    echo "Database error details:"
-    docker-compose exec -T web python manage.py check --database default 2>&1 || true
-fi
-
-echo -e "${YELLOW}📋 Step 7: Quick Fix Attempts${NC}"
-echo "--------------------------------------------------"
-
-echo "Attempting to restart services..."
-docker-compose down
-sleep 5
-docker-compose up -d
-
-echo ""
-echo "Waiting for services to start..."
-sleep 30
-
-echo ""
-echo "Final status check:"
-docker-compose ps
-
-echo ""
-echo -e "${BLUE}🔧 Recommended Next Steps:${NC}"
-echo "1. If services are not running, check the logs above for errors"
-echo "2. If database connection fails, verify your AWS RDS credentials"
-echo "3. If nginx fails, check if port 80 is available"
-echo "4. If web service fails, check Django application logs"
-echo "5. Run 'docker-compose logs [service-name]' for detailed logs"
-
-echo ""
-echo -e "${GREEN}✅ Diagnostic complete!${NC}"
+log "🎯 Diagnosis complete!"
+log "If Gunicorn is not running, try:"
+log "1. sudo systemctl start gunicorn.service"
+log "2. Or manually: gunicorn --bind 127.0.0.1:8000 medcor_backend2.wsgi:application"
+log "3. Check logs: sudo journalctl -u gunicorn.service -f"
