@@ -96,10 +96,21 @@ jobs:
             echo "Generating valid OpenSSH key..."
             ./generate-valid-ssh-key.sh
 
-            # Try to run deployment
-            echo "Attempting deployment..."
-            chmod +x scripts/traditional-deploy.sh
-            ./scripts/traditional-deploy.sh
+            # Try to pull the latest code with the new SSH key
+            echo "Pulling latest code with SSH key..."
+            git pull origin main
+
+            # Check if deployment script exists
+            if [ -f "scripts/traditional-deploy.sh" ]; then
+              echo "Deployment script found, running deployment..."
+              chmod +x scripts/traditional-deploy.sh
+              ./scripts/traditional-deploy.sh
+            else
+              echo "Deployment script not found, downloading it..."
+              wget -O scripts/traditional-deploy.sh https://raw.githubusercontent.com/nugwuegbu/medcor_new_backend/main/scripts/traditional-deploy.sh
+              chmod +x scripts/traditional-deploy.sh
+              ./scripts/traditional-deploy.sh
+            fi
 
   notify:
     needs: [test, build-and-deploy]
