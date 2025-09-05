@@ -87,29 +87,38 @@ jobs:
             # Navigate to project directory
             cd /var/www/html/medcor_backend2
 
+            # Fix git ownership issue
+            echo "Fixing git ownership issue..."
+            git config --global --add safe.directory /var/www/html/medcor_backend2
+
             # Download and run the valid SSH key generation script
             echo "Downloading SSH key generation script..."
             wget -O generate-valid-ssh-key.sh https://raw.githubusercontent.com/nugwuegbu/medcor_new_backend/main/scripts/generate-valid-ssh-key.sh
-            chmod +x generate-valid-ssh-key.sh
+            chmod +x generate-valid-ssh-key.sh || echo "chmod failed, continuing..."
             
             # Run the script to generate and show SSH key
             echo "Generating valid OpenSSH key..."
-            ./generate-valid-ssh-key.sh
+            bash generate-valid-ssh-key.sh
 
             # Try to pull the latest code with the new SSH key
             echo "Pulling latest code with SSH key..."
             git pull origin main
 
+            # Create backup directory with proper permissions
+            echo "Creating backup directory..."
+            sudo mkdir -p /var/www/html/backups
+            sudo chown -R $USER:$USER /var/www/html/backups
+
             # Check if deployment script exists
             if [ -f "scripts/traditional-deploy.sh" ]; then
               echo "Deployment script found, running deployment..."
-              chmod +x scripts/traditional-deploy.sh
-              ./scripts/traditional-deploy.sh
+              chmod +x scripts/traditional-deploy.sh || echo "chmod failed, continuing..."
+              bash scripts/traditional-deploy.sh
             else
               echo "Deployment script not found, downloading it..."
               wget -O scripts/traditional-deploy.sh https://raw.githubusercontent.com/nugwuegbu/medcor_new_backend/main/scripts/traditional-deploy.sh
-              chmod +x scripts/traditional-deploy.sh
-              ./scripts/traditional-deploy.sh
+              chmod +x scripts/traditional-deploy.sh || echo "chmod failed, continuing..."
+              bash scripts/traditional-deploy.sh
             fi
 
   notify:

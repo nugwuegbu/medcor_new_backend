@@ -38,11 +38,15 @@ create_backup() {
     local backup_path="$BACKUP_DIR/medcor_backup_$timestamp"
     
     log "📦 Creating backup..."
-    mkdir -p "$BACKUP_DIR"
+    sudo mkdir -p "$BACKUP_DIR" 2>/dev/null || mkdir -p "$BACKUP_DIR" 2>/dev/null || true
+    sudo chown -R $USER:$USER "$BACKUP_DIR" 2>/dev/null || true
     
     # Copy current deployment
     if [ -d "$PROJECT_DIR" ]; then
-        cp -r "$PROJECT_DIR" "$backup_path"
+        cp -r "$PROJECT_DIR" "$backup_path" 2>/dev/null || {
+            warning "Backup failed, continuing without backup..."
+            return 0
+        }
         log "✅ Backup created successfully"
     else
         warning "No existing deployment found to backup"
