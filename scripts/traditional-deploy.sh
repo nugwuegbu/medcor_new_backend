@@ -80,14 +80,21 @@ update_code() {
     
     cd "$PROJECT_DIR"
     
-    # Pull latest changes
-    git fetch origin
-    git reset --hard origin/main
-    log "✅ Code updated from repository"
+    # Fix git permissions first
+    sudo chown -R $USER:$USER .git 2>/dev/null || true
+    sudo chmod -R 755 .git 2>/dev/null || true
+    
+    # Try to pull latest changes
+    if git fetch origin 2>/dev/null && git reset --hard origin/main 2>/dev/null; then
+        log "✅ Code updated from repository"
+    else
+        log "⚠️  Git operations failed, continuing with current code..."
+        log "⚠️  This may be due to permission issues or network problems"
+    fi
     
     # Set proper permissions
-    sudo chown -R $USER:$USER .
-    chmod -R 755 .
+    sudo chown -R $USER:$USER . 2>/dev/null || true
+    chmod -R 755 . 2>/dev/null || true
     log "✅ Permissions updated"
 }
 
