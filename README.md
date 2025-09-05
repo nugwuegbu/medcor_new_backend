@@ -280,3 +280,15 @@ MIT License - See LICENSE file for details
 4. Push to the branch
 5. Create a Pull Request# CI/CD Pipeline Test - Fri Sep  5 01:11:54 AM WAT 2025
 # CI/CD Test - SSH Key Working - Fri Sep  5 01:36:45 AM WAT 2025
+
+# CI/CD Pipeline Test - Fri Sep  5 01:37:52 AM WAT 2025
+## Testing automatic deployment with SSH key authentication
+- SSH deploy key successfully added to GitHub
+- Git pull working from server to GitHub repository
+- Testing full deployment pipeline with services:
+  - gunicorn.service (Django app)
+  - celery.service (background tasks)
+  - rabbitmq-server (message broker)
+  - nginx (reverse proxy with HTTPS)
+- Expected result: https://api.medcor.ai should be accessible
+
