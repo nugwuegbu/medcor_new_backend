@@ -87,14 +87,123 @@ jobs:
             # Navigate to project directory
             cd /var/www/html/medcor_backend2
 
-            # Download the simple deployment script
-            echo "Downloading simple deployment script..."
-            wget -O scripts/simple-deploy.sh https://raw.githubusercontent.com/nugwuegbu/medcor_new_backend/main/scripts/simple-deploy.sh
-            chmod +x scripts/simple-deploy.sh || echo "chmod failed, continuing..."
+            echo "🚀 Starting MedCor Backend deployment..."
 
-            # Run the simple deployment script
-            echo "Running simple deployment (no git operations)..."
-            bash scripts/simple-deploy.sh
+            # Setup virtual environment
+            echo "🔧 Setting up virtual environment..."
+            if [ -d "venv" ]; then
+              echo "✅ Using existing virtual environment"
+              source venv/bin/activate
+            else
+              echo "⚠️  Virtual environment not found, creating one..."
+              python3 -m venv venv
+              source venv/bin/activate
+              echo "✅ Virtual environment created"
+            fi
+
+            # Install dependencies
+            echo "📦 Installing dependencies..."
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            echo "✅ Dependencies installed"
+
+            # Copy environment file if needed
+            if [ -f "env.prod" ] && [ ! -f ".env" ]; then
+              cp env.prod .env
+              echo "✅ Environment file copied"
+            fi
+
+            # Run database migrations
+            echo "🗄️ Running database migrations..."
+            python manage.py migrate
+            echo "✅ Database migrations completed"
+
+            # Collect static files
+            echo "📁 Collecting static files..."
+            python manage.py collectstatic --noinput
+            echo "✅ Static files collected"
+
+            # Start services
+            echo "🚀 Starting services..."
+
+            # Start gunicorn service
+            sudo systemctl enable gunicorn.service 2>/dev/null || true
+            sudo systemctl start gunicorn.service 2>/dev/null || {
+              echo "⚠️  Failed to start gunicorn.service, trying alternative approach..."
+              cd /var/www/html/medcor_backend2
+              source venv/bin/activate
+              nohup gunicorn --bind 127.0.0.1:8000 medcor_backend2.wsgi:application --daemon 2>/dev/null || true
+            }
+            echo "✅ Gunicorn service started"
+
+            # Start celery service
+            sudo systemctl enable celery.service 2>/dev/null || true
+            sudo systemctl start celery.service 2>/dev/null || {
+              echo "⚠️  Failed to start celery.service, trying alternative approach..."
+              cd /var/www/html/medcor_backend2
+              source venv/bin/activate
+              nohup celery -A medcor_backend2 worker --loglevel=info --daemon 2>/dev/null || true
+            }
+            echo "✅ Celery service started"
+
+            # Start RabbitMQ
+            sudo systemctl start rabbitmq-server 2>/dev/null || true
+            echo "✅ RabbitMQ started"
+
+            # Restart nginx
+            sudo systemctl restart nginx 2>/dev/null || true
+            echo "✅ Nginx restarted"
+
+            # Wait for services to start
+            echo "⏳ Waiting for services to start..."
+            sleep 10
+
+            # Check service health
+            echo "🏥 Checking service health..."
+
+            # Check gunicorn
+            if systemctl is-active --quiet gunicorn.service 2>/dev/null || pgrep -f gunicorn > /dev/null 2>&1; then
+              echo "✅ Gunicorn service is running"
+            else
+              echo "⚠️  Gunicorn service may not be running properly"
+            fi
+
+            # Check celery
+            if systemctl is-active --quiet celery.service 2>/dev/null || pgrep -f celery > /dev/null 2>&1; then
+              echo "✅ Celery service is running"
+            else
+              echo "⚠️  Celery service may not be running properly"
+            fi
+
+            # Check nginx
+            if systemctl is-active --quiet nginx 2>/dev/null; then
+              echo "✅ Nginx service is running"
+            else
+              echo "⚠️  Nginx service may not be running properly"
+            fi
+
+            # Check RabbitMQ
+            if systemctl is-active --quiet rabbitmq-server 2>/dev/null; then
+              echo "✅ RabbitMQ service is running"
+            else
+              echo "⚠️  RabbitMQ service may not be running properly"
+            fi
+
+            # Test API endpoint
+            if curl -f https://api.medcor.ai/api/health/ > /dev/null 2>&1; then
+              echo "✅ API endpoint is responding (HTTPS)"
+            elif curl -f http://api.medcor.ai/api/health/ > /dev/null 2>&1; then
+              echo "✅ API endpoint is responding (HTTP)"
+            elif curl -f http://localhost:8000/api/health/ > /dev/null 2>&1; then
+              echo "✅ API endpoint is responding (localhost)"
+            else
+              echo "⚠️  API endpoint is not responding - check service logs"
+            fi
+
+            echo "🎉 Deployment completed!"
+            echo "🌐 API should be available at: https://api.medcor.ai"
+            echo "📚 API Documentation: https://api.medcor.ai/api/schema/swagger-ui/"
+            echo "🔧 Admin Interface: https://api.medcor.ai/admin/"
 
   notify:
     needs: [test, build-and-deploy]
