@@ -93,17 +93,16 @@ setup_environment() {
     
     cd "$PROJECT_DIR"
     
-    # Use existing virtual environment
+    # Check for existing virtual environment
     if [ -d "venv" ]; then
         log "✅ Using existing virtual environment"
+        source venv/bin/activate
     else
-        error "❌ Virtual environment not found at $PROJECT_DIR/venv"
-        error "Please ensure the existing venv is present before deployment"
-        exit 1
+        log "⚠️  Virtual environment not found, creating one..."
+        python3 -m venv venv
+        source venv/bin/activate
+        log "✅ Virtual environment created"
     fi
-    
-    # Activate virtual environment
-    source venv/bin/activate
     
     # Install/update dependencies
     pip install --upgrade pip
