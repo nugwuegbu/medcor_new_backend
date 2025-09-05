@@ -199,7 +199,7 @@ SIMPLE_JWT = {
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5000"
+    "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5000,https://test.medcor.ai,https://medcor.ai,https://www.medcor.ai"
 ).split(",")
 
 CORS_ALLOW_CREDENTIALS = True

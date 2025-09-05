@@ -221,7 +221,9 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://your-frontend-domain.com",
+    "https://test.medcor.ai",
+    "https://medcor.ai",
+    "https://www.medcor.ai",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -300,7 +302,8 @@ cat > .env << 'EOF'
 # Django Settings
 SECRET_KEY=django-insecure-your-secret-key-here
 DEBUG=False
-ALLOWED_HOSTS=localhost,127.0.0.1,your-server-ip
+ALLOWED_HOSTS=localhost,127.0.0.1,your-server-ip,test.medcor.ai,medcor.ai,www.medcor.ai
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5000,https://test.medcor.ai,https://medcor.ai,https://www.medcor.ai
 
 # Database Configuration (AWS RDS)
 DATABASE_ENGINE=django.db.backends.postgresql

@@ -371,6 +371,8 @@ The deployment process is fully automated and triggers on every push to the main
 
 ### Manual Deployment
 
+####deployment key added
+
 You can also trigger deployments manually:
 
 1. **Go to Actions tab** in your GitHub repository
