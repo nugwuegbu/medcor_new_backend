@@ -34,15 +34,19 @@ setup_environment() {
     
     cd "$PROJECT_DIR"
     
-    # Check for existing virtual environment
-    if [ -d "venv" ]; then
-        log "✅ Using existing virtual environment"
+    # SAFETY CHECK: Protect existing venv
+    log "🔒 SAFETY CHECK: Protecting existing venv directory..."
+    if [ -d "venv" ] && [ -f "venv/bin/activate" ]; then
+        log "✅ Using existing virtual environment (PRESERVED)"
+        log "⚠️  NOT deleting or recreating existing venv"
         source venv/bin/activate
+        log "✅ Virtual environment activated successfully"
     else
-        log "⚠️  Virtual environment not found, creating one..."
+        log "⚠️  Virtual environment not found or corrupted, creating new one..."
+        log "⚠️  This should only happen on first deployment"
         python3 -m venv venv
         source venv/bin/activate
-        log "✅ Virtual environment created"
+        log "✅ New virtual environment created"
     fi
     
     # Install/update dependencies

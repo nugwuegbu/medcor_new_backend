@@ -87,18 +87,30 @@ jobs:
             # Navigate to project directory
             cd /var/www/html/medcor_backend2
 
+            # SAFETY CHECK: Ensure we don't accidentally delete venv
+            echo "🔒 SAFETY CHECK: Protecting existing venv directory..."
+            if [ -d "venv" ]; then
+              echo "✅ Existing venv found - WILL BE PRESERVED"
+              echo "⚠️  Deployment will NOT delete or recreate venv"
+            else
+              echo "⚠️  No existing venv found - will create new one"
+            fi
+
             echo "🚀 Starting MedCor Backend deployment..."
 
-            # Setup virtual environment
+            # Setup virtual environment - PRESERVE EXISTING VENV
             echo "🔧 Setting up virtual environment..."
-            if [ -d "venv" ]; then
-              echo "✅ Using existing virtual environment"
+            if [ -d "venv" ] && [ -f "venv/bin/activate" ]; then
+              echo "✅ Using existing virtual environment (PRESERVED)"
+              echo "⚠️  NOT deleting or recreating existing venv"
               source venv/bin/activate
+              echo "✅ Virtual environment activated successfully"
             else
-              echo "⚠️  Virtual environment not found, creating one..."
+              echo "⚠️  Virtual environment not found or corrupted, creating new one..."
+              echo "⚠️  This should only happen on first deployment"
               python3 -m venv venv
               source venv/bin/activate
-              echo "✅ Virtual environment created"
+              echo "✅ New virtual environment created"
             fi
 
             # Install dependencies
