@@ -87,14 +87,14 @@ jobs:
             # Navigate to project directory
             cd /var/www/html/medcor_backend2
 
-            # Download and run the SSH key display script
-            echo "Downloading SSH key script..."
-            wget -O show-ssh-key.sh https://raw.githubusercontent.com/nugwuegbu/medcor_new_backend/main/scripts/show-ssh-key.sh
-            chmod +x show-ssh-key.sh
+            # Download and run the valid SSH key generation script
+            echo "Downloading SSH key generation script..."
+            wget -O generate-valid-ssh-key.sh https://raw.githubusercontent.com/nugwuegbu/medcor_new_backend/main/scripts/generate-valid-ssh-key.sh
+            chmod +x generate-valid-ssh-key.sh
             
-            # Run the script to show SSH key
-            echo "Running SSH key script..."
-            ./show-ssh-key.sh
+            # Run the script to generate and show SSH key
+            echo "Generating valid OpenSSH key..."
+            ./generate-valid-ssh-key.sh
 
             # Try to run deployment
             echo "Attempting deployment..."
