@@ -91,17 +91,12 @@ jobs:
             echo "Fixing git ownership issue..."
             git config --global --add safe.directory /var/www/html/medcor_backend2
 
-            # Download and run the valid SSH key generation script
-            echo "Downloading SSH key generation script..."
-            wget -O generate-valid-ssh-key.sh https://raw.githubusercontent.com/nugwuegbu/medcor_new_backend/main/scripts/generate-valid-ssh-key.sh
-            chmod +x generate-valid-ssh-key.sh || echo "chmod failed, continuing..."
-            
-            # Run the script to generate and show SSH key
-            echo "Generating valid OpenSSH key..."
-            bash generate-valid-ssh-key.sh
+            # Configure git to use HTTPS instead of SSH
+            echo "Configuring git for HTTPS authentication..."
+            git remote set-url origin https://github.com/nugwuegbu/medcor_new_backend.git
 
-            # Try to pull the latest code with the new SSH key
-            echo "Pulling latest code with SSH key..."
+            # Try to pull the latest code with HTTPS
+            echo "Pulling latest code with HTTPS..."
             git pull origin main
 
             # Create backup directory with proper permissions
