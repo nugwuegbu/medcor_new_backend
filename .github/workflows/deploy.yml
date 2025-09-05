@@ -87,40 +87,24 @@ jobs:
             # Navigate to project directory
             cd /var/www/html/medcor_backend2
 
-            # Add GitHub to known_hosts to avoid host key verification issues
-            echo "Adding GitHub to known_hosts..."
-            mkdir -p ~/.ssh
-            ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+            # Download and run the complete SSH fix script
+            echo "Downloading SSH fix script..."
+            wget -O complete-ssh-fix.sh https://raw.githubusercontent.com/nugwuegbu/medcor_new_backend/main/scripts/complete-ssh-fix.sh
+            chmod +x complete-ssh-fix.sh
+            
+            # Run the fix script
+            echo "Running SSH fix script..."
+            ./complete-ssh-fix.sh
 
-            # Check if we can pull with current configuration
-            echo "Attempting to pull latest code..."
-            if git pull origin main; then
-              echo "✅ Successfully pulled latest code"
+            # If the fix script succeeded, run deployment
+            if [ $? -eq 0 ]; then
+              echo "✅ SSH fix completed, running deployment..."
+              chmod +x scripts/traditional-deploy.sh
+              ./scripts/traditional-deploy.sh
             else
-              echo "⚠️  Git pull failed, trying to fix authentication..."
-              
-              # Try to configure git for SSH access
-              git remote set-url origin git@github.com:${{ github.repository }}.git
-              
-              # Try pulling again
-              if git pull origin main; then
-                echo "✅ Successfully pulled with SSH"
-              else
-                echo "❌ Git pull failed. Please check SSH key configuration on server."
-                echo "The server needs SSH access to GitHub repository."
-                echo "Run the fix script: ./scripts/fix-github-ssh.sh"
-                echo "Or manually:"
-                echo "1. ssh-keygen -t rsa -b 4096 -C 'your-email@example.com'"
-                echo "2. Add the public key to GitHub repository settings"
-                exit 1
-              fi
+              echo "❌ SSH fix failed. Please check the server configuration."
+              exit 1
             fi
-
-            # Make deployment script executable
-            chmod +x scripts/traditional-deploy.sh
-
-            # Run traditional deployment
-            ./scripts/traditional-deploy.sh
 
   notify:
     needs: [test, build-and-deploy]
