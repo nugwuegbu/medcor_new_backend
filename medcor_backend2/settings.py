@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "specialty",
     "email_service",
     "youcam",
+    "langchain_ai",
 ]
 
 MIDDLEWARE = [
@@ -316,3 +317,10 @@ LOGGING = {
 
 # OpenAI Configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
+OPENAI_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", "2000"))
+
+# MCP Server Configuration
+MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8001")
+MCP_SERVER_TIMEOUT = int(os.getenv("MCP_SERVER_TIMEOUT", "30"))

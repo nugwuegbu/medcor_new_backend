@@ -42,6 +42,7 @@ urlpatterns = [
     path("api/specialty/", include("specialty.urls")),
     path("api/email/", include("email_service.urls")),
     path("api/youcam/", include("youcam.urls")),
+    path("api/ai/", include("langchain_ai.urls")),
 ]
 
 # Serve media files in development
