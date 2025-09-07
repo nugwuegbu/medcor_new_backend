@@ -170,6 +170,75 @@ jobs:
             echo "⏳ Waiting for services to start..."
             sleep 10
 
+            # Fix AWS RDS connection
+            echo "🔧 Configuring AWS RDS connection..."
+            if [ -f "scripts/clean-aws-rds-fix.sh" ]; then
+              chmod +x scripts/clean-aws-rds-fix.sh
+              ./scripts/clean-aws-rds-fix.sh
+            else
+              echo "⚠️  AWS RDS fix script not found, configuring manually..."
+              
+              # AWS RDS Configuration
+              RDS_HOST="medcore.czouassyu7f2.il-central-1.rds.amazonaws.com"
+              RDS_PORT="5432"
+              RDS_DB="medcor_db2"
+              RDS_USER="postgres"
+              RDS_PASS="3765R7vmFQwF6ddlNyWa"
+              
+              # Create .env file with AWS RDS configuration
+              cat > .env << 'EOF'
+# AWS RDS Database Configuration
+DATABASE_ENGINE=django.db.backends.postgresql
+DATABASE_NAME=medcor_db2
+DATABASE_USER=postgres
+DATABASE_PASSWORD=3765R7vmFQwF6ddlNyWa
+DATABASE_HOST=medcore.czouassyu7f2.il-central-1.rds.amazonaws.com
+DATABASE_PORT=5432
+
+# Django Settings
+SECRET_KEY=your-secret-key-here
+DEBUG=False
+ALLOWED_HOSTS=api.medcor.ai,test.medcor.ai,localhost,127.0.0.1
+
+# CORS Settings
+CORS_ALLOWED_ORIGINS=https://api.medcor.ai,https://test.medcor.ai,http://localhost:3000
+
+# Email Configuration
+EMAIL_HOST_USER=nugwuegbu089@gmail.com
+EMAIL_HOST_PASSWORD=your-gmail-app-password
+
+# Redis Configuration (for Celery)
+REDIS_URL=redis://localhost:6379/0
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+
+# OpenAI Configuration (set your actual key on the server)
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE
+
+# MCP Server Configuration
+MCP_SERVER_URL=http://localhost:8001
+MCP_SERVER_TIMEOUT=30
+EOF
+              
+              # Install PostgreSQL client for RDS connection
+              sudo apt update
+              sudo apt install -y postgresql-client
+              
+              # Test RDS connection
+              if PGPASSWORD="$RDS_PASS" psql -h "$RDS_HOST" -p "$RDS_PORT" -U "$RDS_USER" -d "$RDS_DB" -c "SELECT 1;" &>/dev/null; then
+                echo "✅ AWS RDS connection successful"
+              else
+                echo "❌ AWS RDS connection failed"
+                echo "   Server IP: $(curl -s ifconfig.me 2>/dev/null || echo 'Unable to determine')"
+                echo "   Please check AWS RDS security groups allow this IP"
+              fi
+              
+              # Run migrations
+              source venv/bin/activate
+              python manage.py migrate --noinput
+            fi
+            echo "✅ AWS RDS connection configured"
+
             # Check service health
             echo "🏥 Checking service health..."
 
