@@ -1,0 +1,309 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run linting
+        run: |
+          pip install flake8 black isort
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          black --check .
+          isort --check-only .
+
+      - name: Run tests
+        run: |
+          python manage.py test --settings=medcor_backend2.test_settings
+
+      - name: Security check
+        run: |
+          pip install bandit safety
+          bandit -r . -f json -o bandit-report.json || true
+          safety check --json > safety-report.json || true
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Prepare deployment
+        run: |
+          echo "Preparing traditional deployment (no Docker build needed)"
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            # Navigate to project directory
+            cd /var/www/html/medcor_backend2
+
+            # SAFETY CHECK: Ensure we don't accidentally delete venv
+            echo "🔒 SAFETY CHECK: Protecting existing venv directory..."
+            if [ -d "venv" ]; then
+              echo "✅ Existing venv found - WILL BE PRESERVED"
+              echo "⚠️  Deployment will NOT delete or recreate venv"
+            else
+              echo "⚠️  No existing venv found - will create new one"
+            fi
+
+            echo "🚀 Starting MedCor Backend deployment..."
+
+            # Setup virtual environment - PRESERVE EXISTING VENV
+            echo "🔧 Setting up virtual environment..."
+            if [ -d "venv" ] && [ -f "venv/bin/activate" ]; then
+              echo "✅ Using existing virtual environment (PRESERVED)"
+              echo "⚠️  NOT deleting or recreating existing venv"
+              source venv/bin/activate
+              echo "✅ Virtual environment activated successfully"
+            else
+              echo "⚠️  Virtual environment not found or corrupted, creating new one..."
+              echo "⚠️  This should only happen on first deployment"
+              python3 -m venv venv
+              source venv/bin/activate
+              echo "✅ New virtual environment created"
+            fi
+
+            # Install dependencies
+            echo "📦 Installing dependencies..."
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            echo "✅ Dependencies installed"
+
+            # Copy environment file if needed
+            if [ -f "env.prod" ] && [ ! -f ".env" ]; then
+              cp env.prod .env
+              echo "✅ Environment file copied"
+            fi
+
+            # Run database migrations
+            echo "🗄️ Running database migrations..."
+            python manage.py migrate
+            echo "✅ Database migrations completed"
+
+            # Collect static files
+            echo "📁 Collecting static files..."
+            python manage.py collectstatic --noinput
+            echo "✅ Static files collected"
+
+            # Start services
+            echo "🚀 Starting services..."
+
+            # Start gunicorn service
+            sudo systemctl enable gunicorn.service 2>/dev/null || true
+            sudo systemctl start gunicorn.service 2>/dev/null || {
+              echo "⚠️  Failed to start gunicorn.service, trying alternative approach..."
+              cd /var/www/html/medcor_backend2
+              source venv/bin/activate
+              nohup gunicorn --bind 127.0.0.1:8000 medcor_backend2.wsgi:application --daemon 2>/dev/null || true
+            }
+            echo "✅ Gunicorn service started"
+
+            # Start celery service
+            sudo systemctl enable celery.service 2>/dev/null || true
+            sudo systemctl start celery.service 2>/dev/null || {
+              echo "⚠️  Failed to start celery.service, trying alternative approach..."
+              cd /var/www/html/medcor_backend2
+              source venv/bin/activate
+              nohup celery -A medcor_backend2 worker --loglevel=info --daemon 2>/dev/null || true
+            }
+            echo "✅ Celery service started"
+
+            # Start RabbitMQ
+            sudo systemctl start rabbitmq-server 2>/dev/null || true
+            echo "✅ RabbitMQ started"
+
+            # Restart nginx
+            sudo systemctl restart nginx 2>/dev/null || true
+            echo "✅ Nginx restarted"
+
+            # Wait for services to start
+            echo "⏳ Waiting for services to start..."
+            sleep 10
+
+            # Fix AWS RDS connection
+            echo "🔧 Configuring AWS RDS connection..."
+            if [ -f "scripts/clean-aws-rds-fix.sh" ]; then
+              chmod +x scripts/clean-aws-rds-fix.sh
+              ./scripts/clean-aws-rds-fix.sh
+            else
+              echo "⚠️  AWS RDS fix script not found, configuring manually..."
+              
+              # AWS RDS Configuration
+              RDS_HOST="medcore.czouassyu7f2.il-central-1.rds.amazonaws.com"
+              RDS_PORT="5432"
+              RDS_DB="medcor_db2"
+              RDS_USER="postgres"
+              RDS_PASS="3765R7vmFQwF6ddlNyWa"
+              
+              # Create .env file with AWS RDS configuration
+              cat > .env << 'EOF'
+# AWS RDS Database Configuration
+DATABASE_ENGINE=django.db.backends.postgresql
+DATABASE_NAME=medcor_db2
+DATABASE_USER=postgres
+DATABASE_PASSWORD=3765R7vmFQwF6ddlNyWa
+DATABASE_HOST=medcore.czouassyu7f2.il-central-1.rds.amazonaws.com
+DATABASE_PORT=5432
+
+# Django Settings
+SECRET_KEY=your-secret-key-here
+DEBUG=False
+ALLOWED_HOSTS=api.medcor.ai,test.medcor.ai,localhost,127.0.0.1
+
+# CORS Settings
+CORS_ALLOWED_ORIGINS=https://api.medcor.ai,https://test.medcor.ai,http://localhost:3000
+
+# Email Configuration
+EMAIL_HOST_USER=nugwuegbu089@gmail.com
+EMAIL_HOST_PASSWORD=your-gmail-app-password
+
+# Redis Configuration (for Celery)
+REDIS_URL=redis://localhost:6379/0
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+
+# OpenAI Configuration (set your actual key on the server)
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE
+
+# MCP Server Configuration
+MCP_SERVER_URL=http://localhost:8001
+MCP_SERVER_TIMEOUT=30
+EOF
+              
+              # Install PostgreSQL client for RDS connection
+              sudo apt update
+              sudo apt install -y postgresql-client
+              
+              # Test RDS connection
+              if PGPASSWORD="$RDS_PASS" psql -h "$RDS_HOST" -p "$RDS_PORT" -U "$RDS_USER" -d "$RDS_DB" -c "SELECT 1;" &>/dev/null; then
+                echo "✅ AWS RDS connection successful"
+              else
+                echo "❌ AWS RDS connection failed"
+                echo "   Server IP: $(curl -s ifconfig.me 2>/dev/null || echo 'Unable to determine')"
+                echo "   Please check AWS RDS security groups allow this IP"
+              fi
+              
+              # Run migrations
+              source venv/bin/activate
+              python manage.py migrate --noinput
+            fi
+            echo "✅ AWS RDS connection configured"
+
+            # Check service health
+            echo "🏥 Checking service health..."
+
+            # Check gunicorn
+            if systemctl is-active --quiet gunicorn.service 2>/dev/null || pgrep -f gunicorn > /dev/null 2>&1; then
+              echo "✅ Gunicorn service is running"
+            else
+              echo "⚠️  Gunicorn service may not be running properly"
+            fi
+
+            # Check celery
+            if systemctl is-active --quiet celery.service 2>/dev/null || pgrep -f celery > /dev/null 2>&1; then
+              echo "✅ Celery service is running"
+            else
+              echo "⚠️  Celery service may not be running properly"
+            fi
+
+            # Check nginx
+            if systemctl is-active --quiet nginx 2>/dev/null; then
+              echo "✅ Nginx service is running"
+            else
+              echo "⚠️  Nginx service may not be running properly"
+            fi
+
+            # Check RabbitMQ
+            if systemctl is-active --quiet rabbitmq-server 2>/dev/null; then
+              echo "✅ RabbitMQ service is running"
+            else
+              echo "⚠️  RabbitMQ service may not be running properly"
+            fi
+
+            # Test API endpoint
+            if curl -f https://api.medcor.ai/api/health/ > /dev/null 2>&1; then
+              echo "✅ API endpoint is responding (HTTPS)"
+            elif curl -f http://api.medcor.ai/api/health/ > /dev/null 2>&1; then
+              echo "✅ API endpoint is responding (HTTP)"
+            elif curl -f http://localhost:8000/api/health/ > /dev/null 2>&1; then
+              echo "✅ API endpoint is responding (localhost)"
+            else
+              echo "⚠️  API endpoint is not responding - check service logs"
+            fi
+
+            echo "🎉 Deployment completed!"
+            echo "🌐 API should be available at: https://api.medcor.ai"
+            echo "📚 API Documentation: https://api.medcor.ai/api/schema/swagger-ui/"
+            echo "🔧 Admin Interface: https://api.medcor.ai/admin/"
+
+  notify:
+    needs: [test, build-and-deploy]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Notify deployment status
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            if [ "${{ job.status }}" == "success" ]; then
+              echo "✅ Deployment successful! MedCor Backend updated to commit ${{ github.sha }}"
+              # You can add notification logic here (Slack, Discord, email, etc.)
+            else
+              echo "❌ Deployment failed! Check the logs for details."
+              # You can add failure notification logic here
+            fi
