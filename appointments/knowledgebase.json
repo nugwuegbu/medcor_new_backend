@@ -1,0 +1,57 @@
+{
+  "identity": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "hospital_name": "string",
+    "hospital_address": "string",
+    "agent_name": "string",
+    "agent_title": "string",
+    "system_prompt": "string",
+    "is_active": true,
+    "created_at": "2025-09-19T10:21:15.225Z",
+    "updated_at": "2025-09-19T10:21:15.225Z"
+  },
+  "behavior": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "hospital_name": "string",
+    "hospital_address": "string",
+    "communication_tone": "Empathic",
+    "communication_style": "Conversational",
+    "confidence_level": "Conservative",
+    "response_length": "Short",
+    "is_active": true,
+    "created_at": "2025-09-19T10:21:15.232Z",
+    "updated_at": "2025-09-19T10:21:15.232Z"
+  },
+  "response": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "hospital_name": "string",
+    "hospital_address": "string",
+    "greeting_message": "string",
+    "appointment_booking": "string",
+    "face_analysis": "string",
+    "hair_analysis": "string",
+    "hair_extension_analysis": "string",
+    "lips_analysis": "string",
+    "skin_analysis": "string",
+    "general_inquiries": "string",
+    "fallback_response": "string",
+    "emergency_response": "string",
+    "business_hours": "string",
+    "medical_specialties": "string",
+    "is_active": true,
+    "created_at": "2025-09-19T10:24:05.457Z",
+    "updated_at": "2025-09-19T10:24:05.457Z"
+  },
+  "source": {
+    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "hospital_name": "string",
+    "hospital_address": "string",
+    "source_file": "string",
+    "file_name": "string",
+    "file_size": "string",
+    "file_url": "string",
+    "is_active": true,
+    "created_at": "2025-09-19T10:25:15.518Z",
+    "updated_at": "2025-09-19T10:25:15.518Z"
+  }
+}

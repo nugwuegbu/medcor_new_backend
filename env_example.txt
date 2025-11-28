@@ -1,0 +1,43 @@
+# Database Configuration Examples
+# Copy these to your system environment or create a .env file
+
+# For PostgreSQL:
+export DB_ENGINE=postgresql
+export DB_NAME=medcor_db
+export DB_USER=your_username
+export DB_PASSWORD=your_password
+export DB_HOST=localhost
+export DB_PORT=5432
+
+# For MySQL:
+export DB_ENGINE=mysql
+export DB_NAME=medcor_db
+export DB_USER=your_username
+export DB_PASSWORD=your_password
+export DB_HOST=localhost
+export DB_PORT=3306
+
+# For SQLite (default):
+export DB_ENGINE=sqlite
+
+# Django Settings:
+export SECRET_KEY=your-secret-key-here
+export DEBUG=True
+export ALLOWED_HOSTS=localhost,127.0.0.1
+
+# CORS Settings:
+export CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5000
+
+# Email Configuration (Gmail SMTP)
+export GMAIL_APP_PASSWORD=your-gmail-app-password-here
+
+# SendGrid Configuration (Alternative)
+export SENDGRID_API_KEY=your-sendgrid-api-key-here
+
+# YouCam AI Analysis API
+export YOUCAM_API_KEY=your-youcam-api-key-here
+export YOUCAM_SECRET_KEY=your-youcam-secret-key-here
+
+# Celery Configuration
+export CELERY_BROKER_URL=amqp://guest:guest@localhost:5672//
+export CELERY_RESULT_BACKEND=rpc:// 

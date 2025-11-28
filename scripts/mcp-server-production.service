@@ -1,0 +1,39 @@
+[Unit]
+Description=MedCor MCP Server
+Documentation=https://github.com/your-repo/medcor-backend2
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+Requires=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/var/www/html/medcor_backend2
+Environment=DJANGO_SETTINGS_MODULE=medcor_backend2.settings
+Environment=PYTHONPATH=/var/www/html/medcor_backend2
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/var/www/html/medcor_backend2/venv/bin/python /var/www/html/medcor_backend2/mcp_server.py
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+StartLimitBurst=3
+StartLimitInterval=60
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mcp-server
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/html/medcor_backend2
+ReadOnlyPaths=/var/www/html/medcor_backend2/venv
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target

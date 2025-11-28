@@ -1,0 +1,3 @@
+#!/bin/bash
+# Complete one-line MCP server fix for AWS
+sudo systemctl stop mcp-server && sed -i 's/@mcp\.prompt()/@mcp.tool()/g' /var/www/html/medcor_backend2/mcp_server.py && sed -i 's/@mcp\.prompt/@mcp.tool/g' /var/www/html/medcor_backend2/mcp_server.py && sed -i 's/mcp\.run(host="0\.0\.0\.0", port=8001)/mcp.run()/g' /var/www/html/medcor_backend2/mcp_server.py && sed -i 's/mcp\.run(host="0\.0\.0\.0", port=[0-9]*)/mcp.run()/g' /var/www/html/medcor_backend2/mcp_server.py && sudo systemctl start mcp-server && sleep 5 && sudo systemctl status mcp-server

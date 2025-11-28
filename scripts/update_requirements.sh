@@ -1,0 +1,223 @@
+#!/bin/bash
+
+# Script to update requirements.txt for remote server deployment
+# This script ensures requirements.txt is always up-to-date with current environment
+
+set -e
+
+echo "🔄 Updating requirements.txt for remote server..."
+
+# Change to project directory
+cd "$(dirname "$0")/.."
+
+# Activate virtual environment if it exists
+if [ -d "venv" ]; then
+    echo "📦 Activating virtual environment..."
+    source venv/bin/activate
+fi
+
+# Generate requirements from current environment
+echo "📋 Generating requirements from current environment..."
+pip freeze > requirements_current.txt
+
+# Create a clean requirements.txt with only production dependencies
+echo "🧹 Creating clean requirements.txt for production..."
+
+cat > requirements.txt << 'EOF'
+# Django and REST Framework
+Django==5.0.1
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+
+# Django Extensions and Middleware
+django-cors-headers==4.3.1
+django-filter==25.1
+whitenoise==6.6.0
+
+# Database
+psycopg2-binary==2.9.9
+
+# Authentication and Security
+bcrypt==4.1.2
+PyJWT==2.10.1
+
+# API Documentation
+drf-spectacular==0.27.0
+
+# Image Processing
+Pillow==10.2.0
+
+# HTTP Requests
+requests==2.32.5
+
+# AI and LangChain
+openai==1.106.1
+langchain==0.3.27
+langchain-openai==0.3.32
+langchain-community==0.3.29
+langchain-core==0.3.75
+langchain-text-splitters==0.3.11
+langsmith==0.4.26
+
+# Web Scraping and Document Processing
+beautifulsoup4==4.12.2
+PyPDF2==3.0.1
+python-docx==1.1.0
+lxml==6.0.1
+
+# Web Server
+gunicorn==21.2.0
+uvicorn==0.35.0
+
+# Environment and Configuration
+python-dotenv==1.0.0
+
+# MCP Server
+fastmcp==0.1.0
+mcp==1.13.1
+
+# Celery and Task Queue
+celery==5.3.4
+kombu==5.3.4
+billiard==4.2.0
+amqp==5.2.0
+
+# Redis (for caching and health checks)
+redis==4.6.0
+
+# Core Dependencies
+asgiref==3.9.1
+sqlparse==0.5.3
+pytz==2025.2
+tzdata==2025.2
+
+# Data Processing and Validation
+pydantic==2.11.7
+pydantic-core==2.33.2
+pydantic-settings==2.10.1
+numpy==2.2.6
+
+# HTTP and Async
+httpx==0.28.1
+httpcore==1.0.9
+aiohttp==3.12.15
+aiohappyeyeballs==2.6.1
+aiosignal==1.4.0
+anyio==4.10.0
+h11==0.16.0
+sniffio==1.3.1
+multidict==6.6.4
+yarl==1.20.1
+frozenlist==1.7.0
+async-timeout==4.0.3
+
+# JSON and Data Serialization
+orjson==3.11.3
+jsonpatch==1.33
+jsonpointer==3.0.0
+jsonschema==4.25.1
+jsonschema-specifications==2025.4.1
+referencing==0.36.2
+dataclasses-json==0.6.7
+marshmallow==3.26.1
+
+# CLI and Terminal
+click==8.2.1
+click-didyoumean==0.3.1
+click-plugins==1.1.1.2
+click-repl==0.3.0
+typer==0.16.1
+rich==14.1.0
+prompt_toolkit==3.0.52
+wcwidth==0.2.13
+Pygments==2.19.2
+
+# Utilities
+python-dateutil==2.9.0.post0
+python-multipart==0.0.20
+urllib3==2.5.0
+certifi==2025.8.3
+charset-normalizer==3.4.3
+idna==3.10
+six==1.17.0
+distro==1.9.0
+packaging==25.0
+inflection==0.5.1
+uritemplate==4.2.0
+vine==5.1.0
+greenlet==3.2.4
+propcache==0.3.2
+shellingham==1.5.4
+tqdm==4.67.1
+tenacity==9.1.2
+tiktoken==0.11.0
+regex==2025.9.1
+soupsieve==2.8
+markdown-it-py==4.0.0
+mdurl==0.1.2
+rpds-py==0.27.0
+zstandard==0.24.0
+
+# Type Checking and Extensions
+typing-extensions==4.14.1
+typing-inspect==0.9.0
+typing-inspection==0.4.1
+mypy-extensions==1.1.0
+annotated-types==0.7.0
+
+# Web Framework Components
+starlette==0.47.3
+sse-starlette==3.0.2
+
+# Database and ORM
+SQLAlchemy==2.0.43
+
+# Optional Services (uncomment as needed)
+# AWS Services
+# boto3==1.34.0
+
+# Weather Services
+# python-weather==1.0.6
+
+# Azure Services
+# azure-cognitiveservices-vision-face==2.0.0
+# msrest==0.7.1
+
+# ElevenLabs Services
+# elevenlabs==0.2.26
+
+# Geolocation Services
+# geopy==2.4.1
+EOF
+
+# Update specific packages to latest versions from current environment
+echo "🔍 Updating specific packages to latest versions..."
+
+# Extract current versions for key packages
+CURRENT_REQUESTS=$(pip show requests | grep Version | cut -d' ' -f2)
+CURRENT_OPENAI=$(pip show openai | grep Version | cut -d' ' -f2)
+CURRENT_LANGCHAIN=$(pip show langchain | grep Version | cut -d' ' -f2)
+CURRENT_PYDANTIC=$(pip show pydantic | grep Version | cut -d' ' -f2)
+CURRENT_NUMPY=$(pip show numpy | grep Version | cut -d' ' -f2)
+
+# Update the requirements.txt with current versions
+sed -i "s/requests==2.32.5/requests==$CURRENT_REQUESTS/" requirements.txt
+sed -i "s/openai==1.106.1/openai==$CURRENT_OPENAI/" requirements.txt
+sed -i "s/langchain==0.3.27/langchain==$CURRENT_LANGCHAIN/" requirements.txt
+sed -i "s/pydantic==2.11.7/pydantic==$CURRENT_PYDANTIC/" requirements.txt
+sed -i "s/numpy==2.2.6/numpy==$CURRENT_NUMPY/" requirements.txt
+
+# Clean up temporary file
+rm -f requirements_current.txt
+
+echo "✅ requirements.txt updated successfully!"
+echo "📊 Summary of key packages:"
+echo "   - requests: $CURRENT_REQUESTS"
+echo "   - openai: $CURRENT_OPENAI"
+echo "   - langchain: $CURRENT_LANGCHAIN"
+echo "   - pydantic: $CURRENT_PYDANTIC"
+echo "   - numpy: $CURRENT_NUMPY"
+
+echo ""
+echo "🚀 Ready for remote server deployment!"
+echo "   Run: pip install -r requirements.txt"
