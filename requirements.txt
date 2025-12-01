@@ -136,7 +136,7 @@ regex==2025.9.1
 soupsieve==2.8
 markdown-it-py==4.0.0
 mdurl==0.1.2
-rpds-py==0.27.0
+rpds-py==0.30.0
 zstandard==0.24.0
 
 # Type Checking and Extensions
