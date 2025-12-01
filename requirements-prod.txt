@@ -69,7 +69,7 @@ sqlparse==0.5.3
 tzdata==2025.2
 
 # Data Processing and Validation
-numpy==2.2.6
+numpy==2.3.5
 pydantic==2.11.7
 pydantic-settings==2.10.1
 
