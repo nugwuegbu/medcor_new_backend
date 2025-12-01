@@ -76,7 +76,7 @@ numpy<2.0
 
 # PII Collection and Validation
 phonenumbers==8.13.36
-email-validator==2.2.0
+email-validator==2.3.0
 
 # HTTP and Async
 httpx==0.28.1
