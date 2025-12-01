@@ -38,7 +38,7 @@ langchain-openai==0.3.32
 openai==1.106.1
 
 # Web Scraping and Document Processing
-beautifulsoup4==4.12.2
+beautifulsoup4==4.14.3
 lxml==6.0.1
 pypdf2==3.0.1
 python-docx==1.1.0
